@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 import markupsafe
-
-import werkzeug.wrappers
 
 from odoo import http
 from odoo.http import request
 from odoo.tools import replace_exceptions
 
 from odoo.addons.onlyoffice_odoo_connector.utils import file_utils
+
+from urllib.request import urlopen
+
+_logger = logging.getLogger(__name__)
 
 
 class Onlyoffice_Connector(http.Controller):
@@ -38,6 +41,39 @@ class Onlyoffice_Connector(http.Controller):
 
         return request.render("onlyoffice_odoo_connector.onlyoffice_editor", self.prepare_editor_values(attachment, access_token))
 
+    @http.route("/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False)
+    def editor_callback(self, attachment_id, access_token=None):
+
+        response_json = {"error": 0}
+
+        try:
+            body = request.get_json_data()
+
+            attachment = self.get_attachment(attachment_id)
+            if not attachment:
+                raise Exception("attachment not found")
+
+            # impersonate
+            # attachment.validate_access(access_token)
+
+            # jwt
+
+            status = body["status"]
+
+            if (status == 2) | (status == 3):  # mustsave, corrupted
+                file_url = body.get("url")
+                attachment.write({"raw": urlopen(file_url).read()})
+
+        except Exception as ex:
+            response_json["error"] = 1
+            response_json["message"] = http.serialize_exception(ex)
+
+        return request.make_response(
+            data=json.dumps(response_json),
+            status=500 if response_json["error"] == 1 else 200,
+            headers=[("Content-Type", "application/json")],
+        )
+
     def prepare_editor_values(self, attachment, access_token):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
 
@@ -58,13 +94,20 @@ class Onlyoffice_Connector(http.Controller):
                 "key": data["checksum"],
                 "permissions": {"edit": True},
             },
-            "editorConfig": {"mode": "edit", "lang": request.env.user.lang, "user": {"id": request.env.user.id, "name": request.env.user.name}, "customization": {}},
+            "editorConfig": {
+                "callbackUrl": odoo_url + "/onlyoffice/editor/callback/" + str(data["id"]) + ("?access_token=" + access_token if access_token else ""),
+                "mode": "edit",
+                "lang": request.env.user.lang,
+                "user": {"id": request.env.user.id, "name": request.env.user.name},
+                "customization": {},
+            },
         }
 
         return {"docTitle": filename, "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(editor_config))}
 
     def get_attachment(self, attachment_id):
 
+        # remove sudo
         IrAttachment = request.env["ir.attachment"].sudo()
         try:
             return IrAttachment.browse([attachment_id]).exists().ensure_one()
