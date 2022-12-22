@@ -1,5 +1,34 @@
 <odoo>
     <data>
+        <template id="onlyoffice_editor" name="ONLYOFFICE Editor">
+            &lt;!DOCTYPE html&gt;
+            <html>
+                <head>
+                    <meta charset="UTF-8" />
+                    <title>
+                        ONLYOFFICE - <t t-out="docTitle" />
+                    </title>
+                    <style>
+                        * {
+                            margin: 0;
+                        }
+
+                        html, body {
+                            height: 100%;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div id="doceditor"></div>
+                    <script type="text/javascript" t-att-src="docApiJS"></script>
+                    <script type="text/javascript">
+                        var config = JSON.parse('<t t-out="editorConfig" />');
+
+                        var docEditor = new DocsAPI.DocEditor("doceditor", config);
+                    </script>
+                </body>
+            </html>
+        </template>
 
         <!-- <template id="listing"> -->
         <!--   <ul> -->
