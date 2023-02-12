@@ -60,7 +60,20 @@ class Onlyoffice_Connector(http.Controller):
             attachment.validate_access(access_token)
             attachment.check_access_rights("write")
 
-            # jwt
+            if jwt_utils.is_jwt_enabled(request.env):
+                token = body.get("token")
+
+                if not token:
+                    token = request.headers[config_utils.get_jwt_header(request.env)]
+                    if token:
+                        token = token[len("Bearer "):]
+
+                if not token:
+                    raise Exception("expected JWT")
+
+                body = jwt_utils.decode_token(request.env, token)
+                if body.get("payload"):
+                    body = body["payload"]
 
             status = body["status"]
 
@@ -119,6 +132,9 @@ class Onlyoffice_Connector(http.Controller):
 
         if can_write:
             root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
+
+        if jwt_utils.is_jwt_enabled(request.env):
+            root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
         return {"docTitle": filename, "docIcon": f"/onlyoffice_odoo_connector/static/description/editor_icons/{document_type}.ico", "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
 
