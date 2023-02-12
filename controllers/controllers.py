@@ -109,7 +109,7 @@ class Onlyoffice_Connector(http.Controller):
             "editorConfig": {
                 "mode": "edit" if can_write else "view",
                 "lang": request.env.user.lang,
-                "user": {"id": request.env.user.id, "name": request.env.user.name},
+                "user": {"id": str(request.env.user.id), "name": request.env.user.name},
                 "customization": {},
             },
         }
@@ -134,7 +134,7 @@ class Onlyoffice_Connector(http.Controller):
             raise Exception("missing security token")
 
         user_id = jwt_utils.decode_token(request.env, token, config_utils.get_internal_jwt_secret(request.env))["id"]
-        user = request.env["res.users"].sudo().browse(user_id)
+        user = request.env["res.users"].sudo().browse(user_id).exists().ensure_one()
         return user
 
 # save https://github.com/odoo/odoo/blob/04a70e99e15b23b78d4ada5c34c4cbc7e77c0770/addons/web/controllers/binary.py#L166
