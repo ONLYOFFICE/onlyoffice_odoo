@@ -22,6 +22,8 @@
     # any module necessary for this one to work correctly
     'depends': ['base'],
 
+    "external_dependencies": {"python": ["pyjwt"]},
+
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',

@@ -11,6 +11,8 @@ class ResConfigSettings(models.TransientModel):
     doc_server_public_url = fields.Char("Document Server URL")
     doc_server_jwt_secret = fields.Char("Document Server JWT Secret")
 
+    internal_jwt_secret = fields.Char("Internal JWT Secret")
+
     def set_values(self):
         res = super().set_values()
         self.env["ir.config_parameter"].set_param("onlyoffice_connector.doc_server_public_url", self.doc_server_public_url)

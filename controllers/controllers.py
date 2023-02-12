@@ -8,22 +8,25 @@ from odoo.http import request
 from odoo.tools import replace_exceptions
 
 from odoo.addons.onlyoffice_odoo_connector.utils import file_utils
+from odoo.addons.onlyoffice_odoo_connector.utils import jwt_utils
 
 from urllib.request import urlopen
+
+from werkzeug.exceptions import Forbidden
 
 _logger = logging.getLogger(__name__)
 
 
 class Onlyoffice_Connector(http.Controller):
     @http.route("/onlyoffice/file/content/<int:attachment_id>", auth="public")
-    def get_file_content(self, attachment_id, access_token=None):
+    def get_file_content(self, attachment_id, oo_security_token=None, access_token=None):
 
-        attachment = self.get_attachment(attachment_id)
+        attachment = self.get_attachment(attachment_id, self.get_user_from_token(oo_security_token))
         if not attachment:
             return request.not_found()
 
-        # check if we can impersonate user and check access via internal method
-        # attachment.validate_access(access_token)
+        attachment.validate_access(access_token)
+        attachment.check_access_rights("read")
 
         stream = request.env["ir.binary"]._get_stream_from(attachment, "datas", None, "name", None)
 
@@ -42,19 +45,19 @@ class Onlyoffice_Connector(http.Controller):
         return request.render("onlyoffice_odoo_connector.onlyoffice_editor", self.prepare_editor_values(attachment, access_token))
 
     @http.route("/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False)
-    def editor_callback(self, attachment_id, access_token=None):
+    def editor_callback(self, attachment_id, oo_security_token=None, access_token=None):
 
         response_json = {"error": 0}
 
         try:
             body = request.get_json_data()
 
-            attachment = self.get_attachment(attachment_id)
+            attachment = self.get_attachment(attachment_id, self.get_user_from_token(oo_security_token))
             if not attachment:
                 raise Exception("attachment not found")
 
-            # impersonate
-            # attachment.validate_access(access_token)
+            attachment.validate_access(access_token)
+            attachment.check_access_rights("write")
 
             # jwt
 
@@ -82,38 +85,56 @@ class Onlyoffice_Connector(http.Controller):
 
         filename = data["name"]
 
-        editor_config = {
+        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
+        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+
+        if (not can_read):
+            raise Exception("cant read")
+
+        security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, jwt_utils.get_internal_jwt_secret(request.env))
+
+        root_config = {
             "width": "100%",
             "height": "100%",
             "type": "desktop",
             "documentType": file_utils.get_file_type(filename),
             "document": {
                 "title": filename,
-                "url": odoo_url + "/onlyoffice/file/content/" + str(data["id"]) + ("?access_token=" + access_token if access_token else ""),
+                "url": odoo_url + "/onlyoffice/file/content/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
                 "fileType": file_utils.get_file_ext(filename),
                 "key": data["checksum"],
-                "permissions": {"edit": True},
+                "permissions": { "edit": can_write },
             },
             "editorConfig": {
-                "callbackUrl": odoo_url + "/onlyoffice/editor/callback/" + str(data["id"]) + ("?access_token=" + access_token if access_token else ""),
-                "mode": "edit",
+                "mode": "edit" if can_write else "view",
                 "lang": request.env.user.lang,
                 "user": {"id": request.env.user.id, "name": request.env.user.name},
                 "customization": {},
             },
         }
 
-        return {"docTitle": filename, "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(editor_config))}
+        if can_write:
+            root_config['editorConfig']['callbackUrl'] = odoo_url + "/onlyoffice/editor/callback/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
 
-    def get_attachment(self, attachment_id):
+        return {"docTitle": filename, "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
 
-        # remove sudo
-        IrAttachment = request.env["ir.attachment"].sudo()
+    def get_attachment(self, attachment_id, user=None):
+        IrAttachment = request.env["ir.attachment"]
+        if user:
+            IrAttachment = IrAttachment.with_user(user)
         try:
             return IrAttachment.browse([attachment_id]).exists().ensure_one()
         except Exception:
             return None
 
+    def get_user_from_token(self, token):
+        
+        if not token:
+            raise Exception("missing security token")
+
+        user_id = jwt_utils.decode_token(request.env, token, jwt_utils.get_internal_jwt_secret(request.env))["id"]
+        user = request.env["res.users"].sudo().browse(user_id)
+        return user
 
 # save https://github.com/odoo/odoo/blob/04a70e99e15b23b78d4ada5c34c4cbc7e77c0770/addons/web/controllers/binary.py#L166
 
