@@ -1,5 +1,5 @@
 #
-# (c) Copyright Ascensio System SIA 2022
+# (c) Copyright Ascensio System SIA 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 from odoo.addons.onlyoffice_odoo_connector.utils import format_utils
 
-localePath = {
+locale_path = {
     "az": "az-Latn-AZ",
     "bg": "bg-BG",
     "cs": "cs-CZ",
@@ -43,53 +43,53 @@ localePath = {
 }
 
 
-def getFileTitleWithoutExt(name):
+def get_file_title_without_ext(name):
     ind = name.rfind(".")
     return name[:ind]
 
 
-def getFileNameWithoutExt(name):
+def get_file_name_without_ext(name):
     ind = name.rfind(".")
     return name[:ind]
 
 
-def getFileExt(name):
+def get_file_ext(name):
     return name[name.rfind(".") + 1 :].lower()
 
 
-def getFileType(context):
-    for format in format_utils.getSupportedFormats():
-        if format.name == getFileExt(context):
+def get_file_type(context):
+    for format in format_utils.get_supported_formats():
+        if format.name == get_file_ext(context):
             return format.type
 
     return None
 
 
-def canView(context):
-    for format in format_utils.getSupportedFormats():
-        if format.name == getFileExt(context):
+def can_view(context):
+    for format in format_utils.get_supported_formats():
+        if format.name == get_file_ext(context):
             return True
 
     return False
 
 
-def canEdit(context):
-    for format in format_utils.getSupportedFormats():
-        if format.name == getFileExt(context):
+def can_edit(context):
+    for format in format_utils.get_supported_formats():
+        if format.name == get_file_ext(context):
             return format.edit
 
     return False
 
 
-def canFillForm(context):
-    for format in format_utils.getSupportedFormats():
-        if format.name == getFileExt(context):
+def can_fill_form(context):
+    for format in format_utils.get_supported_formats():
+        if format.name == get_file_ext(context):
             return format.fillForm
 
     return False
 
 
-def getDefaultExtByType(str):
+def get_default_ext_by_type(str):
     if str == "word":
         return "docx"
     if str == "cell":
@@ -102,7 +102,7 @@ def getDefaultExtByType(str):
     return None
 
 
-def getDefaultNameByType(str):
+def get_default_name_by_type(str):
     if str == "word":
         return "Document"
     if str == "cell":

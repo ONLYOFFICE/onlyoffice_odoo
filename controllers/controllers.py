@@ -86,11 +86,11 @@ class Onlyoffice_Connector(http.Controller):
             "width": "100%",
             "height": "100%",
             "type": "desktop",
-            "documentType": file_utils.getFileType(filename),
+            "documentType": file_utils.get_file_type(filename),
             "document": {
                 "title": filename,
                 "url": odoo_url + "/onlyoffice/file/content/" + str(data["id"]) + ("?access_token=" + access_token if access_token else ""),
-                "fileType": file_utils.getFileExt(filename),
+                "fileType": file_utils.get_file_ext(filename),
                 "key": data["checksum"],
                 "permissions": {"edit": True},
             },
