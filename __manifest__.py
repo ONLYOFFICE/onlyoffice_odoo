@@ -31,6 +31,17 @@
         'views/templates.xml',
         'views/res_config_settings_views.xml',
     ],
+
+    'assets': {
+        'mail.assets_messaging': [
+            'onlyoffice_odoo_connector/static/src/models/*.js',
+        ],
+        'web.assets_backend': [
+            'onlyoffice_odoo_connector/static/src/components/*/*.js',
+            'onlyoffice_odoo_connector/static/src/components/*/*.scss',
+            'onlyoffice_odoo_connector/static/src/components/*/*.xml',
+        ],
+    },
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
