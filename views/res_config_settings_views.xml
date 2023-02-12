@@ -2,7 +2,7 @@
 <odoo>
 
     <record id="res_config_settings_view_form" model="ir.ui.view">
-        <field name="name">res.config.settings.view.form.inherit.onlyoffice</field>
+        <field name="name">res.config.settings.view.form.inherit.onlyoffice_odoo_connector</field>
         <field name="model">res.config.settings</field>
         <field name="priority" eval="10" />
         <field name="inherit_id" ref="base.res_config_settings_view_form" />
@@ -11,7 +11,7 @@
                 <div class="app_settings_block"
                     string="ONLYOFFICE"
                     data-string="ONLYOFFICE"
-                    data-key="onlyoffice">
+                    data-key="onlyoffice_odoo_connector">
                     <h2>General Settings</h2>
                     <div class="row mt16 o_settings_container">
                         <div class="col-12 col-lg-6 o_setting_box">
@@ -47,7 +47,7 @@
         <field name="view_id" ref="res_config_settings_view_form" />
         <field name="view_mode">form</field>
         <field name="target">inline</field>
-        <field name="context">{'module' : 'onlyoffice'}</field>
+        <field name="context">{'module' : 'onlyoffice_odoo_connector'}</field>
     </record>
 
 </odoo>
