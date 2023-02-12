@@ -93,6 +93,7 @@ class Onlyoffice_Connector(http.Controller):
             raise Exception("cant read")
 
         security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
+        path_part = str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else "")
 
         root_config = {
             "width": "100%",
@@ -101,7 +102,7 @@ class Onlyoffice_Connector(http.Controller):
             "documentType": file_utils.get_file_type(filename),
             "document": {
                 "title": filename,
-                "url": odoo_url + "onlyoffice/file/content/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
+                "url": odoo_url + "onlyoffice/file/content/" + path_part,
                 "fileType": file_utils.get_file_ext(filename),
                 "key": data["checksum"],
                 "permissions": { "edit": can_write },
@@ -115,7 +116,7 @@ class Onlyoffice_Connector(http.Controller):
         }
 
         if can_write:
-            root_config['editorConfig']['callbackUrl'] = odoo_url + "onlyoffice/editor/callback/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
+            root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
 
         return {"docTitle": filename, "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
 
