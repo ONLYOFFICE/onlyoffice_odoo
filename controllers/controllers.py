@@ -9,6 +9,7 @@ from odoo.tools import replace_exceptions
 
 from odoo.addons.onlyoffice_odoo_connector.utils import file_utils
 from odoo.addons.onlyoffice_odoo_connector.utils import jwt_utils
+from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
 
 from urllib.request import urlopen
 
@@ -80,8 +81,8 @@ class Onlyoffice_Connector(http.Controller):
     def prepare_editor_values(self, attachment, access_token):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
 
-        docserver_url = request.env["ir.config_parameter"].sudo().get_param("onlyoffice_connector.doc_server_public_url")
-        odoo_url = request.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        docserver_url = config_utils.get_doc_server_public_url(request.env)
+        odoo_url = config_utils.get_odoo_url(request.env)
 
         filename = data["name"]
 
@@ -91,7 +92,7 @@ class Onlyoffice_Connector(http.Controller):
         if (not can_read):
             raise Exception("cant read")
 
-        security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, jwt_utils.get_internal_jwt_secret(request.env))
+        security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
 
         root_config = {
             "width": "100%",
@@ -100,7 +101,7 @@ class Onlyoffice_Connector(http.Controller):
             "documentType": file_utils.get_file_type(filename),
             "document": {
                 "title": filename,
-                "url": odoo_url + "/onlyoffice/file/content/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
+                "url": odoo_url + "onlyoffice/file/content/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
                 "fileType": file_utils.get_file_ext(filename),
                 "key": data["checksum"],
                 "permissions": { "edit": can_write },
@@ -114,7 +115,7 @@ class Onlyoffice_Connector(http.Controller):
         }
 
         if can_write:
-            root_config['editorConfig']['callbackUrl'] = odoo_url + "/onlyoffice/editor/callback/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
+            root_config['editorConfig']['callbackUrl'] = odoo_url + "onlyoffice/editor/callback/" + str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else ""),
 
         return {"docTitle": filename, "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
 
@@ -132,7 +133,7 @@ class Onlyoffice_Connector(http.Controller):
         if not token:
             raise Exception("missing security token")
 
-        user_id = jwt_utils.decode_token(request.env, token, jwt_utils.get_internal_jwt_secret(request.env))["id"]
+        user_id = jwt_utils.decode_token(request.env, token, config_utils.get_internal_jwt_secret(request.env))["id"]
         user = request.env["res.users"].sudo().browse(user_id)
         return user
 

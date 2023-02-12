@@ -14,19 +14,8 @@
 # limitations under the License.
 #
 
-import jwt
+DOC_SERVER_PUBLIC_URL = "onlyoffice_connector.doc_server_public_url"
+DOC_SERVER_JWT_SECRET = "onlyoffice_connector.doc_server_jwt_secret"
+DOC_SERVER_JWT_HEADER = "onlyoffice_connector.doc_server_jwt_header"
 
-from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
-
-def is_jwt_enabled(env):
-    return bool(config_utils.get_jwt_secret(env))
-
-def encode_payload(env, payload, secret):
-    if (secret is None):
-        secret = config_utils.get_jwt_secret(env)
-    return jwt.encode(payload, secret, algorithm="HS256").decode("utf-8")
-
-def decode_token(env, token, secret):
-    if (secret is None):
-        secret = config_utils.get_jwt_secret(env)
-    return jwt.decode(token, config_utils.get_jwt_secret(env), algorithms=['HS256'])
+INTERNAL_JWT_SECRET = "onlyoffice_connector.internal_jwt_secret"

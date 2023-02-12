@@ -12,25 +12,41 @@
                     string="ONLYOFFICE"
                     data-string="ONLYOFFICE"
                     data-key="onlyoffice_odoo_connector">
-                    <h2>General Settings</h2>
-                    <div class="row mt16 o_settings_container">
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_left_pane" />
-                            <div class="o_setting_right_pane">
-                                <span class="o_form_label">Document Server Url</span>
-                                <div class="text-muted content-group mt16">
-                                    <field name="doc_server_public_url" />
+                    <div>
+                        <h2>General Settings</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane" />
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Document Server Url</span>
+                                    <div class="text-muted content-group mt16">
+                                        <field name="doc_server_public_url" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mt16 o_settings_container">
-                        <div class="col-12 col-lg-6 o_setting_box">
-                            <div class="o_setting_left_pane" />
-                            <div class="o_setting_right_pane">
-                                <span class="o_form_label">Document Server JWT Secret</span>
-                                <div class="text-muted content-group mt16">
-                                    <field name="doc_server_jwt_secret" />
+                    <div>
+                        <h2>Security</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane" />
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Document Server JWT Secret</span>
+                                    <div class="text-muted content-group mt16">
+                                        <field name="doc_server_jwt_secret" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane" />
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Document Server JWT Header</span>
+                                    <div class="text-muted content-group mt16">
+                                        <field name="doc_server_jwt_header" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
