@@ -45,11 +45,20 @@ def get_internal_jwt_secret(env):
 
     return secret
 
+def set_doc_server_public_url(env, url):
+    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_PUBLIC_URL, fix_url(url))
+
+def set_jwt_header(env, header):
+    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_HEADER, header)
+
+def set_jwt_secret(env, secret):
+    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_SECRET, secret)
+
 def fix_url(url):
     return fix_end_slash(fix_proto(url))
 
 def fix_proto(url):
-    return url if url.startswith("http") else (url + "http://")
+    return url if url.startswith("http") else ("http://" + url)
 
 def fix_end_slash(url):
     return url if url.endswith("/") else (url + "/")
