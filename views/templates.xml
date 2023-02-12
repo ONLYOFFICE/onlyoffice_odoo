@@ -8,6 +8,7 @@
                     <title>
                         ONLYOFFICE - <t t-out="docTitle" />
                     </title>
+                    <link rel="icon" t-att-href="docIcon" type="image/x-icon" />
                     <style>
                         * {
                             margin: 0;

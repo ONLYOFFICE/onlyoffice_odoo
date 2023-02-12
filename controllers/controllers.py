@@ -95,11 +95,13 @@ class Onlyoffice_Connector(http.Controller):
         security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
         path_part = str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else "")
 
+        document_type = file_utils.get_file_type(filename)
+
         root_config = {
             "width": "100%",
             "height": "100%",
             "type": "desktop",
-            "documentType": file_utils.get_file_type(filename),
+            "documentType": document_type,
             "document": {
                 "title": filename,
                 "url": odoo_url + "onlyoffice/file/content/" + path_part,
@@ -118,7 +120,7 @@ class Onlyoffice_Connector(http.Controller):
         if can_write:
             root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
 
-        return {"docTitle": filename, "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
+        return {"docTitle": filename, "docIcon": f"/onlyoffice_odoo_connector/static/description/editor_icons/{document_type}.ico", "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
 
     def get_attachment(self, attachment_id, user=None):
         IrAttachment = request.env["ir.attachment"]
