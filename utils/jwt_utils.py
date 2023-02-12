@@ -24,9 +24,9 @@ def is_jwt_enabled(env):
 def encode_payload(env, payload, secret):
     if (secret is None):
         secret = config_utils.get_jwt_secret(env)
-    return jwt.encode(payload, secret, algorithm="HS256").decode("utf-8")
+    return jwt.encode(payload, secret, algorithm="HS256")
 
 def decode_token(env, token, secret):
     if (secret is None):
         secret = config_utils.get_jwt_secret(env)
-    return jwt.decode(token, config_utils.get_jwt_secret(env), algorithms=['HS256'])
+    return jwt.decode(token, secret, algorithms=['HS256'])
