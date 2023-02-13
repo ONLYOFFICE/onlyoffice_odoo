@@ -23,6 +23,15 @@ class Format:
         self.fill_form = fill_form
         self.convert_to = convert_to
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "type": self.type,
+            "edit": self.edit,
+            "fill_form": self.fill_form,
+            "convert_to": self.convert_to,
+        }
+
 
 def get_supported_formats():
     return [

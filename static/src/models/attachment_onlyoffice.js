@@ -17,6 +17,7 @@ registerPatch({
         },
     },
     fields: {
+        onlyofficeFormat: attr(),
         onlyofficeEditorUrl: attr({
             compute() {
                 const accessTokenQuery = this.accessToken ? `?access_token=${this.accessToken}` : '';
@@ -25,12 +26,14 @@ registerPatch({
         }),
         onlyofficeCanEdit: attr({
             compute() {
-                return true;
+                if (!this.originThread || !this.originThread) return false;
+                return this.originThread.hasWriteAccess && this.onlyofficeFormat && this.onlyofficeFormat.edit;
             },
         }),
         onlyofficeCanView: attr({
             compute() {
-                return true;
+                if (!this.originThread || !this.originThread.onlyoffice_formats) return false;
+                return this.originThread.hasReadAccess && this.onlyofficeFormat;
             },
         }),
     }
