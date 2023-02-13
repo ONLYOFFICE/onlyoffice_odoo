@@ -15,8 +15,24 @@ registerPatch({
             ev.stopPropagation();
             this.openOnlyofficeEditor();
         },
+
+        async fetchOnlyofficeCard() {
+            const res = await this.messaging.rpc({
+                route: `/onlyoffice/file/card/${this.id}`,
+            }, { shadow: true });
+
+            const values = { onlyofficeFormat: res };
+
+            this.update(values);
+        }
     },
     fields: {
+        onlyofficeFormat: attr({
+            compute() {
+                this.fetchOnlyofficeCard();
+                return false;
+            }
+        }),
         onlyofficeEditorUrl: attr({
             compute() {
                 const accessTokenQuery = this.accessToken ? `?access_token=${this.accessToken}` : '';
@@ -25,12 +41,12 @@ registerPatch({
         }),
         onlyofficeCanEdit: attr({
             compute() {
-                return true;
+                return this.onlyofficeFormat && this.onlyofficeFormat.canEdit;
             },
         }),
         onlyofficeCanView: attr({
             compute() {
-                return true;
+                return this.onlyofficeFormat && this.onlyofficeFormat.canView;
             },
         }),
     }

@@ -8,6 +8,7 @@ from odoo.http import request
 from odoo.tools import replace_exceptions
 
 from odoo.addons.onlyoffice_odoo_connector.utils import file_utils
+from odoo.addons.onlyoffice_odoo_connector.utils import format_utils
 from odoo.addons.onlyoffice_odoo_connector.utils import jwt_utils
 from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
 
@@ -90,6 +91,26 @@ class Onlyoffice_Connector(http.Controller):
             status=500 if response_json["error"] == 1 else 200,
             headers=[("Content-Type", "application/json")],
         )
+
+    @http.route("/onlyoffice/file/card/<int:attachment_id>", auth="user", methods=["POST"], type="json")
+    def file_card(self, attachment_id, **kwargs):
+
+        attachment = self.get_attachment(attachment_id)
+        if not attachment:
+            raise Exception("attachment not found")
+
+        filename = attachment.read(["name"])[0]["name"]
+
+        res = {
+            "canEdit": attachment.check_access_rights("write") and file_utils.can_edit(filename),
+            "canView": attachment.check_access_rights("read") and file_utils.can_view(filename)
+        }
+
+        ext = file_utils.get_file_ext(filename)
+        if ext in format_utils.format_dict:
+            res["format"] = format_utils.format_dict[ext]
+
+        return res
 
     def prepare_editor_values(self, attachment, access_token):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
