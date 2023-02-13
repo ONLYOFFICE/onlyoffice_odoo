@@ -23,5 +23,15 @@ registerPatch({
                 return `/onlyoffice/editor/${this.id}${accessTokenQuery}`;
             },
         }),
+        onlyofficeCanEdit: attr({
+            compute() {
+                return true;
+            },
+        }),
+        onlyofficeCanView: attr({
+            compute() {
+                return true;
+            },
+        }),
     }
 });

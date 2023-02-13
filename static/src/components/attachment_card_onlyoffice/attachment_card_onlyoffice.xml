@@ -2,11 +2,13 @@
 <templates xml:space="preserve">
     <t t-inherit="mail.AttachmentCard" t-inherit-mode="extension" owl="1">
         <xpath expr="//div[hasclass('o_AttachmentCard_aside')]" position="before">
-            <div class="o_AttachmentCard_aside position-relative overflow-hidden">
-                <button class="o_AttachmentCard_asideItem o_AttachmentCard_asideItemOnlyoffice btn top-0 justify-content-center align-items-center d-flex w-100 h-100 rounded-0 bg-300" t-on-click="attachmentCard.attachment.onClickOnlyofficeEdit" title="Edit in ONLYOFFICE">
-                    <i class="fa fa-pencil" role="img" aria-label="Edit in ONLYOFFICE"/>
-                </button>
-            </div>
+            <t t-if="attachmentCard.showOnlyofficeButton">
+                <div class="o_AttachmentCard_aside position-relative overflow-hidden">
+                    <button class="o_AttachmentCard_asideItem o_AttachmentCard_asideItemOnlyoffice btn top-0 justify-content-center align-items-center d-flex w-100 h-100 rounded-0 bg-300" t-on-click="attachmentCard.attachment.onClickOnlyofficeEdit" title="Open in ONLYOFFICE">
+                        <i class="fa fa-pencil" role="img" aria-label="Open in ONLYOFFICE"/>
+                    </button>
+                </div>
+            </t>
         </xpath>
     </t>
 </templates>

@@ -16,7 +16,7 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/16.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
+    'category': 'Productivity',
     'version': '0.1',
 
     # any module necessary for this one to work correctly
@@ -37,8 +37,8 @@
             'onlyoffice_odoo_connector/static/src/models/*.js',
         ],
         'web.assets_backend': [
-            'onlyoffice_odoo_connector/static/src/components/*/*.js',
-            'onlyoffice_odoo_connector/static/src/components/*/*.scss',
+            # 'onlyoffice_odoo_connector/static/src/components/*/*.js',
+            # 'onlyoffice_odoo_connector/static/src/components/*/*.scss',
             'onlyoffice_odoo_connector/static/src/components/*/*.xml',
         ],
     },
