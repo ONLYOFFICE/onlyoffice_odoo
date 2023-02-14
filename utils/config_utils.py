@@ -24,8 +24,6 @@ def get_odoo_url(env):
 
 def get_doc_server_public_url(env):
     url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_PUBLIC_URL)
-    if not url:
-        url = "http://documentserver/"
     return fix_url(url)
 
 def get_jwt_header(env):
@@ -55,6 +53,8 @@ def set_jwt_secret(env, secret):
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_SECRET, secret)
 
 def fix_url(url):
+    if not url:
+        url = "http://documentserver/"
     return fix_end_slash(fix_proto(url))
 
 def fix_proto(url):
