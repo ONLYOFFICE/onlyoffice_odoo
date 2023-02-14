@@ -29,6 +29,9 @@
         'views/res_config_settings_views.xml',
     ],
 
+    'installable': True,
+    'application': True,
+
     'assets': {
         'mail.assets_messaging': [
             'onlyoffice_odoo_connector/static/src/models/*.js',
