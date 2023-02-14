@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import threading
-from odoo import fields, models, api, _
-from odoo.exceptions import ValidationError
+
+from odoo import fields, models, _
 
 from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
 

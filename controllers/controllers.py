@@ -1,19 +1,33 @@
 # -*- coding: utf-8 -*-
+
+#
+# (c) Copyright Ascensio System SIA 2023
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import json
 import logging
 import markupsafe
 
 from odoo import http
 from odoo.http import request
-from odoo.tools import replace_exceptions
 
 from odoo.addons.onlyoffice_odoo_connector.utils import file_utils
 from odoo.addons.onlyoffice_odoo_connector.utils import jwt_utils
 from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
 
 from urllib.request import urlopen
-
-from werkzeug.exceptions import Forbidden
 
 _logger = logging.getLogger(__name__)
 
@@ -155,18 +169,3 @@ class Onlyoffice_Connector(http.Controller):
         user_id = jwt_utils.decode_token(request.env, token, config_utils.get_internal_jwt_secret(request.env))["id"]
         user = request.env["res.users"].sudo().browse(user_id).exists().ensure_one()
         return user
-
-# save https://github.com/odoo/odoo/blob/04a70e99e15b23b78d4ada5c34c4cbc7e77c0770/addons/web/controllers/binary.py#L166
-
-#     @http.route('/my_module/my_module/objects/', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('my_module.listing', {
-#             'root': '/my_module/my_module',
-#             'objects': http.request.env['my_module.my_module'].search([]),
-#         })
-
-#     @http.route('/my_module/my_module/objects/<model("my_module.my_module"):obj>/', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('my_module.object', {
-#             'object': obj
-#         })

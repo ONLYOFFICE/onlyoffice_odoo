@@ -19,15 +19,12 @@
     'category': 'Productivity',
     'version': '0.1',
 
-    # any module necessary for this one to work correctly
     'depends': ['base'],
 
     "external_dependencies": {"python": ["pyjwt"]},
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
-        'views/views.xml',
         'views/templates.xml',
         'views/res_config_settings_views.xml',
     ],
@@ -37,13 +34,7 @@
             'onlyoffice_odoo_connector/static/src/models/*.js',
         ],
         'web.assets_backend': [
-            # 'onlyoffice_odoo_connector/static/src/components/*/*.js',
-            # 'onlyoffice_odoo_connector/static/src/components/*/*.scss',
             'onlyoffice_odoo_connector/static/src/components/*/*.xml',
         ],
     },
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
-    ],
 }
