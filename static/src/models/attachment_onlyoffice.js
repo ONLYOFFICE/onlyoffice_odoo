@@ -4,6 +4,57 @@ import { registerPatch } from '@mail/model/model_core';
 import { attr, many, one } from '@mail/model/model_field';
 import { clear, insert } from '@mail/model/model_field_command';
 
+const oo_editable_formats = [
+    "docx",
+    "docxf",
+    "xlsx",
+    "pptx",
+]
+
+const oo_viewable_formats = [
+    "djvu",
+    "doc",
+    "docm",
+    "dot",
+    "dotm",
+    "dotx",
+    "epub",
+    "fb2",
+    "fodt",
+    "html",
+    "mht",
+    "odt",
+    "ott",
+    "oxps",
+    "pdf",
+    "rtf",
+    "txt",
+    "xps",
+    "xml",
+    "oform",
+    "csv",
+    "fods",
+    "ods",
+    "ots",
+    "xls",
+    "xlsb",
+    "xlsm",
+    "xlt",
+    "xltm",
+    "xltx",
+    "fodp",
+    "odp",
+    "otp",
+    "pot",
+    "potm",
+    "potx",
+    "pps",
+    "ppsm",
+    "ppsx",
+    "ppt",
+    "pptm",
+];
+
 registerPatch({
     name: 'Attachment',
     recordMethods: {
@@ -25,12 +76,12 @@ registerPatch({
         }),
         onlyofficeCanEdit: attr({
             compute() {
-                return true;
+                return oo_editable_formats.includes(this.extension);
             },
         }),
         onlyofficeCanView: attr({
             compute() {
-                return true;
+                return oo_viewable_formats.includes(this.extension);
             },
         }),
     }
