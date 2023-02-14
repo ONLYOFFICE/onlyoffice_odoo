@@ -12,6 +12,15 @@
                     string="ONLYOFFICE"
                     data-string="ONLYOFFICE"
                     data-key="onlyoffice_odoo_connector">
+
+                    <div class="row app_settings_header my-0 ms-0 mw-100 bg-opacity-25" t-att-class="{'bg-warning': ((not version_response) or (not version_response.version)), 'bg-success': (version_response and version_response.version)}">
+                        <div class="o_setting_box col-xs-12 col-md-6 ms-0">
+                            <div class="o_setting_right_pane border-start-0 ms-0 ps-0">
+                                <span class="col ps-0 text-nowrap">Message</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <h2>General Settings</h2>
                         <div class="row mt16 o_settings_container">

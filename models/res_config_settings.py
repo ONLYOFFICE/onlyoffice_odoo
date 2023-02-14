@@ -5,6 +5,7 @@ from odoo import fields, models, api, _
 from odoo.exceptions import ValidationError
 
 from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
+from odoo.addons.onlyoffice_odoo_connector.utils import command_service
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -32,11 +33,10 @@ class ResConfigSettings(models.TransientModel):
         doc_server_jwt_header = config_utils.get_jwt_header(self.env)
 
         res.update(
-            doc_server_public_url=doc_server_public_url,
-            doc_server_jwt_secret=doc_server_jwt_secret,
-            doc_server_jwt_header=doc_server_jwt_header,
+            doc_server_public_url = doc_server_public_url,
+            doc_server_jwt_secret = doc_server_jwt_secret,
+            doc_server_jwt_header = doc_server_jwt_header,
+            version_response = command_service.get_version(self.env), # we can validate settings here
         )
 
         return res
-
-        # we can validate settings here
