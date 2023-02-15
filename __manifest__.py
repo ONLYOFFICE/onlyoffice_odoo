@@ -29,6 +29,8 @@
         'views/res_config_settings_views.xml',
     ],
 
+    'license': 'AGPL-3',
+
     'installable': True,
     'application': True,
 
