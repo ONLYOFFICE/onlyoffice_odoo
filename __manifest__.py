@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "onlyoffice_odoo_connector",
+    'name': "ONLYOFFICE Connector for Odoo",
 
     'summary': "Edit and collaborate on office files within Odoo Documents.",
 
