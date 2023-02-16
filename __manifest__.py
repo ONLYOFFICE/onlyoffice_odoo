@@ -15,7 +15,7 @@
     'category': 'Productivity',
     'version': '0.1',
 
-    'depends': ['base'],
+    'depends': ['base', 'mail'],
 
     "external_dependencies": {"python": ["pyjwt"]},
 
