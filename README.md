@@ -28,11 +28,31 @@ Community Edition vs Enterprise Edition comparison can be found [here](#onlyoffi
 
 ## Installing Odoo ONLYOFFICE integration app
 
+**Installation from the admin panel**
+
 * [Log into](https://www.odoo.com/web/login) your exisiting Odoo account or [sign up](https://www.odoo.com/web/signup) for a new account.
 * Go to the Odoo administration panel and click ‘Apps’ on the top menu bar.
 * Search for ONLYOFFICE in the Apps catalog. 
-* Click the 'Install' button. 
+* Click the 'Install' button.
 
+**Manual installation**
+
+Navigate to the [Odoo Apps catalog](https://apps.odoo.com/apps) and select the Odoo version you have installed. Search for ONLYOFFICE and download it. You can also download the latest app version from the official [GitHub repo](https://github.com/ONLYOFFICE/onlyoffice-odoo/releases).
+
+Put ONLYOFFICE connector into `/path/to/odoo/addons`. Make sure the ONLYOFFICE folder is named as `onlyoffice_odoo_connector`.
+
+Alternatively, you can add the following lines in the `/path/to/odoo/config/odoo.conf` file specifying your path to the folder with apps/addons:
+
+```
+[options]
+addons_path = /mnt/extra-addons
+```
+
+Then, install the package:
+`pip install pyjwt`
+
+Once ready, switch your Odoo to the developer mode and click **Apps -> Update Apps List** OR just restart your Odoo instance.
+ 
 ## Configuring Odoo ONLYOFFICE integration app
 
 To configure the app, go to `Settings`. Find `ONLYOFFICE` on the left sidebar and press it. Specify the URL of the installed ONLYOFFICE Document Server.
