@@ -2,13 +2,9 @@
 {
     'name': "onlyoffice_odoo_connector",
 
-    'summary': """
-        Short (1 phrase/line) summary of the module's purpose, used as
-        subtitle on modules listing or apps.openerp.com""",
+    'summary': "Edit and collaborate on office files within Odoo Documents.",
 
-    'description': """
-        Long description of module's purpose
-    """,
+    'description': "The ONLYOFFICE connector allows users to edit and collaborate on office files within Odoo Documents using ONLYOFFICE Docs. You can work with text documents, spreadsheets, and presentations, co-author documents in real time using two co-editing modes (Fast and Strict), Track Changes, comments, and built-in chat.",
 
     'author': "ONLYOFFICE",
     'website': "https://onlyoffice.com",
