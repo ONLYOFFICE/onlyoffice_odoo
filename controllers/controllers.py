@@ -58,6 +58,16 @@ class Onlyoffice_Connector(http.Controller):
         attachment.validate_access(access_token)
         attachment.check_access_rights("read")
 
+        if jwt_utils.is_jwt_enabled(request.env):
+            token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
+            if token:
+                token = token[len("Bearer "):]
+
+            if not token:
+                raise Exception("expected JWT")
+
+            jwt_utils.decode_token(request.env, token)
+
         stream = request.env["ir.binary"]._get_stream_from(attachment, "datas", None, "name", None)
 
         send_file_kwargs = {"as_attachment": True, "max_age": None}
@@ -93,7 +103,7 @@ class Onlyoffice_Connector(http.Controller):
                 token = body.get("token")
 
                 if not token:
-                    token = request.headers[config_utils.get_jwt_header(request.env)]
+                    token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
                     if token:
                         token = token[len("Bearer "):]
 
