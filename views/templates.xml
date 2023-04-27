@@ -53,17 +53,13 @@
                 <t t-set="no_footer" t-value="True"/>
 
                 <div id="doceditor"></div>
-                <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column">
+                <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column d-none">
                     <img src="/onlyoffice_odoo_connector/static/svg/logo.svg" alt="ONLYOFFICE logo"></img>
                     <div class="my-3 alert alert-danger">
                         <p>
-                            An error has occurred while opening the file. Please check connection settings or contact your administrator. Press “OK” button to close this page. 
-                        </p>
-                        <p>
-                            Find more information about connecting ONLYOFFICE Document Server <a href="https://api.onlyoffice.com/editors/troubleshooting">here</a>.
+                            ONLYOFFICE cannot be reached. Please contact admin.
                         </p>
                     </div>
-                    <button id="button-close" class="btn btn-primary"><strong>OK</strong></button>
                 </div>
                 <script type="text/javascript" t-att-src="docApiJS"></script>
                 <script type="text/javascript">
@@ -73,9 +69,6 @@
                         var docEditor = new DocsAPI.DocEditor("doceditor", config);
                     } else {
                         document.getElementById("error").classList.remove("d-none");
-                        document.getElementById("button-close").onclick = function () {
-                            window.close();
-                        };
                     }
                 </script>
             </t>
