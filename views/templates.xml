@@ -33,35 +33,52 @@
 
 <odoo>
     <data>
+
+        <template id="onlyoffice_frontend_layout" name="Frontend Layout" inherit_id="web.frontend_layout">
+            <xpath expr="//title" position="replace">
+                <title>
+                    ONLYOFFICE - <t t-out="docTitle" />
+                </title>
+            </xpath>
+            <xpath expr="//link[@type='image/x-icon']" position="replace">
+                <link rel="icon" t-att-href="docIcon" type="image/x-icon" />
+            </xpath>
+        </template>
+
         <template id="onlyoffice_editor" name="ONLYOFFICE Editor">
-            &lt;!DOCTYPE html&gt;
-            <html>
-                <head>
-                    <meta charset="UTF-8" />
-                    <title>
-                        ONLYOFFICE - <t t-out="docTitle" />
-                    </title>
-                    <link rel="icon" t-att-href="docIcon" type="image/x-icon" />
-                    <style>
-                        * {
-                            margin: 0;
-                        }
+            <t t-call="onlyoffice_odoo_connector.onlyoffice_frontend_layout">
+                <t t-set="html_data" t-value="{'style': 'height: 100%;'}"/>
+                <t t-set="body_classname" t-value="'bg-100'"/>
+                <t t-set="no_header" t-value="True"/>
+                <t t-set="no_footer" t-value="True"/>
 
-                        html, body {
-                            height: 100%;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div id="doceditor"></div>
-                    <script type="text/javascript" t-att-src="docApiJS"></script>
-                    <script type="text/javascript">
-                        var config = JSON.parse('<t t-out="editorConfig" />');
+                <div id="doceditor"></div>
+                <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column">
+                    <img src="/onlyoffice_odoo_connector/static/svg/logo.svg" alt="ONLYOFFICE logo"></img>
+                    <div class="my-3 alert alert-danger">
+                        <p>
+                            An error has occurred while opening the file. Please check connection settings or contact your administrator. Press “OK” button to close this page. 
+                        </p>
+                        <p>
+                            Find more information about connecting ONLYOFFICE Document Server <a href="https://api.onlyoffice.com/editors/troubleshooting">here</a>.
+                        </p>
+                    </div>
+                    <button id="button-close" class="btn btn-primary"><strong>OK</strong></button>
+                </div>
+                <script type="text/javascript" t-att-src="docApiJS"></script>
+                <script type="text/javascript">
+                    var config = JSON.parse('<t t-out="editorConfig" />');
 
+                    if (window.DocsAPI) {
                         var docEditor = new DocsAPI.DocEditor("doceditor", config);
-                    </script>
-                </body>
-            </html>
+                    } else {
+                        document.getElementById("error").classList.remove("d-none");
+                        document.getElementById("button-close").onclick = function () {
+                            window.close();
+                        };
+                    }
+                </script>
+            </t>
         </template>
     </data>
 </odoo>
