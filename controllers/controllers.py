@@ -34,6 +34,7 @@
 import json
 import logging
 import markupsafe
+import re
 
 from odoo import http
 from odoo.http import request
@@ -45,6 +46,7 @@ from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
 from urllib.request import urlopen
 
 _logger = logging.getLogger(__name__)
+_mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"
 
 
 class Onlyoffice_Connector(http.Controller):
@@ -149,10 +151,12 @@ class Onlyoffice_Connector(http.Controller):
 
         document_type = file_utils.get_file_type(filename)
 
+        is_mobile = bool(re.search(_mobile_regex, request.httprequest.headers.get("User-Agent"), re.IGNORECASE))
+
         root_config = {
             "width": "100%",
             "height": "100%",
-            "type": "desktop",
+            "type": "mobile" if is_mobile else "desktop",
             "documentType": document_type,
             "document": {
                 "title": filename,
