@@ -158,7 +158,7 @@ class Onlyoffice_Connector(http.Controller):
                 "title": filename,
                 "url": odoo_url + "onlyoffice/file/content/" + path_part,
                 "fileType": file_utils.get_file_ext(filename),
-                "key": data["checksum"],
+                "key": str(data["id"]) + data["checksum"],
                 "permissions": { "edit": can_write },
             },
             "editorConfig": {
