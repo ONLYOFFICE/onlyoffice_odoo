@@ -39,7 +39,7 @@ Community Edition vs Enterprise Edition comparison can be found [here](#onlyoffi
 
 Navigate to the [Odoo Apps catalog](https://apps.odoo.com/apps) and select the Odoo version you have installed. Search for ONLYOFFICE and download it. You can also download the latest app version from the official [GitHub repo](https://github.com/ONLYOFFICE/onlyoffice-odoo/releases).
 
-Put ONLYOFFICE connector into `/path/to/odoo/addons`. Make sure the ONLYOFFICE folder is named as `onlyoffice_odoo_connector`.
+Put ONLYOFFICE connector into `/path/to/odoo/addons`. Make sure the ONLYOFFICE folder is named as `onlyoffice_odoo`.
 
 Alternatively, you can add the following lines in the `/path/to/odoo/config/odoo.conf` file specifying your path to the folder with apps/addons:
 

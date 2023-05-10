@@ -33,7 +33,7 @@
 
 from odoo import fields, models, _
 
-from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"

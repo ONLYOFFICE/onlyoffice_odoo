@@ -39,9 +39,9 @@ import re
 from odoo import http
 from odoo.http import request
 
-from odoo.addons.onlyoffice_odoo_connector.utils import file_utils
-from odoo.addons.onlyoffice_odoo_connector.utils import jwt_utils
-from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import file_utils
+from odoo.addons.onlyoffice_odoo.utils import jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 from urllib.request import urlopen
 
@@ -84,7 +84,7 @@ class Onlyoffice_Connector(http.Controller):
 
         attachment.validate_access(access_token)
 
-        return request.render("onlyoffice_odoo_connector.onlyoffice_editor", self.prepare_editor_values(attachment, access_token))
+        return request.render("onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token))
 
     @http.route("/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False)
     def editor_callback(self, attachment_id, oo_security_token=None, access_token=None):
@@ -179,7 +179,7 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
-        return {"docTitle": filename, "docIcon": f"/onlyoffice_odoo_connector/static/description/editor_icons/{document_type}.ico", "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
+        return {"docTitle": filename, "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico", "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
 
     def get_attachment(self, attachment_id, user=None):
         IrAttachment = request.env["ir.attachment"]

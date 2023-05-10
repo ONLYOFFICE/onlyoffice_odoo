@@ -31,7 +31,7 @@
 
 import uuid
 
-from odoo.addons.onlyoffice_odoo_connector.utils import config_constants
+from odoo.addons.onlyoffice_odoo.utils import config_constants
 
 def get_odoo_url(env):
     url = env["ir.config_parameter"].sudo().get_param("web.base.url")

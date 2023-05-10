@@ -73,10 +73,10 @@
         </template>
 
         <template id="onlyoffice_editor" name="ONLYOFFICE Editor">
-            <t t-call="onlyoffice_odoo_connector.onlyoffice_layout">
+            <t t-call="onlyoffice_odoo.onlyoffice_layout">
                 <div id="doceditor"></div>
                 <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column d-none">
-                    <img src="/onlyoffice_odoo_connector/static/svg/logo.svg" alt="ONLYOFFICE logo"></img>
+                    <img src="/onlyoffice_odoo/static/svg/logo.svg" alt="ONLYOFFICE logo"></img>
                     <div class="my-3 alert alert-danger">
                         <p>
                             ONLYOFFICE cannot be reached. Please contact admin.

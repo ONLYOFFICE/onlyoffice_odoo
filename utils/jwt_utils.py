@@ -31,7 +31,7 @@
 
 import jwt
 
-from odoo.addons.onlyoffice_odoo_connector.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 def is_jwt_enabled(env):
     return bool(config_utils.get_jwt_secret(env))

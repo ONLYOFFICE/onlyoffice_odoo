@@ -29,7 +29,7 @@
 # terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
 #
 
-from odoo.addons.onlyoffice_odoo_connector.utils import format_utils
+from odoo.addons.onlyoffice_odoo.utils import format_utils
 
 locale_path = {
     "az": "az-Latn-AZ",

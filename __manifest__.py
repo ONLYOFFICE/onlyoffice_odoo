@@ -32,10 +32,10 @@
 
     'assets': {
         'mail.assets_messaging': [
-            'onlyoffice_odoo_connector/static/src/models/*.js',
+            'onlyoffice_odoo/static/src/models/*.js',
         ],
         'web.assets_backend': [
-            'onlyoffice_odoo_connector/static/src/components/*/*.xml',
+            'onlyoffice_odoo/static/src/components/*/*.xml',
         ],
     },
 }
