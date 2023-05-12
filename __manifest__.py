@@ -27,6 +27,8 @@
 
     'license': 'AGPL-3',
 
+    'images': [ "main_screenshot.png", "document.png", "sales_section.png", "discuss_section.png", "settings.png" ],
+
     'installable': True,
     'application': True,
 
