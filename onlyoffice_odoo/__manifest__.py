@@ -25,7 +25,7 @@
     'license': 'AGPL-3',
     'support': 'support@onlyoffice.com',
 
-    'images': [ "main_screenshot.png", "document.png", "sales_section.png", "discuss_section.png", "settings.png" ],
+    'images': [ "static/description/main_screenshot.png", "static/description/document.png", "static/description/sales_section.png", "static/description/discuss_section.png", "static/description/settings.png" ],
 
     'installable': True,
     'application': True,
