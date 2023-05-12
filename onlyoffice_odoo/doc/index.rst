@@ -15,6 +15,7 @@ In the **Document Server Url**, specify the URL of the installed ONLYOFFICE Docs
 
 
 .. image:: settings.png
+    :width: 800
 
 
 Contact us
