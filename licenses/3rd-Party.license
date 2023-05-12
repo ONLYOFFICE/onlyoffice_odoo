@@ -1,0 +1,5 @@
+Odoo ONLYOFFICE integration app uses code from the following 3rd party projects:
+
+PyJWT         - A Python implementation of RFC 7519. (https://github.com/jpadilla/pyjwt/blob/master/LICENSE)
+License:        MIT
+License File:   PyJWT.license

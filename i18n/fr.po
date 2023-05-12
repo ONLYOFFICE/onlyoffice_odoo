@@ -1,0 +1,85 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* onlyoffice_odoo
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0-20221116\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-14 10:14+0000\n"
+"PO-Revision-Date: 2023-02-16 10:50+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "<span class=\"o_form_label\">Document Server JWT Header</span>"
+msgstr "<span class=\"o_form_label\">En-tête JWT du Document Server</span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "<span class=\"o_form_label\">Document Server JWT Secret</span>"
+msgstr "<span class=\"o_form_label\">Secret JWT du Document Server</span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "<span class=\"o_form_label\">Document Server Url</span>"
+msgstr "<span class=\"o_form_label\">URL du Document Server</span>"
+
+#. module: onlyoffice_odoo
+#: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
+msgid "Config Settings"
+msgstr "Paramètres de configuration"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_jwt_header
+msgid "Document Server JWT Header"
+msgstr "En-tête JWT du Document Server"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_jwt_secret
+msgid "Document Server JWT Secret"
+msgstr "Secret JWT du Document Server"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_public_url
+msgid "Document Server URL"
+msgstr "URL du Document Server"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "General Settings"
+msgstr "Paramètres généraux"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__internal_jwt_secret
+msgid "Internal JWT Secret"
+msgstr "Secret JWT interne"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE"
+msgstr "ONLYOFFICE"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/components/attachment_card_onlyoffice/attachment_card_onlyoffice.xml:0
+#, python-format
+msgid "Open in ONLYOFFICE"
+msgstr "Ouvrir dans ONLYOFFICE"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Security"
+msgstr "Sécurité"
+
+#. module: onlyoffice_odoo
+#: model:ir.actions.act_window,name:onlyoffice_odoo.action_onlyoffice_config_settings
+msgid "Settings"
+msgstr "Paramètres"
