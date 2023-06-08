@@ -1,0 +1,26 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* onlyoffice_odoo
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0-20221116\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-14 10:14+0000\n"
+"PO-Revision-Date: 2023-02-16 10:56+0300\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#, python-format
+msgid "Open in ONLYOFFICE"
+msgstr ""
