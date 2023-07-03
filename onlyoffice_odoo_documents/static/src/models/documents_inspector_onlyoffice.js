@@ -92,7 +92,7 @@ patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
         if (records.length !== 1) return false;
         const ext = records[0].data.display_name.split('.').pop()
         return records.length === 1 && 
-            (this.onlyofficeCanEdit(ext) || this. onlyofficeCanView(ext));
+            (this.onlyofficeCanEdit(ext) || this.onlyofficeCanView(ext));
     },
     onlyofficeCanEdit(extension) {
         return oo_editable_formats.includes(extension);
