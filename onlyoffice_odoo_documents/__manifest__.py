@@ -15,7 +15,8 @@
     'depends': ['onlyoffice_odoo', 'documents'],
 
     # always loaded
-    'data': [],
+    'data': [
+    ],
 
     'license': 'AGPL-3',
     'support': 'support@onlyoffice.com',
@@ -31,6 +32,8 @@
         ],
         'web.assets_backend': [
             'onlyoffice_odoo_documents/static/src/components/*/*.xml',
+            'onlyoffice_odoo_documents/static/src/documents_view/**/*',
+            'onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*',
         ],
     },
 }

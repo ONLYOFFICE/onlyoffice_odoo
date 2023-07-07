@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="onlyoffice_odoo_documents.DocumentsViews.Buttons" t-inherit="documents.DocumentsViews.Buttons" t-inherit-mode="extension">
+        <xpath expr="//button[contains(@t-attf-class, 'o_documents_kanban_upload')]" position="after">
+            <button type="button" t-attf-class="btn btn-secondary o_documents_kanban_onlyoffice_odoo_documents {{additionalClasses}}" t-att-disabled="disabled"
+                t-on-click.stop.prevent="onClickCreateOnlyoffice">
+                Create with ONLYOFFICE
+            </button>
+        </xpath>
+    </t>
+</templates>
