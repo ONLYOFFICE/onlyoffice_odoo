@@ -1,0 +1,4 @@
+[submodule "onlyoffice_odoo/static/assets/document_templates"]
+	path = onlyoffice_odoo/static/assets/document_templates
+	url = https://github.com/ONLYOFFICE/document-templates
+	branch = main/new
