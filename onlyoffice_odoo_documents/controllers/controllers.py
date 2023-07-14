@@ -54,7 +54,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
             data = {
                 'name': title + "." + format,
                 'mimetype': file_utils.get_mime_by_ext(format),
-                'datas': file_data,
+                'raw': file_data,
                 'folder_id': int(folder_id)
             }
 
