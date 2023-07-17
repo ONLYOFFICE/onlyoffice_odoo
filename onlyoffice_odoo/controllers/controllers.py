@@ -43,6 +43,7 @@ from odoo.addons.onlyoffice_odoo.utils import file_utils
 from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 from odoo.addons.onlyoffice_odoo.utils import config_utils
 
+from mimetypes import guess_type
 from urllib.request import urlopen
 
 _logger = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = body.get("url")
-                attachment.write({"raw": urlopen(file_url).read()})
+                attachment.write({"raw": urlopen(file_url).read(), "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
             response_json["error"] = 1
