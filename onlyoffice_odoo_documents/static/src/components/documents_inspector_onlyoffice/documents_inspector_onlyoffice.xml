@@ -35,7 +35,7 @@
     <t t-inherit="documents.DocumentsInspector.buttons" t-inherit-mode="extension" owl="1">
         <xpath expr="//div[hasclass('btn-group')]" position="inside">
             <t t-if="showOnlyofficeButton(records)">
-                <button class="btn fa o_inspector_button" t-on-click="() => onlyofficeEditorUrl(records[0].data.attachment_id[0])" title="Open in ONLYOFFICE">
+                <button class="btn fa o_inspector_button" t-on-click="() => onlyofficeEditorUrl(records[0].data.id)" title="Open in ONLYOFFICE">
                     <img src="/onlyoffice_odoo_documents/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
                 </button>
             </t>

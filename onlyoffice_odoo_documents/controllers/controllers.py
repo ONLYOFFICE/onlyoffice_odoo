@@ -38,7 +38,11 @@ from odoo import http
 from odoo.http import request
 from odoo.tools.translate import _
 
+from werkzeug.exceptions import Forbidden
+from odoo.exceptions import AccessError
+
 from odoo.addons.onlyoffice_odoo.utils import file_utils
+from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 
 _logger = logging.getLogger(__name__)
 
@@ -66,3 +70,28 @@ class OnlyofficeDocuments_Connector(http.Controller):
             result["error"] = _("Failed to create document")
 
         return json.dumps(result)
+
+class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
+    @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
+    def render_document_editor(self, document_id, access_token=None):
+        return request.render("onlyoffice_odoo.onlyoffice_editor", self.prepare_document_editor(document_id, access_token))
+    
+    def prepare_document_editor(self, document_id, access_token):
+        document = request.env['documents.document'].browse(int(document_id))
+        try:
+            document.check_access_rule("read")
+        except AccessError:
+            _logger.error("User has no read access rights to open this document")
+            raise Forbidden()
+        
+        attachment = self.get_attachment(document.attachment_id.id)
+        if not attachment:
+            _logger.error("Current document has no attachments")
+            raise Forbidden()
+        
+        try:
+            document.check_access_rule("write")
+            return self.prepare_editor_values(attachment, access_token, True)
+        except AccessError:
+            _logger.debug("Current user has no write access")
+            return self.prepare_editor_values(attachment, access_token, False)

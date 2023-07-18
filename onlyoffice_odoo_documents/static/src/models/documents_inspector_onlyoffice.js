@@ -101,6 +101,6 @@ patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
         return oo_viewable_formats.includes(extension);  
     },
     onlyofficeEditorUrl(id) {
-        window.open(`/onlyoffice/editor/${id}`, '_blank');
+        window.open(`/onlyoffice/editor/document/${id}`, '_blank');
     }
 });
