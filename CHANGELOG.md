@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.0.0
+## Added
+- support Documents module
+- opening file from Documents module
+- creating file in Document module
+
 ## 1.0.0
 ## Added
 - edit option for DOCX, DOCXF, XLSX, PPTX
