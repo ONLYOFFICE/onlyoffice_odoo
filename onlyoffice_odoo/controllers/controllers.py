@@ -43,6 +43,7 @@ from odoo.addons.onlyoffice_odoo.utils import file_utils
 from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 from odoo.addons.onlyoffice_odoo.utils import config_utils
 
+from mimetypes import guess_type
 from urllib.request import urlopen
 
 _logger = logging.getLogger(__name__)
@@ -84,7 +85,16 @@ class Onlyoffice_Connector(http.Controller):
 
         attachment.validate_access(access_token)
 
-        return request.render("onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token))
+        data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
+        filename = data["name"]
+        
+        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
+        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+
+        if (not can_read):
+            raise Exception("cant read")
+
+        return request.render("onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token, can_write))
 
     @http.route("/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False)
     def editor_callback(self, attachment_id, oo_security_token=None, access_token=None):
@@ -120,7 +130,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = body.get("url")
-                attachment.write({"raw": urlopen(file_url).read()})
+                attachment.write({"raw": urlopen(file_url).read(), "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
             response_json["error"] = 1
@@ -131,20 +141,14 @@ class Onlyoffice_Connector(http.Controller):
             status=500 if response_json["error"] == 1 else 200,
             headers=[("Content-Type", "application/json")],
         )
-
-    def prepare_editor_values(self, attachment, access_token):
+        
+    def prepare_editor_values(self, attachment, access_token, can_write):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
 
         docserver_url = config_utils.get_doc_server_public_url(request.env)
         odoo_url = config_utils.get_odoo_url(request.env)
 
         filename = data["name"]
-
-        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
-        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
-
-        if (not can_read):
-            raise Exception("cant read")
 
         security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
         path_part = str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else "")
