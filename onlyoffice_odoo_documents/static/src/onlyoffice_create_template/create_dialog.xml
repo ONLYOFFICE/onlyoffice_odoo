@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="onlyoffice_odoo_documents.CreateDialog" owl="1">
+        <div>
+            <Dialog
+                t-if="state.isOpen"
+                title="dialogTitle"
+                contentClass="'o-onlyoffice-create-templates-dialog'"
+                footer="true"
+            >
+                <div class="o-onlyoffice-create-field-box">
+                    <div class="o_wrap_field d-flex d-sm-contents flex-column mb-3 mb-sm-0">
+                        <div class="o_cell o_wrap_label flex-grow-1 flex-sm-grow-0 me-3 text-900">
+                            <label class="o_form_label" for="name">Title</label>
+                        </div>
+                        <div class="o_wrap_input flex-grow-1 flex-sm-grow-0 w-100">
+                            <div class="o_field_widget o_field_char">
+                                <input class="o_input" id="title" t-model.trim="state.title" type="text" autocomplete="off" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="o-onlyoffice-create-templates-container">
+                    <div class="o-onlyoffice-create-template"
+                        t-on-click="() => this._selectedFormat('docx')"
+                        t-on-dblclick="_createFile"
+                        t-att-class="_isSelected('docx') ? 'o-template-selected': ''">
+                        <img
+                            class="o-onlyoffice-create-icon"
+                            src="onlyoffice_odoo_documents/static/svg/formats/docx.svg"
+                            t-att-title="Document"/>
+                        <div class="o-template-item-name">Document</div>
+                    </div>
+                    <div class="o-onlyoffice-create-template"
+                        t-on-click="() => this._selectedFormat('xlsx')"
+                        t-on-dblclick="_createFile"
+                        t-att-class="_isSelected('xlsx') ? 'o-template-selected': ''">
+                        <img
+                            class="o-onlyoffice-create-icon"
+                            src="onlyoffice_odoo_documents/static/svg/formats/xlsx.svg"
+                            t-att-title="Spreadsheet"/>
+                        <div class="o-template-item-name">Spreadsheet</div>
+                    </div>
+                    <div class="o-onlyoffice-create-template"
+                        t-on-click="() => this._selectedFormat('pptx')"
+                        t-on-dblclick="_createFile"
+                        t-att-class="_isSelected('pptx') ? 'o-template-selected': ''">
+                        <img
+                            class="o-onlyoffice-create-icon"
+                            src="onlyoffice_odoo_documents/static/svg/formats/pptx.svg"
+                            t-att-title="Presentation"/>
+                        <div class="o-template-item-name">Presentation</div>
+                    </div>
+                </div>
+                <t t-set-slot="footer">
+                    <button
+                        class="btn btn-primary o-onlyoffice-create-ok-button"
+                        t-att-disabled="_buttonDisabled()"
+                        t-on-click="_createFile">
+                        <t>Create</t>
+                    </button>
+                    <button class="btn btn-secondary" t-on-click="data.close">
+                        <t>Cancel</t>
+                    </button>
+                </t>
+            </Dialog>
+        </div>
+    </t>
+</templates>

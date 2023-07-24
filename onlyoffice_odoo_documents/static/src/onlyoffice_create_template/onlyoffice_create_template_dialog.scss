@@ -1,0 +1,34 @@
+$margin-right: 15px;
+
+.o-onlyoffice-create-templates-dialog {
+
+    .o-onlyoffice-create-field-box {
+        display: flex;
+        padding: $margin-right;
+    }
+
+    .o-onlyoffice-create-templates-container {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: space-between;
+
+        .o-onlyoffice-create-template {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ced4da;
+            padding: $margin-right;
+            margin: $margin-right;
+            flex: 1;
+
+            &.o-template-selected {
+                border-color: $o-brand-primary;
+                box-shadow: 0 0 0 2px $o-brand-primary;
+            }
+
+            .o-onlyoffice-create-icon {
+                margin-right: $margin-right;
+                height: 45px;
+            }
+        }
+    }
+}

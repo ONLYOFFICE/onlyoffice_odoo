@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': "ONLYOFFICE",
+    'name': "ONLYOFFICE Documents",
 
     'summary': "Edit and collaborate on office files within Odoo Documents.",
 
@@ -10,32 +10,30 @@
     'website': "https://www.onlyoffice.com",
 
     'category': 'Productivity',
-    'version': '2.0.0',
+    'version': '2.0.1',
 
-    'depends': ['base', 'mail'],
-
-    "external_dependencies": {"python": ["pyjwt"]},
+    'depends': ['onlyoffice_odoo', 'documents'],
 
     # always loaded
     'data': [
-        'views/templates.xml',
-        'views/res_config_settings_views.xml',
     ],
 
     'license': 'AGPL-3',
     'support': 'support@onlyoffice.com',
 
-    'images': [ "static/description/main_screenshot.png", "static/description/document.png", "static/description/sales_section.png", "static/description/discuss_section.png", "static/description/settings.png" ],
+    'images': [],
 
     'installable': True,
     'application': True,
 
     'assets': {
         'mail.assets_messaging': [
-            'onlyoffice_odoo/static/src/models/*.js',
+            'onlyoffice_odoo_documents/static/src/models/*.js',
         ],
         'web.assets_backend': [
-            'onlyoffice_odoo/static/src/components/*/*.xml',
+            'onlyoffice_odoo_documents/static/src/components/*/*.xml',
+            'onlyoffice_odoo_documents/static/src/documents_view/**/*',
+            'onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*',
         ],
     },
 }

@@ -1,0 +1,96 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* onlyoffice_odoo_documents
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0+e-20221116\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-07-10 10:23+0000\n"
+"PO-Revision-Date: 2023-07-10 10:23+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Language: en\n"
+"Plural-Forms: \n"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Cancel"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Create"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/onlyoffice_odoo_documents_controller_mixin.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
+#, python-format
+msgid "Create with ONLYOFFICE"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Document"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Failed to create document"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
+#, python-format
+msgid "New Document"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
+#, python-format
+msgid "New document created in Documents"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#, python-format
+msgid "Open in ONLYOFFICE"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Presentation"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Spreadsheet"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Title"
+msgstr ""
