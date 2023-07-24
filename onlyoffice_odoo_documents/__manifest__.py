@@ -18,7 +18,7 @@
     'data': [
     ],
 
-    'license': 'AGPL-3',
+    'license': 'LGPL-3',
     'support': 'support@onlyoffice.com',
 
     'images': [],
