@@ -22,7 +22,7 @@
         'views/res_config_settings_views.xml',
     ],
 
-    'license': 'AGPL-3',
+    'license': 'LGPL-3',
     'support': 'support@onlyoffice.com',
 
     'images': [ "static/description/main_screenshot.png", "static/description/document.png", "static/description/sales_section.png", "static/description/discuss_section.png", "static/description/settings.png" ],
