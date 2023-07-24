@@ -21,7 +21,7 @@
     'license': 'LGPL-3',
     'support': 'support@onlyoffice.com',
 
-    'images': [],
+    'images': [ "static/description/main_screenshot.png", "static/description/editors.png", "static/description/edit_files.png", "static/description/create_files.png" ],
 
     'installable': True,
     'application': True,
