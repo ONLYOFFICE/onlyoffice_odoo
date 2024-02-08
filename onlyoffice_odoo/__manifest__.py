@@ -31,11 +31,9 @@
     'application': True,
 
     'assets': {
-        'mail.assets_messaging': [
-            'onlyoffice_odoo/static/src/models/*.js',
-        ],
         'web.assets_backend': [
             'onlyoffice_odoo/static/src/components/*/*.xml',
+            'onlyoffice_odoo/static/src/models/*.js'
         ],
     },
 }
