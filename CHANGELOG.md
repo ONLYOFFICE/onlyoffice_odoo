@@ -1,5 +1,9 @@
 # Change Log
 
+##
+## Added
+- compatible with Odoo 17
+
 ## 2.0.0
 ## Added
 - support Documents module
