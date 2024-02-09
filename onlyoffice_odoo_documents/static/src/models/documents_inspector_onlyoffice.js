@@ -6,7 +6,7 @@
  *
 */
 
-import { patch } from 'web.utils';
+import { patch } from "@web/core/utils/patch";
 import { DocumentsInspector } from '@documents/views/inspector/documents_inspector';
 
 const oo_editable_formats = [
@@ -60,7 +60,7 @@ const oo_viewable_formats = [
     "pptm",
 ];
 
-patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
+patch(DocumentsInspector.prototype, {
     showOnlyofficeButton(records) {
         if (records.length !== 1) return false;
         const ext = records[0].data.display_name.split('.').pop()

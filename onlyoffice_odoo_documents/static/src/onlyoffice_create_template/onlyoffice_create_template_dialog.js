@@ -2,11 +2,11 @@
 
 import { Dialog } from "@web/core/dialog/dialog";
 
-import { DropPrevious } from "web.concurrency";
+import { KeepLast } from "@web/core/utils/concurrency";
 import { useService } from "@web/core/utils/hooks";
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook";
 import { getDefaultConfig } from "@web/views/view";
-import { _t } from "web.core";
+import { _t } from "@web/core/l10n/translation";
 
 const { Component, useState, useSubEnv } = owl;
 
@@ -21,11 +21,11 @@ export class CreateDialog extends Component {
         this.data = this.env.dialogData;
         useHotkey("escape", () => this.data.close());
 
-        this.dialogTitle = this.env._t("Create with ONLYOFFICE");
+        this.dialogTitle = _t("Create with ONLYOFFICE");
         this.state = useState({
             isOpen: true,
             selectedFormat: "docx",
-            title: this.env._t("New Document"),
+            title: _t("New Document"),
             isCreating: false,
         });
         useSubEnv({
@@ -33,7 +33,7 @@ export class CreateDialog extends Component {
                 ...getDefaultConfig(),
             },
         });
-        this.dp = new DropPrevious();
+        this.keepLast = new KeepLast();
     }
 
     async _createFile() {

@@ -27,10 +27,8 @@
     'application': True,
 
     'assets': {
-        'mail.assets_messaging': [
-            'onlyoffice_odoo_documents/static/src/models/*.js',
-        ],
         'web.assets_backend': [
+            'onlyoffice_odoo_documents/static/src/models/*.js',
             'onlyoffice_odoo_documents/static/src/components/*/*.xml',
             'onlyoffice_odoo_documents/static/src/documents_view/**/*',
             'onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*',
