@@ -15,6 +15,7 @@ from odoo.http import request
 from odoo.addons.onlyoffice_odoo.utils import file_utils
 from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 from odoo.addons.onlyoffice_odoo.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import url_utils
 
 from mimetypes import guess_type
 from urllib.request import urlopen
@@ -102,7 +103,7 @@ class Onlyoffice_Connector(http.Controller):
             status = body["status"]
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
-                file_url = body.get("url")
+                file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 attachment.write({"raw": urlopen(file_url).read(), "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
@@ -119,7 +120,7 @@ class Onlyoffice_Connector(http.Controller):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
 
         docserver_url = config_utils.get_doc_server_public_url(request.env)
-        odoo_url = config_utils.get_odoo_url(request.env)
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
         filename = data["name"]
 
