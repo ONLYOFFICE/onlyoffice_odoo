@@ -24,6 +24,18 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 
 
 class Onlyoffice_Connector(http.Controller):
+    @http.route("/onlyoffice/file/content/test.txt", auth="public")
+    def get_test_file(self):
+        content=''
+        headers = [
+            ('Content-Length', len(content)),
+            ('Content-Type', 'text/plain'),
+            ('Content-Disposition', 'attachment; filename=test.txt')
+        ]
+
+        response = request.make_response(content, headers)
+        return response
+
     @http.route("/onlyoffice/file/content/<int:attachment_id>", auth="public")
     def get_file_content(self, attachment_id, oo_security_token=None, access_token=None):
 

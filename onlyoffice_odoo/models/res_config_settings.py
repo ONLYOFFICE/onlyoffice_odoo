@@ -4,9 +4,10 @@
 # (c) Copyright Ascensio System SIA 2023
 #
 
-from odoo import fields, models, _
+from odoo import api, fields, models
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import validation_utils
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -17,12 +18,27 @@ class ResConfigSettings(models.TransientModel):
 
     internal_jwt_secret = fields.Char("Internal JWT Secret")
 
-    def set_values(self):
-        res = super().set_values()
+    @api.onchange("doc_server_public_url")
+    def onchange_doc_server_public_url(self):
+        if self.doc_server_public_url and not validation_utils.valid_url(self.doc_server_public_url):
+            return {
+                "warning": {
+                    "title": "Warning",
+                    "message": "Incorrect Document Server URL"
+                }
+            }
 
-        config_utils.set_doc_server_public_url(self.env, self.doc_server_public_url)
+    @api.model
+    def save_config_values(self):
+        if validation_utils.valid_url(self.doc_server_public_url):
+            config_utils.set_doc_server_public_url(self.env, self.doc_server_public_url)
         config_utils.set_jwt_secret(self.env, self.doc_server_jwt_secret)
         config_utils.set_jwt_header(self.env, self.doc_server_jwt_header)
+
+    def set_values(self):
+        res = super().set_values()
+        validation_utils.settings_validation(self)
+        self.save_config_values()
 
         return res
 
@@ -41,4 +57,3 @@ class ResConfigSettings(models.TransientModel):
 
         return res
 
-        # we can validate settings here
