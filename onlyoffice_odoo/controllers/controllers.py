@@ -8,6 +8,7 @@ import json
 import logging
 import markupsafe
 import re
+import string
 
 from odoo import http
 from odoo.http import request
@@ -121,7 +122,7 @@ class Onlyoffice_Connector(http.Controller):
         docserver_url = config_utils.get_doc_server_public_url(request.env)
         odoo_url = config_utils.get_odoo_url(request.env)
 
-        filename = data["name"]
+        filename = self.filter_xss(data["name"])
 
         security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
         path_part = str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else "")
@@ -175,3 +176,9 @@ class Onlyoffice_Connector(http.Controller):
         user_id = jwt_utils.decode_token(request.env, token, config_utils.get_internal_jwt_secret(request.env))["id"]
         user = request.env["res.users"].sudo().browse(user_id).exists().ensure_one()
         return user
+
+    def filter_xss(self, text):
+        allowed_symbols = set(string.ascii_letters + string.digits + "_-.")
+        text = "".join(char for char in text if char in allowed_symbols)
+
+        return text
