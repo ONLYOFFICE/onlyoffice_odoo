@@ -61,8 +61,7 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
             payload = {"payload": body_json}
 
             header_token = jwt_utils.encode_payload(env, payload, jwt_secret)
-            header = jwt_header
-            headers[header] = "Bearer " + header_token
+            headers[jwt_header] = "Bearer " + header_token
 
             token = jwt_utils.encode_payload(env, body_json, jwt_secret)
             body_json["token"] = token
@@ -119,8 +118,8 @@ def convert(env, file_url, public_url, jwt_secret, jwt_header):
     try:
         response = requests.post(
             os.path.join(public_url, "ConvertService.ashx"),
-            data=json.dumps(body_json),
-            headers=headers,
+            data = json.dumps(body_json),
+            headers = headers
         )
 
         if response.status_code == 200:
