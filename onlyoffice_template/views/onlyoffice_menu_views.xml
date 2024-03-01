@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="onlyoffice_template_view_form" model="ir.ui.view">
+        <field name="name">onlyoffice.template.form</field>
+        <field name="model">onlyoffice.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="name"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="only_action">
+        <field name="name">ONLYOFFICE</field>
+        <field name="res_model">onlyoffice.template</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_id" ref="onlyoffice_template_view_form"/>
+    </record>
+
+    <menuitem name="ONLYOFFICE" id="onlyoffice_template.menu_root" web_icon="onlyoffice_template,static/description/icon.png" sequence="99"/>
+    <menuitem name="ONLYOFFICE" id="onlyoffice_template.dashboard" parent="onlyoffice_template.menu_root" action="only_action" sequence="0"/>
+</odoo>
