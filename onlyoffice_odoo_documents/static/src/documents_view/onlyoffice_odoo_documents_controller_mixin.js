@@ -4,9 +4,9 @@ import { CreateDialog } from "@onlyoffice_odoo_documents/onlyoffice_create_templ
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 
-export const OnlyofficeDocumentsControllerMixin = {
+export const OnlyofficeDocumentsControllerMixin = () => ({
     setup() {
-        this._super(...arguments);
+        super.setup(...arguments);
         this.action = useService("action");
         this.dialogService = useService("dialog");
     },
@@ -17,4 +17,4 @@ export const OnlyofficeDocumentsControllerMixin = {
             context: this.props.context,
         });
     },
-};
+});

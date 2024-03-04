@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0-20221116\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-02-14 10:14+0000\n"
-"PO-Revision-Date: 2023-07-10 17:13+0300\n"
+"PO-Revision-Date: 2023-10-18 18:33+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.1\n"
+"X-Generator: Poedit 3.4\n"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -65,7 +65,7 @@ msgstr "Neues Dokument"
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
 #, python-format
 msgid "New document created in Documents"
-msgstr "Neues Dokument erstellt in Documents"
+msgstr "Neues Dokument erstellt in Dokumente"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
