@@ -50,6 +50,9 @@ export class CreateDialog extends Component {
 
         const result = JSON.parse(json);
 
+        this.props.model.load();
+        this.props.model.notify();
+        
         if (result.error) {
             this.notificationService.add(result.error, {
                 type: "error",

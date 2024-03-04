@@ -1,5 +1,5 @@
 #
-# (c) Copyright Ascensio System SIA 2023
+# (c) Copyright Ascensio System SIA 2024
 #
 
 import uuid
@@ -7,13 +7,19 @@ from datetime import date
 
 from odoo.addons.onlyoffice_odoo.utils import config_constants
 
-def get_odoo_url(env):
-    url = env["ir.config_parameter"].sudo().get_param("web.base.url")
-    return fix_url(url)
+def get_base_or_odoo_url(env):
+    url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_ODOO_URL)
+    return  fix_url(url or env["ir.config_parameter"].sudo().get_param("web.base.url"))
 
 def get_doc_server_public_url(env):
     url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_PUBLIC_URL)
+    if not url:
+        url = "http://documentserver/"
     return fix_url(url)
+
+def get_doc_server_inner_url(env):
+    url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_INNER_URL)
+    return fix_url(url or get_doc_server_public_url(env))
 
 def get_jwt_header(env):
     header = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_JWT_HEADER)
@@ -39,7 +45,15 @@ def get_demo_date(env):
     return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DEMO_DATE)
 
 def set_doc_server_public_url(env, url):
+    if not url:
+        url = "http://documentserver/"
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_PUBLIC_URL, fix_url(url))
+
+def set_doc_server_odoo_url(env, url):
+    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_ODOO_URL, fix_url(url))
+
+def set_doc_server_inner_url(env, url):
+    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_INNER_URL, fix_url(url))
 
 def set_jwt_header(env, header):
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_HEADER, header)
@@ -66,9 +80,8 @@ def set_demo_date(env):
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DEMO_DATE, demo_date)
 
 def fix_url(url):
-    if not url:
-        url = "http://documentserver/"
-    return fix_end_slash(fix_proto(url))
+    if url:
+        return fix_end_slash(fix_proto(url))
 
 def fix_proto(url):
     return url if url.startswith("http") else ("http://" + url)

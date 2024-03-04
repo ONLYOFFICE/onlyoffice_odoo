@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 #
-# (c) Copyright Ascensio System SIA 2023
+# (c) Copyright Ascensio System SIA 2024
 #
 
 import json
 import logging
 import markupsafe
 import re
+import string
 
 from odoo import http
 from odoo.http import request
@@ -15,6 +16,7 @@ from odoo.http import request
 from odoo.addons.onlyoffice_odoo.utils import file_utils
 from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 from odoo.addons.onlyoffice_odoo.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import url_utils
 
 from mimetypes import guess_type
 from urllib.request import urlopen
@@ -24,6 +26,28 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 
 
 class Onlyoffice_Connector(http.Controller):
+    @http.route("/onlyoffice/file/content/test.txt", auth="public")
+    def get_test_file(self):
+        content = "test"
+        headers = [
+            ("Content-Length", len(content)),
+            ("Content-Type", "text/plain"),
+            ("Content-Disposition", "attachment; filename=test.txt")
+        ]
+
+        if jwt_utils.is_jwt_enabled(request.env):
+            token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
+            if token:
+                token = token[len("Bearer "):]
+
+            if not token:
+                raise Exception("expected JWT")
+
+            jwt_utils.decode_token(request.env, token)
+
+        response = request.make_response(content, headers)
+        return response
+
     @http.route("/onlyoffice/file/content/<int:attachment_id>", auth="public")
     def get_file_content(self, attachment_id, oo_security_token=None, access_token=None):
 
@@ -102,7 +126,7 @@ class Onlyoffice_Connector(http.Controller):
             status = body["status"]
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
-                file_url = body.get("url")
+                file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 attachment.write({"raw": urlopen(file_url).read(), "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
@@ -119,9 +143,9 @@ class Onlyoffice_Connector(http.Controller):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
 
         docserver_url = config_utils.get_doc_server_public_url(request.env)
-        odoo_url = config_utils.get_odoo_url(request.env)
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
-        filename = data["name"]
+        filename = self.filter_xss(data["name"])
 
         security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
         path_part = str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else "")
@@ -175,3 +199,9 @@ class Onlyoffice_Connector(http.Controller):
         user_id = jwt_utils.decode_token(request.env, token, config_utils.get_internal_jwt_secret(request.env))["id"]
         user = request.env["res.users"].sudo().browse(user_id).exists().ensure_one()
         return user
+
+    def filter_xss(self, text):
+        allowed_symbols = set(string.ascii_letters + string.digits + "_-.")
+        text = "".join(char for char in text if char in allowed_symbols)
+
+        return text

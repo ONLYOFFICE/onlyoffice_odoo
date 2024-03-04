@@ -15,6 +15,7 @@ export const OnlyofficeDocumentsControllerMixin = {
         this.dialogService.add(CreateDialog, {
             folderId: this.env.searchModel.getSelectedFolderId(),
             context: this.props.context,
+            model: this.env.model
         });
     },
 };
