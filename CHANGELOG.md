@@ -4,6 +4,7 @@
 ## Added
 - advanced server settings for specifying internal addresses
 - validation of server settings on the settings page
+- trial period of 30 days for the demo server
 - link to docs cloud
 
 ## 2.0.0
