@@ -25,6 +25,28 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 
 
 class Onlyoffice_Connector(http.Controller):
+    @http.route("/onlyoffice/file/content/test.txt", auth="public")
+    def get_test_file(self):
+        content = "test"
+        headers = [
+            ("Content-Length", len(content)),
+            ("Content-Type", "text/plain"),
+            ("Content-Disposition", "attachment; filename=test.txt")
+        ]
+
+        if jwt_utils.is_jwt_enabled(request.env):
+            token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
+            if token:
+                token = token[len("Bearer "):]
+
+            if not token:
+                raise Exception("expected JWT")
+
+            jwt_utils.decode_token(request.env, token)
+
+        response = request.make_response(content, headers)
+        return response
+
     @http.route("/onlyoffice/file/content/<int:attachment_id>", auth="public")
     def get_file_content(self, attachment_id, oo_security_token=None, access_token=None):
 
