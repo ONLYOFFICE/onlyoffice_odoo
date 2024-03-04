@@ -1,5 +1,10 @@
 # Change Log
 
+##
+## Added
+- advanced server settings for specifying internal addresses
+- link to docs cloud
+
 ## 2.0.0
 ## Added
 - support Documents module
