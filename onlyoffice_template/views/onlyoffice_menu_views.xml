@@ -1,24 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="onlyoffice_template_view_form" model="ir.ui.view">
-        <field name="name">onlyoffice.template.form</field>
-        <field name="model">onlyoffice.template</field>
-        <field name="arch" type="xml">
-            <form>
-                <sheet>
+    <data>
+        <record id="view_onlyoffice_template_form" model="ir.ui.view">
+            <field name="name">onlyoffice.template.form</field>
+            <field name="model">onlyoffice.template</field>
+            <field name="arch" type="xml">
+                <form string="ONLYOFFICE Template">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="file" filename="name"/>
+                        </group>
+                        <footer>
+                            <button name="action_download" string="Download" type="object" class="btn-primary"/>
+                            <button name="action_delete_attachment" string="Delete Attachment" type="object" class="btn-secondary"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_onlyoffice_template_kanban" model="ir.ui.view">
+            <field name="name">onlyoffice.template.kanban</field>
+            <field name="model">onlyoffice.template</field>
+            <field name="arch" type="xml">
+                <kanban js_class="custom_kanban">
+                    <field name="id"/>
+                    <field name="attachment_id"/>
+                    <field name="mimetype"/>
+                    <field name="create_uid"/>
+                    <field name="create_date"/>
                     <field name="name"/>
-                </sheet>
-            </form>
-        </field>
-    </record>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <!--<div class="oe_kanban_global_click">
+                                <field name="name"/>
+                                <div class="oe_kanban_bottom_right">
+                                    <button name="action_download" string="Download" type="object" class="oe_kanban_button"/>
+                                    <button name="action_delete_attachment" string="Delete" type="object" class="oe_kanban_button"/>
+                                </div>
+                            </div>-->
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
 
-    <record model="ir.actions.act_window" id="only_action">
-        <field name="name">ONLYOFFICE</field>
-        <field name="res_model">onlyoffice.template</field>
-        <field name="view_mode">kanban,tree,form</field>
-        <field name="view_id" ref="onlyoffice_template_view_form"/>
-    </record>
+        <record model="ir.actions.act_window" id="action_onlyoffice_template">
+                <field name="name">ONLYOFFICE Template</field>
+                <field name="res_model">onlyoffice.template</field>
+                <field name="view_mode">kanban,form</field>
+        </record>
 
-    <menuitem name="ONLYOFFICE" id="onlyoffice_template.menu_root" web_icon="onlyoffice_template,static/description/icon.png" sequence="99"/>
-    <menuitem name="ONLYOFFICE" id="onlyoffice_template.dashboard" parent="onlyoffice_template.menu_root" action="only_action" sequence="0"/>
+        <menuitem 
+            id="onlyoffice_template_menu" 
+            name="ONLYOFFICE Template" 
+            web_icon="onlyoffice_template,static/description/icon.png"
+            sequence="30"
+        />
+        <menuitem 
+            id="onlyoffice_template_submenu" 
+            name="ONLYOFFICE Template" 
+            parent="onlyoffice_template_menu" 
+            action="action_onlyoffice_template"
+        />
+    </data>
 </odoo>
+
+
+<!--
+<button name="action_download" string="Download" type="object" class="oe_kanban_action_button oe_kanban_action_button_warning"/>
+<button name="action_delete" string="Delete" type="object" class="oe_kanban_action_button oe_kanban_action_button_danger"/>
+-->

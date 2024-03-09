@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <t t-name="onlyoffice_template.CustomKanbanController" t-inherit="web.KanbanView" owl="1">
+        <xpath expr="//Layout" position="after">
+            <div class="container">
+                <ul class="parametersList">
+                    <t t-foreach="state.json" t-as="item" t-key="item.i">
+                        <li t-on-click="() => this.clickOnLi()" id="addComment">
+                            Model: <t t-esc="item.model"/>, 
+                            Name: <t t-esc="item.name"/>, 
+                            String: <t t-esc="item.string"/>, 
+                            Type: <t t-esc="item.type"/>
+                        </li>
+                    </t>
+                </ul>
+                <div class="iframe"/>
+            </div>
+        </xpath>
+    </t>
+
+    <t t-name="onlyoffice_template.CustomKanbanController.Buttons" t-inherit="web.KanbanView.Buttons" t-inherit-mode="primary" owl="1">
+        <xpath expr="//button[hasclass('o-kanban-button-new')]" position="replace">
+            <button type="button" class="btn btn-primary o-kanban-button-new-template" t-on-click="() => this._onButtonNewTemplate()">
+                Create template
+            </button>
+            <button type="button" class="btn btn-primary o-kanban-button-new-template" t-on-click="() => this.test()">
+                Test
+            </button>
+        </xpath>
+    </t>
+</templates>

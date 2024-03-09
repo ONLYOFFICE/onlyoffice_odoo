@@ -12,13 +12,15 @@
     'category': 'Productivity',
     'version': '2.0.0',
 
-    'depends': ['base', 'onlyoffice_odoo'],
+    'depends': ['base', 'onlyoffice_odoo', 'mail'],
 
     "external_dependencies": {"python": ["pyjwt"]},
 
     # always loaded
     'data': [
+        'security/ir.model.access.csv',
         'views/onlyoffice_menu_views.xml',
+        'views/templates_extension.xml',
     ],
 
     'license': 'LGPL-3',
@@ -30,11 +32,9 @@
     'application': True,
 
     'assets': {
-        'mail.assets_messaging': [
-            'onlyoffice_template/static/src/models/*.js',
-        ],
         'web.assets_backend': [
-            'onlyoffice_template/static/src/components/*/*.xml',
+            'onlyoffice_template/static/src/css/*',
+            'onlyoffice_template/static/src/views/**/*',
         ],
     },
 }

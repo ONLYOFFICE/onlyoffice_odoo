@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <t t-name="onlyoffice_template.CustomControlPanel" t-inherit="web.ControlPanel" t-inherit-mode="primary" owl="1">
+        <!--<xpath expr="//div[hasclass('o_control_panel')]" position="inside">
+        <xpath expr="//t[@t-call='web.ControlPanel.Regular']" position="replace">
+            <t t-call="onlyoffice_template.CustomControlPanel.Regular"/>
+        </xpath>-->
+    </t>
+
+    <t t-name="onlyoffice_template.CustomControlPanel.Regular" t-inherit="web.ControlPanel.Regular" t-inherit-mode="primary" owl="1">
+        <xpath expr="//div[hasclass('o_cp_top_left')]" position="replace">
+            <div class="o_cp_top_left">
+                <ol class="breadcrumb" role="navigation">
+                    <li class="breadcrumb-item active text-black-75">
+                        <button t-on-click="this.onTestClick">Test Button</button>
+                        <span class="text-900">Pick a Theme</span>
+                        <small class="mx-2 text-muted">Don't worry, you can switch later.</small>
+                    </li>
+                </ol>
+            </div>
+        </xpath>    
+        <xpath expr="//div[hasclass('o_cp_top_right')]" position="replace">
+            <div class="o_cp_top_right d-flex flex-row-reverse">
+                <a class="btn btn-secondary">
+                    <i class="fa fa-times" />
+                </a>
+            </div>
+        </xpath>
+    </t>-->
+</templates>
+

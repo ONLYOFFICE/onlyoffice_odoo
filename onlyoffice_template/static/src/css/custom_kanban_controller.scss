@@ -1,0 +1,23 @@
+.o_view_controller {
+    .parametersList {
+        list-style-type: none;
+        border: 1px solid red;
+        max-height: 120px;
+        overflow-y: scroll;
+    }
+    
+    .container {
+        display: flex;
+        height: 600px;
+        width: 100%;
+        align-items: center;
+        margin: 0 !important;
+        padding: 0;
+        max-width: 100%;
+    }
+    
+    .iframe {
+        width: 100%;
+    }
+}
+

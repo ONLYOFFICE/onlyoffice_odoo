@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <t t-name="onlyoffice_template.CustomKanbanRecord" t-inherit="web.KanbanRecord">
+        <xpath expr="//div[@t-ref='root']" position="inside">
+            <div class="o_kanban_image">
+                <div class="o_kanban_image_wrapper">
+                    <div class="o_image o_image_thumbnail" data-mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="o_kanban_details">
+                <div class="o_kanban_details_wrapper">
+                    <div class="o_kanban_record_title">
+                        <t t-esc="props.record.data.name"/>
+                    </div>
+                    <div class="o_kanban_record_body">
+                        <samp class="text-muted"> </samp>
+                    </div>
+                    <div class="o_kanban_record_bottom">
+                        <time class="oe_kanban_bottom_left">
+                            <div name="create_date" class="o_field_widget o_readonly_modifier o_field_date">
+                                <t t-esc="getCreateDate()"/>
+                            </div>
+                        </time>
+                        <div class="oe_kanban_bottom_right">
+                            <div name="create_uid" class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user o_field_many2one_avatar">
+                                <div class="d-flex" t-attf-data-tooltip="{{props.record.data.create_uid[1]}}">
+                                    <span class="o_m2o_avatar">
+                                        <img t-attf-src="/web/image/res.users/{{props.record.data.create_uid[0]}}/avatar_128">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+        <!--<xpath expr="//div[hasclass('oe_kanban_bottom_right')]" position="inside">
+            <button type="button" class="btn btn-primary" t-on-click="() => console.log(this)">
+                Edit
+            </button>
+        </xpath>-->
+    </t>
+</templates>
+
