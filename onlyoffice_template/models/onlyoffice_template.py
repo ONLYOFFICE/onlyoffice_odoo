@@ -60,7 +60,7 @@ class OnlyofficeTemplate(models.Model):
         }
 
     @api.model
-    def get_parameter(self):
+    def get_fields(self):
         '''
         all_models = self.env['ir.model'].search([])
         models_fields_info = {}
@@ -75,30 +75,16 @@ class OnlyofficeTemplate(models.Model):
             }
         '''
         models_fields_info = {}
-        fields = self.env["ir.attachment"].fields_get()
-        models_fields_info["ir.attachment"] = {
+        fields = self.env["sale.order"].fields_get()
+        models_fields_info["sale.order"] = {
             field: {
-                'name': clean_text(field),
+                'name': field,
                 'string': clean_text(fields[field]['string']),
-                'type': clean_text(fields[field]['type'])
+                'type': fields[field]['type']
             } for field in fields
         }
         result = json.dumps(models_fields_info, ensure_ascii=False)
         return result
-    
-    '''
-    @api.model
-    def action_download(self):
-        self.ensure_one()
-        if not self.attachment_id:
-            raise UserError("No document attached to download.")
-        url = '/web/content/%s?download=true' % (self.attachment_id.id)
-        return {
-            'type': 'ir.actions.act_url',
-            'url': url,
-            'target': 'self',
-        }
-    '''
 
     def action_delete_attachment(self):
         self.ensure_one()
@@ -115,5 +101,4 @@ class OnlyofficeTemplate(models.Model):
             raise UserError("No document attached to delete.")
     
 def clean_text(text):
-    # Заменяем все неалфавитно-цифровые символы на пустую строку
-    return re.sub(r'[^a-zA-Z0-9]', '', text)
+    return re.sub(r'[^a-zA-Z0-9]', ' ', text)

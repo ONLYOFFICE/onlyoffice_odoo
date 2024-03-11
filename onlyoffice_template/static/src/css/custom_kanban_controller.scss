@@ -1,23 +1,40 @@
 .o_view_controller {
-    .parametersList {
+    position: relative;
+
+    .fields_list {
+        width: 420px;
+        height: 100%;
+        margin: 0;
+        padding: 0;
         list-style-type: none;
-        border: 1px solid red;
-        max-height: 120px;
         overflow-y: scroll;
+
+        .field {
+            border: 1px black solid;
+            margin: 10px;
+            padding: 5px;
+        }
     }
     
-    .container {
+    .editor {
         display: flex;
-        height: 600px;
+        position: absolute;
+        max-width: 100%;
         width: 100%;
+        height: 100%;
         align-items: center;
         margin: 0 !important;
         padding: 0;
-        max-width: 100%;
+        background-color: var(--body-bg);
     }
     
     .iframe {
         width: 100%;
+        height: 100%;
+
+        iframe {
+            width: 100%;
+            height: 100%;
+        }
     }
 }
-

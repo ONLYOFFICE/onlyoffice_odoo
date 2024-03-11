@@ -47,7 +47,7 @@
         </record>
 
         <record model="ir.actions.act_window" id="action_onlyoffice_template">
-                <field name="name">ONLYOFFICE Template</field>
+                <field name="name">ONLYOFFICE</field>
                 <field name="res_model">onlyoffice.template</field>
                 <field name="view_mode">kanban,form</field>
         </record>

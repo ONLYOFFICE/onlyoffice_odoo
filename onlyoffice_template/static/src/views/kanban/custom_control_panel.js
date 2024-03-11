@@ -12,7 +12,7 @@ export class CustomControlPanel extends ControlPanel {
     }
 
     async onTestClick() {
-        console.log(this)
+        console.log(this);
     }
 }
 
