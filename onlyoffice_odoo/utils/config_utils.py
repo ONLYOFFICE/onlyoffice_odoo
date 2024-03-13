@@ -9,7 +9,7 @@ from odoo.addons.onlyoffice_odoo.utils import config_constants
 
 def get_base_or_odoo_url(env):
     url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_ODOO_URL)
-    return  fix_url(url or env["ir.config_parameter"].sudo().get_param("web.base.url"))
+    return fix_url(url or env["ir.config_parameter"].sudo().get_param("web.base.url"))
 
 def get_doc_server_public_url(env):
     url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_PUBLIC_URL)
@@ -62,15 +62,20 @@ def set_jwt_secret(env, secret):
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_SECRET, secret)
 
 def set_demo(env, param):
+    demo = get_demo(env)
     demo_date = get_demo_date(env)
     if not demo_date:
         set_demo_date(env)
     if param:
         set_doc_server_public_url(env, "https://onlinedocs.onlyoffice.com/")
+        set_doc_server_odoo_url(env, "")
+        set_doc_server_inner_url(env, "")
         set_jwt_header(env, "AuthorizationJWT")
         set_jwt_secret(env, "sn2puSUF7muF5Jas")
-    else:
+    elif demo and not param:
         set_doc_server_public_url(env, "http://documentserver/")
+        set_doc_server_odoo_url(env, "")
+        set_doc_server_inner_url(env, "")
         set_jwt_header(env, "Authorization")
         set_jwt_secret(env, "")
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DEMO, param)

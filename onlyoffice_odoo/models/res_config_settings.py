@@ -35,15 +35,19 @@ class ResConfigSettings(models.TransientModel):
     def save_config_values(self):
         if validation_utils.valid_url(self.doc_server_public_url):
             config_utils.set_doc_server_public_url(self.env, self.doc_server_public_url)
-        config_utils.set_doc_server_odoo_url(self.env, self.doc_server_odoo_url)
-        config_utils.set_doc_server_inner_url(self.env, self.doc_server_inner_url)
+        if validation_utils.valid_url(self.doc_server_odoo_url):
+            config_utils.set_doc_server_odoo_url(self.env, self.doc_server_odoo_url)
+        if validation_utils.valid_url(self.doc_server_inner_url):
+            config_utils.set_doc_server_inner_url(self.env, self.doc_server_inner_url)
         config_utils.set_jwt_secret(self.env, self.doc_server_jwt_secret)
         config_utils.set_jwt_header(self.env, self.doc_server_jwt_header)
         config_utils.set_demo(self.env, self.doc_server_demo)
         
     def set_values(self):
         res = super().set_values()
-        validation_utils.settings_validation(self)
+        сurrent_demo_state = config_utils.get_demo(self.env)
+        if not сurrent_demo_state and not self.doc_server_demo:
+            validation_utils.settings_validation(self)
         self.save_config_values()
 
         return res
