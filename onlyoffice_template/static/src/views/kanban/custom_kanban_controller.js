@@ -27,12 +27,34 @@ export class CustomKanbanController extends KanbanController {
         await this._openTemplate(data.attachment_id[0]);
     }
 
-    async onFieldElementClick() {
+    /*
+        char //text
+        text //multiline text
+        integer
+        float
+        monetary
+        html
+        date
+        datetime
+        boolean //Checkbox
+        selection //dropbox
+        binary //file, image, sign
+        many2one
+        one2many
+        many2many
+    */
+    async onFieldElementClick(_event, field) {
+        const data = {
+            model: field.model,
+            name: field.name,
+            string: field.string,
+            type: field.type
+        }
         const iframe = document.querySelector("iframe");
-        iframe.contentWindow.postMessage("123", "http://192.168.0.100:8069");
+        iframe.contentWindow.postMessage(data, "http://192.168.0.100:8069");
     }
 
-    async onButtonCreateTemplateClick() { 
+    async onButtonCreateTemplateClick() {
         const result = await this.rpc(`/onlyoffice/template/file/create`);
         if (result.error) {
             this.notificationService.add(result.error, {type: "error", sticky: false}); 
@@ -76,9 +98,11 @@ export class CustomKanbanController extends KanbanController {
     }
 
     async _openTemplate(id) {
-        await this._generateFieldsList();
-        this._embedIframe(id);
-        this.state.showEditor = true;
+        if (!this.state.showEditor) {
+            await this._generateFieldsList();
+            this._embedIframe(id);
+            this.state.showEditor = true;
+        }
     }
 }
 

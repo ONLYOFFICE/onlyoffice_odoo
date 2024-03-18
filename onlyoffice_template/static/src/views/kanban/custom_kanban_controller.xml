@@ -5,7 +5,7 @@
             <div class="editor" t-att-style="!state.showEditor ? 'display: none;' : null">
                 <ul class="fields_list">
                     <t t-foreach="state.fields" t-as="field" t-key="field.key">
-                        <li t-on-click="() => this.onFieldElementClick()" class="field">
+                        <li t-on-click="(event) => this.onFieldElementClick(event, field)" class="field">
                             Model: <t t-esc="field.model"/><br/>
                             Name: <t t-esc="field.name"/><br/>
                             String: <t t-esc="field.string"/><br/>

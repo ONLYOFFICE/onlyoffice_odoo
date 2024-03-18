@@ -14,8 +14,42 @@ class OnlyofficeTemplate(models.Model):
     attachment_id = fields.Many2one('ir.attachment', string="Document Attachment", readonly=True)
     mimetype = fields.Char(string="Template Mimetype")
 
+
+    def get_field_info(self, model_name, record_id, depth=0):
+        if depth > 2:
+            return 'Maximum recursion depth exceeded.'
+
+        result = []
+
+        if model_name not in self.env:
+            return f'Model {model_name} does not exist.'
+
+        record = self.env[model_name].browse(record_id)
+        if not record.exists():
+            return f'Record with ID {record_id} not found in model {model_name}.'
+
+        for field_name, field in self.env[model_name]._fields.items():
+            field_data = {
+                'model': model_name,
+                'name': field_name,
+                'string': field.string or "",
+                'type': field.type,
+            }
+
+            if field.type in ['many2one', 'one2many', 'many2many'] and field.comodel_name:
+                related_records = record.mapped(field_name)
+                field_data['value'] = [self.get_field_info(field.comodel_name, rec.id, depth + 1) for rec in related_records]
+            elif field.type not in ['many2one', 'one2many', 'many2many']:
+                field_data['value'] = record[field_name]
+
+            result.append(field_data)
+
+        return result
+
     @api.model
     def create(self, vals):
+        #model_obj = self.get_field_info('sale.order', 1, 0) 
+
         record = super(OnlyofficeTemplate, self).create(vals)
         if vals.get('file'):
             attachment = self.env['ir.attachment'].create({
