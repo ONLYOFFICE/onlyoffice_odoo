@@ -59,7 +59,7 @@
 
                         config.events = {
                             onRequestSaveAs: async (event) => {
-                                odoo.define('onlyoffice_odoo.templates', function (require) {
+                                odoo.define('onlyoffice_template.onlyoffice.template', function (require) {
                                     'use strict';
                                     var ajax = require('web.ajax');
                                     ajax.rpc(`/onlyoffice/upload_file_from_url`, {
@@ -70,9 +70,11 @@
                             },
 
                             onDocumentReady: () => {
+                                console.log("onDocumentReady")
                                 window.connector = docEditor.createConnector();
                                 window.addEventListener("message", (event) => {
                                     const type = event.data.type;
+                                    console.log(type)
                                     if (type === "char" || type === "text") {
                                         createTextForm(event.data);
                                     }
@@ -83,60 +85,14 @@
                             }
                         };
 
-                        
-
                         if (window.DocsAPI) {
                             var docEditor = new DocsAPI.DocEditor("doceditor", config);
                         } else {
                             document.getElementById("error").classList.remove("d-none");
                         }
-
-
-                        
                     </script>
                     <div id="extension"></div>
                 </t>
         </xpath>
     </template>
-
-
-
-    <!--<template id="onlyoffice_editor_extension" inherit_id="onlyoffice_odoo.onlyoffice_editor" name="ONLYOFFICE Editor Extension">
-        <xpath expr="//div[@id='extension']" position="after">
-            <div>extension extension extension extension extension extension extension extension extension</div>
-            <script type="text/javascript">
-                window.addEventListener("message", (event) => {
-                    
-
-                    if (event.data === "123") {
-                        //var currentdate = Date.now();
-                        //var datetime = "" + currentdate;
-                        //window.connector.executeMethod("AddComment", [{ Text: "comment", UserName: "Administrator", Time: datetime }]);
-                        //window.connector.executeMethod("MoveCursorToEnd", [true]);
-
-
-                        window.connector.callCommand(function() {
-                            var oDocument = Api.GetDocument();
-                            var oTextForm = Api.CreateTextForm({
-                                "key": "Personal information",
-                                "placeholder": "First name",
-                                "multiLine": true,
-                                "autoFit": true
-                            });
-                            oTextForm.ToInline();
-                            var oParagraph = Api.CreateParagraph();
-                            oParagraph.AddElement(oTextForm);
-                            //oDocument.Push(oParagraph);
-                            oDocument.InsertContent([oParagraph], true, { "KeepTextOnly": true });
-                        }, () => console.log("CreateTextForm", this));
-
-                        console.log("onlyoffice_editor_extension this", this)
-                        console.log("onlyoffice_editor_extension event", event)
-                        console.log("onlyoffice_editor_extension window", window)
-                    }
-                }, false);
-                
-            </script>
-        </xpath>
-    </template>-->
 </odoo>

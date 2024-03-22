@@ -11,10 +11,6 @@
                             <field name="name"/>
                             <field name="file" filename="name"/>
                         </group>
-                        <footer>
-                            <button name="action_download" string="Download" type="object" class="btn-primary"/>
-                            <button name="action_delete_attachment" string="Delete Attachment" type="object" class="btn-secondary"/>
-                        </footer>
                     </sheet>
                 </form>
             </field>
@@ -33,13 +29,6 @@
                     <field name="name"/>
                     <templates>
                         <t t-name="kanban-box">
-                            <!--<div class="oe_kanban_global_click">
-                                <field name="name"/>
-                                <div class="oe_kanban_bottom_right">
-                                    <button name="action_download" string="Download" type="object" class="oe_kanban_button"/>
-                                    <button name="action_delete_attachment" string="Delete" type="object" class="oe_kanban_button"/>
-                                </div>
-                            </div>-->
                         </t>
                     </templates>
                 </kanban>
@@ -66,9 +55,3 @@
         />
     </data>
 </odoo>
-
-
-<!--
-<button name="action_download" string="Download" type="object" class="oe_kanban_action_button oe_kanban_action_button_warning"/>
-<button name="action_delete" string="Delete" type="object" class="oe_kanban_action_button oe_kanban_action_button_danger"/>
--->

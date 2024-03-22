@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="onlyoffice_template.TemplateDialog" owl="1">
+        <div>
+            <Dialog t-if="state.isOpen" title="dialogTitle" contentClass="'o-spreadsheet-templates-dialog'" footer="true" modalRef="modalRef">
+                <div>
+                    <SearchBar/>
+                </div>
+                <div class="o-pager">
+                    <Pager
+                        t-if="state.templatesCount"
+                        total="state.templatesCount"
+                        offset="state.offset"
+                        limit="limit"
+                        isEditable="false"
+                        onUpdate.bind="_onPagerChanged"
+                    />
+                </div>
+                <div class="o_kanban_renderer o_renderer d-flex o_kanban_ungrouped align-content-start flex-wrap justify-content-start">
+                    <div class="o_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0">
+                        <div class="oe_kanban_global_area oe_kanban_global_click o_kanban_attachment">
+                            <div class="o_kanban_image">
+                                <div class="o_kanban_image_wrapper">
+                                    <div
+                                        class="o_image o_image_thumbnail"
+                                        data-mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="o_kanban_details">
+                                <div class="o_kanban_details_wrapper">
+                                    <div class="o_kanban_record_title">
+                                        <span class="o_text_overflow">Create template...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <t t-foreach="state.templates" t-as="template" t-key="template.id">
+                        <div 
+                            class="o_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0"
+                            tabindex="0"
+                            t-att-class="_isSelected(template.id) ? 'o_onlyoffice_kanban_record_selected': ''"
+                            t-on-focus="() => this._selectTemplate(template.id)"
+                            t-on-dblclick="_createSpreadsheet">
+                            <div class="oe_kanban_global_area oe_kanban_global_click o_kanban_attachment">
+                                <div class="o_kanban_image">
+                                    <div class="o_kanban_image_wrapper">
+                                        <div
+                                            class="o_image o_image_thumbnail"
+                                            t-att-data-mimetype="template.mimetype">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="o_kanban_details">
+                                    <div class="o_kanban_details_wrapper">
+                                        <div class="o_kanban_record_title" t-att-title="template.name">
+                                            <span class="o_text_overflow" t-esc="template.name"/>
+                                        </div>
+
+                                        <div class="o_kanban_record_body">
+                                            <samp class="text-muted"> </samp>
+                                        </div>
+
+                                        <div class="o_kanban_record_bottom">
+                                            <time class="oe_kanban_bottom_left">
+                                                <div name="create_date" class="o_field_widget o_readonly_modifier o_field_date">
+                                                    <span t-esc="template.create_date"/>
+                                                </div>
+                                            </time>
+                                            <div class="oe_kanban_bottom_right">
+                                                <div
+                                                    name="create_uid"
+                                                    class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user o_field_many2one_avatar">
+                                                    <div class="d-flex" t-att-data-tooltip="template.create_uid[1]">
+                                                        <span class="o_m2o_avatar">
+                                                            <img t-att-src="'/web/image/res.users/' + template.create_uid[0] + '/avatar_128'"/>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+                <t t-set-slot="footer">
+                    <button
+                        class="btn btn-primary o-spreadsheet-create"
+                        t-att-disabled="_buttonDisabled()"
+                        t-on-click="_createSpreadsheet">
+                        <t>Create</t>
+                    </button>
+                    <button class="btn btn-secondary" t-on-click="data.close">
+                        <t>Cancel</t>
+                    </button>
+                </t>
+            </Dialog>
+        </div>
+    </t>
+</templates>

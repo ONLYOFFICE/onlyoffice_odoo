@@ -12,7 +12,7 @@
     'category': 'Productivity',
     'version': '2.0.0',
 
-    'depends': ['base', 'onlyoffice_odoo', 'mail'],
+    'depends': ['base', 'sale', 'onlyoffice_odoo', 'mail'],
 
     "external_dependencies": {"python": ["pyjwt"]},
 
@@ -21,6 +21,7 @@
         'security/ir.model.access.csv',
         'views/onlyoffice_menu_views.xml',
         'views/templates_extension.xml',
+        'views/sale_order_form_extension.xml',
     ],
 
     'license': 'LGPL-3',

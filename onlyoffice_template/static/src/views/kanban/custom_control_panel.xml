@@ -17,7 +17,7 @@
                     </li>
                 </ol>
             </div>
-        </xpath>    
+        </xpath>
         <xpath expr="//div[hasclass('o_cp_top_right')]" position="replace">
             <div class="o_cp_top_right d-flex flex-row-reverse">
                 <a class="btn btn-secondary">

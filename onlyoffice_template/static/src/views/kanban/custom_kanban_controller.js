@@ -11,8 +11,6 @@ export class CustomKanbanController extends KanbanController {
         this.orm = useService("orm");
         this.rpc = useService("rpc");
         this.notificationService = useService("notification");
-        this.action = useService("action");
-        console.log("CustomKanbanController", this.props);
 
         this.state = useState({
             fields: {},
@@ -51,6 +49,7 @@ export class CustomKanbanController extends KanbanController {
             type: field.type
         }
         const iframe = document.querySelector("iframe");
+        console.log("onFieldElementClick: ", data)
         iframe.contentWindow.postMessage(data, "http://192.168.0.100:8069");
     }
 

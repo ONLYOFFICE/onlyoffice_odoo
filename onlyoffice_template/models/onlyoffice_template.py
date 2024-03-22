@@ -1,4 +1,5 @@
 from odoo import api, models, fields
+from odoo.http import request
 from odoo.exceptions import UserError
 import json
 import re
@@ -9,8 +10,8 @@ class OnlyofficeTemplate(models.Model):
 
     name = fields.Char(required=True, string="Template Name")
     file = fields.Binary(string="Document")
+    create_uid = fields.Many2one('res.users', string="Created By", readonly=True)
     create_date = fields.Datetime("Template Create Date", readonly=True)
-    user_id = fields.Many2one('res.users', string="Created By", readonly=True)
     attachment_id = fields.Many2one('ir.attachment', string="Document Attachment", readonly=True)
     mimetype = fields.Char(string="Template Mimetype")
 
@@ -62,36 +63,11 @@ class OnlyofficeTemplate(models.Model):
             record.attachment_id = attachment.id
         return record
 
-    def write(self, vals):
-        if 'file' in vals:
-            for record in self:
-                if record.attachment_id:
-                    record.attachment_id.unlink()
-                attachment = self.env['ir.attachment'].create({
-                    'name': vals.get('name', record.name),
-                    'datas': vals['file'],
-                    'res_model': self._name,
-                    'res_id': record.id,
-                })
-                vals['attachment_id'] = attachment.id
-        return super(OnlyofficeTemplate, self).write(vals)
-
     def unlink(self):
         for record in self:
             if record.attachment_id:
                 record.attachment_id.unlink()
         return super(OnlyofficeTemplate, self).unlink()
-
-    def action_download(self):
-        self.ensure_one()
-        if not self.attachment_id:
-            raise UserError("No document attached to download.")
-        url = '/web/content/%s?download=true' % (self.attachment_id.id)
-        return {
-            'type': 'ir.actions.act_url',
-            'url': url,
-            'target': 'self',
-        }
 
     @api.model
     def get_fields(self):
@@ -127,10 +103,7 @@ class OnlyofficeTemplate(models.Model):
             self.attachment_id = False
             self.file = False 
             self.sudo().unlink()
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'reload',
-            }
+            return
         else:
             raise UserError("No document attached to delete.")
     
