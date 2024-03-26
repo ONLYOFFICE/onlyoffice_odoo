@@ -16,6 +16,7 @@ export class TemplateDialog extends Component{
         this.orm = useService("orm");
         this.rpc = useService("rpc");
         this.viewService = useService("view");
+        this.notificationService = useService("notification");
 
         this.data = this.env.dialogData;
         useHotkey("escape", () => this.data.close());
@@ -87,14 +88,40 @@ export class TemplateDialog extends Component{
         this.state.templatesCount = length;
     }
 
+    async _fillTemplate() {
+        console.log(this)
+        const templateId = this.state.selectedTemplateId;
+        const resId = this.props.formControllerProps.resId;
+        const resModel = this.props.formControllerProps.resModel;
+        //const relatedModels = this.props.formControllerProps.relatedModels;
+        
+        const response = await this.rpc('/onlyoffice/template/fill', {
+            template_id: templateId,
+            record_id: resId,
+            model_name: resModel,
+        });
+
+        if (!response ) {
+            this.notificationService.add(_t("Unknown error"), {
+                type: "danger"
+            });
+        } 
+        else if (response.href) {
+            window.location.href = response.href;
+        } 
+        else if (response.error) {
+            this.notificationService.add(_t(response.error), {
+                type: "danger"
+            });
+        }
+        return
+    }
 
     _selectTemplate(templateId) {
-        console.log(templateId)
         this.state.selectedTemplateId = templateId;
     }
 
     _isSelected(templateId) {
-        console.log(templateId)
         return this.state.selectedTemplateId === templateId;
     }
 

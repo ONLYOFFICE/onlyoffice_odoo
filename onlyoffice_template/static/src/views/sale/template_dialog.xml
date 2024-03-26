@@ -43,7 +43,7 @@
                             tabindex="0"
                             t-att-class="_isSelected(template.id) ? 'o_onlyoffice_kanban_record_selected': ''"
                             t-on-focus="() => this._selectTemplate(template.id)"
-                            t-on-dblclick="_createSpreadsheet">
+                            t-on-dblclick="_fillTemplate">
                             <div class="oe_kanban_global_area oe_kanban_global_click o_kanban_attachment">
                                 <div class="o_kanban_image">
                                     <div class="o_kanban_image_wrapper">
@@ -92,7 +92,7 @@
                     <button
                         class="btn btn-primary o-spreadsheet-create"
                         t-att-disabled="_buttonDisabled()"
-                        t-on-click="_createSpreadsheet">
+                        t-on-click="_fillTemplate">
                         <t>Create</t>
                     </button>
                     <button class="btn btn-secondary" t-on-click="data.close">

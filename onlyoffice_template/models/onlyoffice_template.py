@@ -16,7 +16,7 @@ class OnlyofficeTemplate(models.Model):
     mimetype = fields.Char(string="Template Mimetype")
 
 
-    def get_field_info(self, model_name, record_id, depth=0):
+    def get_model_record_fields(self, model_name, record_id, depth=0):
         if depth > 2:
             return 'Maximum recursion depth exceeded.'
 

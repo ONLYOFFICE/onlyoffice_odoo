@@ -74,6 +74,7 @@ export class CustomKanbanController extends KanbanController {
                 const fields = models[model];
                 Object.keys(fields).forEach(fieldName => {
                     const field = fields[fieldName];
+                    console.log("field", field)
                     array.push({
                         model: model,
                         name: field.name,

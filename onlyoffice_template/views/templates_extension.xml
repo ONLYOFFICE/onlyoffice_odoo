@@ -1,6 +1,6 @@
 <odoo>
     <template id="onlyoffice_editor_extension" inherit_id="onlyoffice_odoo.onlyoffice_editor" name="ONLYOFFICE Editor Extension">
-        <xpath expr="//div[@id='test']" position="replace">
+        <xpath expr="//div[@id='extension']" position="replace">
             <t t-call="onlyoffice_odoo.onlyoffice_layout">
                     <div id="doceditor"></div>
                     <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column d-none">
@@ -19,7 +19,7 @@
                                 console.log("createTextForm Asc.scope", Asc.scope)
                                 var oDocument = Api.GetDocument();
                                 var oTextForm = Api.CreateTextForm({
-                                    "key": Asc.scope.data.name,
+                                    "key": Asc.scope.data.model + "_" + Asc.scope.data.name,
                                     "placeholder": Asc.scope.data.string,
                                     "tip": Asc.scope.data.string,
                                     "tag": Asc.scope.data.model,
@@ -42,7 +42,7 @@
                                 console.log("createCheckBoxForm Asc.scope", Asc.scope)
                                 var oDocument = Api.GetDocument();
                                 var oCheckBoxForm = Api.CreateCheckBoxForm({
-                                    "key": Asc.scope.data.name,
+                                    "key": Asc.scope.data.model + "_" + Asc.scope.data.name,
                                     "tip": Asc.scope.data.string,
                                     "tag": Asc.scope.data.model
                                 });
@@ -75,7 +75,13 @@
                                 window.addEventListener("message", (event) => {
                                     const type = event.data.type;
                                     console.log(type)
-                                    if (type === "char" || type === "text") {
+                                    if (type === "char" ||
+                                        type === "text" ||
+                                        type === "integer" ||
+                                        type === "float" ||
+                                        type === "monetary" ||
+                                        type === "date" ||
+                                        type === "datetime") {
                                         createTextForm(event.data);
                                     }
                                     if (type === "boolean") {

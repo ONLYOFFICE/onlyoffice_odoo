@@ -43,13 +43,13 @@
 
         <menuitem 
             id="onlyoffice_template_menu" 
-            name="ONLYOFFICE Template" 
+            name="ONLYOFFICE" 
             web_icon="onlyoffice_template,static/description/icon.png"
             sequence="30"
         />
         <menuitem 
             id="onlyoffice_template_submenu" 
-            name="ONLYOFFICE Template" 
+            name="ONLYOFFICE" 
             parent="onlyoffice_template_menu" 
             action="action_onlyoffice_template"
         />
