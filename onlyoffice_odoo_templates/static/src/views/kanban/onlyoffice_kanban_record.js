@@ -1,6 +1,6 @@
 /** @odoo-module **/
-import { CANCEL_GLOBAL_CLICK, KanbanRecord } from "@web/views/kanban/kanban_record";
 import { useService } from "@web/core/utils/hooks";
+import { KanbanRecord } from "@web/views/kanban/kanban_record";
 
 export class OnlyofficeKanbanRecord extends KanbanRecord {
   setup() {
@@ -12,14 +12,7 @@ export class OnlyofficeKanbanRecord extends KanbanRecord {
   /**
    * @override
    */
-  async onGlobalClick(ev) {
-    if (ev.target.closest(CANCEL_GLOBAL_CLICK) && !ev.target.classList.contains("o_onlyoffice_download")) {
-      return;
-    }
-    if (ev.target.classList.contains("o_onlyoffice_download")) {
-      window.location.href = `/onlyoffice/template/download/${this.props.record.data.attachment_id[0]}`;
-      return;
-    }
+  async onGlobalClick() {
     return this.editTemplate();
   }
 

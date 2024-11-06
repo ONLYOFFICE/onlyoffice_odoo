@@ -60,7 +60,7 @@
                         <t t-name="kanban-menu">
                             <a t-if="widget.editable" type="edit" class="dropdown-item">Edit</a>
                             <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
-                            <a class="dropdown-item o_onlyoffice_download">Download</a>
+                            <a t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/datas?download=true" download="" class="dropdown-item">Download</a>
                         </t>
                         <t t-name="kanban-box">
                             <div class="oe_kanban_global_area o_kanban_attachment oe_kanban_global_click">

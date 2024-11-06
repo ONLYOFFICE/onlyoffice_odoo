@@ -27,7 +27,7 @@
                         t-att-class="_isSelected('docx') ? 'o-template-selected': ''">
                         <img
                             class="o-onlyoffice-create-icon"
-                            src="onlyoffice_odoo_documents/static/svg/formats/docx.svg"
+                            src="/onlyoffice_odoo_documents/static/svg/formats/docx.svg"
                             t-att-title="Document"/>
                         <div class="o-template-item-name">Document</div>
                     </div>
@@ -37,7 +37,7 @@
                         t-att-class="_isSelected('xlsx') ? 'o-template-selected': ''">
                         <img
                             class="o-onlyoffice-create-icon"
-                            src="onlyoffice_odoo_documents/static/svg/formats/xlsx.svg"
+                            src="/onlyoffice_odoo_documents/static/svg/formats/xlsx.svg"
                             t-att-title="Spreadsheet"/>
                         <div class="o-template-item-name">Spreadsheet</div>
                     </div>
@@ -47,7 +47,7 @@
                         t-att-class="_isSelected('pptx') ? 'o-template-selected': ''">
                         <img
                             class="o-onlyoffice-create-icon"
-                            src="onlyoffice_odoo_documents/static/svg/formats/pptx.svg"
+                            src="/onlyoffice_odoo_documents/static/svg/formats/pptx.svg"
                             t-att-title="Presentation"/>
                         <div class="o-template-item-name">Presentation</div>
                     </div>
@@ -57,7 +57,7 @@
                         t-att-class="_isSelected('pdf') ? 'o-template-selected': ''">
                         <img
                             class="o-onlyoffice-create-icon"
-                            src="onlyoffice_odoo_documents/static/svg/formats/pdf.svg"
+                            src="/onlyoffice_odoo_documents/static/svg/formats/pdf.svg"
                             t-att-title="PDF"/>
                         <div class="o-template-item-name">PDF Form</div>
                     </div>

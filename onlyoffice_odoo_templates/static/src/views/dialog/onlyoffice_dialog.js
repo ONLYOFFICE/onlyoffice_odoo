@@ -7,6 +7,7 @@ import { useService } from "@web/core/utils/hooks";
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook";
 import { getDefaultConfig } from "@web/views/view";
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
+import { rpc } from "@web/core/network/rpc";
 
 import { _t } from "@web/core/l10n/translation";
 
@@ -15,7 +16,7 @@ const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl;
 export class TemplateDialog extends Component {
   setup() {
     this.orm = useService("orm");
-    this.rpc = useService("rpc");
+    this.rpc = rpc;
     this.viewService = useService("view");
     this.notificationService = useService("notification");
     this.dialog = useService("dialog");
@@ -41,7 +42,6 @@ export class TemplateDialog extends Component {
     });
 
     this.model = new SearchModel(this.env, {
-      user: useService("user"),
       orm: this.orm,
       view: useService("view"),
     });

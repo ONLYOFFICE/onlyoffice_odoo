@@ -4,14 +4,13 @@
 <!-- (c) Copyright Ascensio System SIA 2024 -->
 <!-- -->
 
-<templates xml:space="preserve">
-    <t t-inherit="documents.DocumentsInspector.buttons" t-inherit-mode="extension" owl="1">
-        <xpath expr="//div[hasclass('btn-group')]" position="inside">
-            <t t-if="showOnlyofficeButton(records)">
-                <button class="btn fa o_inspector_button" t-on-click="() => onlyofficeEditorUrl(records[0].data.id)" title="Open in ONLYOFFICE">
-                    <img src="/onlyoffice_odoo_documents/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
-                </button>
-            </t>
+<templates>
+    <t t-name="onlyoffice.documents.ControlPanel" t-inherit="documents.ControlPanel"
+        t-inherit-mode="extension">
+        <xpath expr="//*[hasclass('o_documents_share_button')]" position="after">
+            <button type="button" class="btn btn-secondary o_onlyoffice_open"
+                t-if="userIsInternal and showOnlyofficeButton(singleSelection)"
+                t-on-click.prevent="onlyofficeEditorUrl"> Open in ONLYOFFICE </button>
         </xpath>
     </t>
 </templates>

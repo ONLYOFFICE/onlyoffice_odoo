@@ -45,7 +45,7 @@ class Onlyoffice_Connector(http.Controller):
             return request.not_found()
 
         attachment.validate_access(access_token)
-        attachment.check_access_rights("read")
+        attachment.has_access("read")
 
         if jwt_utils.is_jwt_enabled(request.env):
             token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
@@ -74,8 +74,8 @@ class Onlyoffice_Connector(http.Controller):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
         
-        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
-        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+        can_read = attachment.has_access("read") and file_utils.can_view(filename)
+        can_write = attachment.has_access("write") and file_utils.can_edit(filename)
 
         if (not can_read):
             raise Exception("cant read")
@@ -95,7 +95,7 @@ class Onlyoffice_Connector(http.Controller):
                 raise Exception("attachment not found")
 
             attachment.validate_access(access_token)
-            attachment.check_access_rights("write")
+            attachment.has_access("write")
 
             if jwt_utils.is_jwt_enabled(request.env):
                 token = body.get("token")

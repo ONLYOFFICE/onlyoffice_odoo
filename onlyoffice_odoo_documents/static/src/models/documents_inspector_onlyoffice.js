@@ -7,8 +7,8 @@
 */
 
 import { patch } from "@web/core/utils/patch";
-import { DocumentsInspector } from '@documents/views/inspector/documents_inspector';
-import { useService } from "@web/core/utils/hooks";
+import { DocumentsControlPanel } from "@documents/views/search/documents_control_panel";
+
 import { _t } from "@web/core/l10n/translation";
 
 const oo_editable_formats = [
@@ -61,17 +61,14 @@ const oo_viewable_formats = [
     "pptm",
 ];
 
-patch(DocumentsInspector.prototype, {
-    setup() {
-        super.setup(...arguments);
-        this.notification = useService("notification");
-        this.onlyofficeEditorUrl = this.onlyofficeEditorUrl.bind(this);
-    },
+patch(DocumentsControlPanel.prototype, {
     showOnlyofficeButton(records) {
-        if (records.length !== 1) return false;
-        const ext = records[0].data.display_name.split('.').pop()
-        return records.length === 1 && 
-            (this.onlyofficeCanEdit(ext) || this.onlyofficeCanView(ext));
+        if (records?.data?.display_name) {
+            const ext = records?.data?.display_name.split('.').pop()
+            return (this.onlyofficeCanEdit(ext) || this.onlyofficeCanView(ext))
+        } else {
+            return false
+        }
     },
     onlyofficeCanEdit(extension) {
         return oo_editable_formats.includes(extension);
@@ -79,9 +76,10 @@ patch(DocumentsInspector.prototype, {
     onlyofficeCanView(extension) {
         return oo_viewable_formats.includes(extension);  
     },
-    async onlyofficeEditorUrl(id) {
-        var demo = await this.env.services.orm.call('ir.config_parameter', 'get_param', ['onlyoffice_connector.doc_server_demo']);
-        var demoDate = await this.env.services.orm.call('ir.config_parameter', 'get_param', ['onlyoffice_connector.doc_server_demo_date']);
+    async onlyofficeEditorUrl() {
+        const doc = this.env.model.root.selection[0];
+        var demo = await this.orm.call('ir.config_parameter', 'get_param', ['onlyoffice_connector.doc_server_demo']);
+        var demoDate = await this.orm.call('ir.config_parameter', 'get_param', ['onlyoffice_connector.doc_server_demo_date']);
         demoDate = new Date(Date.parse(demoDate))
         if (demo && demoDate && demoDate instanceof Date) {
             const today = new Date();
@@ -99,6 +97,6 @@ patch(DocumentsInspector.prototype, {
                 return;
             }
         }
-        window.open(`/onlyoffice/editor/document/${id}`, '_blank');
+        window.open(`/onlyoffice/editor/document/${doc.data.id}`, '_blank');
     }
 });

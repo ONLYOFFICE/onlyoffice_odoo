@@ -8,11 +8,10 @@ import codecs
 import json
 import re
 import requests
-from urllib.request import urlopen
 
-from odoo import SUPERUSER_ID, http, models
+from odoo import http
 from odoo.http import request
-from odoo.tools import BytesIO, file_open, translate, get_lang, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+from odoo.tools import file_open, get_lang, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 
@@ -28,9 +27,9 @@ class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
 
-        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
+        can_read = attachment.has_access("read") and file_utils.can_view(filename)
         hasAccess = http.request.env.user.has_group("onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin")
-        can_write = hasAccess and attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+        can_write = hasAccess and attachment.has_access("write") and file_utils.can_edit(filename)
 
         if not can_read:
             raise Exception("cant read")

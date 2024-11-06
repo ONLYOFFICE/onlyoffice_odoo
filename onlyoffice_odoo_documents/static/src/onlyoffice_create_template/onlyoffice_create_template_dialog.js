@@ -6,6 +6,8 @@ import { KeepLast } from "@web/core/utils/concurrency";
 import { useService } from "@web/core/utils/hooks";
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook";
 import { getDefaultConfig } from "@web/views/view";
+import { rpc } from "@web/core/network/rpc";
+
 import { _t } from "@web/core/l10n/translation";
 
 const { Component, useState, useSubEnv } = owl;
@@ -13,7 +15,7 @@ const { Component, useState, useSubEnv } = owl;
 export class CreateDialog extends Component {
     setup() {
         this.orm = useService("orm");
-        this.rpc = useService("rpc");
+        this.rpc = rpc;
         this.viewService = useService("view");
         this.notificationService = useService("notification");
         this.actionService = useService("action");

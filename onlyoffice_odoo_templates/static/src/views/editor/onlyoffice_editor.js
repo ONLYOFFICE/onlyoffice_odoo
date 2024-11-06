@@ -1,8 +1,9 @@
 /** @odoo-module **/
 
+import { cookie } from "@web/core/browser/cookie";
+import { rpc } from "@web/core/network/rpc";
 import { registry } from "@web/core/registry";
 import { useBus, useService } from "@web/core/utils/hooks";
-import { cookie } from "@web/core/browser/cookie";
 import { EditorComponent } from "./onlyoffice_editor_component";
 
 import { _t } from "@web/core/l10n/translation";
@@ -13,7 +14,7 @@ class TemplateEditor extends Component {
   setup() {
     super.setup(...arguments);
     this.orm = useService("orm");
-    this.rpc = useService("rpc");
+    this.rpc = rpc;
     this.viewService = useService("view");
     this.EditorComponent = EditorComponent;
     this.notificationService = useService("notification");
