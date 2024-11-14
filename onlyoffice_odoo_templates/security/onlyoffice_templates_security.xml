@@ -1,55 +1,55 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <odoo>
-    <record id="module_category_onlyoffice_odoo_templates" model="ir.module.category">
-        <field name="name">ONLYOFFICE templates</field>
-        <field name="sequence">30</field>
-    </record>
-    
-    <!-- User role with read-only access -->
-    <record id="group_onlyoffice_odoo_templates_user" model="res.groups">
-        <field name="name">User</field>
-        <field name="category_id" ref="module_category_onlyoffice_odoo_templates"/>
-        <field name="comment">Can open ONLYOFFICE templates for viewing and print them.</field>
-    </record>
+  <record id="module_category_onlyoffice_odoo_templates" model="ir.module.category">
+    <field name="name">ONLYOFFICE templates</field>
+    <field name="sequence">30</field>
+  </record>
 
-    <!-- Administrator role with full access -->
-    <record id="group_onlyoffice_odoo_templates_admin" model="res.groups">
-        <field name="name">Administrator</field>
-        <field name="category_id" ref="module_category_onlyoffice_odoo_templates"/>
-        <field name="implied_ids" eval="[(4, ref('group_onlyoffice_odoo_templates_user'))]"/>
-        <field name="comment">Can open, create, edit and print ONLYOFFICE templates.</field>
-    </record>
+  <!-- User role with read-only access -->
+  <record id="group_onlyoffice_odoo_templates_user" model="res.groups">
+    <field name="name">User</field>
+    <field name="category_id" ref="module_category_onlyoffice_odoo_templates" />
+    <field name="comment">Can open ONLYOFFICE templates for viewing and print them.</field>
+  </record>
 
-    <record id="base.user_root" model="res.users">
-        <field name="groups_id" eval="[(4, ref('onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin'))]"/>
-    </record>
+  <!-- Administrator role with full access -->
+  <record id="group_onlyoffice_odoo_templates_admin" model="res.groups">
+    <field name="name">Administrator</field>
+    <field name="category_id" ref="module_category_onlyoffice_odoo_templates" />
+    <field name="implied_ids" eval="[(4, ref('group_onlyoffice_odoo_templates_user'))]" />
+    <field name="comment">Can open, create, edit and print ONLYOFFICE templates.</field>
+  </record>
 
-    <record id="base.default_user" model="res.users">
-        <field name="groups_id" eval="[(4, ref('onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user'))]"/>
-    </record>
+  <record id="base.user_root" model="res.users">
+    <field name="groups_id" eval="[(4, ref('onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin'))]" />
+  </record>
 
-    <record id="base.user_admin" model="res.users">
-        <field name="groups_id" eval="[(4, ref('onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin'))]"/>
-    </record>
+  <record id="base.default_user" model="res.users">
+    <field name="groups_id" eval="[(4, ref('onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user'))]" />
+  </record>
 
-    <!-- Access control rules -->
-    <record id="access_onlyoffice_odoo_templates_user" model="ir.model.access">
-        <field name="name">User Access</field>
-        <field name="model_id" ref="onlyoffice_odoo_templates.model_onlyoffice_odoo_templates"/>
-        <field name="group_id" ref="group_onlyoffice_odoo_templates_user"/>
-        <field name="perm_read" eval="1"/>
-        <field name="perm_write" eval="0"/>
-        <field name="perm_create" eval="0"/>
-        <field name="perm_unlink" eval="0"/>
-    </record>
-    
-    <record id="access_onlyoffice_odoo_templates_admin" model="ir.model.access">
-        <field name="name">Administrator Access</field>
-        <field name="model_id" ref="onlyoffice_odoo_templates.model_onlyoffice_odoo_templates"/>
-        <field name="group_id" ref="group_onlyoffice_odoo_templates_admin"/>
-        <field name="perm_read" eval="1"/>
-        <field name="perm_write" eval="1"/>
-        <field name="perm_create" eval="1"/>
-        <field name="perm_unlink" eval="1"/>
-    </record>
+  <record id="base.user_admin" model="res.users">
+    <field name="groups_id" eval="[(4, ref('onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin'))]" />
+  </record>
+
+  <!-- Access control rules -->
+  <record id="access_onlyoffice_odoo_templates_user" model="ir.model.access">
+    <field name="name">User Access</field>
+    <field name="model_id" ref="onlyoffice_odoo_templates.model_onlyoffice_odoo_templates" />
+    <field name="group_id" ref="group_onlyoffice_odoo_templates_user" />
+    <field name="perm_read" eval="1" />
+    <field name="perm_write" eval="0" />
+    <field name="perm_create" eval="0" />
+    <field name="perm_unlink" eval="0" />
+  </record>
+
+  <record id="access_onlyoffice_odoo_templates_admin" model="ir.model.access">
+    <field name="name">Administrator Access</field>
+    <field name="model_id" ref="onlyoffice_odoo_templates.model_onlyoffice_odoo_templates" />
+    <field name="group_id" ref="group_onlyoffice_odoo_templates_admin" />
+    <field name="perm_read" eval="1" />
+    <field name="perm_write" eval="1" />
+    <field name="perm_create" eval="1" />
+    <field name="perm_unlink" eval="1" />
+  </record>
 </odoo>

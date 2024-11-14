@@ -1,17 +1,17 @@
 .o-onlyoffice-models-list {
+  row-gap: 5px;
   display: flex;
   flex-direction: column;
-  row-gap: 5px;
 
   .o-onlyoffice-model {
     .o-onlyoffice-model-button {
-      padding: 5px 10px 5px 20px;
-      width: 100%;
-      text-align: start;
-      padding-left: 20px;
-      font-weight: bold;
       position: relative;
+      width: 100%;
+      padding: 5px 10px 5px 20px;
+      padding-left: 20px;
       border: none;
+      font-weight: bold;
+      text-align: start;
       background-color: inherit;
 
       svg {
@@ -20,27 +20,27 @@
         }
 
         position: absolute;
+        top: 0;
         left: 10px;
         height: 100%;
-        top: 0;
       }
 
       .o-onlyoffice-model-description {
-        text-wrap: nowrap;
-        text-overflow: ellipsis;
         overflow: hidden;
-        text-transform: capitalize;
         color: var(--gray-900);
+        text-overflow: ellipsis;
+        text-transform: capitalize;
+        text-wrap: nowrap;
       }
 
       .o-onlyoffice-model-name {
-        text-wrap: nowrap;
-        text-overflow: ellipsis;
         overflow: hidden;
         color: var(--gray-500);
+        text-overflow: ellipsis;
+        text-wrap: nowrap;
       }
     }
-    
+
     .o-onlyoffice-model-button:hover {
       background-color: var(--gray-300);
     }
@@ -55,33 +55,33 @@
   }
 
   .o-onlyoffice-fields-list {
+    row-gap: 5px;
     display: flex;
     flex-direction: column;
-    row-gap: 5px;
   }
 
   .o-onlyoffice-field {
     padding: 5px 10px;
     border: 1px var(--gray-300) solid;
-    text-align: center;
-    font-weight: bold;
-    cursor: pointer;
-    text-overflow: ellipsis;
     overflow: hidden;
+    font-weight: bold;
+    text-align: center;
+    text-overflow: ellipsis;
     text-wrap: nowrap;
+    cursor: pointer;
 
     .o-onlyoffice-field-name {
-      text-wrap: nowrap;
-      text-overflow: ellipsis;
       overflow: hidden;
       color: var(--gray-500);
+      text-overflow: ellipsis;
+      text-wrap: nowrap;
     }
 
     .o-onlyoffice-field-string {
-      text-wrap: nowrap;
-      text-overflow: ellipsis;
       overflow: hidden;
       color: var(--gray-900);
+      text-overflow: ellipsis;
+      text-wrap: nowrap;
     }
   }
 
@@ -95,9 +95,9 @@
 }
 
 .o-onlyoffice-fields-separator {
+  flex-shrink: 0;
   width: 100%;
   height: 2px;
   margin: 10px 0;
-  flex-shrink: 0;
   border-color: var(--gray-300);
 }

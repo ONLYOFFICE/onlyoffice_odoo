@@ -1,28 +1,23 @@
-# -*- coding: utf-8 -*-
-
 #
 # (c) Copyright Ascensio System SIA 2024
 #
 
 import json
 import logging
-import markupsafe
 import re
 import string
+from mimetypes import guess_type
+from urllib.request import urlopen
+
+import markupsafe
 
 from odoo import http
 from odoo.http import request
 
-from odoo.addons.onlyoffice_odoo.utils import file_utils
-from odoo.addons.onlyoffice_odoo.utils import jwt_utils
-from odoo.addons.onlyoffice_odoo.utils import config_utils
-from odoo.addons.onlyoffice_odoo.utils import url_utils
-
-from mimetypes import guess_type
-from urllib.request import urlopen
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
-_mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"
+_mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
 
 class Onlyoffice_Connector(http.Controller):
@@ -32,14 +27,13 @@ class Onlyoffice_Connector(http.Controller):
         headers = [
             ("Content-Length", len(content)),
             ("Content-Type", "text/plain"),
-            ("Content-Disposition", "attachment; filename=test.txt")
+            ("Content-Disposition", "attachment; filename=test.txt"),
         ]
         response = request.make_response(content, headers)
         return response
 
     @http.route("/onlyoffice/file/content/<int:attachment_id>", auth="public")
     def get_file_content(self, attachment_id, oo_security_token=None, access_token=None):
-
         attachment = self.get_attachment(attachment_id, self.get_user_from_token(oo_security_token))
         if not attachment:
             return request.not_found()
@@ -50,7 +44,7 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
             if token:
-                token = token[len("Bearer "):]
+                token = token[len("Bearer ") :]
 
             if not token:
                 raise Exception("expected JWT")
@@ -73,18 +67,21 @@ class Onlyoffice_Connector(http.Controller):
 
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
-        
+
         can_read = attachment.has_access("read") and file_utils.can_view(filename)
         can_write = attachment.has_access("write") and file_utils.can_edit(filename)
 
-        if (not can_read):
+        if not can_read:
             raise Exception("cant read")
 
-        return request.render("onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token, can_write))
+        return request.render(
+            "onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token, can_write)
+        )
 
-    @http.route("/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False)
+    @http.route(
+        "/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False
+    )
     def editor_callback(self, attachment_id, oo_security_token=None, access_token=None):
-
         response_json = {"error": 0}
 
         try:
@@ -103,7 +100,7 @@ class Onlyoffice_Connector(http.Controller):
                 if not token:
                     token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
                     if token:
-                        token = token[len("Bearer "):]
+                        token = token[len("Bearer ") :]
 
                 if not token:
                     raise Exception("expected JWT")
@@ -116,7 +113,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                attachment.write({"raw": urlopen(file_url).read(), "mimetype": guess_type(file_url)[0]})
+                attachment.write({"raw": urlopen(file_url, timeout=30).read(), "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
             response_json["error"] = 1
@@ -127,7 +124,7 @@ class Onlyoffice_Connector(http.Controller):
             status=500 if response_json["error"] == 1 else 200,
             headers=[("Content-Type", "application/json")],
         )
-        
+
     def prepare_editor_values(self, attachment, access_token, can_write):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
 
@@ -136,8 +133,17 @@ class Onlyoffice_Connector(http.Controller):
 
         filename = self.filter_xss(data["name"])
 
-        security_token = jwt_utils.encode_payload(request.env, { "id": request.env.user.id }, config_utils.get_internal_jwt_secret(request.env))
-        path_part = str(data["id"]) + "?oo_security_token=" + security_token + ("&access_token=" + access_token if access_token else "")
+        security_token = jwt_utils.encode_payload(
+            request.env, {"id": request.env.user.id}, config_utils.get_internal_jwt_secret(request.env)
+        )
+        security_token = security_token.decode("utf-8") if isinstance(security_token, bytes) else security_token
+        access_token = access_token.decode("utf-8") if isinstance(access_token, bytes) else access_token
+        path_part = (
+            str(data["id"])
+            + "?oo_security_token="
+            + security_token
+            + ("&access_token=" + access_token if access_token else "")
+        )
 
         document_type = file_utils.get_file_type(filename)
 
@@ -153,7 +159,7 @@ class Onlyoffice_Connector(http.Controller):
                 "url": odoo_url + "onlyoffice/file/content/" + path_part,
                 "fileType": file_utils.get_file_ext(filename),
                 "key": str(data["id"]) + str(data["checksum"]),
-                "permissions": { "edit": can_write },
+                "permissions": {"edit": can_write},
             },
             "editorConfig": {
                 "mode": "edit" if can_write else "view",
@@ -169,7 +175,12 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
-        return {"docTitle": filename, "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico", "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js", "editorConfig": markupsafe.Markup(json.dumps(root_config))}
+        return {
+            "docTitle": filename,
+            "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
+            "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
+            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+        }
 
     def get_attachment(self, attachment_id, user=None):
         IrAttachment = request.env["ir.attachment"]
@@ -181,7 +192,6 @@ class Onlyoffice_Connector(http.Controller):
             return None
 
     def get_user_from_token(self, token):
-        
         if not token:
             raise Exception("missing security token")
 

@@ -11,7 +11,7 @@ builder.CloseFile();
 builder.CreateFile("docx");
 var json = GlobalVariable["json"];
 var oDocument = Api.GetDocument();
-var oParagraph = oDocument.GetElement(0); 
+var oParagraph = oDocument.GetElement(0);
 oParagraph.AddText(json);
 oDocument.Push(oParagraph);
 Api.Save();

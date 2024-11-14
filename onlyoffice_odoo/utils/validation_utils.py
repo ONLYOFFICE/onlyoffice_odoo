@@ -1,40 +1,48 @@
-from odoo.addons.onlyoffice_odoo.utils import jwt_utils
-from odoo.exceptions import ValidationError
-
-from urllib.request import urlopen
 import json
 import os
 import re
-import requests
 import time
+from urllib.request import urlopen
+
+import requests
+
+from odoo.exceptions import ValidationError
+
+from odoo.addons.onlyoffice_odoo.utils import jwt_utils
+
 
 def valid_url(url):
     if not url:
         return True
+    # pylint: disable=anomalous-backslash-in-string
     pattern = "^(https?:\/\/)?[\w-]{1,32}(\.[\w-]{1,32})*[\/\w-]*(:[\d]{1,5}\/?)?$"
+    # pylint: enable=anomalous-backslash-in-string
     if re.findall(pattern, url):
         return True
     return False
 
-def settings_validation(self):
-        base_url = self.env["ir.config_parameter"].get_param("web.base.url")
-        public_url = self.doc_server_public_url
-        jwt_secret = self.doc_server_jwt_secret
-        jwt_header = self.doc_server_jwt_header
-        demo = self.doc_server_demo
 
-        check_mixed_content(base_url, public_url, demo)
-        check_doc_serv_url(public_url, demo)
-        check_doc_serv_command_service(self.env, public_url, jwt_secret, jwt_header, demo)
-        check_doc_serv_convert_service(self.env, public_url, base_url, jwt_secret, jwt_header, demo)
+def settings_validation(self):
+    base_url = self.env["ir.config_parameter"].get_param("web.base.url")
+    public_url = self.doc_server_public_url
+    jwt_secret = self.doc_server_jwt_secret
+    jwt_header = self.doc_server_jwt_header
+    demo = self.doc_server_demo
+
+    check_mixed_content(base_url, public_url, demo)
+    check_doc_serv_url(public_url, demo)
+    check_doc_serv_command_service(self.env, public_url, jwt_secret, jwt_header, demo)
+    check_doc_serv_convert_service(self.env, public_url, base_url, jwt_secret, jwt_header, demo)
+
 
 def check_mixed_content(base_url, public_url, demo):
-    if (base_url.startswith("https") and not public_url.startswith("https")):
+    if base_url.startswith("https") and not public_url.startswith("https"):
         get_message_error("Mixed Active Content is not allowed. HTTPS address for Document Server is required.", demo)
+
 
 def check_doc_serv_url(public_url, demo):
     try:
-        response = urlopen(os.path.join(public_url, "healthcheck"))
+        response = urlopen(os.path.join(public_url, "healthcheck"), timeout=10)
         healthcheck = response.read()
 
         if not healthcheck:
@@ -51,7 +59,7 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
         headers = {"Content-Type": "application/json"}
         body_json = {"c": "version"}
 
-        if jwt_secret != None and jwt_secret != False and jwt_secret != "":
+        if jwt_secret is not None and jwt_secret is not False and jwt_secret != "":
             payload = {"payload": body_json}
 
             header_token = jwt_utils.encode_payload(env, payload, jwt_secret)
@@ -64,6 +72,7 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
             os.path.join(url, "coauthoring/CommandService.ashx"),
             data=json.dumps(body_json),
             headers=headers,
+            timeout=10,
         )
 
         if response.json()["error"] == 6:
@@ -73,7 +82,8 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
             get_message_error(
                 os.path.join(url, "coauthoring/CommandService.ashx")
                 + " returned error: "
-                + str(response.json()["error"]), demo
+                + str(response.json()["error"]),
+                demo,
             )
 
     except ValidationError as e:
@@ -113,9 +123,7 @@ def convert(env, file_url, public_url, jwt_secret, jwt_header):
 
     try:
         response = requests.post(
-            os.path.join(public_url, "ConvertService.ashx"),
-            data = json.dumps(body_json),
-            headers = headers
+            os.path.join(public_url, "ConvertService.ashx"), data=json.dumps(body_json), headers=headers, timeout=10
         )
 
         if response.status_code == 200:
@@ -125,7 +133,7 @@ def convert(env, file_url, public_url, jwt_secret, jwt_header):
         else:
             return f"Document conversion service returned status {response.status_code}"
 
-    except:
+    except Exception:
         return "Document conversion service cannot be reached"
 
 
@@ -151,5 +159,5 @@ def get_conversion_error_message(errorCode):
     try:
         return errorDictionary[errorCode]
 
-    except:
+    except Exception:
         return "Undefined error code"

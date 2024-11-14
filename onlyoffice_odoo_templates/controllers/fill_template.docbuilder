@@ -38,7 +38,7 @@ function getData(keyPath, index = 0, obj = fields) {
   if (typeof values[index] === 'undefined') {
     return ""
   }
-  
+
   if (Array.isArray(values[0])) {
       // If the first element is an array, return a concatenated string of all values by key
       return values[index].flat().join(' ');
@@ -70,7 +70,7 @@ function fillElementByType(oElement) {
     var oElementClassType = oElement.GetClassType();
 
     if (oElementClassType === "paragraph") {
-        if (oElement.GetNumbering()) {    
+        if (oElement.GetNumbering()) {
             fillNumbering(oElement);
         } else {
             fillParagraph(oElement);

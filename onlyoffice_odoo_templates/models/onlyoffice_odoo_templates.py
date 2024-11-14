@@ -1,14 +1,14 @@
 import base64
-import copy
 import json
-import re
 import os
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.modules import get_module_path
+
 from odoo.addons.onlyoffice_odoo.utils import file_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
-from odoo.modules import get_module_path
+
 
 class OnlyOfficeTemplate(models.Model):
     _name = "onlyoffice.odoo.templates"
@@ -30,7 +30,7 @@ class OnlyOfficeTemplate(models.Model):
 
     @api.onchange("file")
     def _onchange_file(self):
-        if self.file and self.create_date: # if file exist
+        if self.file and self.create_date:  # if file exist
             decode_file = base64.b64decode(self.file)
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
             if not is_pdf_form:
@@ -54,7 +54,11 @@ class OnlyOfficeTemplate(models.Model):
         for model_name in model_folders:
             if any(model_name == model[0] for model in installed_models_list):
                 templates_path = os.path.join(templates_dir, model_name)
-                templates_name = [name for name in os.listdir(templates_path) if os.path.isfile(os.path.join(templates_path, name)) and name.lower().endswith(".pdf")]
+                templates_name = [
+                    name
+                    for name in os.listdir(templates_path)
+                    if os.path.isfile(os.path.join(templates_path, name)) and name.lower().endswith(".pdf")
+                ]
                 for template_name in templates_name:
                     template_path = os.path.join(templates_path, template_name)
                     template = open(template_path, "rb")
@@ -63,11 +67,13 @@ class OnlyOfficeTemplate(models.Model):
                         template_data = base64.encodebytes(template_data)
                         model = self.env["ir.model"].search([("model", "=", model_name)], limit=1)
                         name = template_name.rstrip(".pdf")
-                        self.create({
-                            "name": name,
-                            "template_model_id": model.id,
-                            "file": template_data,
-                        })
+                        self.create(
+                            {
+                                "name": name,
+                                "template_model_id": model.id,
+                                "file": template_data,
+                            }
+                        )
                     finally:
                         template.close()
         return
@@ -87,7 +93,7 @@ class OnlyOfficeTemplate(models.Model):
         vals["mimetype"] = mimetype
 
         datas = vals.pop("file", None)
-        record = super(OnlyOfficeTemplate, self).create(vals)
+        record = super().create(vals)
         if datas:
             attachment = self.env["ir.attachment"].create(
                 {
@@ -121,7 +127,7 @@ class OnlyOfficeTemplate(models.Model):
 
             fields = self.env[model_name].fields_get([], attributes=("name", "type", "string", "relation"))
 
-            form_fields = self.env[model_name].get_view()['models']
+            form_fields = self.env[model_name].get_view()["models"]
             form_fields = form_fields[model_name]
 
             field_list = []
@@ -152,11 +158,13 @@ class OnlyOfficeTemplate(models.Model):
                         if field_type == "many2one":
                             related_description = self.env["ir.model"].search([("model", "=", related_model)], limit=1)
                             related_description = related_description.name
-                            related_fields = self.env[related_model].fields_get([], attributes=("name", "type", "string"))
-                            related_form_fields = self.env[related_model].get_view()['models']
+                            related_fields = self.env[related_model].fields_get(
+                                [], attributes=("name", "type", "string")
+                            )
+                            related_form_fields = self.env[related_model].get_view()["models"]
                             related_form_fields = related_form_fields[related_model]
                             related_field_list = []
-                            for (related_field_name, related_field_props) in related_fields.items():
+                            for related_field_name, related_field_props in related_fields.items():
                                 if related_field_props["type"] in ["html", "json"]:
                                     continue  # TODO:
                                 if related_field_name not in related_form_fields:

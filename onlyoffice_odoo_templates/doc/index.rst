@@ -10,7 +10,7 @@ To be able to work with office files within Odoo Enterprise, you will need an in
 ONLYOFFICE app configuration
 ============================
 
-All the settings are configured from the `main ONLYOFFICE app for Odoo <https://apps.odoo.com/apps/modules/17.0/onlyoffice_odoo>`_.
+All the settings are configured from the `main ONLYOFFICE app for Odoo <https://apps.odoo.com/apps/modules/18.0/onlyoffice_odoo>`_.
 
 To adjust the main app settings within your Odoo, go to *Home menu -> Settings -> ONLYOFFICE*.
 
