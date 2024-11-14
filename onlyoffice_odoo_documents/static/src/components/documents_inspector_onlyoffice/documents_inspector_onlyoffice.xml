@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
-
 <!-- -->
 <!-- (c) Copyright Ascensio System SIA 2024 -->
 <!-- -->
-
 <templates xml:space="preserve">
     <t t-inherit="documents.DocumentsInspector.buttons" t-inherit-mode="extension" owl="1">
-        <xpath expr="//div[hasclass('btn-group')]" position="inside">
-            <t t-if="showOnlyofficeButton(records)">
-                <button class="btn fa o_inspector_button" t-on-click="() => onlyofficeEditorUrl(records[0].data.id)" title="Open in ONLYOFFICE">
-                    <img src="/onlyoffice_odoo_documents/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
-                </button>
-            </t>
-        </xpath>
-    </t>
+    <xpath expr="//div[hasclass('btn-group')]" position="inside">
+      <t t-if="showOnlyofficeButton(records)">
+        <button
+          class="btn fa o_inspector_button"
+          t-on-click="() => onlyofficeEditorUrl(records[0].data.id)"
+          title="Open in ONLYOFFICE"
+        >
+          <img src="/onlyoffice_odoo_documents/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
+        </button>
+      </t>
+    </xpath>
+  </t>
 </templates>

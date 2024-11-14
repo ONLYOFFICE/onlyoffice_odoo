@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 #
 # (c) Copyright Ascensio System SIA 2024
 #
 
 from odoo import api, fields, models
 
-from odoo.addons.onlyoffice_odoo.utils import config_utils
-from odoo.addons.onlyoffice_odoo.utils import validation_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, validation_utils
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -24,12 +22,7 @@ class ResConfigSettings(models.TransientModel):
     @api.onchange("doc_server_public_url")
     def onchange_doc_server_public_url(self):
         if self.doc_server_public_url and not validation_utils.valid_url(self.doc_server_public_url):
-            return {
-                "warning": {
-                    "title": "Warning",
-                    "message": "Incorrect Document Server URL"
-                }
-            }
+            return {"warning": {"title": "Warning", "message": "Incorrect Document Server URL"}}
 
     @api.model
     def save_config_values(self):
@@ -42,7 +35,7 @@ class ResConfigSettings(models.TransientModel):
         config_utils.set_jwt_secret(self.env, self.doc_server_jwt_secret)
         config_utils.set_jwt_header(self.env, self.doc_server_jwt_header)
         config_utils.set_demo(self.env, self.doc_server_demo)
-        
+
     def set_values(self):
         res = super().set_values()
         сurrent_demo_state = config_utils.get_demo(self.env)
@@ -68,8 +61,7 @@ class ResConfigSettings(models.TransientModel):
             doc_server_inner_url=doc_server_inner_url,
             doc_server_jwt_secret=doc_server_jwt_secret,
             doc_server_jwt_header=doc_server_jwt_header,
-            doc_server_demo=doc_server_demo
+            doc_server_demo=doc_server_demo,
         )
 
         return res
-

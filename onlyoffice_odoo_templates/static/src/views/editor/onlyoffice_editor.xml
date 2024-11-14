@@ -1,89 +1,101 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
     <t t-name="onlyoffice_odoo_templates.TemplateEditor" owl="1">
-        <html>
-            <head>
-                <meta charset="UTF-8" />
-                <title>
-                    ONLYOFFICE
-                </title>
-                <link rel="preload" href="/web/static/src/libs/fontawesome/fonts/fontawesome-webfont.woff2?v=4.7.0" as="font" crossorigin=""/>
-                <style>
-                    html, body {
-                        height: 100%;
-                    }
-                </style>
-            </head>
-            <body class="o-onlyoffice-template">
-                <div class="o-onlyoffice-template-panel">
-                    <div class="o-onlyoffice-panel-header">
-                        <span>Fields</span>
-                    </div>
-                    <hr class="o-onlyoffice-panel-separator"/>
-                    <div class="o-onlyoffice-panel-body">
-                        <div class="o-onlyoffice-body-title">
-                            <span>
-                                Choose the field below to paste selected parameter to the cursor
-                            </span>
-                        </div>
-                        <div class="o-onlyoffice-body-search">
-                            <div class="o-onlyoffice-search-title">
-                                <span>
-                                    Module/ section
-                                </span>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title> ONLYOFFICE </title>
+        <style>
+          html, body {
+            height: 100%;
+          }
+        </style>
+      </head>
+      <body class="o-onlyoffice-template">
+        <div class="o-onlyoffice-template-panel">
+          <div class="o-onlyoffice-panel-header">
+            <span>Fields</span>
+          </div>
+          <hr class="o-onlyoffice-panel-separator" />
+          <div class="o-onlyoffice-panel-body">
+            <div class="o-onlyoffice-body-title">
+              <span> Choose the field below to paste selected parameter to the cursor </span>
+            </div>
+            <div class="o-onlyoffice-body-search">
+              <div class="o-onlyoffice-search-title">
+                <span> Module/ section </span>
+              </div>
+              <div class="o-onlyoffice-search-field">
+                <input type="text" placeholder="Search field" t-model="state.searchString" t-on-input="onSearchInput" />
+                <button t-if="state.searchString" t-on-click="onCleanSearchClick">
+                  <svg
+                    width="12"
+                    height="11"
+                    viewBox="0 0 12 11"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M0.810547 0.707106L1.4718 1.36836L2.7943 2.69087L5.29585 5.19244L3.00452 7.48377L1.57703 8.91125L0.863283 9.625L1.57039 10.3321L2.28413 9.61836L3.71162 8.19087L6.00295 5.89954L8.2943 8.19089L9.7218 9.61839L10.4355 10.3321L11.1427 9.62503L10.4289 8.91128L9.0014 7.48378L6.71006 5.19244L9.21162 2.69087L10.5341 1.36836L11.1954 0.707108L10.4883 0L9.82703 0.661255L8.50452 1.98377L6.00295 4.48533L3.50141 1.98377L2.17891 0.661257L1.51766 0L0.810547 0.707106Z"
+                      fill="black"
+                    />
+                  </svg>
+                </button>
+                <button t-if="!state.searchString">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M10 5.5C10 7.98528 7.98528 10 5.5 10C3.01472 10 1 7.98528 1 5.5C1 3.01472 3.01472 1 5.5 1C7.98528 1 10 3.01472 10 5.5ZM9.01953 9.72663C8.06578 10.5217 6.83875 11 5.5 11C2.46243 11 0 8.53757 0 5.5C0 2.46243 2.46243 0 5.5 0C8.53757 0 11 2.46243 11 5.5C11 6.83875 10.5217 8.06578 9.72663 9.01953L13.8536 13.1465L13.1465 13.8536L9.01953 9.72663Z"
+                      fill="black"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="o-onlyoffice-body-models">
+              <t t-if="state.models">
+                <div class="o-onlyoffice-models-list">
+                  <t t-if="state.models.fields">
+                    <div class="o-onlyoffice-fields-list">
+                      <t t-foreach="state.models.fields" t-as="field" t-key="field.name">
+                        <t t-if="field.related_model">
+                          <EditorComponent model="field.related_model" searchString="state.searchString" level="0" />
+                        </t>
+                        <t t-else="">
+                          <div t-on-click="() => this.onFieldClick(field)" class="o-onlyoffice-field">
+                            <div class="o-onlyoffice-field-string" t-att-title="field.string">
+                              <t t-esc="field.string" />
                             </div>
-                            <div class="o-onlyoffice-search-field">
-                                <input type="text" placeholder="Search field" t-model="state.searchString" t-on-input="onSearchInput"/>
-                                <button t-if="state.searchString" t-on-click="onCleanSearchClick">
-                                    <svg width="12" height="11" viewBox="0 0 12 11" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M0.810547 0.707106L1.4718 1.36836L2.7943 2.69087L5.29585 5.19244L3.00452 7.48377L1.57703 8.91125L0.863283 9.625L1.57039 10.3321L2.28413 9.61836L3.71162 8.19087L6.00295 5.89954L8.2943 8.19089L9.7218 9.61839L10.4355 10.3321L11.1427 9.62503L10.4289 8.91128L9.0014 7.48378L6.71006 5.19244L9.21162 2.69087L10.5341 1.36836L11.1954 0.707108L10.4883 0L9.82703 0.661255L8.50452 1.98377L6.00295 4.48533L3.50141 1.98377L2.17891 0.661257L1.51766 0L0.810547 0.707106Z" fill="black"/>
-                                    </svg>
-                                </button>
-                                <button t-if="!state.searchString">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M10 5.5C10 7.98528 7.98528 10 5.5 10C3.01472 10 1 7.98528 1 5.5C1 3.01472 3.01472 1 5.5 1C7.98528 1 10 3.01472 10 5.5ZM9.01953 9.72663C8.06578 10.5217 6.83875 11 5.5 11C2.46243 11 0 8.53757 0 5.5C0 2.46243 2.46243 0 5.5 0C8.53757 0 11 2.46243 11 5.5C11 6.83875 10.5217 8.06578 9.72663 9.01953L13.8536 13.1465L13.1465 13.8536L9.01953 9.72663Z" fill="black"/>
-                                    </svg>
-                                </button>
+                            <div class="o-onlyoffice-field-name" t-att-title="field.name">
+                              <t t-esc="field.name" />
                             </div>
-                        </div>
-                        <div class="o-onlyoffice-body-models">
-                            <t t-if="state.models">
-                                <div class="o-onlyoffice-models-list">
-                                    <t t-if="state.models.fields">
-                                        <div class="o-onlyoffice-fields-list">
-                                            <t t-foreach="state.models.fields" t-as="field" t-key="field.name">
-                                                <t t-if="field.related_model">
-                                                    <EditorComponent model="field.related_model" searchString="state.searchString" level="0"/>
-                                                </t>
-                                                <t t-else="">
-                                                    <div t-on-click="() => this.onFieldClick(field)" class="o-onlyoffice-field">
-                                                        <div class="o-onlyoffice-field-string" t-att-title="field.string">
-                                                            <t t-esc="field.string"/>
-                                                        </div>
-                                                        <div class="o-onlyoffice-field-name" t-att-title="field.name">
-                                                            <t t-esc="field.name"/>
-                                                        </div>
-                                                    </div>
-                                                </t>
-                                            </t>
-                                        </div>
-                                    </t>
-                                    <!--<EditorComponent model="state.models" searchString="state.searchString" level="0"/>-->
-                                </div>
-                            </t>
-                        </div>
+                          </div>
+                        </t>
+                      </t>
                     </div>
+                  </t>
                 </div>
-                <div id="doceditor"/>
-                <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column d-none">
-                    <img src="/onlyoffice_odoo_templates/static/svg/onlyoffice_logo.svg" alt="ONLYOFFICE logo"/>
-                    <div class="my-3 alert alert-danger">
-                        <p>
-                            ONLYOFFICE cannot be reached. Please contact admin.
-                        </p>
-                    </div>
-                </div>
-            </body>
-        </html>
-    </t>
+              </t>
+            </div>
+          </div>
+        </div>
+        <div id="doceditor" />
+        <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column d-none">
+          <img src="/onlyoffice_odoo_templates/static/svg/onlyoffice_logo.svg" alt="ONLYOFFICE logo" />
+          <div class="my-3 alert alert-danger">
+            <p> ONLYOFFICE cannot be reached. Please contact admin. </p>
+          </div>
+        </div>
+      </body>
+    </html>
+  </t>
 </templates>

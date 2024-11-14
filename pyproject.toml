@@ -1,0 +1,24 @@
+[project]
+name = "onlyoffice_odoo"
+version = "0.0.0"  # Just a placeholder; the real version is the git tag
+authors = [{ name = "ONLYOFFICE", email = "support@onlyoffice.com" }]
+dependencies = [
+    "pre-commit",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
+# ruff configuration (will be used by ruff when running linting)
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+extend-select = [
+    "UP",  # pyupgrade
+    "I",  # isort
+]

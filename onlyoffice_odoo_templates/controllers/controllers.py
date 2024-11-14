@@ -1,20 +1,28 @@
-# -*- coding: utf-8 -*-
-
 #
 # (c) Copyright Ascensio System SIA 2024
 #
 import base64
 import codecs
 import json
+import logging
 import re
-import requests
-from urllib.request import urlopen
 
-from odoo import SUPERUSER_ID, http, models
+import requests
+
+from odoo import http
 from odoo.http import request
-from odoo.tools import BytesIO, file_open, translate, get_lang, DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+from odoo.tools import (
+    DEFAULT_SERVER_DATE_FORMAT,
+    DEFAULT_SERVER_DATETIME_FORMAT,
+    file_open,
+    get_lang,
+)
+
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
+
+_logger = logging.getLogger(__name__)
+
 
 class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
     @http.route("/onlyoffice/template/editor", auth="user", methods=["POST"], type="json", csrf=False)
@@ -30,7 +38,11 @@ class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
 
         can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
         hasAccess = http.request.env.user.has_group("onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin")
-        can_write = hasAccess and attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+        can_write = (
+            hasAccess
+            and attachment.check_access_rights("write", raise_exception=False)
+            and file_utils.can_edit(filename)
+        )
 
         if not can_read:
             raise Exception("cant read")
@@ -51,15 +63,17 @@ class OnlyofficeTemplate_Connector(http.Controller):
         oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
 
         template_headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        template_callback_url = f"{odoo_url}onlyoffice/template/callback/fill_template?template_id={template_id}&record_id={record_id}&model_name={model_name}&oo_security_token={oo_security_token}"
+        template_callback_url = f"{odoo_url}onlyoffice/template/callback/fill_template?template_id={template_id}&record_id={record_id}&model_name={model_name}&oo_security_token={oo_security_token}"  # noqa: E501
         template_payload = {"async": False, "url": template_callback_url}
 
         if jwt_secret:
             template_payload["token"] = jwt_utils.encode_payload(request.env, template_payload, jwt_secret)
-            template_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(request.env, {"payload": template_payload}, jwt_secret)
+            template_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
+                request.env, {"payload": template_payload}, jwt_secret
+            )
 
         try:
-            response = requests.post(docbuilder_url, json=template_payload, headers=template_headers)
+            response = requests.post(docbuilder_url, json=template_payload, headers=template_headers, timeout=10)
             response.raise_for_status()
             response_json = response.json()
 
@@ -83,9 +97,11 @@ class OnlyofficeTemplate_Connector(http.Controller):
         if not user:
             return
 
-        template_record = self.get_record(template_id, "onlyoffice.odoo.templates", self.get_user_from_token(oo_security_token))
+        template_record = self.get_record(
+            template_id, "onlyoffice.odoo.templates", self.get_user_from_token(oo_security_token)
+        )
         if not template_record:
-            print("Template not found")
+            _logger("Template not found")
             return
         attachment_id = template_record.attachment_id.id
 
@@ -96,44 +112,46 @@ class OnlyofficeTemplate_Connector(http.Controller):
         docbuilder_url = f"{docserver_url}docbuilder"
 
         keys_headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        keys_callback_url = f"{odoo_url}onlyoffice/template/callback/get_keys?attachment_id={attachment_id}&oo_security_token={oo_security_token}"
+        keys_callback_url = f"{odoo_url}onlyoffice/template/callback/get_keys?attachment_id={attachment_id}&oo_security_token={oo_security_token}"  # noqa: E501
         keys_payload = {"async": False, "url": keys_callback_url}
 
         if jwt_secret:
             keys_payload["token"] = jwt_utils.encode_payload(request.env, keys_payload, jwt_secret)
-            keys_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(request.env, {"payload": keys_payload}, jwt_secret)
+            keys_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
+                request.env, {"payload": keys_payload}, jwt_secret
+            )
 
         try:
-            response = requests.post(docbuilder_url, json=keys_payload, headers=keys_headers)
+            response = requests.post(docbuilder_url, json=keys_payload, headers=keys_headers, timeout=10)
             response.raise_for_status()
             response_json = response.json()
 
             if response_json.get("error"):
-                print(response_json.get("error"))
+                _logger(response_json.get("error"))
                 return
 
             urls = response_json.get("urls")
             if urls:
                 first_url = next(iter(urls.values()), None)
                 if first_url:
-                    response = requests.get(first_url)
+                    response = requests.get(first_url, timeout=10)
                     response.raise_for_status()
 
-                    response_content = codecs.decode(response.content, 'utf-8-sig')
+                    response_content = codecs.decode(response.content, "utf-8-sig")
                     keys = sorted(json.loads(response_content))
 
         except requests.RequestException as e:
-            print(e)  # TODO
+            _logger(e)  # TODO
             return
 
         try:
             fields = self.get_fields(model_name, record_id, keys, user)
             fields_json = json.dumps(fields, ensure_ascii=False)
         except Exception as e:
-            print(e)  # TODO
+            _logger(e)  # TODO
             fields_json = ""
 
-        url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"
+        url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
         docbuilder_content = f"""
             builder.OpenFile("{url}");
             var fields = {fields_json};
@@ -146,7 +164,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         record_name = getattr(record, "display_name", getattr(record, "name", str(record_id)))
         template_name = getattr(template_record, "display_name", getattr(template_record, "name", "Filled Template"))
         filename = re.sub(r"[<>:'/\\|?*\x00-\x1f]", " ", f"{template_name} - {record_name}")
-        
+
         docbuilder_content += f"""
             builder.SaveFile("pdf", "{filename}.pdf");
             builder.CloseFile();
@@ -161,7 +179,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
     @http.route("/onlyoffice/template/callback/get_keys", auth="public")
     def get_keys(self, attachment_id, oo_security_token):
-        url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"
+        url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
         docbuilder_content = f"""
             builder.OpenFile("{url}");
         """
@@ -184,7 +202,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
         attachment = self.get_record(attachment_id, "ir.attachment", self.get_user_from_token(oo_security_token))
 
-        attachment_name = getattr(attachment, "display_name", getattr(attachment, "name", f"Template - {attachment_id}.pdf"))
+        attachment_name = getattr(
+            attachment, "display_name", getattr(attachment, "name", f"Template - {attachment_id}.pdf")
+        )
 
         if attachment:
             template_content = base64.b64decode(attachment.datas)
@@ -196,7 +216,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         else:
             return request.not_found()
 
-    def get_fields(self, model_name, record_id, keys, user):
+    def get_fields(self, model_name, record_id, keys, user):  # noqa: C901
         def convert_keys(input_list):
             output_dict = {}
             for item in input_list:
@@ -220,11 +240,11 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
             return dict_to_list(output_dict)
 
-        def get_related_field(model_name, record_id, keys):
+        def get_related_field(model_name, record_id, keys):  # noqa: C901
             result = {}
             record = self.get_record(record_id, model_name, user)
             if not record:
-                print("Record not found")
+                _logger("Record not found")
                 return
             for field in keys:
                 try:
@@ -268,7 +288,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                             if field_type in ["float", "integer", "char", "text"]:
                                 result[field] = str(data)
                             elif field_type == "monetary":
-                                data = "{:,.2f}".format(float(data))
+                                data = f"{float(data):,.2f}"
                                 currency_field_name = record._fields[field].currency_field
                                 if currency_field_name:
                                     currency = getattr(record, currency_field_name).name
@@ -294,9 +314,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 else:
                                     result[field] = str(data)
                 except Exception as e:
-                    print(e)  # TODO
+                    _logger(e)  # TODO
                     continue
-            return result 
+            return result
 
         keys = convert_keys(keys)
         return get_related_field(model_name, record_id, keys)
@@ -311,9 +331,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
             context["lang"] = user.lang
             context["uid"] = user.id
         try:
-            return model_name.with_context(context).browse(record_id).exists()  # TODO: Add .sudo()
+            return model_name.with_context(**context).browse(record_id).exists()  # TODO: Add .sudo()
         except Exception as e:
-            print(e)
+            _logger(e)
             return None
 
     def get_user_from_token(self, token):
@@ -330,6 +350,6 @@ class OnlyofficeTemplate_Connector(http.Controller):
             -3: "Document generation error.",
             -4: "Error while downloading the document file to be generated.",
             -6: "Error while accessing the document generation result database.",
-            -8: "Invalid token."
+            -8: "Invalid token.",
         }
         return docbuilder_messages.get(error_code, "Error code not recognized.")
