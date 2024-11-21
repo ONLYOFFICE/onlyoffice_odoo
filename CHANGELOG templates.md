@@ -1,5 +1,11 @@
 # Change Log
 
+## 3.0.2
+
+## Added
+
+- compatible with Odoo 18
+
 ## 2.0.2
 
 ## Added
