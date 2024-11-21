@@ -1,7 +1,10 @@
 # Change Log
 
+## 5.0.1
+
 ## Added
 
+- compatible with Odoo 18
 - added creation of pdf forms
 
 ## 4.0.1
