@@ -69,9 +69,9 @@
             <img
               class="o-onlyoffice-create-icon"
               src="onlyoffice_odoo_documents/static/svg/formats/pdf.svg"
-              t-att-title="PDF"
+              t-att-title="PDF form"
             />
-            <div class="o-template-item-name">PDF Form</div>
+            <div class="o-template-item-name">PDF form</div>
           </div>
         </div>
         <t t-set-slot="footer">
