@@ -68,8 +68,8 @@
           >
             <img
               class="o-onlyoffice-create-icon"
-              src="/onlyoffice_odoo_documents/static/svg/formats/pdf.svg"
-              t-att-title="PDF form"
+              src="onlyoffice_odoo_documents/static/svg/formats/pdf.svg"
+              t-att-title="PDF"
             />
             <div class="o-template-item-name">PDF form</div>
           </div>
