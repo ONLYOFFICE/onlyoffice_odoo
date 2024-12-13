@@ -72,6 +72,7 @@ def get_default_file_template(lang, ext):
         "bg": "bg-BG",
         "cs": "cs-CZ",
         "de": "de-DE",
+        "default": "default",
         "el": "el-GR",
         "en-gb": "en-GB",
         "en": "en-US",
