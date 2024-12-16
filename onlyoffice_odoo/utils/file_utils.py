@@ -81,7 +81,7 @@ def get_default_file_template(lang, ext):
         "fi": "fi-FI",
         "fr": "fr-FR",
         "gl": "gl-ES",
-        "he": "he_IL",
+        "he": "he-IL",
         "it": "it-IT",
         "ja": "ja-JP",
         "ko": "ko-KR",
