@@ -77,7 +77,7 @@ def get_default_file_template(lang, ext):
         "en-gb": "en-GB",
         "en": "en-US",
         "es": "es-ES",
-        "eu_ES": "eu-ES",
+        "eu": "eu-ES",
         "fi": "fi-FI",
         "fr": "fr-FR",
         "gl": "gl-ES",
@@ -86,7 +86,7 @@ def get_default_file_template(lang, ext):
         "ja": "ja-JP",
         "ko": "ko-KR",
         "lv": "lv-LV",
-        "nb_NO": "nb-NO",
+        "nb": "nb-NO",
         "nl": "nl-NL",
         "pl": "pl-PL",
         "pt-br": "pt-BR",
@@ -94,11 +94,11 @@ def get_default_file_template(lang, ext):
         "ru": "ru-RU",
         "sk": "sk-SK",
         "sv": "sv-SE",
-        "tr_TR": "tr-TR",
+        "tr": "tr-TR",
         "uk": "uk-UA",
         "vi": "vi-VN",
         "zh-CN": "zh-CN",
-        "zh_TW": "zh-TW",
+        "zh-TW": "zh-TW",
     }
 
     lang = lang.replace("_", "-")
