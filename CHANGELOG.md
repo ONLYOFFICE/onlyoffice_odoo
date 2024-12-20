@@ -1,12 +1,13 @@
 # Change Log
 
+- default document template for unsupported language
+- Basque, Finnish, Galician, Hebrew, Norwegian, Turkish, Chinese (Traditional) empty file templates
+
 ## 5.0.0
 
 ## Added
 
 - compatible with Odoo 18
-- default document template for unsupported language
-- Basque, Finnish, Galician, Hebrew, Norwegian, Turkish, Chinese (Traditional) empty file templates
 
 ## 4.0.0
 
