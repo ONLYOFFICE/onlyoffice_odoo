@@ -35,8 +35,11 @@
             <setting string="Connect to demo ONLYOFFICE Docs server">
               <field name="doc_server_demo" />
               <div class="text-muted">
-                                This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.
-                            </div>
+                This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.
+              </div>
+            </setting>
+            <setting string="Open file in the same tab">
+              <field name="same_tab" />
             </setting>
             <setting>
               <div class="onlyoffice_link_container">
@@ -45,8 +48,8 @@
                   href="https://www.onlyoffice.com/docs-registration.aspx"
                   target="_blank"
                 >
-                                    GET NOW
-                                </a>
+                  GET NOW
+                </a>
               </div>
             </setting>
           </block>

@@ -2,12 +2,12 @@
 
 Template files used to create new documents and documents with sample content in:
 
-- [Jira ONLYOFFICE integration app](https://github.com/ONLYOFFICE/onlyoffice-jira)
-- [HumHub ONLYOFFICE integration plugin](https://github.com/ONLYOFFICE/onlyoffice-humhub)
-- [Nextcloud ONLYOFFICE integration app](https://github.com/ONLYOFFICE/onlyoffice-nextcloud)
-- [Odoo ONLYOFFICE integration app](https://github.com/onlyoffice/onlyoffice-odoo)
-- [ONLYOFFICE App for Pipedrive](https://github.com/onlyoffice/onlyoffice-pipedrive)
-- [ONLYOFFICE DocSpace App for Zoom](https://github.com/onlyoffice/onlyoffice-docspace-zoom)
+- [ONLYOFFICE app for Jira](https://github.com/ONLYOFFICE/onlyoffice-jira)
+- [ONLYOFFICE app for Nextcloud](https://github.com/ONLYOFFICE/onlyoffice-nextcloud)
+- [ONLYOFFICE app for Odoo](https://github.com/onlyoffice/onlyoffice-odoo)
+- [ONLYOFFICE app for ownCloud](https://github.com/onlyoffice/onlyoffice-owncloud)
+- [ONLYOFFICE app for Pipedrive](https://github.com/onlyoffice/onlyoffice-pipedrive)
+- [ONLYOFFICE addon for Plone](https://github.com/onlyoffice/onlyoffice-plone)
 - [ONLYOFFICE Docs Integration PHP SDK](https://github.com/ONLYOFFICE/docs-integration-sdk-php)
-- [ownCloud ONLYOFFICE integration app](https://github.com/onlyoffice/onlyoffice-owncloud)
-- [Plone ONLYOFFICE integration plugin](https://github.com/onlyoffice/onlyoffice-plone)
+- [ONLYOFFICE DocSpace app for Zoom](https://github.com/onlyoffice/onlyoffice-docspace-zoom)
+- [ONLYOFFICE module for HumHub](https://github.com/ONLYOFFICE/onlyoffice-humhub)

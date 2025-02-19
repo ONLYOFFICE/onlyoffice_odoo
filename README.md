@@ -1,4 +1,4 @@
-# Odoo ONLYOFFICE integration app
+# ONLYOFFICE app for Odoo
 
 This app allows users to edit and collaborate on office documents within [Odoo](https://www.odoo.com/) Documents using ONLYOFFICE Docs packaged as Document Server - [Community or Enterprise Edition](#onlyoffice-docs-editions).
 
@@ -26,7 +26,7 @@ To install Enterprise Edition, follow instructions [here](https://helpcenter.onl
 
 Community Edition vs Enterprise Edition comparison can be found [here](#onlyoffice-docs-editions).
 
-## Installing Odoo ONLYOFFICE integration app
+## Installing ONLYOFFICE app for Odoo
 
 **Installation from the admin panel**
 
@@ -39,7 +39,7 @@ Community Edition vs Enterprise Edition comparison can be found [here](#onlyoffi
 
 Navigate to the [Odoo Apps catalog](https://apps.odoo.com/apps) and select the Odoo version you have installed. Search for ONLYOFFICE and download it. You can also download the latest app version from the official [GitHub repo](https://github.com/ONLYOFFICE/onlyoffice-odoo/releases).
 
-Put ONLYOFFICE connector into `/path/to/odoo/addons`. Make sure the ONLYOFFICE folder is named as `onlyoffice_odoo`.
+Put ONLYOFFICE app into `/path/to/odoo/addons`. Make sure the ONLYOFFICE folder is named as `onlyoffice_odoo`.
 
 Alternatively, you can add the following lines in the `/path/to/odoo/config/odoo.conf` file specifying your path to the folder with apps/addons:
 
@@ -55,7 +55,7 @@ Once ready, switch your Odoo to the developer mode and click **Apps -> Update Ap
 
 **Please note (refers to the ONLYOFFICE Templates app)**: ONLYOFFICE demo templates will only be added to the Odoo modules that are already installed. That's why we strongly recommend installing ONLYOFFICE Templates after installing other Odoo modules such as CRM, Sales, Calendar, etc.
  
-## Configuring Odoo ONLYOFFICE integration app
+## Configuring ONLYOFFICE app for Odoo
 
 To configure the app, go to `Settings`. Find `ONLYOFFICE` on the left sidebar and press it. Specify the URL of the installed ONLYOFFICE Document Server.
 

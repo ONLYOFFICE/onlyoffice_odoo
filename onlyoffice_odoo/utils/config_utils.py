@@ -53,6 +53,10 @@ def get_demo_date(env):
     return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DEMO_DATE)
 
 
+def get_same_tab(env):
+    return env["ir.config_parameter"].sudo().get_param(config_constants.SAME_TAB)
+
+
 def set_doc_server_public_url(env, url):
     if not url:
         url = "http://documentserver/"
@@ -81,7 +85,7 @@ def set_demo(env, param):
     if not demo_date:
         set_demo_date(env)
     if param:
-        set_doc_server_public_url(env, "https://onlinedocs.onlyoffice.com/")
+        set_doc_server_public_url(env, "https://onlinedocs.docs.onlyoffice.com/")
         set_doc_server_odoo_url(env, "")
         set_doc_server_inner_url(env, "")
         set_jwt_header(env, "AuthorizationJWT")
@@ -98,6 +102,10 @@ def set_demo(env, param):
 def set_demo_date(env):
     demo_date = date.today()
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DEMO_DATE, demo_date)
+
+
+def set_same_tab(env, param):
+    env["ir.config_parameter"].sudo().set_param(config_constants.SAME_TAB, param)
 
 
 def fix_url(url):

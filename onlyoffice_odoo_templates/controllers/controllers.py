@@ -21,7 +21,7 @@ from odoo.tools import (
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
@@ -101,7 +101,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             template_id, "onlyoffice.odoo.templates", self.get_user_from_token(oo_security_token)
         )
         if not template_record:
-            _logger("Template not found")
+            logger.warning("Template not found")
             return
         attachment_id = template_record.attachment_id.id
 
@@ -127,7 +127,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             response_json = response.json()
 
             if response_json.get("error"):
-                _logger(response_json.get("error"))
+                logger.warning(response_json.get("error"))
                 return
 
             urls = response_json.get("urls")
@@ -141,14 +141,14 @@ class OnlyofficeTemplate_Connector(http.Controller):
                     keys = sorted(json.loads(response_content))
 
         except requests.RequestException as e:
-            _logger(e)  # TODO
+            logger.warning(e)  # TODO
             return
 
         try:
             fields = self.get_fields(model_name, record_id, keys, user)
             fields_json = json.dumps(fields, ensure_ascii=False)
         except Exception as e:
-            _logger(e)  # TODO
+            logger.warning(e)  # TODO
             fields_json = ""
 
         url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
@@ -244,7 +244,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             result = {}
             record = self.get_record(record_id, model_name, user)
             if not record:
-                _logger("Record not found")
+                logger.warning("Record not found")
                 return
             for field in keys:
                 try:
@@ -314,7 +314,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 else:
                                     result[field] = str(data)
                 except Exception as e:
-                    _logger(e)  # TODO
+                    logger.warning(e)  # TODO
                     continue
             return result
 
@@ -333,7 +333,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         try:
             return model_name.with_context(**context).browse(record_id).exists()  # TODO: Add .sudo()
         except Exception as e:
-            _logger(e)
+            logger.warning(e)
             return None
 
     def get_user_from_token(self, token):

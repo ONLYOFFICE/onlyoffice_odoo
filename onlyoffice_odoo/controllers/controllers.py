@@ -10,8 +10,10 @@ from mimetypes import guess_type
 from urllib.request import urlopen
 
 import markupsafe
+from werkzeug.exceptions import Forbidden
 
 from odoo import http
+from odoo.exceptions import AccessError
 from odoo.http import request
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
@@ -21,6 +23,36 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 
 
 class Onlyoffice_Connector(http.Controller):
+    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
+    def get_config(self, document_id=None, attachment_id=None, access_token=None):
+        if document_id:
+            document = request.env["documents.document"].browse(int(document_id))
+            try:
+                document.check_access_rule("read")
+                attachment_id = document.attachment_id.id
+            except AccessError:
+                _logger.error("User has no read access rights to open this document")
+                raise Forbidden()  # noqa: B904
+
+        attachment = self.get_attachment(attachment_id)
+        if not attachment:
+            return request.not_found()
+
+        attachment.validate_access(access_token)
+
+        data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
+        filename = data["name"]
+
+        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
+
+        if not can_read:
+            raise Exception("cant read")
+
+        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+
+        config = self.prepare_editor_values(attachment, access_token, can_write)
+        return config
+
     @http.route("/onlyoffice/file/content/test.txt", auth="public")
     def get_test_file(self):
         content = "test"
@@ -127,7 +159,7 @@ class Onlyoffice_Connector(http.Controller):
 
     def prepare_editor_values(self, attachment, access_token, can_write):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
-
+        key = str(data["id"]) + str(data["checksum"])
         docserver_url = config_utils.get_doc_server_public_url(request.env)
         odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
@@ -143,6 +175,8 @@ class Onlyoffice_Connector(http.Controller):
             + "?oo_security_token="
             + security_token
             + ("&access_token=" + access_token if access_token else "")
+            + "&shardkey="
+            + key
         )
 
         document_type = file_utils.get_file_type(filename)
@@ -158,7 +192,7 @@ class Onlyoffice_Connector(http.Controller):
                 "title": filename,
                 "url": odoo_url + "onlyoffice/file/content/" + path_part,
                 "fileType": file_utils.get_file_ext(filename),
-                "key": str(data["id"]) + str(data["checksum"]),
+                "key": key,
                 "permissions": {"edit": can_write},
             },
             "editorConfig": {

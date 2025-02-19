@@ -12,8 +12,8 @@
         t-att-disabled="disabled"
         t-on-click.stop.prevent="onClickCreateOnlyoffice"
       >
-                Create with ONLYOFFICE
-            </button>
+        Create with ONLYOFFICE
+      </button>
     </xpath>
   </t>
 </templates>

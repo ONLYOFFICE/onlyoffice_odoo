@@ -25,7 +25,11 @@ export class OnlyofficeKanbanRecord extends KanbanRecord {
 
   async editTemplate() {
     const action = {
-      tag: "onlyoffice_odoo_templates.TemplateEditor",
+      params: {
+        attachment_id: this.props.record.data.attachment_id[0],
+        template_model_model: this.props.record.data.template_model_model,
+      },
+      tag: "onlyoffice_template_editor",
       target: "current",
       type: "ir.actions.client",
     }
