@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { cookie } from "@web/core/browser/cookie"
+import { router } from "@web/core/browser/router"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { registry } from "@web/core/registry"
@@ -17,6 +18,7 @@ class TemplateEditor extends Component {
     this.viewService = useService("view")
     this.EditorComponent = EditorComponent
     this.notificationService = useService("notification")
+    this.router = router
 
     this.state = useState({
       models: null,
@@ -34,26 +36,13 @@ class TemplateEditor extends Component {
 
     onMounted(async () => {
       try {
-        if (!this.props.id) {
-          const urlParams = new URLSearchParams(window.location.hash)
-          const id = urlParams.get("id")
-          if (!id) {
-            return
-          }
-          this.props.id = id
-        }
+        const attachment_id = this.props.action.params.attachment_id
+        const template_model_model = this.props.action.params.template_model_model
 
-        const [{ template_model_model, attachment_id }] = await this.orm.read(
-          "onlyoffice.odoo.templates",
-          [parseInt(this.props.id, 10)],
-          ["template_model_model", "attachment_id"],
-        )
-
-        // Set id to URL
-        if (!new URLSearchParams(window.location.hash).has("id")) {
-          const newUrl = window.location.href + `&id=${this.props.id}`
-          history.replaceState(null, null, newUrl)
-        }
+        this.router.pushState({
+          attachment_id: this.props.action.params.attachment_id,
+          template_model_model: this.props.action.params.template_model_model,
+        })
 
         const models = JSON.parse(
           await this.orm.call("onlyoffice.odoo.templates", "get_fields_for_model", [template_model_model]),
@@ -63,7 +52,7 @@ class TemplateEditor extends Component {
         const formattedModels = this.formatModels(models)
         this.unchangedModels = formattedModels
 
-        const response = await this.rpc("/onlyoffice/template/editor", { attachment_id: attachment_id[0] })
+        const response = await this.rpc("/onlyoffice/template/editor", { attachment_id: attachment_id })
         const config = JSON.parse(response.editorConfig)
         config.events = {
           onDocumentReady: () => {
@@ -287,4 +276,4 @@ TemplateEditor.components = {
 }
 TemplateEditor.template = "onlyoffice_odoo_templates.TemplateEditor"
 
-registry.category("actions").add("onlyoffice_odoo_templates.TemplateEditor", TemplateEditor)
+registry.category("actions").add("onlyoffice_template_editor", TemplateEditor)

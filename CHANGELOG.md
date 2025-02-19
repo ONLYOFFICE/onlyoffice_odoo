@@ -1,5 +1,10 @@
 # Change Log
 
+- goback from editor to file location
+- setting to open the editor in the same tab
+- shardkey in querystring
+- jwt lifetime
+- demo server address changed
 - default document template for unsupported language
 - Basque, Finnish, Galician, Hebrew, Norwegian, Turkish, Chinese (Traditional) empty file templates
 

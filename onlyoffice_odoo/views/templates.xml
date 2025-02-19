@@ -49,6 +49,14 @@
       <script type="text/javascript" t-att-src="docApiJS" />
       <script type="text/javascript">
         var config = JSON.parse('<t t-out="editorConfig" />');
+        if (window?.opener?.location?.href) {
+          if (window.opener.location.origin === window.origin) {
+            config.editorConfig.customization.goback = {
+              blank: false,
+              url: window.opener.location.href
+            }
+          }
+        }
         if (window.DocsAPI) {
           var docEditor = new DocsAPI.DocEditor("doceditor", config);
         } else {
