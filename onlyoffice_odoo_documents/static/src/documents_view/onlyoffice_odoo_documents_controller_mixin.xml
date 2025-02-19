@@ -9,7 +9,7 @@
       <button
         type="button"
         t-attf-class="btn btn-link dropdown-item o_documents_kanban_onlyoffice_odoo_documents {{additionalClasses}}"
-        t-att-disabled="disabled"
+        t-att-disabled="!folder.id"
         t-on-click.stop.prevent="onClickCreateOnlyoffice"
       >
         Create with ONLYOFFICE
