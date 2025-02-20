@@ -62,6 +62,16 @@ export class CreateDialog extends Component {
         type: "info",
       })
 
+      const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+      if (same_tab) {
+        const action = {
+          params: { attachment_id: result.file_id },
+          tag: "onlyoffice_editor",
+          target: "current",
+          type: "ir.actions.client",
+        }
+        return this.actionService.doAction(action)
+      }
       window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
     }
 
