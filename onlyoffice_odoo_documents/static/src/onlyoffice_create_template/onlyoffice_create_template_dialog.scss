@@ -18,6 +18,7 @@ $margin-right: 15px;
       padding: $margin-right;
       margin: $margin-right;
       flex: 1;
+      cursor: pointer;
 
       &.o-template-selected {
         border-color: $o-brand-primary;
