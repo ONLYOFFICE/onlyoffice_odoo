@@ -2,13 +2,12 @@
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
+import { download } from "@web/core/network/download"
 import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
 import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
 import { DropPrevious } from "web.concurrency"
-
-import { _t } from "web.core"
 
 const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
 
@@ -99,24 +98,27 @@ export class TemplateDialog extends Component {
   }
 
   async fillTemplate() {
+    if (this.state.isProcessing) {
+      return
+    }
     this.state.isProcessing = true
 
     const templateId = this.state.selectedTemplateId
-    const { resId, resModel } = this.props
+    const { resId } = this.props
 
-    const response = await this.rpc("/onlyoffice/template/get_filled_template", {
-      model_name: resModel,
-      record_id: resId,
-      template_id: templateId,
-    })
-
-    if (!response) {
-      this.notificationService.add(_t("Unknown error"), { type: "danger" })
-    } else if (response.href) {
-      window.location.href = response.href
-    } else if (response.error) {
-      this.notificationService.add(_t(response.error), { type: "danger" })
+    this.env.services.ui.block()
+    try {
+      await download({
+        data: {
+          record_ids: resId,
+          template_id: templateId,
+        },
+        url: "/onlyoffice/template/fill",
+      })
+    } finally {
+      this.env.services.ui.unblock()
     }
+    this.env.services.ui.unblock()
     this.data.close()
   }
 
