@@ -7,6 +7,7 @@ import io
 import json
 import logging
 import re
+import time
 import zipfile
 from datetime import datetime
 
@@ -28,6 +29,31 @@ logger = logging.getLogger(__name__)
 
 
 class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
+    @http.route("/onlyoffice/template/preview", type="http", auth="user")
+    def preview_template(self, template_path, **kwargs):
+        unique = int(time.time() * 1000)
+        file_url = f"/onlyoffice/template/pdf_content/{template_path.replace('/', '_')}"
+        viewer_url = f"/web/static/lib/pdfjs/web/viewer.html?unique={unique}&file={file_url}"
+
+        return request.redirect(viewer_url)
+
+    @http.route("/onlyoffice/template/pdf_content/<string:template_path>", type="http", auth="user")
+    def get_pdf_content(self, template_path, **kwargs):
+        try:
+            file_content = request.env["onlyoffice.odoo.demo.templates"].get_template_content(
+                template_path.replace("_", "/")
+            )
+
+            return request.make_response(
+                file_content,
+                headers=[
+                    ("Content-Type", "application/pdf"),
+                    ("Content-Disposition", 'inline; filename="preview.pdf"'),
+                ],
+            )
+        except Exception as e:
+            return request.not_found(f"Error: {str(e)}")
+
     @http.route("/onlyoffice/template/editor", auth="user", methods=["POST"], type="json", csrf=False)
     def override_render_editor(self, attachment_id, access_token=None):
         attachment = self.get_attachment(attachment_id)

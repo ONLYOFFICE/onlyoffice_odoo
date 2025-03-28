@@ -52,7 +52,7 @@
               </div>
             </div>
           </div>
-          <div>
+          <div class="o_onlyoffice_settings_security">
             <h2>Security</h2>
             <div class="row mt16 o_settings_container">
               <div class="col-12 col-lg-6 o_setting_box">
@@ -72,7 +72,7 @@
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">
-                   Document Server JWT Header
+                    Document Server JWT Header
                   </span>
                   <div class="text-muted content-group mt16">
                     <field name="doc_server_jwt_header" />
@@ -93,7 +93,8 @@
                     Connect to demo ONLYOFFICE Docs server
                   </label>
                   <div class="text-muted">
-                    This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.
+                    This is a public test server, please do not use it for private sensitive data.
+                    The server will be available during a 30-day period.
                   </div>
                 </div>
               </div>

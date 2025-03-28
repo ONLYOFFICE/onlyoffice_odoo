@@ -7,13 +7,14 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "1.0.2",
-    "depends": ["base", "onlyoffice_odoo"],
+    "depends": ["base", "onlyoffice_odoo", "web"],
     "external_dependencies": {"python": ["pyjwt"]},
     # always loaded
     "data": [
         "security/onlyoffice_templates_security.xml",
         "security/ir.model.access.csv",
         "views/onlyoffice_menu_views.xml",
+        "views/res_config_settings_views.xml",
     ],
     "demo": ["data/templates_data.xml"],
     "license": "LGPL-3",
