@@ -53,6 +53,9 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
     def prepare_document_editor(self, document_id, access_token):
         document = request.env["documents.document"].browse(int(document_id))
+        if document.is_locked and document.lock_uid.id != request.env.user.id:
+            _logger.error("Document is locked by another user")
+            raise Forbidden()
         try:
             document.check_access_rule("read")
         except AccessError:

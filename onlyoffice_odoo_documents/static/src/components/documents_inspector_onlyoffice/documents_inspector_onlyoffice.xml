@@ -10,6 +10,7 @@
           class="btn fa o_inspector_button"
           t-on-click="() => onlyofficeEditorUrl(records[0].data.id)"
           title="Open in ONLYOFFICE"
+          t-att-disabled="locked"
         >
           <img src="/onlyoffice_odoo_documents/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
         </button>
