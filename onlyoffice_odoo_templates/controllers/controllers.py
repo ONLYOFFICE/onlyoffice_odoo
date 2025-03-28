@@ -3,9 +3,13 @@
 #
 import base64
 import codecs
+import io
 import json
 import logging
 import re
+import time
+import zipfile
+from datetime import datetime
 
 import requests
 
@@ -25,6 +29,31 @@ logger = logging.getLogger(__name__)
 
 
 class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
+    @http.route("/onlyoffice/template/preview", type="http", auth="user")
+    def preview_template(self, template_path, **kwargs):
+        unique = int(time.time() * 1000)
+        file_url = f"/onlyoffice/template/pdf_content/{template_path.replace('/', '_')}"
+        viewer_url = f"/web/static/lib/pdfjs/web/viewer.html?unique={unique}&file={file_url}"
+
+        return request.redirect(viewer_url)
+
+    @http.route("/onlyoffice/template/pdf_content/<string:template_path>", type="http", auth="user")
+    def get_pdf_content(self, template_path, **kwargs):
+        try:
+            file_content = request.env["onlyoffice.odoo.demo.templates"].get_template_content(
+                template_path.replace("_", "/")
+            )
+
+            return request.make_response(
+                file_content,
+                headers=[
+                    ("Content-Type", "application/pdf"),
+                    ("Content-Disposition", 'inline; filename="preview.pdf"'),
+                ],
+            )
+        except Exception as e:
+            return request.not_found(f"Error: {str(e)}")
+
     @http.route("/onlyoffice/template/editor", auth="user", methods=["POST"], type="json", csrf=False)
     def override_render_editor(self, attachment_id, access_token=None):
         attachment = self.get_attachment(attachment_id)
@@ -52,133 +81,211 @@ class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
 
 
 class OnlyofficeTemplate_Connector(http.Controller):
-    @http.route("/onlyoffice/template/get_filled_template", auth="user", methods=["POST"], type="json")
-    def get_filled_template(self, template_id, record_id, model_name):
-        jwt_secret = config_utils.get_jwt_secret(request.env)
-        jwt_header = config_utils.get_jwt_header(request.env)
-        odoo_url = config_utils.get_base_or_odoo_url(request.env)
-        docserver_url = config_utils.get_doc_server_public_url(request.env)
-        docbuilder_url = f"{docserver_url}docbuilder"
+    @http.route("/onlyoffice/template/fill", auth="user", type="http")
+    def main(self, template_id, record_ids):
         internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
         oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
 
-        template_headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        template_callback_url = f"{odoo_url}onlyoffice/template/callback/fill_template?template_id={template_id}&record_id={record_id}&model_name={model_name}&oo_security_token={oo_security_token}"  # noqa: E501
-        template_payload = {"async": False, "url": template_callback_url}
-
-        if jwt_secret:
-            template_payload["token"] = jwt_utils.encode_payload(request.env, template_payload, jwt_secret)
-            template_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
-                request.env, {"payload": template_payload}, jwt_secret
-            )
-
         try:
-            response = requests.post(docbuilder_url, json=template_payload, headers=template_headers, timeout=10)
-            response.raise_for_status()
-            response_json = response.json()
+            templates = self.fill_template(oo_security_token, record_ids, template_id)
+            if len(templates) == 1:
+                url = next(iter(templates.values()))
+                filename = next(iter(templates))
+                response = requests.get(url, timeout=120)
+                if response.status_code == 200:
+                    headers = [
+                        ("Content-Type", "application/pdf"),
+                        ("X-Content-Type-Options", "nosniff"),
+                        ("Content-Length", str(len(response.content))),
+                        ("Content-Disposition", f'attachment; filename="{filename}"'),
+                    ]
+                    return request.make_response(response.content, headers)
+                else:
+                    e = f"error while downloading the document file, status = {response.status_code}"
+                    logger.warning(e)
+                    return request.not_found()
+            elif len(templates) > 1:
+                stream = io.BytesIO()
+                with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
+                    for filename, url in templates.items():
+                        response = requests.get(url, timeout=120)
+                        if response.status_code == 200:
+                            archive.writestr(filename, response.content)
+                        else:
+                            e = f"error while downloading the document file to be generated zip, status = {response.status_code}"  # noqa: E501
+                            logger.warning(e)
+                            return request.not_found()
+                stream.seek(0)
+                content = stream.read()
+                stream.flush()
 
-            if response_json.get("error"):
-                return {"error": self.get_docbuilder_error(response_json.get("error"))}
+                filename = f"onlyoffice-templates-{datetime.now().strftime('%Y_%m_%d_%H_%M')}.zip"
+                headers = [
+                    ("Content-Type", "application/zip"),
+                    ("X-Content-Type-Options", "nosniff"),
+                    ("Content-Length", str(len(response.content))),
+                    ("Content-Disposition", f'attachment; filename="{filename}"'),
+                ]
+                return request.make_response(content, headers)
+            else:
+                logger.warning("no templates found")
+                logger.debug(templates)
+                return request.not_found()
+        except Exception as e:
+            logger.warning(e)
+            return request.not_found()
 
-            urls = response_json.get("urls")
-            if urls:
-                first_url = next(iter(urls.values()), None)
-                if first_url:
-                    return {"href": first_url}
+        logger.warning("unknown error")
+        return request.not_found()
 
-        except requests.RequestException as e:
-            return {"error": e}
-
-        return {"error": "Unknown error"}
-
-    @http.route("/onlyoffice/template/callback/fill_template", auth="public")
-    def fill_template(self, template_id, record_id, model_name, oo_security_token):
-        user = self.get_user_from_token(oo_security_token)
-        if not user:
-            return
-
-        template_record = self.get_record(
-            template_id, "onlyoffice.odoo.templates", self.get_user_from_token(oo_security_token)
-        )
-        if not template_record:
-            logger.warning("Template not found")
-            return
-        attachment_id = template_record.attachment_id.id
-
-        jwt_secret = config_utils.get_jwt_secret(request.env)
-        jwt_header = config_utils.get_jwt_header(request.env)
-        odoo_url = config_utils.get_base_or_odoo_url(request.env)
+    def fill_template(self, oo_security_token, record_ids, template_id):
         docserver_url = config_utils.get_doc_server_public_url(request.env)
         docbuilder_url = f"{docserver_url}docbuilder"
+        jwt_header = config_utils.get_jwt_header(request.env)
+        jwt_secret = config_utils.get_jwt_secret(request.env)
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
-        keys_headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        keys_callback_url = f"{odoo_url}onlyoffice/template/callback/get_keys?attachment_id={attachment_id}&oo_security_token={oo_security_token}"  # noqa: E501
-        keys_payload = {"async": False, "url": keys_callback_url}
+        docbuilder_headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        docbuilder_callback_url = f"{odoo_url}onlyoffice/template/callback/docbuilder/fill_template?oo_security_token={oo_security_token}&record_ids={record_ids}&template_id={template_id}"  # noqa: E501
+        docbuilder_payload = {"async": False, "url": docbuilder_callback_url}
 
         if jwt_secret:
-            keys_payload["token"] = jwt_utils.encode_payload(request.env, keys_payload, jwt_secret)
-            keys_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
-                request.env, {"payload": keys_payload}, jwt_secret
+            docbuilder_payload["token"] = jwt_utils.encode_payload(request.env, docbuilder_payload, jwt_secret)
+            docbuilder_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
+                request.env, {"payload": docbuilder_payload}, jwt_secret
             )
 
         try:
-            response = requests.post(docbuilder_url, json=keys_payload, headers=keys_headers, timeout=10)
-            response.raise_for_status()
-            response_json = response.json()
+            if jwt_secret:
+                docbuilder_response = requests.post(
+                    docbuilder_url, json=docbuilder_payload, headers=docbuilder_headers, timeout=120
+                )
+            else:
+                docbuilder_response = requests.post(docbuilder_url, json=docbuilder_payload, timeout=120)
+            docbuilder_response.raise_for_status()
+            docbuilder_json = docbuilder_response.json()
+            if docbuilder_json.get("error"):
+                e = self.get_docbuilder_error(docbuilder_json.get("error"))
+                raise Exception(e)
 
-            if response_json.get("error"):
-                logger.warning(response_json.get("error"))
-                return
+            urls = docbuilder_json.get("urls")
+            return urls
+        except:
+            raise
 
-            urls = response_json.get("urls")
-            if urls:
-                first_url = next(iter(urls.values()), None)
-                if first_url:
-                    response = requests.get(first_url, timeout=10)
-                    response.raise_for_status()
+    @http.route("/onlyoffice/template/callback/docbuilder/fill_template", auth="public")
+    def docbuilder_fill_template(self, oo_security_token, record_ids, template_id):
+        if not oo_security_token or not record_ids or not template_id:
+            logger.warning("oo_security_token or record_ids or template_id not found")
+            return request.not_found()
 
-                    response_content = codecs.decode(response.content, "utf-8-sig")
-                    keys = sorted(json.loads(response_content))
+        user = self.get_user_from_token(oo_security_token)
+        if not user:
+            logger.warning("user not found")
+            return request.not_found()
 
-        except requests.RequestException as e:
-            logger.warning(e)  # TODO
-            return
+        template = self.get_record("onlyoffice.odoo.templates", template_id, user)
+        if not template:
+            logger.warning("template not found")
+            return request.not_found()
+
+        attachment_id = template.attachment_id.id
+        if not attachment_id:
+            logger.warning("attachment_id of the template was not found")
+            return request.not_found()
+
+        model = template.template_model_model
+        if not model:
+            logger.warning("model of the template was not found")
+            return request.not_found()
 
         try:
-            fields = self.get_fields(model_name, record_id, keys, user)
-            fields_json = json.dumps(fields, ensure_ascii=False)
+            record_ids = [int(x) for x in record_ids.split(",")]
+            url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
+
+            docbuilder_content = ""
+            docbuilder_script_content = ""
+            with file_open("onlyoffice_odoo_templates/controllers/fill_template.docbuilder", "r") as f:
+                docbuilder_script_content = f.read()
+
+            keys = self.get_keys(attachment_id, oo_security_token)
+            for record_id in record_ids:
+                fields = self.get_fields(keys, model, record_id, user)
+                fields = json.dumps(fields, ensure_ascii=False)
+
+                docbuilder_content += f"""
+                    builder.OpenFile("{url}");
+                    var fields = {fields};
+                """
+                docbuilder_content += docbuilder_script_content
+
+                record = self.get_record(model, record_id, user)
+                record_name = getattr(record, "display_name", getattr(record, "name", str(record_id)))
+                template_name = getattr(template, "display_name", getattr(template, "name", "Filled Template"))
+                filename = re.sub(r"[<>:'/\\|?*\x00-\x1f]", " ", f"{template_name} - {record_name}")
+
+                docbuilder_content += f"""
+                    builder.SaveFile("pdf", "{filename}.pdf");
+                    builder.CloseFile();
+                """
+
+            headers = {
+                "Content-Disposition": "attachment; filename='fill_template.docbuilder'",
+                "Content-Type": "text/plain",
+            }
+
+            return request.make_response(docbuilder_content, headers)
+
         except Exception as e:
-            logger.warning(e)  # TODO
-            fields_json = ""
+            logger.warning(e)
+            return request.not_found()
 
-        url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
-        docbuilder_content = f"""
-            builder.OpenFile("{url}");
-            var fields = {fields_json};
-        """
-
-        with file_open("onlyoffice_odoo_templates/controllers/fill_template.docbuilder", "r") as f:
-            docbuilder_content = docbuilder_content + f.read()
-
-        record = self.get_record(record_id, model_name, user)
-        record_name = getattr(record, "display_name", getattr(record, "name", str(record_id)))
-        template_name = getattr(template_record, "display_name", getattr(template_record, "name", "Filled Template"))
-        filename = re.sub(r"[<>:'/\\|?*\x00-\x1f]", " ", f"{template_name} - {record_name}")
-
-        docbuilder_content += f"""
-            builder.SaveFile("pdf", "{filename}.pdf");
-            builder.CloseFile();
-        """
-
-        headers = {
-            "Content-Disposition": "attachment; filename='fill_template.docbuilder'",
-            "Content-Type": "text/plain",
-        }
-
-        return request.make_response(docbuilder_content, headers)
-
-    @http.route("/onlyoffice/template/callback/get_keys", auth="public")
     def get_keys(self, attachment_id, oo_security_token):
+        docserver_url = config_utils.get_doc_server_public_url(request.env)
+        docbuilder_url = f"{docserver_url}docbuilder"
+        jwt_header = config_utils.get_jwt_header(request.env)
+        jwt_secret = config_utils.get_jwt_secret(request.env)
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
+
+        docbuilder_headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        docbuilder_callback_url = f"{odoo_url}onlyoffice/template/callback/docbuilder/get_keys?attachment_id={attachment_id}&oo_security_token={oo_security_token}"  # noqa: E501
+        docbuilder_payload = {"async": False, "url": docbuilder_callback_url}
+
+        if jwt_secret:
+            docbuilder_payload["token"] = jwt_utils.encode_payload(request.env, docbuilder_payload, jwt_secret)
+            docbuilder_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
+                request.env, {"payload": docbuilder_payload}, jwt_secret
+            )
+
+        try:
+            if jwt_secret:
+                docbuilder_response = requests.post(
+                    docbuilder_url, json=docbuilder_payload, headers=docbuilder_headers, timeout=120
+                )
+            else:
+                docbuilder_response = requests.post(docbuilder_url, json=docbuilder_payload, timeout=120)
+            docbuilder_response.raise_for_status()
+            docbuilder_json = docbuilder_response.json()
+            if docbuilder_json.get("error"):
+                e = self.get_docbuilder_error(docbuilder_json.get("error"))
+                raise Exception(e)
+
+            urls = docbuilder_json.get("urls")
+            keys_url = urls.get("keys.txt")
+            keys_response = requests.get(keys_url, timeout=120)
+            keys_response.raise_for_status()
+            response_content = codecs.decode(keys_response.content, "utf-8-sig")
+
+            return json.loads(response_content)
+        except:
+            raise
+
+    @http.route("/onlyoffice/template/callback/docbuilder/get_keys", auth="public")
+    def docbuilder_get_keys(self, attachment_id, oo_security_token):
+        if not attachment_id or not oo_security_token:
+            logger.warning("attachment_id or oo_security_token not found")
+            return request.not_found()
+
         url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
         docbuilder_content = f"""
             builder.OpenFile("{url}");
@@ -195,28 +302,24 @@ class OnlyofficeTemplate_Connector(http.Controller):
         return request.make_response(docbuilder_content, headers)
 
     @http.route("/onlyoffice/template/download/<int:attachment_id>", auth="public")
-    def download_template(self, attachment_id, oo_security_token=None):
-        if request.env.user and request.env.user.id and not oo_security_token:
-            internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
-            oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
-
-        attachment = self.get_record(attachment_id, "ir.attachment", self.get_user_from_token(oo_security_token))
-
-        attachment_name = getattr(
-            attachment, "display_name", getattr(attachment, "name", f"Template - {attachment_id}.pdf")
-        )
-
-        if attachment:
-            template_content = base64.b64decode(attachment.datas)
-            headers = {
-                "Content-Type": file_utils.get_mime_by_ext("pdf"),
-                "Content-Disposition": f"attachment; filename={attachment_name}",
-            }
-            return request.make_response(template_content, headers)
-        else:
+    def download(self, attachment_id, oo_security_token):
+        if not attachment_id or not oo_security_token:
+            logger.warning("attachment_id or oo_security_token not found")
             return request.not_found()
 
-    def get_fields(self, model_name, record_id, keys, user):  # noqa: C901
+        attachment = self.get_record("ir.attachment", attachment_id, self.get_user_from_token(oo_security_token))
+        if attachment:
+            content = base64.b64decode(attachment.datas)
+            headers = {
+                "Content-Type": "application/pdf",
+                "Content-Disposition": "attachment; filename=template.pdf",
+            }
+            return request.make_response(content, headers)
+        else:
+            logger.warning("attachment not found")
+            return request.not_found()
+
+    def get_fields(self, keys, model, record_id, user):  # noqa: C901
         def convert_keys(input_list):
             output_dict = {}
             for item in input_list:
@@ -240,9 +343,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
             return dict_to_list(output_dict)
 
-        def get_related_field(model_name, record_id, keys):  # noqa: C901
+        def get_related_field(keys, model, record_id):  # noqa: C901
             result = {}
-            record = self.get_record(record_id, model_name, user)
+            record = self.get_record(model, record_id, user)
             if not record:
                 logger.warning("Record not found")
                 return
@@ -260,11 +363,11 @@ class OnlyofficeTemplate_Connector(http.Controller):
                             if not related_record_ids:
                                 continue
                             if field_type == "many2one" and isinstance(related_record_ids, tuple):
-                                related_data = get_related_field(related_model, related_record_ids[0], related_keys)
+                                related_data = get_related_field(related_keys, related_model, related_record_ids[0])
                             else:
                                 related_data = []
                                 for record_id in related_record_ids:
-                                    related_data_temp = get_related_field(related_model, record_id, related_keys)
+                                    related_data_temp = get_related_field(related_keys, related_model, record_id)
                                     if related_data_temp:
                                         related_data.append(related_data_temp)
                             if related_data:
@@ -314,27 +417,27 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 else:
                                     result[field] = str(data)
                 except Exception as e:
-                    logger.warning(e)  # TODO
+                    logger.warning(e)
                     continue
             return result
 
         keys = convert_keys(keys)
-        return get_related_field(model_name, record_id, keys)
+        return get_related_field(keys, model, record_id)
 
-    def get_record(self, record_id, model_name, user=None):
+    def get_record(self, model, record_id, user=None):
         if not isinstance(record_id, list):
             record_id = [int(record_id)]
-        model_name = request.env[model_name].sudo()
+        model = request.env[model].sudo()
         context = {"lang": request.env.context.get("lang", "en_US")}
         if user:
-            model_name = model_name.with_user(user)
+            model = model.with_user(user)
             context["lang"] = user.lang
             context["uid"] = user.id
         try:
-            return model_name.with_context(**context).browse(record_id).exists()  # TODO: Add .sudo()
+            return model.with_context(**context).browse(record_id).exists()  # TODO: Add .sudo()
         except Exception as e:
             logger.warning(e)
-            return None
+            raise
 
     def get_user_from_token(self, token):
         if not token:

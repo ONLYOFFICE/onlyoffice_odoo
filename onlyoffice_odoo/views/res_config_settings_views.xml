@@ -23,7 +23,7 @@
               <field name="doc_server_inner_url" />
             </setting>
           </block>
-          <block title="Security" name="onlyoffice_odoo">
+          <block title="Security" name="onlyoffice_odoo" id="o_onlyoffice_settings_security">
             <setting string="Document Server JWT Secret">
               <field name="doc_server_jwt_secret" password="True" />
             </setting>
