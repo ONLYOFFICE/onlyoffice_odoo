@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+  <t t-name="onlyoffice_odoo_templates.OnlyofficePDFPreview" owl="1">
+    <div
+      class="o-onlyoffice-preview modal o_technical_modal w-100 h-100 bg-black-75"
+      t-on-click="(ev) => this.onClickOutside(ev)"
+    >
+      <div class="o-onlyoffice-preview-header d-flex w-75 mt-5 bg-black-75 text-400">
+        <div class="o-onlyoffice-header-title d-flex align-items-center px-3">
+          <i role="img" class="fa fa-file-text-o" />
+          <div class="text-400" t-esc="props.title" />
+        </div>
+        <div class="d-flex align-items-center h-100 px-3 cursor-pointer" t-on-click="() => props.close()">
+          <i role="img" class="fa fa-fw fa-times" />
+        </div>
+      </div>
+      <div class="o-onlyoffice-preview-body d-flex w-75 h-100 mb-5 bg-black-75">
+        <iframe t-att-src="props.url" class="o-onlyoffice-body-iframe" />
+      </div>
+    </div>
+  </t>
+</templates>

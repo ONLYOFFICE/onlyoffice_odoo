@@ -1,0 +1,30 @@
+.o-onlyoffice-preview {
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+
+  .o-onlyoffice-preview-header {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: space-between;
+
+    .o-onlyoffice-header-title {
+      column-gap: 10px;
+    }
+  }
+
+  .o-onlyoffice-preview-body {
+    .o-onlyoffice-body-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  }
+}
