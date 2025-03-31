@@ -1,4 +1,6 @@
 # Change Log
+
+- new interface for the creation of templates
 - settings menu for demo template installation
 - batch print in list view
 - goback from editor to file location
