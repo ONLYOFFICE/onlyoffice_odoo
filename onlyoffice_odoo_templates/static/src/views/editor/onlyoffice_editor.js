@@ -4,7 +4,7 @@ import { cookie } from "@web/core/browser/cookie"
 import { _t } from "@web/core/l10n/translation"
 import { registry } from "@web/core/registry"
 import { useBus, useService } from "@web/core/utils/hooks"
-import { EditorComponent } from "./onlyoffice_editor_component"
+import { ExportData } from "./onlyoffice_editor_export_data"
 
 const { Component, useState, onMounted, onWillUnmount } = owl
 
@@ -13,14 +13,11 @@ class TemplateEditor extends Component {
     super.setup(...arguments)
     this.orm = useService("orm")
     this.rpc = useService("rpc")
-    this.EditorComponent = EditorComponent
+    this.ExportData = ExportData
     this.notificationService = useService("notification")
     this.router = useService("router")
 
-    this.state = useState({
-      models: null,
-      searchString: "",
-    })
+    this.state = useState({ resModel: "" })
 
     this.config = null
     this.docApiJS = null
@@ -29,7 +26,7 @@ class TemplateEditor extends Component {
     this.script = null
     this.unchangedModels = {}
 
-    useBus(this.env.bus, "onlyoffice-template-field-click", (field) => this.onFieldClick(field.detail))
+    useBus(this.env.bus, "onlyoffice-template-create-form", (field) => this.createForm(field.detail))
 
     onMounted(async () => {
       try {
@@ -40,14 +37,6 @@ class TemplateEditor extends Component {
           attachment_id: this.props.action.params.attachment_id,
           template_model_model: this.props.action.params.template_model_model,
         })
-
-        const models = JSON.parse(
-          await this.orm.call("onlyoffice.odoo.templates", "get_fields_for_model", [template_model_model]),
-        )
-
-        // Add keys to field
-        const formattedModels = this.formatModels(models)
-        this.unchangedModels = formattedModels
 
         const response = await this.rpc("/onlyoffice/template/editor", { attachment_id: attachment_id })
         const config = JSON.parse(response.editorConfig)
@@ -60,7 +49,7 @@ class TemplateEditor extends Component {
               })
             }
             // Render fields
-            this.state.models = formattedModels
+            this.state.resModel = template_model_model
             this.documentReady = true
           },
         }
@@ -115,161 +104,61 @@ class TemplateEditor extends Component {
     })
   }
 
-  formatModels(models, parentNames = []) {
-    if (!models.fields) {
-      return models
-    }
-    models.fields = models.fields
-      .map((field) => {
-        const key = [...parentNames, field.name].join(" ")
-        field.key = key
-        if (field.related_model) {
-          field.related_model = this.formatModels(field.related_model, [...parentNames, field.name])
-        }
-        return field
-      })
-      .sort((a, b) => {
-        if (a.related_model && !b.related_model) {
-          return -1
-        }
-        if (!a.related_model && b.related_model) {
-          return 1
-        }
-        return a.key.localeCompare(b.key)
-      })
-    return models
-  }
-
-  setModelsFilter() {
-    const searchAndExpand = (models) => {
-      if (!models.fields) {
-        return
-      }
-      const searchString = this.state.searchString.toLowerCase()
-      const filteredFields = models.fields.filter((field) => {
-        if (field.key.split(" ").pop().toLowerCase().includes(searchString)) {
-          return true
-        } else if (field.related_model) {
-          field.related_model = searchAndExpand(field.related_model)
-          return field.related_model !== null
-        }
-        return false
-      })
-
-      if (filteredFields.length === 0) {
-        return null
-      }
-
-      return {
-        ...models,
-        fields: filteredFields,
-      }
-    }
-    const unchangedModels = structuredClone(this.unchangedModels)
-    this.state.models = searchAndExpand(unchangedModels)
-  }
-
-  onCleanSearchClick() {
-    if (this.documentReady) {
-      this.state.searchString = ""
-      this.state.models = this.unchangedModels
-    }
-  }
-
-  onSearchInput() {
-    if (this.documentReady) {
-      if (this.state.searchString) {
-        this.setModelsFilter()
-      } else {
-        this.onCleanSearchClick()
-      }
-    }
-  }
-
-  onFieldClick(field) {
+  createForm(field) {
     if (this.documentReady) {
       if (!this.hasLicense) {
         this.notificationService.add(_t("Couldn't insert the field. Please check Automation API."), { type: "danger" })
         return
       }
-      const type = field.type
-      // TODO: add image form and other forms
-      if (
-        type === "char" ||
-        type === "text" ||
-        type === "selection" ||
-        type === "integer" ||
-        type === "float" ||
-        type === "monetary" ||
-        type === "date" ||
-        type === "datetime" ||
-        type === "many2one" ||
-        type === "one2many" ||
-        type === "many2many"
-      ) {
-        this.createTextForm(field)
-      }
-      if (type === "boolean") {
-        this.createCheckBoxForm(field)
-      }
-      if (type === "binary") {
-        this.createPictureForm(field)
-      }
+      Asc.scope.data = field
+      window.connector.callCommand(() => {
+        var oDocument = Api.GetDocument()
+        var oForm = null
+        if (
+          [
+            "char",
+            "text",
+            "selection",
+            "integer",
+            "float",
+            "monetary",
+            "date",
+            "datetime",
+            "many2one",
+            "one2many",
+            "many2many",
+          ].includes(Asc.scope.data.field_type)
+        ) {
+          oForm = Api.CreateTextForm({
+            key: Asc.scope.data.id.replaceAll("/", " "),
+            placeholder: Asc.scope.data.formattedString,
+            tip: Asc.scope.data.formattedString,
+          })
+        }
+        if (Asc.scope.data.field_type === "boolean") {
+          oForm = Api.CreateCheckBoxForm({
+            key: Asc.scope.data.id.replaceAll("/", " "),
+            tip: Asc.scope.data.formattedString,
+          })
+        }
+        if (Asc.scope.data.field_type === "binary") {
+          oForm = Api.CreatePictureForm({
+            key: Asc.scope.data.id.replaceAll("/", " "),
+            tip: Asc.scope.data.formattedString,
+          })
+        }
+        var oParagraph = Api.CreateParagraph()
+        oParagraph.AddElement(oForm)
+        oDocument.InsertContent([oParagraph], true, { KeepTextOnly: true })
+      })
+
       window.docEditor.grabFocus()
     }
-  }
-
-  createTextForm = (data) => {
-    Asc.scope.data = data
-    window.connector.callCommand(() => {
-      var oDocument = Api.GetDocument()
-      var oTextForm = Api.CreateTextForm({
-        key: Asc.scope.data.key,
-        placeholder: Asc.scope.data.string,
-        tag: Asc.scope.data.model,
-        tip: Asc.scope.data.string,
-      })
-      var oParagraph = Api.CreateParagraph()
-      oParagraph.AddElement(oTextForm)
-      oDocument.InsertContent([oParagraph], true, { KeepTextOnly: true })
-    })
-  }
-
-  createCheckBoxForm = (data) => {
-    Asc.scope.data = data
-    window.connector.callCommand(() => {
-      var oDocument = Api.GetDocument()
-      var oCheckBoxForm = Api.CreateCheckBoxForm({
-        key: Asc.scope.data.key,
-        tag: Asc.scope.data.model,
-        tip: Asc.scope.data.string,
-      })
-      oCheckBoxForm.ToInline()
-      var oParagraph = Api.CreateParagraph()
-      oParagraph.AddElement(oCheckBoxForm)
-      oDocument.InsertContent([oParagraph], true, { KeepTextOnly: true })
-    })
-  }
-
-  createPictureForm = (data) => {
-    Asc.scope.data = data
-    window.connector.callCommand(() => {
-      var oDocument = Api.GetDocument()
-      var oPictureForm = Api.CreatePictureForm({
-        key: Asc.scope.data.key,
-        placeholder: Asc.scope.data.string,
-        tag: Asc.scope.data.model,
-        tip: Asc.scope.data.string,
-      })
-      var oParagraph = Api.CreateParagraph()
-      oParagraph.AddElement(oPictureForm)
-      oDocument.InsertContent([oParagraph], true, { KeepTextOnly: true })
-    })
   }
 }
 TemplateEditor.components = {
   ...Component.components,
-  EditorComponent,
+  ExportData,
 }
 TemplateEditor.template = "onlyoffice_odoo_templates.TemplateEditor"
 
