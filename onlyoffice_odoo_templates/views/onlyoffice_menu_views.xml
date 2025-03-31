@@ -97,7 +97,11 @@
                     <div class="dropdown-menu" role="menu" aria-labelledby="dLabel">
                       <a t-if="widget.editable" type="edit" class="dropdown-item">Edit</a>
                       <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
-                      <a class="dropdown-item o_onlyoffice_download">Download</a>
+                      <a
+                        t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/datas?download=true"
+                        download=""
+                        class="dropdown-item"
+                      >Download</a>
                     </div>
                   </div>
                 </div>
