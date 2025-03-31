@@ -1,7 +1,5 @@
 # Change Log
 
-- settings menu for demo template installation
-- batch print in list view
 - goback from editor to file location
 - setting to open the editor in the same tab
 - shardkey in querystring

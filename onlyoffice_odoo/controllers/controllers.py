@@ -27,6 +27,9 @@ class Onlyoffice_Connector(http.Controller):
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         if document_id:
             document = request.env["documents.document"].browse(int(document_id))
+            if document.is_locked and document.lock_uid.id != request.env.user.id:
+                _logger.error("Document is locked by another user")
+                raise Forbidden()
             try:
                 document.check_access_rule("read")
                 attachment_id = document.attachment_id.id

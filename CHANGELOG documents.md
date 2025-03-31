@@ -1,5 +1,14 @@
 # Change Log
 
+- deny opening/editing locked files
+- deny opening files for viewing without access
+- use same tab parameter on create document
+- pointer cursor for list of created documents
+- access to demo mode and same tab parameters for users without access to system parameters
+- open documents with file extensions in capital letters
+- setting to open the editor in the same tab
+- create pdf form
+
 ## Added
 
 - added creation of pdf forms
