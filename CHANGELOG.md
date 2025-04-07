@@ -1,5 +1,7 @@
 # Change Log
 
+## 3.1.0
+
 - goback from editor to file location
 - setting to open the editor in the same tab
 - shardkey in querystring
