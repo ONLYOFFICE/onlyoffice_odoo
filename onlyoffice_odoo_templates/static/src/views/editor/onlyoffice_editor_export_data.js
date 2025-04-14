@@ -188,7 +188,7 @@ export class ExportData extends Component {
   }
 
   onToggleDisplayOption(value) {
-    this.onCleanSearch()
+    // This.onCleanSearch()
     this.state.isTechnicalName = value
   }
 }

@@ -21,7 +21,7 @@
                     <label>
                       <input
                         type="checkbox"
-                        class="o-onlyoffice-template-checkbox"
+                        class="o-onlyoffice-template-checkbox form-check-input"
                         t-att-checked="state.selected.includes(file.path)"
                         t-on-change="(ev) => this.toggleTemplate(file.path, ev.target.checked)"
                       />
