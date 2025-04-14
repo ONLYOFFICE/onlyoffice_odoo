@@ -399,12 +399,25 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 else:
                                     result[field] = str(data)
                             elif field_type == "date":
-                                date_format = get_lang(request.env).date_format
+                                date_format = None
+                                user_date_format = request.env["res.lang"]._get_data(code=user.lang).date_format
+                                if user_date_format:
+                                    date_format = user_date_format
+                                else:
+                                    date_format = get_lang(request.env).date_format
                                 format_to_use = date_format or DEFAULT_SERVER_DATE_FORMAT
                                 result[field] = str(data.strftime(format_to_use))
                             elif field_type == "datetime":
-                                date_format = get_lang(request.env).date_format
-                                time_format = get_lang(request.env).time_format
+                                date_format = None
+                                time_format = None
+                                user_date_format = request.env["res.lang"]._get_data(code=user.lang).date_format
+                                user_time_format = request.env["res.lang"]._get_data(code=user.lang).time_format
+                                if user_date_format and user_time_format:
+                                    date_format = user_date_format
+                                    time_format = user_time_format
+                                else:
+                                    date_format = get_lang(request.env).date_format
+                                    time_format = get_lang(request.env).time_format
                                 if date_format and time_format:
                                     format_to_use = f"{date_format} {time_format}"
                                 else:
