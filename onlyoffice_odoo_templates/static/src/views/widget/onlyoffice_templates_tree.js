@@ -77,40 +77,5 @@ export class TemplatesTree extends Component {
 }
 
 TemplatesTree.template = "onlyoffice_odoo_templates.TemplatesTree"
-TemplatesTree.props = {
-  decorations: {
-    optional: true,
-    type: Object,
-  },
-  id: {
-    optional: true,
-    type: Function,
-  },
-  name: {
-    optional: true,
-    type: Function,
-  },
-  readonly: {
-    optional: true,
-    type: Function,
-  },
-  record: {
-    optional: true,
-    type: Function,
-  },
-  setDirty: {
-    optional: true,
-    type: Function,
-  },
-  type: {
-    optional: true,
-    type: Function,
-  },
-  update: {
-    optional: true,
-    type: Function,
-  },
-  value: true,
-}
 
 registry.category("fields").add("onlyoffice_template_tree", TemplatesTree)
