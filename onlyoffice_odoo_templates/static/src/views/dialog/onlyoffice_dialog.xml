@@ -76,6 +76,9 @@
           <button class="btn btn-primary o-template-fill" t-att-disabled="isButtonDisabled()" t-on-click="fillTemplate">
             <t>Print</t>
           </button>
+          <button class="btn btn-secondary" t-att-disabled="isButtonDisabled()" t-on-click="previewTemplate">
+            <t>Preview</t>
+          </button>
           <button class="btn btn-secondary" t-on-click="data.close">
             <t>Cancel</t>
           </button>
