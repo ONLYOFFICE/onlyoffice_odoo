@@ -1,5 +1,6 @@
 # Change Log
 
+- preview of the template before filling
 - new interface for the creation of templates
 - settings menu for demo template installation
 - batch print in list view
