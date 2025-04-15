@@ -4,15 +4,15 @@
 
 ## Added
 
-- deny opening/editing locked files
-- deny opening files for viewing without access
-- use same tab parameter on create document
-- access to demo mode and same tab parameters for users without access to system parameters
 - setting to open the editor in the same tab
 - added creation of pdf forms
 
 ## Changed
 
+- deny opening/editing locked files
+- deny opening files for viewing without access
+- use same tab parameter on create document
+- access to demo mode and same tab parameters for users without access to system parameters
 - pointer cursor for list of created documents
 - open documents with file extensions in capital letters
 

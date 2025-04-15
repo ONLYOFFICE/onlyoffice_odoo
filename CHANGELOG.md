@@ -2,13 +2,17 @@
 
 ## 3.1.0
 
+## Added
+
 - goback from editor to file location
 - setting to open the editor in the same tab
 - shardkey in querystring
 - jwt lifetime
-- demo server address changed
 - default document template for unsupported language
 - Basque, Finnish, Galician, Hebrew, Norwegian, Turkish, Chinese (Traditional) empty file templates
+
+## Changed
+- demo server address changed
 
 ## 3.0.0
 
