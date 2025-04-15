@@ -92,6 +92,10 @@
                   <label class="o_form_label" for="doc_server_demo">
                     Connect to demo ONLYOFFICE Docs server
                   </label>
+                  <a
+                    title="ONLYOFFICE Templates requires a properly licensed Document Server connected with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper license."
+                    class="o_doc_link"
+                  />
                   <div class="text-muted">
                     This is a public test server, please do not use it for private sensitive data.
                     The server will be available during a 30-day period.
