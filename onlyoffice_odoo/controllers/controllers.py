@@ -237,7 +237,7 @@ class Onlyoffice_Connector(http.Controller):
         return user
 
     def filter_xss(self, text):
-        allowed_symbols = set(string.ascii_letters + string.digits + "_-.")
+        allowed_symbols = set(string.ascii_letters + string.digits + " _-,.:@+")
         text = "".join(char for char in text if char in allowed_symbols)
 
         return text

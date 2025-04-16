@@ -9,6 +9,7 @@ import { KeepLast } from "@web/core/utils/concurrency"
 import { useService } from "@web/core/utils/hooks"
 import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
+import { OnlyofficePDFPreview } from "../widget/onlyoffice_pdf_preview"
 
 const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
 
@@ -76,7 +77,7 @@ export class TemplateDialog extends Component {
     const records = await this.orm.searchRead(
       "onlyoffice.odoo.templates",
       domain,
-      ["name", "create_date", "create_uid", "attachment_id", "mimetype"],
+      ["display_name", "name", "create_date", "create_uid", "attachment_id", "mimetype"],
       {
         context,
         limit: this.limit,
@@ -140,6 +141,27 @@ export class TemplateDialog extends Component {
 
   isButtonDisabled() {
     return this.state.isProcessing || this.state.selectedTemplateId === null
+  }
+
+  previewTemplate() {
+    const t = this.state.templates.find((item) => item.id === this.state.selectedTemplateId)
+    const url = `/web/content/ir.attachment/${t.attachment_id[0]}/datas`
+
+    this.env.services.dialog.add(
+      OnlyofficePDFPreview,
+      {
+        close: () => {
+          this.env.services.dialog.close()
+        },
+        title: t.display_name + ".pdf",
+        url: url,
+      },
+      {
+        onClose: () => {
+          return
+        },
+      },
+    )
   }
 }
 

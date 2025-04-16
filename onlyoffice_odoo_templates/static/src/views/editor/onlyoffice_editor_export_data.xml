@@ -41,13 +41,12 @@
         <span> Choose the field below to paste selected parameter to the cursor </span>
       </div>
       <div class="o-onlyoffice-options-title">
-        <span> Model/section </span>
+        <span>Module/ section</span>
       </div>
       <div class="o-onlyoffice-options-search">
         <div class="o-onlyoffice-search-field o_searchview">
           <input
             t-ref="search"
-            type="search"
             class="o-onlyoffice-search-input o_searchview_input form-control"
             id="o-export-search-filter"
             t-attf-placeholder="{{ state.isTechnicalName ? 'Search technical name' : 'Search field' }}"

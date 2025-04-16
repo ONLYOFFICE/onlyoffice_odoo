@@ -16,11 +16,11 @@
     <field name="arch" type="xml">
       <form>
         <p>
-          Check a templates you want to display in ONLYOFFICE Templates model and press Save
+          Check templates you want to export to the ONLYOFFICE Templates module and press Export. You can do this as many times as you need.
         </p>
         <field name="selected_templates" widget="onlyoffice_template_tree" />
         <footer>
-          <button name="action_save" string="Save" type="object" class="btn-primary" />
+          <button name="action_save" string="Export" type="object" class="btn-primary" />
           <button string="Cancel" special="cancel" class="btn-secondary" />
         </footer>
       </form>
@@ -37,7 +37,7 @@
         <block title="ONLYOFFICE Templates" name="onlyoffice_odoo_templates">
           <setting string="Templates gallery">
             <div class="text-muted">
-              Choose default templates to display in ONLYOFFICE Templates model
+              Export templates to the ONLYOFFICE Templates module
             </div>
             <button
               type="action"
