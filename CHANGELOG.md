@@ -12,6 +12,7 @@
 - Basque, Finnish, Galician, Hebrew, Norwegian, Turkish, Chinese (Traditional) empty file templates
 
 ## Changed
+
 - demo server address changed
 
 ## 3.0.0
