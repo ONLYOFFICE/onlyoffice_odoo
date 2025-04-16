@@ -32,12 +32,36 @@
             </setting>
           </block>
           <block title="Other" name="onlyoffice_odoo">
-            <setting string="Connect to demo ONLYOFFICE Docs server">
-              <field name="doc_server_demo" />
-              <div class="text-muted">
-                This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.
+            <div class="o_setting_box col-12 col-lg-6 o_searchable_setting">
+              <div class="o_setting_left_pane">
+                <field name="doc_server_demo" />
               </div>
-            </setting>
+              <div class="o_setting_right_pane">
+                <label class="o_form_label me-2" for="doc_server_demo">
+                  <span searchabletext="Connect to demo ONLYOFFICE Docs server">
+                    Connect to demo ONLYOFFICE Docs server
+                  </span>
+                </label>
+                <div class="o_widget o_widget_documentation_link d-inline">
+                  <a
+                    title="ONLYOFFICE Templates requires a properly licensed Document Server connected with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper license."
+                    class="o_doc_link"
+                  >
+                    <i class="fa fa-question-circle" />
+                    <span />
+                  </a>
+                </div>
+                <div class="mt16">
+                  <div class="text-muted">
+                    <span
+                      searchabletext="This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period."
+                    >
+                      This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
             <setting string="Open file in the same tab">
               <field name="same_tab" />
             </setting>

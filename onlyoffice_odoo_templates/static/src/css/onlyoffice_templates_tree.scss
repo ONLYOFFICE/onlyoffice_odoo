@@ -6,9 +6,16 @@
           label {
             display: flex;
             align-items: center;
-          }
+            column-gap: 6px;
 
-          .o-onlyoffice-template-checkbox {
+            .o-onlyoffice-template-checkbox {
+              margin: 0 !important;
+            }
+
+            button {
+              padding: 0 !important;
+              border: none !important;
+            }
           }
         }
       }
