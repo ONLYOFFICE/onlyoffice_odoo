@@ -34,11 +34,14 @@ class TemplateEditor extends Component {
       try {
         const attachment_id = this.props.action.params.attachment_id
         const template_model_model = this.props.action.params.template_model_model
-
+        const id = this.props.action.params.id
         this.router.pushState({
           attachment_id: this.props.action.params.attachment_id,
+          id: this.props.action.params.id,
           template_model_model: this.props.action.params.template_model_model,
         })
+
+        await this.orm.call("onlyoffice.odoo.templates", "update_relationship", [id, template_model_model])
 
         const response = await this.rpc("/onlyoffice/template/editor", { attachment_id: attachment_id })
         const config = JSON.parse(response.editorConfig)

@@ -14,7 +14,7 @@
               help="Model for which the template is being created."
               required="1"
             />
-            <field name="template_model_name" invisible="1" />
+            <field name="template_model_related_name" invisible="1" />
             <field name="template_model_model" invisible="1" />
           </group>
           <group string="Template uploading">
@@ -58,6 +58,7 @@
         <field name="create_date" />
         <field name="name" />
         <field name="template_model_name" />
+        <field name="template_model_related_name" />
         <field name="template_model_model" />
         <templates>
           <t t-name="kanban-menu">
@@ -82,7 +83,12 @@
                     <field name="name" class="o_text_overflow" />
                   </div>
                   <div class="o_kanban_record_body">
-                    <field name="template_model_name" widget="badge" />
+                    <t t-if="template_model_related_name">
+                      <field name="template_model_related_name" widget="badge" />
+                    </t>
+                    <t t-else="">
+                      <field name="template_model_name" widget="badge" />
+                    </t>
                   </div>
                   <div class="o_kanban_record_bottom">
                     <span class="oe_kanban_bottom_left">
