@@ -15,8 +15,9 @@ class OnlyOfficeTemplate(models.Model):
 
     name = fields.Char(required=True, string="Template Name")
     template_model_id = fields.Many2one("ir.model", string="Select Model")
-    template_model_name = fields.Char("Model Description", related="template_model_id.name")
-    template_model_model = fields.Char("Model", related="template_model_id.model")
+    template_model_name = fields.Char("Model Description")
+    template_model_related_name = fields.Char("Model Description", related="template_model_id.name")
+    template_model_model = fields.Char("Model")
     file = fields.Binary(string="Upload an existing template")
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
@@ -92,6 +93,9 @@ class OnlyOfficeTemplate(models.Model):
         vals["mimetype"] = mimetype
 
         datas = vals.pop("file", None)
+        model = self.env["ir.model"].search([("id", "=", vals["template_model_id"])], limit=1)
+        vals["template_model_name"] = model.name
+        vals["template_model_model"] = model.model
         record = super().create(vals)
         if datas:
             attachment = self.env["ir.attachment"].create(
@@ -109,7 +113,12 @@ class OnlyOfficeTemplate(models.Model):
 
     @api.model
     def get_fields_for_model(self, model, prefix="", parent_name="", exclude=None):
-        fields = self.env[model].fields_get()
+        try:
+            m = self.env[model]
+            fields = m.fields_get()
+        except Exception:
+            return []
+
         fields = sorted(fields.items(), key=lambda field: tools.ustr(field[1].get("string", "").lower()))
         records = []
         for field_name, field in fields:
@@ -141,3 +150,24 @@ class OnlyOfficeTemplate(models.Model):
                 record["children"] = True
 
         return records
+
+    @api.model
+    def update_relationship(self, template_model_id, model):
+        """
+        If the module was uninstalled and reinstalled, its model id may have changed.
+        Update the model id in the template record
+        """
+        if not template_model_id or not model:
+            return
+
+        model_id = self.env["ir.model"].search([("model", "=", model)]).id
+        if not model_id:
+            return
+
+        record = self.env["onlyoffice.odoo.templates"].browse(template_model_id)
+        if not record:
+            return
+
+        if record.template_model_id != model_id:
+            record.template_model_id = model_id
+        return
