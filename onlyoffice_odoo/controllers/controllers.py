@@ -25,23 +25,22 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 class Onlyoffice_Connector(http.Controller):
     @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
+        document = None
         if document_id:
             document = request.env["documents.document"].browse(int(document_id))
-            if document.is_locked and document.lock_uid.id != request.env.user.id:
-                _logger.error("Document is locked by another user")
-                raise Forbidden()
-            try:
-                document.check_access_rule("read")
-                attachment_id = document.attachment_id.id
-            except AccessError:
-                _logger.error("User has no read access rights to open this document")
-                raise Forbidden()  # noqa: B904
+            attachment_id = document.attachment_id.id
 
         attachment = self.get_attachment(attachment_id)
         if not attachment:
             return request.not_found()
 
         attachment.validate_access(access_token)
+
+        if attachment.res_model == "documents.document" and not document:
+            document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        if document:
+            self._check_document_access(document)
 
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
@@ -99,6 +98,10 @@ class Onlyoffice_Connector(http.Controller):
             return request.not_found()
 
         attachment.validate_access(access_token)
+
+        if attachment.res_model == "documents.document":
+            document = request.env["documents.document"].browse(int(attachment.res_id))
+            self._check_document_access(document)
 
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
@@ -241,3 +244,13 @@ class Onlyoffice_Connector(http.Controller):
         text = "".join(char for char in text if char in allowed_symbols)
 
         return text
+
+    def _check_document_access(self, document):
+        if document.is_locked and document.lock_uid.id != request.env.user.id:
+            _logger.error("Document is locked by another user")
+            raise Forbidden()
+        try:
+            document.check_access_rule("read")
+        except AccessError as e:
+            _logger.error("User has no read access rights to open this document")
+            raise Forbidden() from e
