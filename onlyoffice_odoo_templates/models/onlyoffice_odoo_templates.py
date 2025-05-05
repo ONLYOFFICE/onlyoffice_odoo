@@ -160,11 +160,11 @@ class OnlyOfficeTemplate(models.Model):
         if not template_model_id or not model:
             return
 
-        model_id = self.env["ir.model"].search([("model", "=", model)]).id
+        model_id = self.sudo().env["ir.model"].search([("model", "=", model)]).id
         if not model_id:
             return
 
-        record = self.env["onlyoffice.odoo.templates"].browse(template_model_id)
+        record = self.sudo().env["onlyoffice.odoo.templates"].browse(template_model_id)
         if not record:
             return
 
