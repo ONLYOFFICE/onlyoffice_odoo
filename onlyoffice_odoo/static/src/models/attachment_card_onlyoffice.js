@@ -65,7 +65,10 @@ patch(AttachmentList.prototype, {
   },
   // eslint-disable-next-line sort-keys
   onlyofficeCanOpen(attachment) {
-    return oo_editable_formats.includes(attachment.extension) || oo_viewable_formats.includes(attachment.extension)
+    return (
+      oo_editable_formats.includes(attachment.extension.toLowerCase()) ||
+      oo_viewable_formats.includes(attachment.extension.toLowerCase())
+    )
   },
   async openOnlyoffice(attachment) {
     const demo = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_demo"))
