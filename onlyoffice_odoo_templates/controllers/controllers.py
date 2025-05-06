@@ -10,6 +10,7 @@ import re
 import time
 import zipfile
 from datetime import datetime
+from urllib.parse import quote
 
 import requests
 
@@ -91,13 +92,13 @@ class OnlyofficeTemplate_Connector(http.Controller):
             if len(templates) == 1:
                 url = next(iter(templates.values()))
                 filename = next(iter(templates))
-                response = requests.get(url, timeout=120)
+                response = requests.get(quote(url, safe="/:?=&"), timeout=120)
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
                         ("X-Content-Type-Options", "nosniff"),
                         ("Content-Length", str(len(response.content))),
-                        ("Content-Disposition", f'attachment; filename="{filename}"'),
+                        ("Content-Disposition", f'attachment; filename="{quote(filename)}"'),
                     ]
                     return request.make_response(response.content, headers)
                 else:
