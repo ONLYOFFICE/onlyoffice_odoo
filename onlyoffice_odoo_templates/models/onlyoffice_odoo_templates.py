@@ -15,9 +15,9 @@ class OnlyOfficeTemplate(models.Model):
 
     name = fields.Char(required=True, string="Template Name")
     template_model_id = fields.Many2one("ir.model", string="Select Model")
-    template_model_name = fields.Char("Model Description")
+    template_model_name = fields.Char(string="Model Description", compute="_compute_template_model_fields", store=True)
     template_model_related_name = fields.Char("Model Description", related="template_model_id.name")
-    template_model_model = fields.Char("Model")
+    template_model_model = fields.Char(string=" ", compute="_compute_template_model_fields", store=True)
     file = fields.Binary(string="Upload an existing template")
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
@@ -27,6 +27,16 @@ class OnlyOfficeTemplate(models.Model):
         if self.attachment_id:
             self.attachment_id.name = self.name + ".pdf"
             self.attachment_id.display_name = self.name
+
+    @api.depends("template_model_id")
+    def _compute_template_model_fields(self):
+        for record in self:
+            if record.template_model_id:
+                record.template_model_name = record.template_model_id.name
+                record.template_model_model = record.template_model_id.model
+            else:
+                record.template_model_name = False
+                record.template_model_model = False
 
     @api.onchange("file")
     def _onchange_file(self):
