@@ -401,7 +401,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                     result[field] = str(data)
                             elif field_type == "date":
                                 date_format = None
-                                user_date_format = request.env["res.lang"]._get_data(code=user.lang).date_format
+                                lang = request.env["res.lang"].search([("code", "=", user.lang)], limit=1)
+                                user_date_format = lang.date_format
                                 if user_date_format:
                                     date_format = user_date_format
                                 else:
@@ -411,8 +412,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
                             elif field_type == "datetime":
                                 date_format = None
                                 time_format = None
-                                user_date_format = request.env["res.lang"]._get_data(code=user.lang).date_format
-                                user_time_format = request.env["res.lang"]._get_data(code=user.lang).time_format
+                                lang = request.env["res.lang"].search([("code", "=", user.lang)], limit=1)
+                                user_date_format = lang.date_format
+                                user_time_format = lang.time_format
                                 if user_date_format and user_time_format:
                                     date_format = user_date_format
                                     time_format = user_time_format
