@@ -92,13 +92,16 @@ class OnlyofficeTemplate_Connector(http.Controller):
             if len(templates) == 1:
                 url = next(iter(templates.values()))
                 filename = next(iter(templates))
+                filename = filename.encode("ascii", "ignore").decode("ascii")
+                if not filename:
+                    filename = "document.pdf"
                 response = requests.get(quote(url, safe="/:?=&"), timeout=120)
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
                         ("X-Content-Type-Options", "nosniff"),
                         ("Content-Length", str(len(response.content))),
-                        ("Content-Disposition", f'attachment; filename="{quote(filename)}"'),
+                        ("Content-Disposition", f'attachment; filename="{filename}"'),
                     ]
                     return request.make_response(response.content, headers)
                 else:
