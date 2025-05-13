@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0-20221116\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:14+0000\n"
-"PO-Revision-Date: 2024-07-03 15:33+0300\n"
+"PO-Revision-Date: 2025-05-13 14:19+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.4.1\n"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -63,6 +63,21 @@ msgid "Connect to demo ONLYOFFICE Docs server"
 msgstr "Zum Demoserver von ONLYOFFICE Docs verbinden"
 
 #. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__create_uid
+msgid "Created by"
+msgstr "Erstellt von"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__create_date
+msgid "Created on"
+msgstr "Erstellt am"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
+msgid "Display Name"
+msgstr "Anzeigename"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_inner_url
 msgid "Document Server Inner URL"
 msgstr "Innere URL von Document Server"
@@ -93,9 +108,29 @@ msgid "General Settings"
 msgstr "Allgemeine Einstellungen"
 
 #. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__id
+msgid "ID"
+msgstr "ID"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__internal_jwt_secret
 msgid "Internal JWT Secret"
 msgstr "Interner JWT-Geheimschlüssel"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo____last_update
+msgid "Last Modified on"
+msgstr "Zuletzt geändert am"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__write_uid
+msgid "Last Updated by"
+msgstr "Zuletzt aktualisiert von"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__write_date
+msgid "Last Updated on"
+msgstr "Zuletzt aktualisiert am"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -108,6 +143,17 @@ msgstr "ONLYOFFICE"
 #, python-format
 msgid "ONLYOFFICE Docs server"
 msgstr "ONLYOFFICE Docs-Server"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
+"ONLYOFFICE Templates requires a properly licensed Document Server connected "
+"with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper "
+"license."
+msgstr ""
+"Für ONLYOFFICE Templates benötigen Sie einen ordnungsgemäß lizenzierten "
+"Document Server, der mit Odoo verbunden ist. Kontaktieren Sie das Sales-Team "
+"unter sales@onlyoffice.com, um die entsprechende Lizenz zu erwerben."
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.onlyoffice_editor
@@ -125,6 +171,12 @@ msgstr "ONLYOFFICE-Logo"
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_odoo_url
 msgid "Odoo URL"
 msgstr "Odoo-URL"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Open file in the same tab"
+msgstr "Datei im selben Tab öffnen"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

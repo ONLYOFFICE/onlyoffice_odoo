@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0-20221116\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:14+0000\n"
-"PO-Revision-Date: 2024-07-03 17:31+0300\n"
+"PO-Revision-Date: 2025-05-13 14:27+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ja_JP\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.4.1\n"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -62,6 +62,21 @@ msgid "Connect to demo ONLYOFFICE Docs server"
 msgstr "ONLYOFFICE Docsのデモサーバーへの接続"
 
 #. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__create_uid
+msgid "Created by"
+msgstr "作成者"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__create_date
+msgid "Created on"
+msgstr "作成日"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
+msgid "Display Name"
+msgstr "表示名"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_inner_url
 msgid "Document Server Inner URL"
 msgstr "ドキュメントサーバ内部URL"
@@ -92,9 +107,29 @@ msgid "General Settings"
 msgstr "一般設定"
 
 #. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__id
+msgid "ID"
+msgstr "ID"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__internal_jwt_secret
 msgid "Internal JWT Secret"
 msgstr "内部JWTシクレット"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo____last_update
+msgid "Last Modified on"
+msgstr "最終編集日"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__write_uid
+msgid "Last Updated by"
+msgstr "最終更新したユーザー"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__write_date
+msgid "Last Updated on"
+msgstr "最終更新日"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -107,6 +142,14 @@ msgstr "ONLYOFFICE"
 #, python-format
 msgid "ONLYOFFICE Docs server"
 msgstr "ONLYOFFICE Docsサーバ"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
+"ONLYOFFICE Templates requires a properly licensed Document Server connected "
+"with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper "
+"license."
+msgstr ""
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.onlyoffice_editor
@@ -122,6 +165,12 @@ msgstr "ONLYOFFICEロゴ"
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_odoo_url
 msgid "Odoo URL"
 msgstr "Odoo URL"
+
+#. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Open file in the same tab"
+msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
