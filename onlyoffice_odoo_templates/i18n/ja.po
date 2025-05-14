@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e-20240216\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:20+0000\n"
-"PO-Revision-Date: 2025-05-13 16:07+0300\n"
+"PO-Revision-Date: 2025-05-14 15:54+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ja_JP\n"
@@ -24,6 +24,9 @@ msgid ""
 "                  Templates gallery\n"
 "                </span>"
 msgstr ""
+"<span class=\"o_form_label\">\n"
+"                  テンプレートギャラリー\n"
+"                </span>"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
@@ -65,6 +68,9 @@ msgid ""
 "Check templates you want to export to the ONLYOFFICE Templates module and "
 "press Export. You can do this as many times as you need."
 msgstr ""
+"エクスポートしたいテンプレートを 「ONLYOFFICEテンプレート」モジュールで選択"
+"し、「エクスポート」をクリックします。この操作は必要な回数だけ繰り返すことが"
+"できます。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -139,6 +145,7 @@ msgstr "エクスポート"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
 msgid "Export templates to the ONLYOFFICE Templates module"
 msgstr ""
+"テンプレートを「ONLYOFFICEテンプレート」モジュールにエクスポートします。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -184,17 +191,17 @@ msgstr "最終更新日"
 #: code:addons/onlyoffice_odoo_templates/static/src/views/widget/onlyoffice_templates_tree.xml:0
 #, python-format
 msgid "Loading templates..."
-msgstr ""
+msgstr "テンプレートを読み込み中..."
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_demo_templates
 msgid "Manage Templates"
-msgstr ""
+msgstr "テンプレートの管理"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
 msgid "Manage templates"
-msgstr ""
+msgstr "テンプレートの管理"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__mimetype
@@ -229,12 +236,12 @@ msgstr "モジュール/セクション"
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
 #, python-format
 msgid "No match found."
-msgstr ""
+msgstr "一致しているものはありません"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_demo_templates
 msgid "ONLYOFFICE Demo Templates"
-msgstr ""
+msgstr "ONLYOFFICEデモテンプレート"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
@@ -307,14 +314,14 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__selected_templates
 msgid "Selected Templates"
-msgstr ""
+msgstr "選択されたテンプレート"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
 #, python-format
 msgid "Show sub-fields"
-msgstr ""
+msgstr "サブフィールドを表示"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__name
@@ -348,7 +355,7 @@ msgstr "既存のテンプレートをアップロード"
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
 #, python-format
 msgid "Use a technical name"
-msgstr ""
+msgstr "技術的な名称を使用"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
