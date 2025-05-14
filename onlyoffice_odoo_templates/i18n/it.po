@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e-20240216\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:20+0000\n"
-"PO-Revision-Date: 2024-07-03 17:40+0300\n"
+"PO-Revision-Date: 2025-05-13 16:07+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: it_IT\n"
@@ -15,7 +15,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.4.1\n"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
+msgid ""
+"<span class=\"o_form_label\">\n"
+"                  Templates gallery\n"
+"                </span>"
+msgstr ""
+"<span class=\"o_form_label\">\n"
+"                  Galleria modelli\n"
+"                </span>"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
@@ -50,6 +61,16 @@ msgstr "Può aprire, creare, modificare e stampare modelli di ONLYOFFICE."
 #, python-format
 msgid "Cancel"
 msgstr "Annulla"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
+msgid ""
+"Check templates you want to export to the ONLYOFFICE Templates module and "
+"press Export. You can do this as many times as you need."
+msgstr ""
+"Seleziona i modelli che desideri esportare nel modulo ONLYOFFICE Templates "
+"e clicca su Esporta. Puoi ripetere questa operazione tutte le volte che "
+"vuoi."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -115,6 +136,16 @@ msgid "Edit"
 msgstr "Modifica"
 
 #. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
+msgid "Export"
+msgstr "Esporta"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
+msgid "Export templates to the ONLYOFFICE Templates module"
+msgstr "Esporta i modelli nel modulo ONLYOFFICE Templates"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
 #, python-format
@@ -154,6 +185,23 @@ msgid "Last Updated on"
 msgstr "Ultimo aggiornamento effettuato il"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/widget/onlyoffice_templates_tree.xml:0
+#, python-format
+msgid "Loading templates..."
+msgstr "Caricamento dei modelli in corso..."
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_demo_templates
+msgid "Manage Templates"
+msgstr "Gestisci modelli"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
+msgid "Manage templates"
+msgstr "Gestisci modelli"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__mimetype
 msgid "Mimetype"
 msgstr "Mimetype"
@@ -180,6 +228,18 @@ msgstr "Modulo per il quale viene creato il modello."
 #, python-format
 msgid "Module/ section"
 msgstr "Modulo/sezione"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
+#, python-format
+msgid "No match found."
+msgstr "Nessuna corrispondeza trovata."
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_demo_templates
+msgid "ONLYOFFICE Demo Templates"
+msgstr "Modelli demo di ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
@@ -237,13 +297,6 @@ msgid "Print with ONLYOFFICE"
 msgstr "Stampa con ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
-#, python-format
-msgid "Search field"
-msgstr "Campo di ricerca"
-
-#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__template_model_id
 msgid "Select Model"
 msgstr "Seleziona modello"
@@ -256,6 +309,18 @@ msgid ""
 msgstr ""
 "Seleziona un modello esistente. Lascia il campo vuoto per creare un "
 "\"modello\" vuoto."
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__selected_templates
+msgid "Selected Templates"
+msgstr "Modelli selezionati"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
+#, python-format
+msgid "Show sub-fields"
+msgstr "Mostra sotto-campi"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__name
@@ -280,16 +345,16 @@ msgid "Template uploading"
 msgstr "Caricamento del modello"
 
 #. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
-#, python-format
-msgid "Unknown error"
-msgstr "Errore sconosciuto"
-
-#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__file
 msgid "Upload an existing template"
 msgstr "Carica un modello esistente"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
+#, python-format
+msgid "Use a technical name"
+msgstr "Usa un nome tecnico"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user

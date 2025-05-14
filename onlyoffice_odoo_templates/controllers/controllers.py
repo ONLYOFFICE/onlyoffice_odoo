@@ -83,13 +83,16 @@ class OnlyofficeTemplate_Connector(http.Controller):
             if len(templates) == 1:
                 url = next(iter(templates.values()))
                 filename = next(iter(templates))
+                filename = filename.encode("ascii", "ignore").decode("ascii")
+                if not filename:
+                    filename = "document.pdf"
                 response = requests.get(quote(url, safe="/:?=&"), timeout=120)
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
                         ("X-Content-Type-Options", "nosniff"),
                         ("Content-Length", str(len(response.content))),
-                        ("Content-Disposition", f'attachment; filename="{quote(filename)}"'),
+                        ("Content-Disposition", f'attachment; filename="{filename}"'),
                     ]
                     return request.make_response(response.content, headers)
                 else:
@@ -392,7 +395,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                     result[field] = str(data)
                             elif field_type == "date":
                                 date_format = None
-                                user_date_format = request.env["res.lang"]._get_data(code=user.lang).date_format
+                                lang = request.env["res.lang"].search([("code", "=", user.lang)], limit=1)
+                                user_date_format = lang.date_format
                                 if user_date_format:
                                     date_format = user_date_format
                                 else:
@@ -402,8 +406,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
                             elif field_type == "datetime":
                                 date_format = None
                                 time_format = None
-                                user_date_format = request.env["res.lang"]._get_data(code=user.lang).date_format
-                                user_time_format = request.env["res.lang"]._get_data(code=user.lang).time_format
+                                lang = request.env["res.lang"].search([("code", "=", user.lang)], limit=1)
+                                user_date_format = lang.date_format
+                                user_time_format = lang.time_format
                                 if user_date_format and user_time_format:
                                     date_format = user_date_format
                                     time_format = user_time_format
