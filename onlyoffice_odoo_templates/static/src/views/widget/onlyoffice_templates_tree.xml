@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="onlyoffice_odoo_templates.TemplatesTree" owl="1">
+    <div class="o-onlyoffice-templates-tree">
+      <t t-if="state.loading">
+        <div class="text-center p-4">
+          <i class="fa fa-refresh fa-spin" />
+          Loading templates...
+        </div>
+      </t>
+      <t t-else="">
+        <div class="o-onlyoffice-tree-list">
+          <t t-foreach="Object.values(state.structure)" t-as="category" t-key="category.model">
+            <div class="o-onlyoffice-list-item">
+              <h3 class="o-onlyoffice-item-header">
+                <t t-esc="category.name" />
+              </h3>
+              <div class="o-onlyoffice-item-body">
+                <t t-foreach="category.files" t-as="file" t-key="file.path">
+                  <div class="o-onlyoffice-body-template">
+                    <label>
+                      <input
+                        type="checkbox"
+                        class="o-onlyoffice-template-checkbox form-check-input"
+                        t-att-checked="state.selected.includes(file.path)"
+                        t-on-change="(ev) => this.toggleTemplate(file.path, ev.target.checked)"
+                      />
+                      <button class="btn btn-sm btn-link" t-on-click="() => this.previewTemplate(file.path)">
+                        <i class="fa fa-eye" />
+                      </button>
+                      <span t-esc="file.name" />
+                    </label>
+                  </div>
+                </t>
+              </div>
+            </div>
+          </t>
+        </div>
+      </t>
+    </div>
+  </t>
+</templates>

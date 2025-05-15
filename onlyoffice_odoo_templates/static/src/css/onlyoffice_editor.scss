@@ -1,99 +1,45 @@
 .o-onlyoffice-template {
   display: flex;
 
-  iframe {
-    width: 100%;
+  .o-onlyoffice-template-fields {
+    width: 320px;
     height: 100%;
-  }
+    background-color: var(--body-bg) !important;
+    font-family: Arial !important;
+    font-weight: 400 !important;
+    font-size: 11px !important;
+    line-height: 14px !important;
+    letter-spacing: 2% !important;
 
-  .o-onlyoffice-template-panel {
-    width: 260px;
-    max-width: 260px;
-    height: 100%;
-    flex-shrink: 0;
-    font-size: 11px;
-    border-right: 1.5px var(--gray-300) solid;
-
-    .o-onlyoffice-panel-header {
+    .o-onlyoffice-fields-title {
       display: flex;
+      align-items: center;
       height: 54px;
-      padding: 10px;
+      padding: 0 12px;
       align-items: center;
 
-      span {
-        font-weight: bold;
-      }
+      font-family: Arial;
+      font-weight: 700;
+      font-size: 11px;
+      line-height: 16px;
+      letter-spacing: 2%;
+      vertical-align: middle;
     }
 
-    .o-onlyoffice-panel-separator {
+    .o-onlyoffice-template-separator {
       width: 100%;
-      height: 1.5px;
       margin: 0;
-      flex-shrink: 0;
       border-color: var(--gray-300);
     }
+  }
 
-    .o-onlyoffice-panel-body {
-      display: flex;
-      height: calc(100% - 56px);
-      flex-direction: column;
-      row-gap: 10px;
-      padding: 10px;
+  .o-onlyoffice-template-editor {
+    width: calc(100% - 320px);
+    height: 100%;
 
-      .o-onlyoffice-body-title {
-        span {
-        }
-      }
-
-      .o-onlyoffice-body-search {
-        display: flex;
-        flex-direction: column;
-        row-gap: 10px;
-
-        .o-onlyoffice-search-title {
-          span {
-            font-weight: bold;
-            text-transform: capitalize;
-          }
-        }
-
-        .o-onlyoffice-search-field {
-          position: relative;
-
-          input {
-            height: 24px;
-          }
-
-          button {
-            display: flex;
-            position: absolute;
-            top: 0;
-            right: 0;
-            align-items: center;
-            border: none;
-            height: 100%;
-            background-color: transparent;
-
-            svg {
-              path {
-                fill: var(--gray-900);
-              }
-
-              width: 14px;
-              height: 14px;
-            }
-          }
-        }
-      }
-
-      .o-onlyoffice-body-models {
-        display: flex;
-        flex-direction: column;
-        padding-right: 4px;
-        row-gap: 5px;
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
+    iframe {
+      width: 100%;
+      height: 100%;
     }
   }
 }
