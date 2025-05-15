@@ -1,302 +1,359 @@
-var oDocument = Api.GetDocument();
+var oDocument = Api.GetDocument()
 // As new elements appear when filling tables and lists, the total number of elements in the document increases,
 // so we need to store references to elements, or increase the loop counter when traversing document elements.
-var oDocumentElementsCount = oDocument.GetElementsCount();
-var oDocumentElements = [];
+var oDocumentElementsCount = oDocument.GetElementsCount()
+var oDocumentElements = []
 for (var i = 0; i < oDocumentElementsCount; i++) {
-    var oElement = oDocument.GetElement(i);
-    oDocumentElements.push(oElement);
+  var oElement = oDocument.GetElement(i)
+  oDocumentElements.push(oElement)
 }
-oDocumentElements.forEach(oElement => {
-    fillElementByType(oElement);
+
+oDocumentElements.forEach((oElement) => {
+  fillElementByType(oElement)
 })
 
+// From docs:
+// 💡 Please note that the current paragraph must be in the document (not in the footer/header).
+// And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.
+// So, numbering in shapes and footer/header is not supported.
+
+// fill header and footer
+var oSection = oDocument.GetFinalSection()
+var oHeader = oSection.GetHeader("default", true)
+var oFooter = oSection.GetFooter("default", true)
+var oHeaderElementsCount = oHeader.GetElementsCount()
+var oFooterElementsCount = oFooter.GetElementsCount()
+for (var i = 0; i < oHeaderElementsCount; i++) {
+  var oElement = oHeader.GetElement(i)
+  var oElementClassType = oElement.GetClassType()
+  if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
+    continue
+  } else {
+    fillElementByType(oElement)
+  }
+}
+for (var i = 0; i < oFooterElementsCount; i++) {
+  var oElement = oHeader.GetElement(i)
+  var oElementClassType = oElement.GetClassType()
+  if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
+    continue
+  } else {
+    fillElementByType(oElement)
+  }
+}
+
+// fill form in shapes object
+var oShapes = oDocument.GetAllShapes()
+oShapes.forEach((oShape) => {
+  var oShapesClassType = oShape.GetClassType()
+  if (oShapesClassType === "shape") {
+    var oShapeContent = oShape.GetDocContent()
+    try {
+      var oShapeContentClassType = oShapeContent.GetClassType()
+      if (oShapeContentClassType === "documentContent") {
+        var oShapeElementsCount = oShapeContent.GetElementsCount()
+        for (var i = 0; i < oShapeElementsCount; i++) {
+          var oElement = oShapeContent.GetElement(i)
+          var oElementClassType = oElement.GetClassType()
+          if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
+            continue
+          } else {
+            fillElementByType(oElement)
+          }
+        }
+      }
+    } catch (_e) {}
+  }
+})
 
 function getData(keyPath, index = 0, obj = fields) {
-  const keys = keyPath.split(' ');
+  const keys = keyPath.split(" ")
 
   // Recursive function to traverse the object and get the desired value(s)
   function traverse(obj, keys) {
-      if (keys.length === 0) return obj;
+    if (keys.length === 0) return obj
 
-      let key = keys[0];
-      let remainingKeys = keys.slice(1);
+    let key = keys[0]
+    let remainingKeys = keys.slice(1)
 
-      if (Array.isArray(obj)) {
-          return obj.map(item => traverse(item, [key, ...remainingKeys]));
-      } else {
-    if (typeof obj[key] === 'undefined') {
+    if (Array.isArray(obj)) {
+      return obj.map((item) => traverse(item, [key, ...remainingKeys]))
+    } else {
+      if (typeof obj[key] === "undefined") {
         return ""
-          }
-          return traverse(obj[key], remainingKeys);
       }
+      return traverse(obj[key], remainingKeys)
+    }
   }
 
   // Get the value(s) from the object based on the keys
-  let values = traverse(obj, keys);
+  let values = traverse(obj, keys)
 
-  if (typeof values[index] === 'undefined') {
+  if (typeof values[index] === "undefined") {
     return ""
   }
-  
+
   if (Array.isArray(values[0])) {
-      // If the first element is an array, return a concatenated string of all values by key
-      return values[index].flat().join(' ');
-  } else if (Array.isArray(values) && typeof values[index] !== 'object') {
-      // If values are an array, return the value at the specified index
-      return values[index];
+    // If the first element is an array, return a concatenated string of all values by key
+    return values[index].flat().join(" ")
+  } else if (Array.isArray(values) && typeof values[index] !== "object") {
+    // If values are an array, return the value at the specified index
+    return values[index]
   } else {
-      // If the value is not an array, return it as is
-      return values;
+    // If the value is not an array, return it as is
+    return values
   }
 }
 
 function getDataArrayLength(keyPath, obj = fields) {
-    const keys = keyPath.split(' ');
-    let currentObj = obj;
-    for (let key of keys) {
-        if (typeof currentObj === 'undefined') {
-            return 0;
-        }
-        if (Array.isArray(currentObj)) {
-            return currentObj.length;
-        }
-        currentObj = currentObj[key];
+  const keys = keyPath.split(" ")
+  let currentObj = obj
+  for (let key of keys) {
+    if (typeof currentObj === "undefined") {
+      return 0
     }
-  return 0;
+    if (Array.isArray(currentObj)) {
+      return currentObj.length
+    }
+    currentObj = currentObj[key]
+  }
+  return 0
 }
 
 function fillElementByType(oElement) {
-    var oElementClassType = oElement.GetClassType();
+  var oElementClassType = oElement.GetClassType()
 
-    if (oElementClassType === "paragraph") {
-        if (oElement.GetNumbering()) {    
-            fillNumbering(oElement);
-        } else {
-            fillParagraph(oElement);
-        }
+  if (oElementClassType === "paragraph") {
+    if (oElement.GetNumbering()) {
+      fillNumbering(oElement)
+    } else {
+      fillParagraph(oElement)
     }
-    if (oElementClassType === "form") {
-        fillForm(oElement);
-    }
-    if (oElementClassType === "run") {}
-    if (oElementClassType === "table") {
-        fillTable(oElement);
-    }
+  }
+  if (oElementClassType === "form") {
+    fillForm(oElement)
+  }
+  if (oElementClassType === "run") {
+  }
+  if (oElementClassType === "table") {
+    fillTable(oElement)
+  }
 }
 
 function fillParagraph(oParagraph) {
-    var oParagraphElementsCount = oParagraph.GetElementsCount();
-    for (var i = 0; i < oParagraphElementsCount; i++) {
-        var oElement = oParagraph.GetElement(i);
-        fillElementByType(oElement);
-    }
+  var oParagraphElementsCount = oParagraph.GetElementsCount()
+  for (var i = 0; i < oParagraphElementsCount; i++) {
+    var oElement = oParagraph.GetElement(i)
+    fillElementByType(oElement)
+  }
 }
 
 function fillNumbering(oParagraph) {
-    var requiredLevel = 0;
+  var requiredLevel = 0
 
-    var oParagraphElementsCount = oParagraph.GetElementsCount();
-    for (var i = 0; i < oParagraphElementsCount; i++) {
-        var oElement = oParagraph.GetElement(i);
-        var oElementClassType = oElement.GetClassType();
+  var oParagraphElementsCount = oParagraph.GetElementsCount()
+  for (var i = 0; i < oParagraphElementsCount; i++) {
+    var oElement = oParagraph.GetElement(i)
+    var oElementClassType = oElement.GetClassType()
+
+    if (oElementClassType === "form") {
+      var oForm = oElement
+      var oFormKey = oForm.GetFormKey()
+
+      var data = getData(oFormKey, 0)
+      var length = getDataArrayLength(oFormKey)
+      requiredLevel = Math.max(requiredLevel, length)
+      fillForm(oForm, data)
+    }
+  }
+
+  if (requiredLevel > 1) {
+    var oNumberingLevel = oParagraph.GetNumbering()
+    var oCurrentParagraph = oParagraph
+    for (var newLevel = 1; newLevel < requiredLevel; newLevel++) {
+      var nPos = oCurrentParagraph.GetPosInParent()
+
+      var oNewParagraph = oParagraph.Copy()
+      oNewParagraph.SetNumbering(oNumberingLevel)
+
+      var oParagraphElementsCount = oNewParagraph.GetElementsCount()
+      for (var element = 0; element < oParagraphElementsCount; element++) {
+        var oElement = oNewParagraph.GetElement(element)
+        var oElementClassType = oElement.GetClassType()
 
         if (oElementClassType === "form") {
-            var oForm = oElement;
-            var oFormKey = oForm.GetFormKey();
+          var oForm = oElement
+          var oFormKey = oForm.GetFormKey()
 
-            var data = getData(oFormKey, 0);
-            var length = getDataArrayLength(oFormKey)
-            requiredLevel = Math.max(requiredLevel, length);
-            fillForm(oForm, data);
+          oForm.SetFormKey(oFormKey + newLevel)
+          var data = getData(oFormKey, newLevel)
+          fillForm(oForm, data)
         }
+      }
+      oDocument.AddElement(nPos + 1, oNewParagraph)
+      oCurrentParagraph = oNewParagraph
     }
-
-    if (requiredLevel > 1) {
-        var oNumberingLevel = oParagraph.GetNumbering();
-        var oCurrentParagraph = oParagraph;
-        for (var newLevel = 1; newLevel < requiredLevel; newLevel++) {
-            var nPos = oCurrentParagraph.GetPosInParent();
-
-            var oNewParagraph = oParagraph.Copy();
-            oNewParagraph.SetNumbering(oNumberingLevel);
-
-            var oParagraphElementsCount = oNewParagraph.GetElementsCount();
-            for (var element = 0; element < oParagraphElementsCount; element++) {
-                var oElement = oNewParagraph.GetElement(element);
-                var oElementClassType = oElement.GetClassType();
-
-                if (oElementClassType === "form") {
-                    var oForm = oElement;
-                    var oFormKey = oForm.GetFormKey();
-
-                    oForm.SetFormKey(oFormKey + newLevel);
-                    var data = getData(oFormKey, newLevel);
-                    fillForm(oForm, data);
-                }
-            }
-            oDocument.AddElement(nPos + 1, oNewParagraph);
-            oCurrentParagraph = oNewParagraph;
-        }
-    }
+  }
 }
 
-
 function fillTable(oTable) {
-    var rows = oTable.GetRowsCount();
-    for (var row = 0; row < rows; row++) {
-        var oRow = oTable.GetRow(row);
-        var cols = oRow.GetCellsCount();
+  var rows = oTable.GetRowsCount()
+  for (var row = 0; row < rows; row++) {
+    var oRow = oTable.GetRow(row)
+    var cols = oRow.GetCellsCount()
 
-        // If there is a form in the cell, then write the length of the array using the form key.
-        // Maximum length - the number of lines that must be inserted after the current row.
-        var requiredRows = 0;
-        var tableData = {};
+    // If there is a form in the cell, then write the length of the array using the form key.
+    // Maximum length - the number of lines that must be inserted after the current row.
+    var requiredRows = 0
+    var tableData = {}
 
-        for (var col = 0; col < cols; col++) {
-            var oCell = oTable.GetCell(row, col);
-            var oCellContent = oCell.GetContent();
+    for (var col = 0; col < cols; col++) {
+      var oCell = oTable.GetCell(row, col)
+      var oCellContent = oCell.GetContent()
 
-            // Enum of paragraphs inside the cell
-            var oCellElementsCount = oCellContent.GetElementsCount();
-            for (var cellElement = 0; cellElement < oCellElementsCount; cellElement++) {
-                var oCellElement = oCellContent.GetElement(cellElement);
+      // Enum of paragraphs inside the cell
+      var oCellElementsCount = oCellContent.GetElementsCount()
+      for (var cellElement = 0; cellElement < oCellElementsCount; cellElement++) {
+        var oCellElement = oCellContent.GetElement(cellElement)
 
-                if (oCellElement.GetClassType() !== "paragraph") {
-                    fillElementByType(oCellElement)
-                } else {
-                    // Enum paragraph elements inside a cell
-                    var oParagraphElementsCount = oCellElement.GetElementsCount();
-                    for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
-                        var oParagraphElement = oCellElement.GetElement(paragraphElement);
+        if (oCellElement.GetClassType() !== "paragraph") {
+          fillElementByType(oCellElement)
+        } else {
+          // Enum paragraph elements inside a cell
+          var oParagraphElementsCount = oCellElement.GetElementsCount()
+          for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
+            var oParagraphElement = oCellElement.GetElement(paragraphElement)
 
-                        if (oParagraphElement.GetClassType() !== "form") {
-                            fillElementByType(oParagraphElement)
-                        } else {
-                            // Fill the first element and count the number of required rows
-                            var oForm = oParagraphElement;
-                            var oFormKey = oForm.GetFormKey();
+            if (oParagraphElement.GetClassType() !== "form") {
+              fillElementByType(oParagraphElement)
+            } else {
+              // Fill the first element and count the number of required rows
+              var oForm = oParagraphElement
+              var oFormKey = oForm.GetFormKey()
 
-                            var data = getData(oFormKey, 0);
-                            var length = getDataArrayLength(oFormKey)
-                            requiredRows = Math.max(requiredRows, length);
-                            fillForm(oForm, data);
-                        }
-                    }
-                }
+              var data = getData(oFormKey, 0)
+              var length = getDataArrayLength(oFormKey)
+              requiredRows = Math.max(requiredRows, length)
+              fillForm(oForm, data)
             }
+          }
         }
-
-        if (requiredRows > 1) {
-            // Add new rows, the first row is already there and filled
-            // In each cell of the column we copy the previous cell to save the structure.
-            oTable.AddRows(oTable.GetCell(row, 0), requiredRows - 1, false);
-            for (var newRow = 1; newRow < requiredRows; newRow++) {
-                for (var col = 0; col < cols; col++) {
-                    var oNewCell = oTable.GetCell(row + newRow, col);
-                    var oCell = oTable.GetCell(row, col);
-                    var oCellContent = oCell.GetContent();
-
-                    var oCellElementsCount = oCellContent.GetElementsCount();
-                    for (var i = 0; i < oCellElementsCount; i++) {
-                        // Get the contents of the cell for further copying to a new cell
-                        var oCellElement = oCellContent.GetElement(i);
-                        // Copy the contents of a cell to paste into a new cell
-                        var oNewCellElement = oCellElement.Copy();
-                        // If this is not a paragraph, paste into a new cell unchanged
-                        if (oCellElement.GetClassType() !== "paragraph") {
-                            oNewCell.AddElement(i, oNewCellElement);
-                        } else {
-                            // If it is a paragraph, process the elements of the paragraph to fill the forms inside
-                            var oParagraphElementsCount = oNewCellElement.GetElementsCount();
-                            for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
-                                var oNewParagraphElement = oNewCellElement.GetElement(paragraphElement);
-                                if (oNewParagraphElement.GetClassType() === "form") {
-                                    var oForm = oNewParagraphElement;
-                                    var oFormKey = oForm.GetFormKey();
-
-                                    var data = getData(oFormKey, newRow);
-                                    fillForm(oForm, data);
-                                }
-                            }
-                            oNewCell.AddElement(i, oNewCellElement);
-                        }
-                    }
-                    // After creating a new cell, there is an empty paragraph inside. Remove it
-                    var oNewCellContent = oNewCell.GetContent();
-                    var oNewCellElementsCount = oNewCellContent.GetElementsCount();
-                    oNewCellContent.RemoveElement(oNewCellElementsCount - 1);
-                }
-            }
-            rows += requiredRows - 1;
-            row += requiredRows - 1;
-        }
+      }
     }
+
+    if (requiredRows > 1) {
+      // Add new rows, the first row is already there and filled
+      // In each cell of the column we copy the previous cell to save the structure.
+      oTable.AddRows(oTable.GetCell(row, 0), requiredRows - 1, false)
+      for (var newRow = 1; newRow < requiredRows; newRow++) {
+        for (var col = 0; col < cols; col++) {
+          var oNewCell = oTable.GetCell(row + newRow, col)
+          var oCell = oTable.GetCell(row, col)
+          var oCellContent = oCell.GetContent()
+
+          var oCellElementsCount = oCellContent.GetElementsCount()
+          for (var i = 0; i < oCellElementsCount; i++) {
+            // Get the contents of the cell for further copying to a new cell
+            var oCellElement = oCellContent.GetElement(i)
+            // Copy the contents of a cell to paste into a new cell
+            var oNewCellElement = oCellElement.Copy()
+            // If this is not a paragraph, paste into a new cell unchanged
+            if (oCellElement.GetClassType() !== "paragraph") {
+              oNewCell.AddElement(i, oNewCellElement)
+            } else {
+              // If it is a paragraph, process the elements of the paragraph to fill the forms inside
+              var oParagraphElementsCount = oNewCellElement.GetElementsCount()
+              for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
+                var oNewParagraphElement = oNewCellElement.GetElement(paragraphElement)
+                if (oNewParagraphElement.GetClassType() === "form") {
+                  var oForm = oNewParagraphElement
+                  var oFormKey = oForm.GetFormKey()
+
+                  var data = getData(oFormKey, newRow)
+                  fillForm(oForm, data)
+                }
+              }
+              oNewCell.AddElement(i, oNewCellElement)
+            }
+          }
+          // After creating a new cell, there is an empty paragraph inside. Remove it
+          var oNewCellContent = oNewCell.GetContent()
+          var oNewCellElementsCount = oNewCellContent.GetElementsCount()
+          oNewCellContent.RemoveElement(oNewCellElementsCount - 1)
+        }
+      }
+      rows += requiredRows - 1
+      row += requiredRows - 1
+    }
+  }
 }
 
 // In odoo, if there is no data in the field, the value will be false
 function fillForm(oForm, data = null) {
-    var oFormFormType = oForm.GetFormType();
+  var oFormFormType = oForm.GetFormType()
 
-    if (oFormFormType === "textForm") {
-        function fillTextForm (data) {
-            data = String(data);
-            if (data === "false" || data === "undefined") {
-                oForm.SetText(" ");
-            } else {
-                oForm.SetText(data);
-            }
-        }
-
-        if (data === null) {
-            var oFormKey = oForm.GetFormKey();
-            data = getData(oFormKey);
-            fillTextForm(data);
-        } else {
-            fillTextForm(data);
-        }
+  if (oFormFormType === "textForm") {
+    function fillTextForm(data) {
+      data = String(data)
+      if (data === "false" || data === "undefined") {
+        oForm.SetText(" ")
+      } else {
+        oForm.SetText(data)
+      }
     }
 
-    if (oFormFormType === "comboBoxForm") {}
+    if (data === null) {
+      var oFormKey = oForm.GetFormKey()
+      data = getData(oFormKey)
+      fillTextForm(data)
+    } else {
+      fillTextForm(data)
+    }
+  }
 
-    if (oFormFormType === "dropDownForm") {}
+  if (oFormFormType === "comboBoxForm") {
+  }
 
-    if (oFormFormType === "checkBoxForm") {
-        function fillCheckBoxForm (data) {
-            try {
-                data = JSON.parse(data);
-                oForm.SetChecked(data);
-            } catch (_e) {
-                // TODO: set checked BoxForm in case of error
-            }
-        }
+  if (oFormFormType === "dropDownForm") {
+  }
 
-        if (data === null) {
-            var oFormKey = oForm.GetFormKey()
-            var data = getData(oFormKey);
-            fillCheckBoxForm(data);
-        } else {
-            fillCheckBoxForm(data);
-        }
+  if (oFormFormType === "checkBoxForm") {
+    function fillCheckBoxForm(data) {
+      try {
+        data = JSON.parse(data)
+        oForm.SetChecked(data)
+      } catch (_e) {
+        // TODO: set checked BoxForm in case of error
+      }
     }
 
-    if (oFormFormType === "radioButtonForm") {}
-
-    if (oFormFormType === "pictureForm") {
-        function fillPictureForm (data) {
-            if (typeof data === 'string') {
-                oForm.SetImage(`data:image/png;base64, ${data}`);
-            }
-        }
-
-        if (data === null) {
-            var oFormKey = oForm.GetFormKey();
-            data = getData(oFormKey);
-            fillPictureForm(data);
-        } else {
-            fillPictureForm(data);
-        }
+    if (data === null) {
+      var oFormKey = oForm.GetFormKey()
+      var data = getData(oFormKey)
+      fillCheckBoxForm(data)
+    } else {
+      fillCheckBoxForm(data)
     }
+  }
+
+  if (oFormFormType === "radioButtonForm") {
+  }
+
+  if (oFormFormType === "pictureForm") {
+    function fillPictureForm(data) {
+      if (typeof data === "string") {
+        oForm.SetImage(`data:image/png;base64, ${data}`)
+      }
+    }
+
+    if (data === null) {
+      var oFormKey = oForm.GetFormKey()
+      data = getData(oFormKey)
+      fillPictureForm(data)
+    } else {
+      fillPictureForm(data)
+    }
+  }
 }
 
-Api.Save();
+Api.Save()

@@ -1,6 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <odoo>
-    <data noupdate="1">
-        <function model="onlyoffice.odoo.templates" name="_create_demo_data"/>
-    </data>
+  <function model="onlyoffice.odoo.templates" name="_create_demo_data" />
 </odoo>

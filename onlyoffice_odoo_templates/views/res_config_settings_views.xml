@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- -->
+<!-- (c) Copyright Ascensio System SIA 2024 -->
+<!-- -->
+<odoo>
+  <record id="action_onlyoffice_demo_templates" model="ir.actions.act_window">
+    <field name="name">Manage Templates</field>
+    <field name="res_model">onlyoffice.odoo.demo.templates</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+  </record>
+
+  <record id="view_onlyoffice_demo_templates_form" model="ir.ui.view">
+    <field name="name">onlyoffice.demo.templates.form</field>
+    <field name="model">onlyoffice.odoo.demo.templates</field>
+    <field name="arch" type="xml">
+      <form>
+        <p>
+          Check templates you want to export to the ONLYOFFICE Templates module and press Export. You can do this as many times as you need.
+        </p>
+        <field name="selected_templates" widget="onlyoffice_template_tree" />
+        <footer>
+          <button name="action_save" string="Export" type="object" class="btn-primary" />
+          <button string="Cancel" special="cancel" class="btn-secondary" />
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <record id="res_config_settings_view_form" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.inherit.onlyoffice_odoo_templates</field>
+    <field name="model">res.config.settings</field>
+    <field name="priority" eval="10" />
+    <field name="inherit_id" ref="base.res_config_settings_view_form" />
+    <field name="arch" type="xml">
+      <xpath expr="//block[@id='o_onlyoffice_settings_security']" position="after">
+        <block title="ONLYOFFICE Templates" name="onlyoffice_odoo_templates">
+          <setting string="Templates gallery">
+            <div class="text-muted">
+              Export templates to the ONLYOFFICE Templates module
+            </div>
+            <button
+              type="action"
+              name="%(action_onlyoffice_demo_templates)d"
+              string="Manage templates"
+              class="btn-link"
+              icon="fa-arrow-right"
+            />
+          </setting>
+        </block>
+      </xpath>
+    </field>
+  </record>
+</odoo>
