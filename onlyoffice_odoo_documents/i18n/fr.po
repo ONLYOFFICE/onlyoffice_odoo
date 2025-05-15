@@ -97,6 +97,13 @@ msgstr "Feuille de calcul"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "PDF form"
+msgstr "Formulaire PDF"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 #, python-format
 msgid ""

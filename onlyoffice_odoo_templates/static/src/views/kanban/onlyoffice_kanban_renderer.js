@@ -1,29 +1,29 @@
 /** @odoo-module **/
 
-import { KanbanRenderer } from "@web/views/kanban/kanban_renderer";
-import { OnlyofficeKanbanRecord } from "./onlyoffice_kanban_record";
+import { KanbanRenderer } from "@web/views/kanban/kanban_renderer"
+import { OnlyofficeKanbanRecord } from "./onlyoffice_kanban_record"
 
 export class OnlyofficeKanbanRenderer extends KanbanRenderer {
   setup() {
-    super.setup();
+    super.setup()
   }
 
   /**
    * @override
    **/
   canQuickCreate() {
-    return false;
+    return false
   }
 
   /**
    * @override
    **/
   canCreateGroup() {
-    return false;
+    return false
   }
 }
 
 OnlyofficeKanbanRenderer.components = {
   ...KanbanRenderer.components,
   KanbanRecord: OnlyofficeKanbanRecord,
-};
+}

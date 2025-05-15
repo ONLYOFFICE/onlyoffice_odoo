@@ -1,124 +1,149 @@
-<?xml version="1.0" encoding="utf-8"?>
-
+<?xml version="1.0" encoding="utf-8" ?>
 <!-- -->
 <!-- (c) Copyright Ascensio System SIA 2024 -->
 <!-- -->
-
 <odoo>
-    <record id="res_config_settings_view_form" model="ir.ui.view">
-        <field name="name">res.config.settings.view.form.inherit.onlyoffice_odoo</field>
-        <field name="model">res.config.settings</field>
-        <field name="priority" eval="10" />
-        <field name="inherit_id" ref="base.res_config_settings_view_form" />
-        <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('settings')]" position="inside">
-                <div class="app_settings_block"
-                    string="ONLYOFFICE"
-                    data-string="ONLYOFFICE"
-                    data-key="onlyoffice_odoo">
-                    <link type="text/css" rel="stylesheet" href="onlyoffice_odoo/static/src/css/res_config_settings_views.css"/>
-                    <div>
-                        <h2>General Settings</h2>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane" />
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Document Server Url</span>
-                                    <div class="text-muted content-group mt16">
-                                        <field name="doc_server_public_url" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane" />
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Server address for internal requests from the Document Editing Service</span>
-                                    <div class="text-muted content-group mt16">
-                                        <field name="doc_server_odoo_url" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane" />
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Document Editing Service address for internal requests from the server</span>
-                                    <div class="text-muted content-group mt16">
-                                        <field name="doc_server_inner_url" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h2>Security</h2>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane" />
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Document Server JWT Secret</span>
-                                    <div class="text-muted content-group mt16">
-                                        <field name="doc_server_jwt_secret" password="True" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane" />
-                                <div class="o_setting_right_pane">
-                                    <span class="o_form_label">Document Server JWT Header</span>
-                                    <div class="text-muted content-group mt16">
-                                        <field name="doc_server_jwt_header" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h2>Other</h2>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="doc_server_demo"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label class="o_form_label" for="doc_server_demo">Connect to demo ONLYOFFICE Docs server</label>
-                                    <div class="text-muted">
-                                        This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane" />
-                                <div class="o_setting_right_pane onlyoffice_link_pane">
-                                    <div class="onlyoffice_link_container">
-                                        <a class="onlyoffice_link_button" href="https://www.onlyoffice.com/docs-registration.aspx" target="_blank">
-                                            GET NOW
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+  <record id="res_config_settings_view_form" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.inherit.onlyoffice_odoo</field>
+    <field name="model">res.config.settings</field>
+    <field name="priority" eval="10" />
+    <field name="inherit_id" ref="base.res_config_settings_view_form" />
+    <field name="arch" type="xml">
+      <xpath expr="//div[hasclass('settings')]" position="inside">
+        <div class="app_settings_block" string="ONLYOFFICE" data-string="ONLYOFFICE" data-key="onlyoffice_odoo">
+          <link type="text/css" rel="stylesheet" href="onlyoffice_odoo/static/src/css/res_config_settings_views.css" />
+          <div>
+            <h2>General Settings</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">Document Server Url</span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_public_url" />
+                  </div>
                 </div>
-            </xpath>
-        </field>
-    </record>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    Server address for internal requests from the Document Editing Service
+                  </span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_odoo_url" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    Document Editing Service address for internal requests from the server
+                  </span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_inner_url" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="o_onlyoffice_settings_security">
+            <h2>Security</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    Document Server JWT Secret
+                  </span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_jwt_secret" password="True" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    Document Server JWT Header
+                  </span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_jwt_header" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h2>Other</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane">
+                  <field name="doc_server_demo" />
+                </div>
+                <div class="o_setting_right_pane">
+                  <label class="o_form_label" for="doc_server_demo">
+                    Connect to demo ONLYOFFICE Docs server
+                  </label>
+                  <a
+                    title="ONLYOFFICE Templates requires a properly licensed Document Server connected with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper license."
+                    class="o_doc_link"
+                  />
+                  <div class="text-muted">
+                    This is a public test server, please do not use it for private sensitive data.
+                    The server will be available during a 30-day period.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane">
+                  <field name="same_tab" />
+                </div>
+                <div class="o_setting_right_pane">
+                  <label class="o_form_label" for="same_tab">
+                    Open file in the same tab
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane onlyoffice_link_pane">
+                  <div class="onlyoffice_link_container">
+                    <a
+                      class="onlyoffice_link_button"
+                      href="https://www.onlyoffice.com/docs-registration.aspx"
+                      target="_blank"
+                    >
+                      GET NOW
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </xpath>
+    </field>
+  </record>
 
-    <record id="action_onlyoffice_config_settings" model="ir.actions.act_window">
-        <field name="name">Settings</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">res.config.settings</field>
-        <field name="view_id" ref="res_config_settings_view_form" />
-        <field name="view_mode">form</field>
-        <field name="target">inline</field>
-        <field name="context">{'module' : 'onlyoffice_odoo'}</field>
-    </record>
-
+  <record id="action_onlyoffice_config_settings" model="ir.actions.act_window">
+    <field name="name">Settings</field>
+    <field name="type">ir.actions.act_window</field>
+    <field name="res_model">res.config.settings</field>
+    <field name="view_id" ref="res_config_settings_view_form" />
+    <field name="view_mode">form</field>
+    <field name="target">inline</field>
+    <field name="context">{'module' : 'onlyoffice_odoo'}</field>
+  </record>
 </odoo>

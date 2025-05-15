@@ -1,10 +1,22 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <templates>
-    <t t-name="onlyoffice_odoo_templates.OnlyofficeKanbanController.Buttons" t-inherit="web.KanbanView.Buttons" t-inherit-mode="primary" owl="1">
-        <xpath expr="//button[hasclass('o-kanban-button-new')]" position="replace">
-            <button type="button" class="btn btn-primary o-kanban-button-new" accesskey="c" t-on-click="() => this.createRecord(null)" data-bounce-button="" groups="onlyoffice_odoo_templates.group_manager">
-                Create or Upload
-            </button>
-        </xpath>
-    </t>
+  <t
+    t-name="onlyoffice_odoo_templates.OnlyofficeKanbanController.Buttons"
+    t-inherit="web.KanbanView.Buttons"
+    t-inherit-mode="primary"
+    owl="1"
+  >
+    <xpath expr="//button[hasclass('o-kanban-button-new')]" position="replace">
+      <button
+        type="button"
+        class="btn btn-primary o-kanban-button-new"
+        accesskey="c"
+        t-on-click="() => this.createRecord(null)"
+        data-bounce-button=""
+        groups="onlyoffice_odoo_templates.group_manager"
+      >
+        Create or Upload
+      </button>
+    </xpath>
+  </t>
 </templates>

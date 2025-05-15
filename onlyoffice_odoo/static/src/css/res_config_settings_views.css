@@ -1,49 +1,49 @@
 .onlyoffice_link_pane {
-    padding-left: 0;
-    border-left: 0;
+  padding-left: 0;
+  border-left: 0;
 }
 
 .onlyoffice_link_container {
-    width: 549px;
-    height: 116px;
-    position: relative;
-    border-left: 0;
-    background-image: url("/onlyoffice_odoo/static/src/css/onlyoffice_link_container.png");
-    background-size: contain;
+  width: 549px;
+  height: 116px;
+  position: relative;
+  border-left: 0;
+  background-image: url("/onlyoffice_odoo/static/src/css/onlyoffice_link_container.png");
+  background-size: contain;
 }
 
 .onlyoffice_link_button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    min-width: 93px;
-    max-width: 120px;
-    max-height: 40px;
-    padding: 5px 0;
-    background-color: #71639E;
-    color: white;
-    font-family: 'SF UI Display', sans-serif;
-    text-align: center;
-    font-weight: 500;
-    border-radius: 3px;
-    top: 40.5px;
-    right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  min-width: 93px;
+  max-width: 120px;
+  max-height: 40px;
+  padding: 5px 0;
+  background-color: #71639e;
+  color: white;
+  font-family: "SF UI Display", sans-serif;
+  text-align: center;
+  font-weight: 500;
+  border-radius: 3px;
+  top: 40.5px;
+  right: 14px;
 }
 
 @media (max-width: 767px) {
-    .onlyoffice_link_container {
-        width: 345px;
-        height: 169px;
-        background-image: url("/onlyoffice_odoo/static/src/css/onlyoffice_link_container_mobile.png");
-    }
+  .onlyoffice_link_container {
+    width: 345px;
+    height: 169px;
+    background-image: url("/onlyoffice_odoo/static/src/css/onlyoffice_link_container_mobile.png");
+  }
 
-    .onlyoffice_link_button {
-        width: 77px;
-        height: 34px;
-        bottom: 16px;
-        left: 20px;
-        top: unset;
-        right: unset;
-    }
+  .onlyoffice_link_button {
+    width: 77px;
+    height: 34px;
+    bottom: 16px;
+    left: 20px;
+    top: unset;
+    right: unset;
+  }
 }

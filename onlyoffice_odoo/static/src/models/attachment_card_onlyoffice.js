@@ -4,18 +4,18 @@
  *
  * (c) Copyright Ascensio System SIA 2024
  *
-*/
+ */
 
-import { registerPatch } from '@mail/model/model_core';
-import { attr } from '@mail/model/model_field';
+import { registerPatch } from "@mail/model/model_core"
+import { attr } from "@mail/model/model_field"
 
 registerPatch({
-    name: 'AttachmentCard',
-    fields: {
-        showOnlyofficeButton: attr({
-            compute() {
-                return this.attachment.onlyofficeCanEdit || this.attachment.onlyofficeCanView;
-            },
-        }),
-    },
-});
+  fields: {
+    showOnlyofficeButton: attr({
+      compute() {
+        return this.attachment.onlyofficeCanEdit || this.attachment.onlyofficeCanView
+      },
+    }),
+  },
+  name: "AttachmentCard",
+})

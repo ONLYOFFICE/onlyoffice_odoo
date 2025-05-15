@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
-
 <!-- -->
 <!-- (c) Copyright Ascensio System SIA 2024 -->
 <!-- -->
-
-
 <templates xml:space="preserve">
     <t t-inherit="mail.AttachmentCard" t-inherit-mode="extension" owl="1">
-        <xpath expr="//div[hasclass('o_AttachmentCard_aside')]" position="before">
-            <t t-if="attachmentCard.showOnlyofficeButton">
-                <div class="o_AttachmentCard_aside position-relative overflow-hidden o-hasMultipleActions d-flex flex-column">
-                    <button class="o_AttachmentCard_asideItem o_AttachmentCard_asideItemOnlyoffice btn top-0 justify-content-center align-items-center d-flex w-100 h-100 rounded-0 bg-300" t-on-click="attachmentCard.attachment.onClickOnlyofficeEdit" title="Open in ONLYOFFICE">
-                        <img src="/onlyoffice_odoo/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
-                    </button>
-                </div>
-            </t>
-        </xpath>
-    </t>
+    <xpath expr="//div[hasclass('o_AttachmentCard_aside')]" position="before">
+      <t t-if="attachmentCard.showOnlyofficeButton">
+        <div class="o_AttachmentCard_aside position-relative overflow-hidden o-hasMultipleActions d-flex flex-column">
+          <button
+            class="o_AttachmentCard_asideItem o_AttachmentCard_asideItemOnlyoffice btn top-0 justify-content-center align-items-center d-flex w-100 h-100 rounded-0 bg-300"
+            t-on-click="attachmentCard.attachment.onClickOnlyofficeEdit"
+            title="Open in ONLYOFFICE"
+          >
+            <img src="/onlyoffice_odoo/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
+          </button>
+        </div>
+      </t>
+    </xpath>
+  </t>
 </templates>

@@ -1,90 +1,99 @@
 /** @odoo-module **/
 
-import { Dialog } from "@web/core/dialog/dialog";
+import { Dialog } from "@web/core/dialog/dialog"
 
-import { DropPrevious } from "web.concurrency";
-import { useService } from "@web/core/utils/hooks";
-import { useHotkey } from "@web/core/hotkeys/hotkey_hook";
-import { getDefaultConfig } from "@web/views/view";
-import { _t } from "web.core";
+import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
+import { useService } from "@web/core/utils/hooks"
+import { getDefaultConfig } from "@web/views/view"
+import { DropPrevious } from "web.concurrency"
+import { _t } from "web.core"
 
-const { Component, useState, useSubEnv } = owl;
+const { Component, useState, useSubEnv } = owl
 
 export class CreateDialog extends Component {
-    setup() {
-        this.orm = useService("orm");
-        this.rpc = useService("rpc");
-        this.viewService = useService("view");
-        this.notificationService = useService("notification");
-        this.actionService = useService("action");
+  setup() {
+    this.orm = useService("orm")
+    this.rpc = useService("rpc")
+    this.viewService = useService("view")
+    this.notificationService = useService("notification")
+    this.actionService = useService("action")
 
-        this.data = this.env.dialogData;
-        useHotkey("escape", () => this.data.close());
+    this.data = this.env.dialogData
+    useHotkey("escape", () => this.data.close())
 
-        this.dialogTitle = this.env._t("Create with ONLYOFFICE");
-        this.state = useState({
-            isOpen: true,
-            selectedFormat: "docx",
-            title: this.env._t("New Document"),
-            isCreating: false,
-        });
-        useSubEnv({
-            config: {
-                ...getDefaultConfig(),
-            },
-        });
-        this.dp = new DropPrevious();
+    this.dialogTitle = this.env._t("Create with ONLYOFFICE")
+    this.state = useState({
+      isCreating: false,
+      isOpen: true,
+      selectedFormat: "docx",
+      title: this.env._t("New Document"),
+    })
+    useSubEnv({ config: { ...getDefaultConfig() } })
+    this.dp = new DropPrevious()
+  }
+
+  async _createFile() {
+    if (this._buttonDisabled()) {
+      return
     }
+    this.state.isCreating = true
+    const selectedFormat = this.state.selectedFormat
+    const title = this.state.title
 
-    async _createFile() {
-        if (this._buttonDisabled()) return;
-        this.state.isCreating = true;
-        const selectedFormat = this.state.selectedFormat;
-        const title = this.state.title;
+    const json = await this.rpc("/onlyoffice/documents/file/create", {
+      folder_id: this.props.folderId,
+      supported_format: selectedFormat,
+      title: title,
+    })
 
-        const json = await this.rpc(`/onlyoffice/documents/file/create`, {
-            folder_id: this.props.folderId,
-            title: title,
-            format: selectedFormat
-        });
+    const result = JSON.parse(json)
 
-        const result = JSON.parse(json);
+    this.props.model.load()
+    this.props.model.notify()
 
-        this.props.model.load();
-        this.props.model.notify();
-        
-        if (result.error) {
-            this.notificationService.add(result.error, {
-                type: "error",
-                sticky: false,
-            }); 
-        } else {
-            this.notificationService.add(_t("New document created in Documents"), {
-                type: "info",
-                sticky: false,
-            });
+    if (result.error) {
+      this.notificationService.add(result.error, {
+        sticky: false,
+        type: "error",
+      })
+    } else {
+      this.notificationService.add(_t("New document created in Documents"), {
+        sticky: false,
+        type: "info",
+      })
 
-            window.open(`/onlyoffice/editor/${result.file_id}`, '_blank');
+      const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+      if (same_tab) {
+        const action = {
+          params: { attachment_id: result.file_id },
+          tag: "onlyoffice_editor",
+          target: "current",
+          type: "ir.actions.client",
         }
-
-        this.data.close();
+        return this.actionService.doAction(action)
+      }
+      window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
     }
 
-    _selectedFormat(format) {
-        this.state.selectedFormat = format;
-    }
+    this.data.close()
+  }
 
-    _isSelected(format) {
-        return this.state.selectedFormat === format;
-    }
+  _selectedFormat(format) {
+    this.state.selectedFormat = format
+  }
 
-    _hasSelection() {
-        return !!this.state.selectedFormat !== null;
-    }
+  _isSelected(format) {
+    return this.state.selectedFormat === format
+  }
 
-    _buttonDisabled() {
-        return this.state.isCreating || !this._hasSelection() || !this.state.title;
-    }
+  _hasSelection() {
+    // eslint-disable-next-line no-constant-binary-expression, no-implicit-coercion
+    return !!this.state.selectedFormat !== null
+  }
+
+  _buttonDisabled() {
+    return this.state.isCreating || !this._hasSelection() || !this.state.title
+  }
 }
-CreateDialog.components = { Dialog };
-CreateDialog.template = "onlyoffice_odoo_documents.CreateDialog";
+CreateDialog.components = { Dialog }
+CreateDialog.template = "onlyoffice_odoo_documents.CreateDialog"

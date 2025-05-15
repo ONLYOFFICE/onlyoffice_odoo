@@ -1,116 +1,136 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-    <data>  
-        <record id="view_onlyoffice_form" model="ir.ui.view">
-            <field name="name">onlyoffice.odoo.templates.form</field>
-            <field name="model">onlyoffice.odoo.templates</field>
-            <field name="arch" type="xml">
-                <form string="Create template">
-                    <sheet>
-                        <group string="Template creation">
-                            <field name="name" required="1"/>
-                            <field name="template_model_id"
-                                options="{'no_create': True, 'no_create_edit':True, 'no_open':True}"
-                                help="Model for which the template is being created."
-                                required="1"/>
-                            <field name="template_model_name" invisible="1"/>
-                            <field name="template_model_model" invisible="1"/>
-                        </group>
-                        <group string="Template uploading">
-                            <field name="file"
-                                options="{'accepted_file_extensions': '.pdf'}"
-                                help="Select an existing template. Leave the field blank to create a blank template."/>
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-        
-        <record id="view_onlyoffice_kanban_search" model="ir.ui.view">
-            <field name="name">onlyoffice.odoo.templates.kanban.search</field>
-            <field name="model">onlyoffice.odoo.templates</field>
-            <field name="arch" type="xml">
-                <search>
-                    <field name="name"/>
-                    <field name="template_model_name"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Model" name="template_model_id" context="{'group_by': 'template_model_id'}"/>
-                    </group>
-                    <searchpanel>
-                        <field name="template_model_id" string="Model" enable_counters="1"/>
-                    </searchpanel>
-                </search>
-            </field>
-        </record>
+  <record id="view_onlyoffice_form" model="ir.ui.view">
+    <field name="name">onlyoffice.odoo.templates.form</field>
+    <field name="model">onlyoffice.odoo.templates</field>
+    <field name="arch" type="xml">
+      <form string="Create template">
+        <sheet>
+          <group string="Template creation">
+            <field name="name" required="1" />
+            <field
+              name="template_model_id"
+              options="{'no_create': True, 'no_create_edit':True, 'no_open':True}"
+              help="Model for which the template is being created."
+              required="1"
+            />
+            <field name="template_model_related_name" invisible="1" />
+            <field name="template_model_model" invisible="1" />
+          </group>
+          <group string="Template uploading">
+            <field
+              name="file"
+              options="{'accepted_file_extensions': '.pdf'}"
+              help="Select an existing template. Leave the field blank to create a blank template."
+            />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
 
-        <record id="view_onlyoffice_kanban" model="ir.ui.view">
-            <field name="name">onlyoffice.odoo.templates.kanban</field>
-            <field name="model">onlyoffice.odoo.templates</field>
-            <field name="arch" type="xml">
-                <kanban js_class="onlyoffice_kanban">
-                    <field name="id"/>
-                    <field name="attachment_id"/>
-                    <field name="mimetype"/>
-                    <field name="create_uid"/>
-                    <field name="create_date"/>
-                    <field name="name"/>
-                    <field name="template_model_name"/>
-                    <field name="template_model_model"/>
-                    <templates>
-                        <t t-name="kanban-box">
-                            <div class="oe_kanban_global_area o_kanban_attachment oe_kanban_global_click">
-                                <div class="o_kanban_image">
-                                    <div class="o_kanban_image_wrapper">
-                                        <div class="o_image o_image_thumbnail" t-att-data-mimetype="record.mimetype.value">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="o_kanban_details">
-                                    <div class="o_kanban_details_wrapper">
-                                        <div class="o_kanban_record_title">
-                                            <field name="name" class="o_text_overflow"/>
-                                        </div>
-                                        <div class="o_kanban_record_body">
-                                            <field name="template_model_name" widget="badge"/>
-                                        </div>
-                                        <div class="o_kanban_record_bottom">
-                                            <span class="oe_kanban_bottom_left">
-                                                <field name="create_date" widget="date"/>
-                                            </span>
-                                            <div class="oe_kanban_bottom_right oe_onlyoffice_kanban_bottom_right">
-                                                <field name="create_uid" widget="many2one_avatar_user"/>
-                                            </div>
-                                        </div>
-                                        <div class="o_dropdown_kanban dropdown" tabindex="-1">
-                                            <a class="dropdown-toggle o-no-caret btn" data-bs-toggle="dropdown" href="#" role="button" aria-label="Dropdown menu" title="Dropdown menu">
-                                                <span class="fa fa-ellipsis-v"/>
-                                            </a>
-                                            <div class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                                                <a t-if="widget.editable" type="edit" class="dropdown-item">Edit</a>
-                                                <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
-                                                <a class="dropdown-item o_onlyoffice_download">Download</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </t>
-                    </templates>
-                </kanban>
-            </field>
-        </record>
+  <record id="view_onlyoffice_kanban_search" model="ir.ui.view">
+    <field name="name">onlyoffice.odoo.templates.kanban.search</field>
+    <field name="model">onlyoffice.odoo.templates</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name" />
+        <field name="template_model_name" />
+        <group expand="0" string="Group By">
+          <filter string="Model" name="template_model_id" context="{'group_by': 'template_model_id'}" />
+        </group>
+        <searchpanel>
+          <field name="template_model_id" string="Model" enable_counters="1" />
+        </searchpanel>
+      </search>
+    </field>
+  </record>
 
-        <record model="ir.actions.act_window" id="action_onlyoffice_odoo_templates">
-                <field name="name">ONLYOFFICE Templates</field>
-                <field name="res_model">onlyoffice.odoo.templates</field>
-                <field name="view_mode">kanban,form</field>
-        </record>
+  <record id="view_onlyoffice_kanban" model="ir.ui.view">
+    <field name="name">onlyoffice.odoo.templates.kanban</field>
+    <field name="model">onlyoffice.odoo.templates</field>
+    <field name="arch" type="xml">
+      <kanban js_class="onlyoffice_kanban">
+        <field name="id" />
+        <field name="attachment_id" />
+        <field name="mimetype" />
+        <field name="create_uid" />
+        <field name="create_date" />
+        <field name="name" />
+        <field name="template_model_name" />
+        <field name="template_model_related_name" />
+        <field name="template_model_model" />
+        <templates>
+          <t t-name="kanban-box">
+            <div class="oe_kanban_global_area o_kanban_attachment oe_kanban_global_click">
+              <div class="o_kanban_image">
+                <div class="o_kanban_image_wrapper">
+                  <div class="o_image o_image_thumbnail" t-att-data-mimetype="record.mimetype.value" />
+                </div>
+              </div>
+              <div class="o_kanban_details">
+                <div class="o_kanban_details_wrapper">
+                  <div class="o_kanban_record_title">
+                    <field name="name" class="o_text_overflow" />
+                  </div>
+                  <div class="o_kanban_record_body">
+                    <t t-if="template_model_related_name">
+                      <field name="template_model_related_name" widget="badge" />
+                    </t>
+                    <t t-else="">
+                      <field name="template_model_name" widget="badge" />
+                    </t>
+                  </div>
+                  <div class="o_kanban_record_bottom">
+                    <span class="oe_kanban_bottom_left">
+                      <field name="create_date" widget="date" />
+                    </span>
+                    <div class="oe_kanban_bottom_right oe_onlyoffice_kanban_bottom_right">
+                      <field name="create_uid" widget="many2one_avatar_user" />
+                    </div>
+                  </div>
+                  <div class="o_dropdown_kanban dropdown" tabindex="-1">
+                    <a
+                      class="dropdown-toggle o-no-caret btn"
+                      data-bs-toggle="dropdown"
+                      href="#"
+                      role="button"
+                      aria-label="Dropdown menu"
+                      title="Dropdown menu"
+                    >
+                      <span class="fa fa-ellipsis-v" />
+                    </a>
+                    <div class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                      <a t-if="widget.editable" type="edit" class="dropdown-item">Edit</a>
+                      <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
+                      <a
+                        t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/datas?download=true"
+                        download=""
+                        class="dropdown-item"
+                      >Download</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </t>
+        </templates>
+      </kanban>
+    </field>
+  </record>
 
-        <menuitem id="onlyoffice_menu" 
-            name="ONLYOFFICE Templates" 
-            web_icon="onlyoffice_odoo_templates,static/description/icon.svg"
-            sequence="30"
-            groups="onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user,onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin"
-            action="action_onlyoffice_odoo_templates"/>
-    </data>
+  <record model="ir.actions.act_window" id="action_onlyoffice_odoo_templates">
+    <field name="name">ONLYOFFICE Templates</field>
+    <field name="res_model">onlyoffice.odoo.templates</field>
+    <field name="view_mode">kanban,form</field>
+  </record>
+
+  <menuitem
+    id="onlyoffice_menu"
+    name="ONLYOFFICE Templates"
+    web_icon="onlyoffice_odoo_templates,static/description/icon.svg"
+    sequence="30"
+    groups="onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user,onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin"
+    action="action_onlyoffice_odoo_templates"
+  />
 </odoo>

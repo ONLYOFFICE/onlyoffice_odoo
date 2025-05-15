@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="onlyoffice_odoo.Editor" owl="1">
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title> ONLYOFFICE </title>
+        <style>
+          html, body {
+            height: 100%;
+          }
+        </style>
+      </head>
+      <body class="o-onlyoffice-documents">
+        <div id="doceditor" />
+        <div id="error" class="w-25 m-auto my-5 py-5 d-flex flex-column d-none">
+          <img src="/onlyoffice_odoo/static/svg/onlyoffice_logo.svg" alt="ONLYOFFICE logo" />
+          <div class="my-3 alert alert-danger">
+            <p> ONLYOFFICE cannot be reached. Please contact admin. </p>
+          </div>
+        </div>
+      </body>
+    </html>
+  </t>
+</templates>

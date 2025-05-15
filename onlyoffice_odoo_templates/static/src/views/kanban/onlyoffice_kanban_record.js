@@ -1,49 +1,49 @@
 /** @odoo-module **/
-import { CANCEL_GLOBAL_CLICK, KanbanRecord } from "@web/views/kanban/kanban_record";
-import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
-import { useService } from "@web/core/utils/hooks";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
+import { useService } from "@web/core/utils/hooks"
+import { CANCEL_GLOBAL_CLICK, KanbanRecord } from "@web/views/kanban/kanban_record"
 
 export class OnlyofficeKanbanRecord extends KanbanRecord {
   setup() {
-    super.setup();
-    this.orm = useService("orm");
-    this.actionService = useService("action");
+    super.setup()
+    this.orm = useService("orm")
+    this.actionService = useService("action")
   }
 
   /**
    * @override
    */
   triggerAction(params) {
-    const env = this.env;
-    const { group, list, openRecord, record } = this.props;
-    const { type } = params;
+    const env = this.env
+    const { group, list, openRecord, record } = this.props
+    const { type } = params
     switch (type) {
       case "edit": {
-        return openRecord(record, "edit");
+        return openRecord(record, "edit")
       }
       case "delete": {
-        const listOrGroup = group || list;
+        const listOrGroup = group || list
         if (listOrGroup.deleteRecords) {
           this.dialog.add(ConfirmationDialog, {
             body: env._t("Are you sure you want to delete this record?"),
-            confirm: async () => {
-              await listOrGroup.deleteRecords([record]);
-              this.props.record.model.load();
-              this.props.record.model.notify();
-              return this.notification.add(env._t("Template removed"), {
-                type: "info",
-                sticky: false,
-              });
+            cancel: () => {
+              return
             },
-            cancel: () => {},
-          });
+            confirm: async () => {
+              await listOrGroup.deleteRecords([record])
+              this.props.record.model.load()
+              this.props.record.model.notify()
+              return this.notification.add(env._t("Template removed"), {
+                sticky: false,
+                type: "info",
+              })
+            },
+          })
         }
-        return;
+        return
       }
       default: {
-        return this.notification.add(env._t("Kanban: no action for type: ") + type, {
-          type: "danger",
-        });
+        return this.notification.add(env._t("Kanban: no action for type: ") + type, { type: "danger" })
       }
     }
   }
@@ -53,23 +53,26 @@ export class OnlyofficeKanbanRecord extends KanbanRecord {
    */
   async onGlobalClick(ev) {
     if (ev.target.closest(CANCEL_GLOBAL_CLICK) && !ev.target.classList.contains("o_onlyoffice_download")) {
-      return;
+      return
     }
     if (ev.target.classList.contains("o_onlyoffice_download")) {
-      window.location.href = `/onlyoffice/template/download/${this.props.record.data.attachment_id[0]}`;
-      return;
+      window.location.href = `/onlyoffice/template/download/${this.props.record.data.attachment_id[0]}`
+      return
     }
-    return this.editTemplate();
+    return this.editTemplate()
   }
 
   async editTemplate() {
     const action = {
-      type: "ir.actions.client",
-      tag: "onlyoffice_odoo_templates.TemplateEditor",
+      params: {
+        attachment_id: this.props.record.data.attachment_id[0],
+        id: this.props.record.data.id,
+        template_model_model: this.props.record.data.template_model_model,
+      },
+      tag: "onlyoffice_template_editor",
       target: "current",
-    };
-    return this.actionService.doAction(action, {
-      props: this.props.record.data,
-    });
+      type: "ir.actions.client",
+    }
+    return this.actionService.doAction(action, { props: this.props.record.data })
   }
 }
