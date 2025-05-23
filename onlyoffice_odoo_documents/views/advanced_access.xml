@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+  <record id="onlyoffice_odoo_documents_advanced_access" model="ir.ui.view">
+    <field name="name">onlyoffice.odoo.documents.form</field>
+    <field name="model">onlyoffice.odoo.documents</field>
+    <field name="arch" type="xml">
+      <form string="Advanced Share">
+        <sheet class="o_documents_advanced_access">
+          <group>
+            <field name="type" invisible="1" />
+            <field
+              attrs="{'invisible': [('type', '!=', 'ids')]}"
+              name="document_ids"
+              widget="many2many_tags"
+              readonly="1"
+              options="{'no_edit_color': True}"
+            />
+            <field
+              attrs="{'invisible': [('type', '!=', 'domain')]}"
+              name="folder_id"
+              readonly="1"
+              options="{'no_open': True}"
+            />
+            <field name="user_ids" widget="many2many_tags" options="{'no_create': True}" />
+            <field name="user_access" widget="selection" attrs="{'invisible': [('user_ids', '=', [])]}" />
+            <field name="internal_access" widget="filtered_selection" />
+            <field name="link_access" widget="filtered_selection" />
+          </group>
+
+          <div class="oe_title" attrs="{'invisible': [('users_rules', '=', False)]}">
+            <label for="users_rules" string="Existing Access Rights" />
+            <field name="users_rules" sanitize="False" nolabel="1" />
+          </div>
+
+          <footer>
+            <button name="save" string="Save" type="object" class="btn-primary" />
+            <button string="Discard" special="cancel" class="btn-secondary" />
+          </footer>
+        </sheet>
+      </form>
+    </field>
+  </record>
+</odoo>
