@@ -235,7 +235,9 @@ class OnlyofficeDocuments(models.Model):
                 if old_access:
                     vals["internal_access"] = old_access.internal_access
                 else:
-                    vals["internal_access"] = self.default_internal_access or "viewer"
+                    vals["internal_access"] = (
+                        "viewer" if not self.default_internal_access else self.default_internal_access
+                    )
             else:
                 vals["internal_access"] = self.internal_access
 
@@ -243,9 +245,14 @@ class OnlyofficeDocuments(models.Model):
                 if old_access:
                     vals["link_access"] = old_access.link_access
                 else:
-                    vals["link_access"] = self.default_link_access or "viewer"
+                    vals["link_access"] = "viewer" if not self.default_link_access else self.default_link_access
             else:
                 vals["link_access"] = self.link_access
+
+            if vals.get("internal_access") == "mixed":
+                vals["internal_access"] = "viewer"
+            if vals.get("link_access") == "mixed":
+                vals["link_access"] = "viewer"
 
             if old_access:
                 old_access.write(vals)
