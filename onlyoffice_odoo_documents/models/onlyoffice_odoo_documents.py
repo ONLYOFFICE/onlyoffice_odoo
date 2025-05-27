@@ -23,7 +23,7 @@ class OnlyofficeDocuments(models.Model):
         string="User Access",
         default="viewer",
     )
-    users_rules = fields.Html(compute="_compute_users_rules", string="Existing Access")
+    users_rules = fields.Html(compute="_compute_users_rules", string="People with access")
 
     internal_access = fields.Selection(
         selection=[
@@ -51,7 +51,24 @@ class OnlyofficeDocuments(models.Model):
     )
     default_link_access = fields.Char()
 
-    @api.depends("document_ids", "folder_id")
+    users_rules_ids = fields.One2many(
+        "onlyoffice.documents.access.user",
+        "document_id",
+        string="People with access",
+        compute="_compute_users_rules_ids",
+    )
+
+    @api.depends("document_ids")
+    def _compute_users_rules_ids(self):
+        for rec in self:
+            if rec.document_ids:
+                rec.users_rules_ids = self.env["onlyoffice.documents.access.user"].search(
+                    [("document_id", "in", rec.document_ids.ids)]
+                )
+            else:
+                rec.users_rules_ids = False
+
+    @api.depends("document_ids", "folder_id", "users_rules_ids")
     def _compute_users_rules(self):
         for rec in self:
             rec.users_rules = False

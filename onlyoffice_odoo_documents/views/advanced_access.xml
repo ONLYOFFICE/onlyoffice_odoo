@@ -23,14 +23,24 @@
             />
             <field name="user_ids" widget="many2many_tags" options="{'no_create': True}" />
             <field name="user_access" widget="selection" attrs="{'invisible': [('user_ids', '=', [])]}" />
-            <field name="internal_access" widget="filtered_selection" />
-            <field name="link_access" widget="filtered_selection" />
+            <field attrs="{'invisible': [('user_ids', '!=', [])]}" name="internal_access" widget="filtered_selection" />
+            <field attrs="{'invisible': [('user_ids', '!=', [])]}" name="link_access" widget="filtered_selection" />
           </group>
 
-          <div class="oe_title" attrs="{'invisible': [('users_rules', '=', False)]}">
-            <label for="users_rules" string="Existing Access Rights" />
+          <label for="users_rules_ids" string="People with access" />
+          <field name="users_rules_ids" options="{'no_open': True}">
+            <tree>
+              <field name="user_id" />
+              <field name="role" />
+              <field attrs="{'column_invisible': [('parent.document_ids', '>', 1)]}" name="document_id" />
+            </tree>
+          </field>
+
+          <!--<div
+          class="oe_title" attrs="{'invisible': [('users_rules', '=', False)]}">
+            <label for="users_rules" string="People with access" />
             <field name="users_rules" sanitize="False" nolabel="1" />
-          </div>
+          </div>-->
 
           <footer>
             <button name="save" string="Save" type="object" class="btn-primary" />
