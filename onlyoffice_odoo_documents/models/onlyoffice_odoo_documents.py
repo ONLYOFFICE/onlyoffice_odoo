@@ -19,7 +19,14 @@ class OnlyofficeDocuments(models.Model):
         column2="user_id",
     )
     user_access = fields.Selection(
-        [("viewer", "Viewer"), ("reviewer", "Reviewer"), ("editor", "Editor"), ("none", "None")],
+        [
+            ("none", "None"),
+            ("viewer", "Viewer"),
+            ("comment", "Comment"),
+            ("reviewer", "Reviewer"),
+            ("editor", "Editor"),
+            ("form filling", "Form Filling"),
+        ],
         string="User Access",
         default="viewer",
     )
@@ -27,10 +34,12 @@ class OnlyofficeDocuments(models.Model):
 
     internal_access = fields.Selection(
         selection=[
+            ("none", "None"),
             ("viewer", "Viewer"),
+            ("comment", "Comment"),
             ("reviewer", "Reviewer"),
             ("editor", "Editor"),
-            ("none", "None"),
+            ("form filling", "Form Filling"),
             ("mixed", "Mixed"),
         ],
         default="viewer",
@@ -40,10 +49,12 @@ class OnlyofficeDocuments(models.Model):
 
     link_access = fields.Selection(
         selection=[
+            ("none", "None"),
             ("viewer", "Viewer"),
+            ("comment", "Comment"),
             ("reviewer", "Reviewer"),
             ("editor", "Editor"),
-            ("none", "None"),
+            ("form filling", "Form Filling"),
             ("mixed", "Mixed"),
         ],
         default="viewer",
@@ -57,6 +68,40 @@ class OnlyofficeDocuments(models.Model):
         string="People with access",
         compute="_compute_users_rules_ids",
     )
+
+    extension = fields.Char(
+        string="Document Type",
+        compute="_compute_extension",
+        store=True,
+    )
+
+    @api.depends("document_ids")
+    def _compute_extension(self):
+        for record in self:
+            if not record.document_ids:
+                record.extension = False
+                continue
+
+            extensions = set()
+            for doc in record.document_ids:
+                attachment = doc.attachment_id or self.env["ir.attachment"].search(
+                    [("res_model", "=", "documents.document"), ("res_id", "=", doc.id)], limit=1
+                )
+
+                if attachment:
+                    file_name = attachment.name
+                    if "." in file_name:
+                        ext = file_name.split(".")[-1].lower().strip()
+                        extensions.add(ext)
+                    else:
+                        extensions.add("unknown")
+                else:
+                    extensions.add("unknown")
+
+            if len(extensions) == 1:
+                record.extension = extensions.pop()
+            else:
+                record.extension = "mixed"
 
     @api.depends("document_ids")
     def _compute_users_rules_ids(self):

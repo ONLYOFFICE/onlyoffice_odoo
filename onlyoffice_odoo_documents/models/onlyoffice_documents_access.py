@@ -8,12 +8,26 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     document_id = fields.Many2one("documents.document", string="Document", ondelete="cascade")
     folder_id = fields.Many2one("documents.folder", string="Folder", ondelete="cascade")
     internal_access = fields.Selection(
-        [("viewer", "Viewer"), ("reviewer", "Reviewer"), ("editor", "Editor"), ("none", "None")],
+        [
+            ("none", "None"),
+            ("viewer", "Viewer"),
+            ("comment", "Comment"),
+            ("reviewer", "Reviewer"),
+            ("editor", "Editor"),
+            ("form filling", "Form Filling"),
+        ],
         string="Internal Access",
         default="viewer",
     )
     link_access = fields.Selection(
-        [("viewer", "Viewer"), ("reviewer", "Reviewer"), ("editor", "Editor"), ("none", "None")],
+        [
+            ("none", "None"),
+            ("viewer", "Viewer"),
+            ("comment", "Comment"),
+            ("reviewer", "Reviewer"),
+            ("editor", "Editor"),
+            ("form filling", "Form Filling"),
+        ],
         string="Link Access",
         default="viewer",
     )

@@ -9,7 +9,14 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     folder_id = fields.Many2one("documents.folder", string="Folder", ondelete="cascade")
     user_id = fields.Many2one("res.users", string="User", required=True, ondelete="cascade")
     role = fields.Selection(
-        [("viewer", "Viewer"), ("reviewer", "Reviewer"), ("editor", "Editor"), ("none", "None")],
+        [
+            ("none", "None"),
+            ("viewer", "Viewer"),
+            ("comment", "Comment"),
+            ("reviewer", "Reviewer"),
+            ("editor", "Editor"),
+            ("form filling", "Form Filling"),
+        ],
         string="Role",
         required=True,
     )
