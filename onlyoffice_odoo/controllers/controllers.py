@@ -209,8 +209,39 @@ class Onlyoffice_Connector(http.Controller):
             },
         }
 
-        if can_write:
+        if can_write:  # TODO: check rules before writing
             root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
+
+        if request.env.user:
+            if attachment.res_model == "documents.document":
+                document = request.env["documents.document"].browse(int(attachment.res_id))
+                if "onlyoffice.documents.access.user" in request.env:
+                    access_record = request.env["onlyoffice.documents.access.user"].search(
+                        [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+                    )
+                    if access_record:
+                        role = access_record.role
+                        if role == "none":
+                            return request.not_found()
+                        elif role == "viewer":
+                            root_config["editorConfig"]["mode"] = "view"
+                            root_config["document"]["permissions"]["edit"] = False
+                        elif role == "comment":
+                            root_config["editorConfig"]["mode"] = "edit"
+                            root_config["document"]["permissions"]["edit"] = False
+                            root_config["document"]["permissions"]["comment"] = True
+                        elif role == "reviewer":
+                            root_config["editorConfig"]["mode"] = "edit"
+                            root_config["document"]["permissions"]["edit"] = False
+                            root_config["document"]["permissions"]["review"] = True
+                        elif role == "editor":
+                            root_config["editorConfig"]["mode"] = "edit"
+                        elif role == "form filling":
+                            root_config["editorConfig"]["mode"] = "edit"
+                            root_config["document"]["permissions"]["edit"] = False
+                            root_config["document"]["permissions"]["fillForms"] = True
+                    else:
+                        pass
 
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
