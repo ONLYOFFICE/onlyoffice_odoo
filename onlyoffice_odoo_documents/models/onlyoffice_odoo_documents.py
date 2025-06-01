@@ -113,23 +113,17 @@ class OnlyofficeDocuments(models.Model):
             else:
                 rec.users_rules_ids = False
 
-    @api.depends("document_ids", "folder_id", "users_rules_ids")
+    @api.depends("document_ids", "users_rules_ids")
     def _compute_users_rules(self):
         for rec in self:
             rec.users_rules = False
 
-            if rec.document_ids:
-                target_field = "document_id"
-                target_ids = rec.document_ids.ids
-                total_targets = len(target_ids)
-            elif rec.folder_id:
-                target_field = "folder_id"
-                target_ids = [rec.folder_id.id]
-                total_targets = 1
-            else:
+            if not rec.document_ids:
                 continue
 
-            existing_access = self.env["onlyoffice.documents.access.user"].search([(target_field, "in", target_ids)])
+            existing_access = self.env["onlyoffice.documents.access.user"].search(
+                [("document_id", "in", rec.document_ids.ids)]
+            )
 
             if not existing_access:
                 continue
@@ -144,12 +138,12 @@ class OnlyofficeDocuments(models.Model):
                         "targets_with_access": set(),
                     }
                 user_info[user_id]["roles"].add(access.role)
-                user_info[user_id]["targets_with_access"].add(access[target_field].id)
+                user_info[user_id]["targets_with_access"].add(access["document_id"].id)
 
             rows = []
             for user_id, data in user_info.items():  # noqa: B007
                 if data["targets_with_access"]:
-                    if len(data["roles"]) > 1 or len(data["targets_with_access"]) < total_targets:
+                    if len(data["roles"]) > 1 or len(data["targets_with_access"]) < len(rec.document_ids.ids):
                         role_display = "Mixed"
                     else:
                         role_display = list(data["roles"])[0]
@@ -178,65 +172,55 @@ class OnlyofficeDocuments(models.Model):
 
     @api.model
     def open_advanced_share_popup(self, vals):
+        document_ids = vals.get("document_ids")
+        if not document_ids:
+            raise AccessError("No documents selected for sharing.")
+        document_ids = document_ids[0][2]
+
         is_admin = self.env.user.has_group("base.group_system")
         if is_admin:
             pass
         else:
-            document_ids = vals.get("document_ids")
-            documents = self.env["documents.document"].browse(document_ids[0][2])
+            documents = self.env["documents.document"].browse(document_ids)
             if any(doc.create_uid != self.env.user for doc in documents):
                 raise AccessError("Only the owner or administrator can share documents.")
 
         vals["internal_access"] = "viewer"
         vals["link_access"] = "viewer"
 
-        target_field = None
-        target_ids = None
-
-        document_ids = vals.get("document_ids", None)
-        folder_id = vals.get("folder_id", None)
-        if document_ids:
-            target_field = "document_id"
-            target_ids = document_ids[0][2]
-        elif folder_id:
-            target_field = "folder_id"
-            target_ids = [folder_id]
-
-        if target_field and target_ids:
-            access = self.env["onlyoffice.documents.access"].search([(target_field, "in", target_ids)])
-
-            if access:
-                if len(target_ids) == 1:
-                    vals["internal_access"] = access.internal_access
-                else:
-                    all_internal = []
-                    for target_id in target_ids:
-                        acc = access.filtered(lambda x: x[target_field].id == target_id)  # noqa: B023
-                        if acc:
-                            all_internal.append(acc.internal_access)
-                        else:
-                            all_internal.append("viewer")
-
-                    if len(set(all_internal)) > 1:
-                        vals["internal_access"] = "mixed"
+        access = self.env["onlyoffice.documents.access"].search([("document_id", "in", document_ids)])
+        if access:
+            if len(document_ids) == 1:
+                vals["internal_access"] = access.internal_access
+            else:
+                all_internal = []
+                for document_id in document_ids:
+                    acc = access.filtered(lambda x: x["document_id"].id == document_id)  # noqa: B023
+                    if acc:
+                        all_internal.append(acc.internal_access)
                     else:
-                        vals["internal_access"] = all_internal[0]
+                        all_internal.append("viewer")
 
-                if len(target_ids) == 1:
-                    vals["link_access"] = access.link_access
+                if len(set(all_internal)) > 1:
+                    vals["internal_access"] = "mixed"
                 else:
-                    all_link = []
-                    for target_id in target_ids:
-                        acc = access.filtered(lambda x: x[target_field].id == target_id)  # noqa: B023
-                        if acc:
-                            all_link.append(acc.link_access)
-                        else:
-                            all_link.append("viewer")
+                    vals["internal_access"] = all_internal[0]
 
-                    if len(set(all_link)) > 1:
-                        vals["link_access"] = "mixed"
+            if len(document_ids) == 1:
+                vals["link_access"] = access.link_access
+            else:
+                all_link = []
+                for document_id in document_ids:
+                    acc = access.filtered(lambda x: x["document_id"].id == document_id)  # noqa: B023
+                    if acc:
+                        all_link.append(acc.link_access)
                     else:
-                        vals["link_access"] = all_link[0]
+                        all_link.append("viewer")
+
+                if len(set(all_link)) > 1:
+                    vals["link_access"] = "mixed"
+                else:
+                    vals["link_access"] = all_link[0]
 
         vals["default_internal_access"] = vals["internal_access"]
         vals["default_link_access"] = vals["link_access"]
@@ -249,15 +233,15 @@ class OnlyofficeDocuments(models.Model):
                 "default_tag_ids": vals.get("tag_ids"),
                 "default_type": vals.get("type", "domain"),
                 "default_domain": vals.get("domain") if vals.get("type", "domain") == "domain" else False,
-                "default_document_ids": vals.get("document_ids", False),
+                "default_document_ids": document_ids,
                 "default_internal_access": vals.get("internal_access"),
                 "default_link_access": vals.get("link_access"),
             }
         )
         record = self.with_context(**context).create(vals)
-        return record._get_advanced_share_popup(context, vals)
+        return record.get_advanced_share_popup(context)
 
-    def _get_advanced_share_popup(self, context, vals):
+    def get_advanced_share_popup(self, context):
         form = self.env.ref("onlyoffice_odoo_documents.onlyoffice_odoo_documents_advanced_access")
         return {
             "context": context,
@@ -273,31 +257,22 @@ class OnlyofficeDocuments(models.Model):
         access = self.env["onlyoffice.documents.access"]
         access_user = self.env["onlyoffice.documents.access.user"]
 
-        if self.document_ids:
-            target_field = "document_id"
-            targets = self.document_ids
-            target_ids = targets.ids
-        elif self.folder_id:
-            target_field = "folder_id"
-            targets = self.folder_id
-            target_ids = [targets.id]
-        else:
+        if not self.document_ids:
             return {"type": "ir.actions.act_window_close"}
 
-        existing_access = access.search([(target_field, "in", target_ids)])
+        existing_access = access.search([("document_id", "in", self.document_ids.ids)])
         existing_access_user = access_user.search(
-            [(target_field, "in", target_ids), ("user_id", "in", self.user_ids.ids)]
+            [("document_id", "in", self.document_ids.ids), ("user_id", "in", self.user_ids.ids)]
         )
 
-        old_access_map = {acc[target_field].id: acc for acc in existing_access}
+        old_access_map = {acc["document_id"].id: acc for acc in existing_access}
 
         existing_access_user.unlink()
 
-        for target in targets:
-            target_id = target.id
-            old_access = old_access_map.get(target_id)
+        for document_id in self.document_ids:
+            old_access = old_access_map.get(document_id.id)
 
-            vals = {target_field: target_id}
+            vals = {"document_id": document_id.id}
 
             if self.internal_access == "mixed":
                 if old_access:
@@ -332,12 +307,8 @@ class OnlyofficeDocuments(models.Model):
                 "user_id": user.id,
                 "role": self.user_access,
             }
-            if target_field == "document_id":
-                for target in targets:
-                    access_user_vals["document_id"] = target.id
-                    access_user.create(access_user_vals)
-            else:
-                access_user_vals["folder_id"] = targets.id
+            for document_id in self.document_ids:
+                access_user_vals["document_id"] = document_id.id
                 access_user.create(access_user_vals)
 
         return {"type": "ir.actions.act_window_close"}
