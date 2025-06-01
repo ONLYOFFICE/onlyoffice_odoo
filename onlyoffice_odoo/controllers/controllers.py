@@ -2,6 +2,7 @@
 # (c) Copyright Ascensio System SIA 2024
 #
 
+import base64
 import json
 import logging
 import re
@@ -124,8 +125,8 @@ class Onlyoffice_Connector(http.Controller):
 
         try:
             body = request.get_json_data()
-
-            attachment = self.get_attachment(attachment_id, self.get_user_from_token(oo_security_token))
+            user = self.get_user_from_token(oo_security_token)
+            attachment = self.get_attachment(attachment_id, user)
             if not attachment:
                 raise Exception("attachment not found")
 
@@ -151,7 +152,20 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                attachment.write({"raw": urlopen(file_url, timeout=30).read(), "mimetype": guess_type(file_url)[0]})
+                datas = urlopen(file_url, timeout=30).read()
+                if attachment.res_model == "documents.document":
+                    datas = base64.encodebytes(datas)
+                    document = request.env["documents.document"].browse(int(attachment.res_id))
+                    document.with_user(user).write(
+                        {
+                            "name": attachment.name,
+                            "datas": datas,
+                            "mimetype": guess_type(file_url)[0],
+                        }
+                    )
+                else:
+                    attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
+
 
         except Exception as ex:
             response_json["error"] = 1
