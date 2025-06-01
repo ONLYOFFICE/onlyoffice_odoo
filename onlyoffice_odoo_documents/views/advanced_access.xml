@@ -8,6 +8,7 @@
         <sheet class="o_documents_advanced_access">
           <group>
             <field name="type" invisible="1" />
+            <field name="extension" invisible="1" />
             <field
               attrs="{'invisible': [('type', '!=', 'ids')]}"
               name="document_ids"
@@ -24,7 +25,7 @@
             <field name="user_ids" widget="many2many_tags" options="{'no_create': True}" />
             <field name="user_access" widget="filtered_selection" attrs="{'invisible': [('user_ids', '=', [])]}" />
             <field attrs="{'invisible': [('user_ids', '!=', [])]}" name="internal_access" widget="filtered_selection" />
-            <field attrs="{'invisible': [('user_ids', '!=', [])]}" name="link_access" widget="filtered_selection" />
+            <!--<field attrs="{'invisible': [('user_ids', '!=', [])]}" name="link_access" widget="filtered_selection" />-->
           </group>
 
           <label for="users_rules_ids" string="People with access" />

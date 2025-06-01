@@ -70,7 +70,7 @@ class OnlyofficeDocuments(models.Model):
     )
 
     extension = fields.Char(
-        string="Document Type",
+        string="Extension",
         compute="_compute_extension",
         store=True,
     )
@@ -178,8 +178,14 @@ class OnlyofficeDocuments(models.Model):
 
     @api.model
     def open_advanced_share_popup(self, vals):
-        if not self.env.user.has_group("base.group_system") and self.create_uid != self.env.user:
-            raise AccessError("Only the owner or administrator can share documents.")
+        is_admin = self.env.user.has_group("base.group_system")
+        if is_admin:
+            pass
+        else:
+            document_ids = vals.get("document_ids")
+            documents = self.env["documents.document"].browse(document_ids[0][2])
+            if any(doc.create_uid != self.env.user for doc in documents):
+                raise AccessError("Only the owner or administrator can share documents.")
 
         vals["internal_access"] = "viewer"
         vals["link_access"] = "viewer"
