@@ -254,61 +254,61 @@ class OnlyofficeDocuments(models.Model):
         }
 
     def save(self):
-        access = self.env["onlyoffice.documents.access"]
-        access_user = self.env["onlyoffice.documents.access.user"]
-
         if not self.document_ids:
             return {"type": "ir.actions.act_window_close"}
 
-        existing_access = access.search([("document_id", "in", self.document_ids.ids)])
-        existing_access_user = access_user.search(
-            [("document_id", "in", self.document_ids.ids), ("user_id", "in", self.user_ids.ids)]
-        )
+        if self.user_ids:
+            access_user = self.env["onlyoffice.documents.access.user"]
+            existing_access_user = access_user.search(
+                [("document_id", "in", self.document_ids.ids), ("user_id", "in", self.user_ids.ids)]
+            )
+            existing_access_user.unlink()
+            if self.user_access:
+                for user in self.user_ids:
+                    access_user_vals = {
+                        "user_id": user.id,
+                        "role": self.user_access,
+                    }
+                    for document_id in self.document_ids:
+                        access_user_vals["document_id"] = document_id.id
+                        access_user.create(access_user_vals)
 
-        old_access_map = {acc["document_id"].id: acc for acc in existing_access}
+        elif self.document_ids:
+            access = self.env["onlyoffice.documents.access"]
+            existing_access = access.search([("document_id", "in", self.document_ids.ids)])
+            old_access_map = {acc["document_id"].id: acc for acc in existing_access}
 
-        existing_access_user.unlink()
-
-        for document_id in self.document_ids:
-            old_access = old_access_map.get(document_id.id)
-
-            vals = {"document_id": document_id.id}
-
-            if self.internal_access == "mixed":
-                if old_access:
-                    vals["internal_access"] = old_access.internal_access
-                else:
-                    vals["internal_access"] = (
-                        "viewer" if not self.default_internal_access else self.default_internal_access
-                    )
-            else:
-                vals["internal_access"] = self.internal_access
-
-            if self.link_access == "mixed":
-                if old_access:
-                    vals["link_access"] = old_access.link_access
-                else:
-                    vals["link_access"] = "viewer" if not self.default_link_access else self.default_link_access
-            else:
-                vals["link_access"] = self.link_access
-
-            if vals.get("internal_access") == "mixed":
-                vals["internal_access"] = "viewer"
-            if vals.get("link_access") == "mixed":
-                vals["link_access"] = "viewer"
-
-            if old_access:
-                old_access.write(vals)
-            else:
-                access.create(vals)
-
-        for user in self.user_ids:
-            access_user_vals = {
-                "user_id": user.id,
-                "role": self.user_access,
-            }
             for document_id in self.document_ids:
-                access_user_vals["document_id"] = document_id.id
-                access_user.create(access_user_vals)
+                old_access = old_access_map.get(document_id.id)
+
+                vals = {"document_id": document_id.id}
+
+                if self.internal_access == "mixed":
+                    if old_access:
+                        vals["internal_access"] = old_access.internal_access
+                    else:
+                        vals["internal_access"] = (
+                            "viewer" if not self.default_internal_access else self.default_internal_access
+                        )
+                else:
+                    vals["internal_access"] = self.internal_access
+
+                if self.link_access == "mixed":
+                    if old_access:
+                        vals["link_access"] = old_access.link_access
+                    else:
+                        vals["link_access"] = "viewer" if not self.default_link_access else self.default_link_access
+                else:
+                    vals["link_access"] = self.link_access
+
+                if vals.get("internal_access") == "mixed":
+                    vals["internal_access"] = "viewer"
+                if vals.get("link_access") == "mixed":
+                    vals["link_access"] = "viewer"
+
+                if old_access:
+                    old_access.write(vals)
+                else:
+                    access.create(vals)
 
         return {"type": "ir.actions.act_window_close"}
