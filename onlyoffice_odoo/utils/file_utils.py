@@ -99,6 +99,11 @@ def get_default_file_template(lang, ext):
         "vi": "vi-VN",
         "zh-CN": "zh-CN",
         "zh-TW": "zh-TW",
+        "ca": "ca-ES",
+        "da": "da-DK",
+        "hu": "hu-HU",
+        "id": "id-ID",
+        "ro": "ro-RO",
     }
 
     lang = lang.replace("_", "-")

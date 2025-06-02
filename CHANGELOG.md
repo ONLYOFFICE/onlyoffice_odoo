@@ -1,5 +1,7 @@
 # Change Log
 
+- Catalan, Danish, Hungarian, Indonesian, Romanian empty file templates
+
 ## 3.1.0
 
 ## Added
