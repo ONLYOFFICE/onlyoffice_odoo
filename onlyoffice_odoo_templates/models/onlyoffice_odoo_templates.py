@@ -154,8 +154,7 @@ class OnlyOfficeTemplate(models.Model):
                     super().unlink()
                     self.env.cr.commit()
                     raise UserError("Failed to download converted PDF form") from e
-        else:
-            return record
+        return record
 
     @api.model
     def _convert_to_form(self, attachment):
