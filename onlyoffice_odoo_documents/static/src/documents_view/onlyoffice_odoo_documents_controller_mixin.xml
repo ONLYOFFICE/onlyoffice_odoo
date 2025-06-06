@@ -19,7 +19,7 @@
         t-attf-class="btn btn-secondary o_documents_kanban_onlyoffice_odoo_documents_share {{additionalClasses}}"
         t-on-click="() => this.onShareButtonClick()"
       >
-        Advanced Access
+        Advanced Share
       </button>
     </xpath>
   </t>

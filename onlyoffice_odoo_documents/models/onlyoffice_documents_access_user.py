@@ -17,7 +17,6 @@ class OnlyofficeDocumentsAccessUser(models.Model):
             ("editor", "Editor"),
             ("form filling", "Form Filling"),
         ],
-        string="Role",
         required=True,
     )
 

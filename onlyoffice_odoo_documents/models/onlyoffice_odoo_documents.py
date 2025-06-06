@@ -7,10 +7,7 @@ class OnlyofficeDocuments(models.Model):
     _description = "ONLYOFFICE Documents"
 
     folder_id = fields.Many2one("documents.folder", string="Workspace", required=True, ondelete="cascade")
-    type = fields.Selection([("ids", "Document list"), ("domain", "Domain")], default="ids", string="Share type")
     document_ids = fields.Many2many("documents.document", string="Shared Documents")
-    domain = fields.Char()
-    tag_ids = fields.Many2many("documents.tag", string="Shared Tags")
     user_ids = fields.Many2many(
         "res.users",
         string="Users",
@@ -27,7 +24,6 @@ class OnlyofficeDocuments(models.Model):
             ("editor", "Editor"),
             ("form filling", "Form Filling"),
         ],
-        string="User Access",
         default="viewer",
     )
     users_rules = fields.Html(compute="_compute_users_rules", string="People with access")
@@ -43,7 +39,6 @@ class OnlyofficeDocuments(models.Model):
             ("mixed", "Mixed"),
         ],
         default="viewer",
-        string="Internal Access",
     )
     default_internal_access = fields.Char()
 
@@ -58,7 +53,6 @@ class OnlyofficeDocuments(models.Model):
             ("mixed", "Mixed"),
         ],
         default="viewer",
-        string="Link Access",
     )
     default_link_access = fields.Char()
 
@@ -70,7 +64,6 @@ class OnlyofficeDocuments(models.Model):
     )
 
     extension = fields.Char(
-        string="Extension",
         compute="_compute_extension",
         store=True,
     )
@@ -175,7 +168,6 @@ class OnlyofficeDocuments(models.Model):
         document_ids = vals.get("document_ids")
         if not document_ids:
             raise AccessError("No documents selected for sharing.")
-        document_ids = document_ids[0][2]
 
         is_admin = self.env.user.has_group("base.group_system")
         if is_admin:
@@ -230,9 +222,6 @@ class OnlyofficeDocuments(models.Model):
             {
                 "default_owner_id": self.env.uid,
                 "default_folder_id": vals.get("folder_id"),
-                "default_tag_ids": vals.get("tag_ids"),
-                "default_type": vals.get("type", "domain"),
-                "default_domain": vals.get("domain") if vals.get("type", "domain") == "domain" else False,
                 "default_document_ids": document_ids,
                 "default_internal_access": vals.get("internal_access"),
                 "default_link_access": vals.get("link_access"),

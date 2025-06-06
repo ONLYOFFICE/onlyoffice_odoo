@@ -16,7 +16,6 @@ class OnlyofficeDocumentsAccessUser(models.Model):
             ("editor", "Editor"),
             ("form filling", "Form Filling"),
         ],
-        string="Internal Access",
         default="viewer",
     )
     link_access = fields.Selection(
@@ -28,7 +27,6 @@ class OnlyofficeDocumentsAccessUser(models.Model):
             ("editor", "Editor"),
             ("form filling", "Form Filling"),
         ],
-        string="Link Access",
         default="viewer",
     )
 

@@ -62,7 +62,9 @@ export class CreateDialog extends Component {
         type: "info",
       })
 
-      const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      /* Const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
       if (same_tab) {
         const action = {
           params: { attachment_id: result.file_id },
@@ -71,11 +73,15 @@ export class CreateDialog extends Component {
           type: "ir.actions.client",
         }
         return this.actionService.doAction(action)
-      }
-      window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
-    }
+      } else {
+        const action = () => {
+          return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+        }
+      } */
 
-    this.data.close()
+      this.data.close()
+      this.props.onShare([result.document_id])
+    }
   }
 
   _selectedFormat(format) {

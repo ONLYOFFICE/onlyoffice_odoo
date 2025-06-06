@@ -21,7 +21,7 @@ _logger = logging.getLogger(__name__)
 class OnlyofficeDocuments_Connector(http.Controller):
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="json")
     def post_file_create(self, folder_id, supported_format, title):
-        result = {"error": None, "file_id": None}
+        result = {"error": None, "file_id": None, "document_id": None}
 
         try:
             _logger.info(f"Getting new file template {request.env.user.lang} {supported_format}")
@@ -36,6 +36,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
             document = request.env["documents.document"].create(data)
             result["file_id"] = document.attachment_id.id
+            result["document_id"] = document.id
 
         except Exception as ex:
             _logger.exception(f"Failed to create document {str(ex)}")
