@@ -20,6 +20,11 @@ class OnlyofficeDocuments(models.Model):
         if not is_admin and document.create_uid != self.env.user:
             raise AccessError(_("Only the owner or administrator can share documents."))
 
+        ext = document.name.split(".")[-1].lower() if "." in document.name else ""
+
+        if ext not in ["docx", "xlsx", "pptx", "pdf"]:
+            raise AccessError(_("Incorrect file type for Advanced share, please choose another document."))
+
         roles = self._get_available_roles(document.name)
 
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
