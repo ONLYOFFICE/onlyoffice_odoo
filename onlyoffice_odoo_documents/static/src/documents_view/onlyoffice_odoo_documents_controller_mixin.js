@@ -1,7 +1,6 @@
 /** @odoo-module **/
 
-import { ShareFormViewDialog } from "@documents/views/helper/share_form_view_dialog"
-import { ShareDialog } from "@onlyoffice_odoo_documents/documents_view/share/onlyoffice_share"
+import { ShareDialog } from "@onlyoffice_odoo_documents/documents_view/share/advanced_share"
 import { CreateDialog } from "@onlyoffice_odoo_documents/onlyoffice_create_template/onlyoffice_create_template_dialog"
 import { useService } from "@web/core/utils/hooks"
 
