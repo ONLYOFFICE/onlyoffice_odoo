@@ -12,7 +12,7 @@ from urllib.request import urlopen
 import markupsafe
 from werkzeug.exceptions import Forbidden
 
-from odoo import http
+from odoo import _, http
 from odoo.exceptions import AccessError
 from odoo.http import request
 
@@ -231,28 +231,31 @@ class Onlyoffice_Connector(http.Controller):
     def get_documents_permissions(self, attachment, can_write, root_config):
         role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
-        if "onlyoffice.documents.access.user" in request.env:
-            access_user = request.env["onlyoffice.documents.access.user"].search(
-                [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+        access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
+            [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+        )
+        if access_user:
+            if access_user.role == "deny_access":
+                raise AccessError(_("TODO: access denied"))
+            elif access_user.role == "full_access" and can_write:
+                role = "full_access"
+            else:
+                role = access_user.role
+        if not role:
+            access = request.env["onlyoffice.odoo.documents.access"].search(
+                [("document_id", "=", document.id)], limit=1
             )
-            if access_user:
-                if access_user.role == "none":
-                    raise AccessError("TODO: access denied")
-                elif access_user.role == "editor" and can_write:
-                    role = "editor"
-                else:
-                    role = access_user.role
-        if not role and "onlyoffice.documents.access" in request.env:
-            access = request.env["onlyoffice.documents.access"].search([("document_id", "=", document.id)], limit=1)
             if access:
-                if access.internal_access == "none":
-                    raise AccessError("TODO: access denied")
-                elif access.internal_access == "editor" and can_write:
-                    role = "editor"
+                if access.internal_users == "deny_access":
+                    raise AccessError(_("TODO: access denied"))
+                elif access.internal_users == "full_access" and can_write:
+                    role = "full_access"
                 else:
-                    role = access.internal_access
+                    role = access.internal_users
 
-        if role == "viewer" or not role:
+        if not role:
+            raise AccessError(_("TODO: access denied"))
+        elif role == "read_only":
             root_config["editorConfig"]["mode"] = "view"
             root_config["document"]["permissions"]["edit"] = False
         elif role == "comment":
@@ -263,10 +266,10 @@ class Onlyoffice_Connector(http.Controller):
             root_config["editorConfig"]["mode"] = "edit"
             root_config["document"]["permissions"]["edit"] = False
             root_config["document"]["permissions"]["review"] = True
-        elif role == "editor":
+        elif role == "full_access":
             root_config["editorConfig"]["mode"] = "edit"
             root_config["document"]["permissions"]["edit"] = True
-        elif role == "form filling":
+        elif role == "form_filling":
             root_config["editorConfig"]["mode"] = "edit"
             root_config["document"]["permissions"]["edit"] = False
             root_config["document"]["permissions"]["fillForms"] = True

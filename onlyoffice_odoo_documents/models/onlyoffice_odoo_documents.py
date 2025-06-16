@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, models
 from odoo.exceptions import AccessError
 
 
@@ -6,298 +6,134 @@ class OnlyofficeDocuments(models.Model):
     _name = "onlyoffice.odoo.documents"
     _description = "ONLYOFFICE Documents"
 
-    folder_id = fields.Many2one("documents.folder", string="Workspace", required=True, ondelete="cascade")
-    document_ids = fields.Many2many("documents.document", string="Shared Documents")
-    user_ids = fields.Many2many(
-        "res.users",
-        string="Users",
-        relation="document_share_access_users_rel",
-        column1="document_id",
-        column2="user_id",
-    )
-    user_access = fields.Selection(
-        [
-            ("none", "None"),
-            ("viewer", "Viewer"),
-            ("comment", "Comment"),
-            ("reviewer", "Reviewer"),
-            ("editor", "Editor"),
-            ("form filling", "Form Filling"),
-        ],
-        default="viewer",
-    )
-    users_rules = fields.Html(compute="_compute_users_rules", string="People with access")
-
-    internal_access = fields.Selection(
-        selection=[
-            ("none", "None"),
-            ("viewer", "Viewer"),
-            ("comment", "Comment"),
-            ("reviewer", "Reviewer"),
-            ("editor", "Editor"),
-            ("form filling", "Form Filling"),
-            ("mixed", "Mixed"),
-        ],
-        default="viewer",
-    )
-    default_internal_access = fields.Char()
-
-    link_access = fields.Selection(
-        selection=[
-            ("none", "None"),
-            ("viewer", "Viewer"),
-            ("comment", "Comment"),
-            ("reviewer", "Reviewer"),
-            ("editor", "Editor"),
-            ("form filling", "Form Filling"),
-            ("mixed", "Mixed"),
-        ],
-        default="viewer",
-    )
-    default_link_access = fields.Char()
-
-    users_rules_ids = fields.One2many(
-        "onlyoffice.documents.access.user",
-        "document_id",
-        string="People with access",
-        compute="_compute_users_rules_ids",
-    )
-
-    extension = fields.Char(
-        compute="_compute_extension",
-        store=True,
-    )
-
-    @api.depends("document_ids")
-    def _compute_extension(self):
-        for record in self:
-            if not record.document_ids:
-                record.extension = False
-                continue
-
-            extensions = set()
-            for doc in record.document_ids:
-                attachment = doc.attachment_id or self.env["ir.attachment"].search(
-                    [("res_model", "=", "documents.document"), ("res_id", "=", doc.id)], limit=1
-                )
-
-                if attachment:
-                    file_name = attachment.name
-                    if "." in file_name:
-                        ext = file_name.split(".")[-1].lower().strip()
-                        extensions.add(ext)
-                    else:
-                        extensions.add("unknown")
-                else:
-                    extensions.add("unknown")
-
-            if len(extensions) == 1:
-                record.extension = extensions.pop()
-            else:
-                record.extension = "mixed"
-
-    @api.depends("document_ids")
-    def _compute_users_rules_ids(self):
-        for rec in self:
-            if rec.document_ids:
-                rec.users_rules_ids = self.env["onlyoffice.documents.access.user"].search(
-                    [("document_id", "in", rec.document_ids.ids)]
-                )
-            else:
-                rec.users_rules_ids = False
-
-    @api.depends("document_ids", "users_rules_ids")
-    def _compute_users_rules(self):
-        for rec in self:
-            rec.users_rules = False
-
-            if not rec.document_ids:
-                continue
-
-            existing_access = self.env["onlyoffice.documents.access.user"].search(
-                [("document_id", "in", rec.document_ids.ids)]
-            )
-
-            if not existing_access:
-                continue
-
-            user_info = {}
-            for access in existing_access:
-                user_id = access.user_id.id
-                if user_id not in user_info:
-                    user_info[user_id] = {
-                        "name": access.user_id.name,
-                        "roles": set(),
-                        "targets_with_access": set(),
-                    }
-                user_info[user_id]["roles"].add(access.role)
-                user_info[user_id]["targets_with_access"].add(access["document_id"].id)
-
-            rows = []
-            for user_id, data in user_info.items():  # noqa: B007
-                if data["targets_with_access"]:
-                    if len(data["roles"]) > 1 or len(data["targets_with_access"]) < len(rec.document_ids.ids):
-                        role_display = "Mixed"
-                    else:
-                        role_display = list(data["roles"])[0]
-
-                    rows.append(f"""
-                        <tr>
-                            <td>{data["name"]}</td>
-                            <td>{role_display}</td>
-                        </tr>
-                    """)
-
-            if rows:
-                rec.users_rules = f"""
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Role</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {"".join(rows)}
-                        </tbody>
-                    </table>
-                """
-
     @api.model
-    def open_advanced_share_popup(self, vals):
-        document_ids = vals.get("document_ids")
-        if not document_ids:
-            raise AccessError("No documents selected for sharing.")
+    def advanced_share_data(self, vals):
+        document_id = vals.get("document_id")
+        if not document_id:
+            raise AccessError(_("No document selected for sharing."))
+
+        if len(document_id) > 1:
+            raise AccessError(_("Please select only one document for sharing."))
 
         is_admin = self.env.user.has_group("base.group_system")
-        if is_admin:
-            pass
-        else:
-            documents = self.env["documents.document"].browse(document_ids)
-            if any(doc.create_uid != self.env.user for doc in documents):
-                raise AccessError("Only the owner or administrator can share documents.")
+        document = self.env["documents.document"].browse(document_id)
+        if not is_admin and document.create_uid != self.env.user:
+            raise AccessError(_("Only the owner or administrator can share documents."))
 
-        vals["internal_access"] = "viewer"
-        vals["link_access"] = "viewer"
+        roles = self._get_available_roles(document.name)
 
-        access = self.env["onlyoffice.documents.access"].search([("document_id", "in", document_ids)])
-        if access:
-            if len(document_ids) == 1:
-                vals["internal_access"] = access.internal_access
-            else:
-                all_internal = []
-                for document_id in document_ids:
-                    acc = access.filtered(lambda x: x["document_id"].id == document_id)  # noqa: B023
-                    if acc:
-                        all_internal.append(acc.internal_access)
-                    else:
-                        all_internal.append("viewer")
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
 
-                if len(set(all_internal)) > 1:
-                    vals["internal_access"] = "mixed"
-                else:
-                    vals["internal_access"] = all_internal[0]
+        users_access = []
+        for user_access in self.env["onlyoffice.odoo.documents.access.user"].search(
+            [("document_id", "=", document_id)]
+        ):
+            users_access.append(
+                {
+                    "user": {
+                        "id": user_access.user_id.id,
+                        "name": user_access.user_id.name,
+                        "email": user_access.user_id.email,
+                    },
+                    "role": {
+                        "id": user_access.id,
+                        "role": user_access.role,
+                    },
+                }
+            )
 
-            if len(document_ids) == 1:
-                vals["link_access"] = access.link_access
-            else:
-                all_link = []
-                for document_id in document_ids:
-                    acc = access.filtered(lambda x: x["document_id"].id == document_id)  # noqa: B023
-                    if acc:
-                        all_link.append(acc.link_access)
-                    else:
-                        all_link.append("viewer")
-
-                if len(set(all_link)) > 1:
-                    vals["link_access"] = "mixed"
-                else:
-                    vals["link_access"] = all_link[0]
-
-        vals["default_internal_access"] = vals["internal_access"]
-        vals["default_link_access"] = vals["link_access"]
-
-        context = dict(self.env.context)
-        context.update(
-            {
-                "default_owner_id": self.env.uid,
-                "default_folder_id": vals.get("folder_id"),
-                "default_document_ids": document_ids,
-                "default_internal_access": vals.get("internal_access"),
-                "default_link_access": vals.get("link_access"),
-            }
-        )
-        record = self.with_context(**context).create(vals)
-        return record.get_advanced_share_popup(context)
-
-    def get_advanced_share_popup(self, context):
-        form = self.env.ref("onlyoffice_odoo_documents.onlyoffice_odoo_documents_advanced_access")
         return {
-            "context": context,
-            "res_model": "onlyoffice.odoo.documents",
-            "target": "new",
-            "name": "Advanced Share",
-            "res_id": self.id if self else False,
-            "type": "ir.actions.act_window",
-            "views": [[form.id, "form"]],
+            "document": {
+                "id": document.id,
+                "text": document.name,
+            },
+            "internal_users": access.internal_users if access else "deny_access",
+            "internal_users_roles": roles,
+            "link_access": access.link_access if access else "read_only",
+            "link_access_roles": roles,
+            "users_access": users_access,
+            "users_access_roles": roles,
         }
 
-    def save(self):
-        if not self.document_ids:
-            return {"type": "ir.actions.act_window_close"}
+    def _get_available_roles(self, filename):
+        ext = filename.split(".")[-1].lower() if "." in filename else ""
 
-        if self.user_ids:
-            access_user = self.env["onlyoffice.documents.access.user"]
-            existing_access_user = access_user.search(
-                [("document_id", "in", self.document_ids.ids), ("user_id", "in", self.user_ids.ids)]
+        roles = {
+            "deny_access": _("Deny access"),
+            "read_only": _("Read only"),
+            "comment": _("Comment"),
+            "reviewer": _("Reviewer"),
+            "full_access": _("Full access"),
+            "form_filling": _("Form Filling"),
+        }
+
+        if ext == "docx":
+            roles.pop("form_filling", None)
+        elif ext == "xlsx":
+            roles.pop("reviewer", None)
+            roles.pop("form_filling", None)
+        elif ext == "pptx":
+            roles.pop("reviewer", None)
+            roles.pop("form_filling", None)
+        elif ext == "pdf":
+            roles.pop("comment", None)
+            roles.pop("reviewer", None)
+        else:
+            roles = {
+                "deny_access": _("Deny access"),
+                "read_only": _("Read only"),
+                "full_access": _("Full access"),
+            }
+
+        return roles
+
+    @api.model
+    def advanced_share_save(self, vals):
+        document_id = vals.get("document_id")
+        if not document_id:
+            raise AccessError(_("No document selected for sharing."))
+
+        if len(document_id) > 1:
+            raise AccessError(_("Please select only one document for sharing."))
+
+        is_admin = self.env.user.has_group("base.group_system")
+        document = self.env["documents.document"].browse(document_id)
+        if not is_admin and document.create_uid != self.env.user:
+            raise AccessError(_("Only the owner or administrator can share documents."))
+
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
+        if not access:
+            access = self.env["onlyoffice.odoo.documents.access"].create(
+                {
+                    "document_id": document_id[0],
+                    "internal_users": vals.get("internal_users", "deny_access"),
+                    "link_access": "read_only",
+                }
             )
-            existing_access_user.unlink()
-            if self.user_access:
-                for user in self.user_ids:
-                    access_user_vals = {
-                        "user_id": user.id,
-                        "role": self.user_access,
+        else:
+            access.write({"internal_users": vals.get("internal_users")})
+
+        user_accesses = vals.get("user_accesses", [])
+        current_accesses = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document_id)])
+
+        existing_accesses = {acc.user_id.id: acc for acc in current_accesses}
+        new_user_ids = {ua["user_id"] for ua in user_accesses}
+
+        for user_data in user_accesses:
+            user_id = user_data["user_id"]
+            if user_id in existing_accesses:
+                existing_accesses[user_id].write({"role": user_data["role"]})
+            else:
+                self.env["onlyoffice.odoo.documents.access.user"].create(
+                    {
+                        "document_id": document_id[0],
+                        "user_id": user_id,
+                        "role": user_data["role"],
                     }
-                    for document_id in self.document_ids:
-                        access_user_vals["document_id"] = document_id.id
-                        access_user.create(access_user_vals)
+                )
 
-        elif self.document_ids:
-            access = self.env["onlyoffice.documents.access"]
-            existing_access = access.search([("document_id", "in", self.document_ids.ids)])
-            old_access_map = {acc["document_id"].id: acc for acc in existing_access}
+        to_remove = set(existing_accesses.keys()) - new_user_ids
+        if to_remove:
+            current_accesses.filtered(lambda a: a.user_id.id in to_remove).unlink()
 
-            for document_id in self.document_ids:
-                old_access = old_access_map.get(document_id.id)
-
-                vals = {"document_id": document_id.id}
-
-                if self.internal_access == "mixed":
-                    if old_access:
-                        vals["internal_access"] = old_access.internal_access
-                    else:
-                        vals["internal_access"] = (
-                            "viewer" if not self.default_internal_access else self.default_internal_access
-                        )
-                else:
-                    vals["internal_access"] = self.internal_access
-
-                if self.link_access == "mixed":
-                    if old_access:
-                        vals["link_access"] = old_access.link_access
-                    else:
-                        vals["link_access"] = "viewer" if not self.default_link_access else self.default_link_access
-                else:
-                    vals["link_access"] = self.link_access
-
-                if vals.get("internal_access") == "mixed":
-                    vals["internal_access"] = "viewer"
-                if vals.get("link_access") == "mixed":
-                    vals["link_access"] = "viewer"
-
-                if old_access:
-                    old_access.write(vals)
-                else:
-                    access.create(vals)
-
-        return {"type": "ir.actions.act_window_close"}
+        return True

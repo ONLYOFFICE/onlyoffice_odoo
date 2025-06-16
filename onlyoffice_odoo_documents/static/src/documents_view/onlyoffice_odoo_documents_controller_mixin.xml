@@ -17,7 +17,7 @@
       <button
         type="button"
         t-attf-class="btn btn-secondary o_documents_kanban_onlyoffice_odoo_documents_share {{additionalClasses}}"
-        t-on-click="() => this.onShareButtonClick()"
+        t-on-click.stop.prevent="() => this.onClickAdvancedShare()"
       >
         Advanced Share
       </button>

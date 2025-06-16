@@ -7,7 +7,7 @@ export class FilteredSelectionField extends SelectionField {
   setup() {
     super.setup()
     this.name = this.props.name
-    this.internal_access = this.props.record.context.default_internal_access
+    this.internal_users = this.props.record.context.default_internal_users
     this.link_access = this.props.record.context.default_link_access
     this.extension = this.props.record.data.extension
   }
@@ -19,24 +19,24 @@ export class FilteredSelectionField extends SelectionField {
     let options = super.options
 
     if (this.extension === "docx") {
-      options = options.filter((item) => item[0] !== "form filling")
+      options = options.filter((item) => item[0] !== "form_filling")
     } else if (this.extension === "xlsx") {
       options = options.filter((item) => item[0] !== "reviewer")
-      options = options.filter((item) => item[0] !== "form filling")
+      options = options.filter((item) => item[0] !== "form_filling")
     } else if (this.extension === "pptx") {
       options = options.filter((item) => item[0] !== "reviewer")
-      options = options.filter((item) => item[0] !== "form filling")
+      options = options.filter((item) => item[0] !== "form_filling")
     } else if (this.extension === "pdf") {
       options = options.filter((item) => item[0] !== "comment")
       options = options.filter((item) => item[0] !== "reviewer")
     } else if (this.extension === "mixed" || this.extension === "unknown") {
       options = options.filter((item) => item[0] !== "comment")
       options = options.filter((item) => item[0] !== "reviewer")
-      options = options.filter((item) => item[0] !== "form filling")
+      options = options.filter((item) => item[0] !== "form_filling")
     }
 
-    if (this.name === "internal_access") {
-      if (this.internal_access !== "mixed") {
+    if (this.name === "internal_users") {
+      if (this.internal_users !== "mixed") {
         options = options.filter((item) => item[0] !== "mixed")
       }
     }

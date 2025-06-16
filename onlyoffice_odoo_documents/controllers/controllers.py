@@ -35,6 +35,20 @@ class OnlyofficeDocuments_Connector(http.Controller):
             }
 
             document = request.env["documents.document"].create(data)
+            request.env["onlyoffice.odoo.documents.access"].create(
+                {
+                    "document_id": document.id,
+                    "internal_users": "deny_access",
+                    "link_access": "read_only",
+                }
+            )
+            request.env["onlyoffice.odoo.documents.access.user"].create(
+                {
+                    "document_id": document.id,
+                    "user_id": request.env.user.id,
+                    "role": "full_access",
+                }
+            )
             result["file_id"] = document.attachment_id.id
             result["document_id"] = document.id
 
