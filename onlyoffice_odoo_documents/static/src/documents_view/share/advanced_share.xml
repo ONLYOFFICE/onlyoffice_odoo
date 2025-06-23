@@ -94,7 +94,7 @@
                                 <div class="col-sm-8 ps-0 pe-1 d-flex">
                                   <div class="pe-3">
                                     <img
-                                      t-attf-src="/web/image?model=res.partner&amp;field=avatar_128&amp;id={{ user.user.id }}"
+                                      t-attf-src="/web/image?model=res.users&amp;field=avatar_128&amp;id={{ user.user.id }}"
                                       class="o_image_40_cover rounded"
                                     />
                                   </div>

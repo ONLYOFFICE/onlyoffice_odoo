@@ -210,6 +210,14 @@ export class ShareDialog extends Component {
             role: this.state.newUserAccess,
             user_id: user.id,
           })
+        } else {
+          const existingUser = this.state.usersAccess.find((u) => u.user.id === user.id)
+          if (existingUser && existingUser.role.role !== this.state.newUserAccess) {
+            userAccesses.push({
+              role: this.state.newUserAccess,
+              user_id: user.id,
+            })
+          }
         }
       })
 
