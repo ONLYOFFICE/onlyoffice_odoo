@@ -111,7 +111,7 @@
                   <p class="card-text text-muted" t-esc="form.attributes.description_card" />
                 </div>
                 <div class="card-footer bg-transparent">
-                  <button class="btn btn-primary btn-sm">
+                  <button class="btn btn-primary btn-sm" t-on-click="() => this.download(form)">
                     <i class="fa fa-download" /> Download
                 </button>
                   <button class="btn btn-outline-secondary btn-sm float-end">

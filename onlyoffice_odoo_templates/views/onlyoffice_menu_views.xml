@@ -16,11 +16,12 @@
             />
             <field name="template_model_related_name" invisible="1" />
             <field name="template_model_model" invisible="1" />
+            <field name="hide_file_field" invisible="1" />
           </group>
-          <group string="Template uploading">
+          <group string="Template uploading" attrs="{'invisible': [('hide_file_field', '=', True)]}">
             <field
               name="file"
-              options="{'accepted_file_extensions': '.pdf'}"
+              options="{'accepted_file_extensions': '.pdf', 'attachment': False}"
               help="Select an existing template. Leave the field blank to create a blank template."
             />
           </group>

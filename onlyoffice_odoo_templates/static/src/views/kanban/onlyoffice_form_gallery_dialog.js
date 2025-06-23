@@ -21,6 +21,7 @@ export class FormGalleryDialog extends Component {
 
   setup() {
     this.title = _t("Form Gallery")
+    this.action = useService("action")
     this.notification = useService("notification")
     this.rpc = useService("rpc")
 
@@ -207,5 +208,20 @@ export class FormGalleryDialog extends Component {
         },
       },
     )
+  }
+
+  async download(form) {
+    this.action.doAction({
+      context: {
+        default_hide_file_field: true,
+        default_name: form.attributes.name_form,
+        url: form.attributes.file_oform.data[0].attributes.url,
+      },
+      res_model: "onlyoffice.odoo.templates",
+      target: "current",
+      type: "ir.actions.act_window",
+      view_mode: "form",
+      views: [[false, "form"]],
+    })
   }
 }

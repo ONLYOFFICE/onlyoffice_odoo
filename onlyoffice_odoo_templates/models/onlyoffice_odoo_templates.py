@@ -1,6 +1,8 @@
 import base64
 import os
 
+import requests
+
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.modules import get_module_path
@@ -19,6 +21,7 @@ class OnlyOfficeTemplate(models.Model):
     template_model_related_name = fields.Char("Model Description", related="template_model_id.name")
     template_model_model = fields.Char(string=" ", compute="_compute_template_model_fields", store=True)
     file = fields.Binary(string="Upload an existing template")
+    hide_file_field = fields.Boolean(string="Hide File Field", default=False)
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
 
@@ -90,23 +93,46 @@ class OnlyOfficeTemplate(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get("file"):
-            decode_file = base64.b64decode(vals.get("file"))
-            is_pdf_form = pdf_utils.is_pdf_form(decode_file)
-            if not is_pdf_form:
-                raise UserError(_("Only PDF Form can be uploaded."))
+        url = self._context.get("url", None)
+        if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
 
-        file = vals.get("file") or base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
-        mimetype = file_utils.get_mime_by_ext("pdf")
+                file_content = response.content
+                vals["file"] = base64.b64encode(file_content)
+            except Exception as e:
+                raise UserError(_("Failed to download form")) from e
 
-        vals["file"] = file
-        vals["mimetype"] = mimetype
+        if "file" in vals and vals["file"]:
+            try:
+                decode_file = base64.b64decode(vals["file"])
+                is_pdf_form = pdf_utils.is_pdf_form(decode_file)
+                if not is_pdf_form:
+                    raise UserError(_("Only PDF Form can be uploaded."))
+            except Exception as e:
+                raise UserError(_("Invalid file format.")) from e
 
-        datas = vals.pop("file", None)
+        datas = vals.get("file") or base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
+        vals["mimetype"] = file_utils.get_mime_by_ext("pdf")
+
         model = self.env["ir.model"].search([("id", "=", vals["template_model_id"])], limit=1)
         vals["template_model_name"] = model.name
         vals["template_model_model"] = model.model
-        record = super().create(vals)
+
+        vals.pop("hide_file_field", None)
+        vals.pop("datas", None)
+        vals.pop("file", None)
+
+        record = super().create(
+            {
+                "name": vals.get("name", "New Template"),
+                "template_model_id": vals.get("template_model_id"),
+                "mimetype": vals.get("mimetype", "application/pdf"),
+                "template_model_name": vals.get("template_model_name", ""),
+                "template_model_model": vals.get("template_model_model", ""),
+            }
+        )
         if datas:
             attachment = self.env["ir.attachment"].create(
                 {
