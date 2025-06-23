@@ -94,7 +94,11 @@
           <t t-foreach="state.forms" t-as="form" t-key="form.id">
             <div class="col-md-3 mb-3">
               <div class="card h-100">
-                <div class="card-img-top-container" style="height: 200px; overflow: hidden;">
+                <div
+                  class="card-img-top-container"
+                  style="height: 200px; overflow: hidden; cursor:zoom-in;"
+                  t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url)"
+                >
                   <img
                     t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
                     class="card-img-top"

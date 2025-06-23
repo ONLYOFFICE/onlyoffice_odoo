@@ -5,6 +5,7 @@ import { DropdownItem } from "@web/core/dropdown/dropdown_item"
 import { _t } from "@web/core/l10n/translation"
 import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
+import { OnlyofficePDFPreview } from "../widget/onlyoffice_pdf_preview"
 
 const { Component, useState, onWillStart } = owl
 
@@ -186,5 +187,25 @@ export class FormGalleryDialog extends Component {
 
   getPreviewUrl(form) {
     return form.attributes?.card_prewiew?.data?.attributes?.url
+  }
+
+  previewForm(path) {
+    const url = `/onlyoffice/template/gallery/preview?form_path=${encodeURIComponent(path)}`
+
+    this.env.services.dialog.add(
+      OnlyofficePDFPreview,
+      {
+        close: () => {
+          this.env.services.dialog.close()
+        },
+        title: "PDF Preview - " + path.split("/").pop(),
+        url: url,
+      },
+      {
+        onClose: () => {
+          return
+        },
+      },
+    )
   }
 }
