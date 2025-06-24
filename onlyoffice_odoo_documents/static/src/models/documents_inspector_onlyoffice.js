@@ -10,95 +10,17 @@ import { DocumentsInspector } from "@documents/views/inspector/documents_inspect
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "web.utils"
 
-const oo_editable_formats = [
-  "docx",
-  "xlsx",
-  "pptx",
-  "pdf",
-  "docm",
-  "dotm",
-  "dotx",
-  "xlsb",
-  "xlsm",
-  "xltm",
-  "xltx",
-  "potm",
-  "potx",
-  "ppsm",
-  "ppsx",
-  "pptm",
-]
+let formats = []
+const loadFormats = async () => {
+  try {
+    const response = await fetch("/onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json")
+    formats = await response.json()
+  } catch (error) {
+    console.error("Error loading formats data:", error)
+  }
+}
 
-const oo_viewable_formats = [
-  "djvu",
-  "doc",
-  "docm",
-  "docxf",
-  "dot",
-  "dotm",
-  "dotx",
-  "epub",
-  "fb2",
-  "fodt",
-  "html",
-  "mht",
-  "odt",
-  "ott",
-  "oxps",
-  "rtf",
-  "txt",
-  "xps",
-  "xml",
-  "csv",
-  "fods",
-  "ods",
-  "ots",
-  "xls",
-  "xlsb",
-  "xlsm",
-  "xlt",
-  "xltm",
-  "xltx",
-  "fodp",
-  "odp",
-  "otp",
-  "pot",
-  "potm",
-  "potx",
-  "pps",
-  "ppsm",
-  "ppsx",
-  "ppt",
-  "pptm",
-  "docx",
-  "pptx",
-  "pdf",
-  "htm",
-  "hwp",
-  "hwpx",
-  "md",
-  "mhtml",
-  "pages",
-  "stw",
-  "sxw",
-  "wps",
-  "wpt",
-  "et",
-  "ett",
-  "numbers",
-  "sxc",
-  "dps",
-  "dpt",
-  "key",
-  "odg",
-  "sxi",
-  "vsdx",
-  "vsdm",
-  "vssm",
-  "vssx",
-  "vstm",
-  "vstx",
-]
+loadFormats()
 
 patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
   setup() {
@@ -109,10 +31,12 @@ patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
   },
   // eslint-disable-next-line sort-keys
   onlyofficeCanEdit(extension) {
-    return oo_editable_formats.includes(extension.toLowerCase())
+    const format = formats.find((f) => f.name === extension.toLowerCase())
+    return format && format.actions && format.actions.includes("edit")
   },
   onlyofficeCanView(extension) {
-    return oo_viewable_formats.includes(extension.toLowerCase())
+    const format = formats.find((f) => f.name === extension.toLowerCase())
+    return format && format.actions && (format.actions.includes("view") || format.actions.includes("edit"))
   },
   async onlyofficeEditorUrl(id) {
     const demo = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_demo"))
