@@ -10,7 +10,24 @@ import { DocumentsInspector } from "@documents/views/inspector/documents_inspect
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "web.utils"
 
-const oo_editable_formats = ["docx", "xlsx", "pptx", "pdf"]
+const oo_editable_formats = [
+  "docx",
+  "xlsx",
+  "pptx",
+  "pdf",
+  "docm",
+  "dotm",
+  "dotx",
+  "xlsb",
+  "xlsm",
+  "xltm",
+  "xltx",
+  "potm",
+  "potx",
+  "ppsm",
+  "ppsx",
+  "pptm",
+]
 
 const oo_viewable_formats = [
   "djvu",
@@ -53,6 +70,34 @@ const oo_viewable_formats = [
   "ppsx",
   "ppt",
   "pptm",
+  "docx",
+  "pptx",
+  "pdf",
+  "htm",
+  "hwp",
+  "hwpx",
+  "md",
+  "mhtml",
+  "pages",
+  "stw",
+  "sxw",
+  "wps",
+  "wpt",
+  "et",
+  "ett",
+  "numbers",
+  "sxc",
+  "dps",
+  "dpt",
+  "key",
+  "odg",
+  "sxi",
+  "vsdx",
+  "vsdm",
+  "vssm",
+  "vssx",
+  "vstm",
+  "vstx",
 ]
 
 patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {

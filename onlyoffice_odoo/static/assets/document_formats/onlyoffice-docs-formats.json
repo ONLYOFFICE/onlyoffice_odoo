@@ -13,7 +13,7 @@
         "convert": ["docx", "bmp", "dotm", "dotx", "epub", "fb2", "gif", "html", "jpg", "odt", "ott", "pdf", "pdfa", "png", "rtf", "txt"],
         "mime": ["application/vnd.ms-word.document.macroenabled.12"]
     },
-    {   
+    {
         "name": "docx",
         "type": "word",
         "actions": ["view", "edit"],
@@ -89,6 +89,13 @@
         "actions": ["view", "auto-convert"],
         "convert": ["docx", "bmp", "docm", "dotm", "dotx", "epub", "fb2", "gif", "html", "jpg", "odt", "ott", "pdf", "pdfa", "png", "rtf", "txt"],
         "mime": ["application/x-hwpx"]
+    },
+    {
+        "name": "md",
+        "type": "word",
+        "actions": ["view", "auto-convert"],
+        "convert": ["docx", "bmp", "docm", "dotm", "dotx", "epub", "fb2", "gif", "html", "jpg", "odt", "ott", "pdf", "pdfa", "png", "rtf", "txt"],
+        "mime": ["text/markdown"]
     },
     {
         "name": "mht",
@@ -240,7 +247,7 @@
     {
         "name": "xlsb",
         "type": "cell",
-        "actions": ["view", "auto-convert"],
+        "actions": ["view", "edit"],
         "convert": ["xlsx", "bmp", "csv", "gif", "jpg", "ods", "ots", "pdf", "pdfa", "png", "xlsm", "xltm", "xltx"],
         "mime": ["application/vnd.ms-excel.sheet.binary.macroenabled.12"]
     },
@@ -306,6 +313,13 @@
         "actions": ["view", "auto-convert"],
         "convert": ["pptx", "bmp", "gif", "jpg", "odp", "otp", "pdf", "pdfa", "png", "potm", "potx", "ppsm", "ppsx", "pptm"],
         "mime": ["application/vnd.apple.keynote", "application/x-iwork-keynote-sffkey"]
+    },
+    {
+        "name": "odg",
+        "type": "slide",
+        "actions": ["view", "auto-convert"],
+        "convert": ["pptx", "bmp", "gif", "jpg", "odp", "otp", "pdf", "pdfa", "png", "potm", "potx", "ppsm", "ppsx", "pptm"],
+        "mime": ["application/vnd.oasis.opendocument.presentationapplication/vnd.oasis.opendocument.graphics", "application/x-vnd.oasis.opendocument.graphics"]
     },
     {
         "name": "odp",
@@ -432,6 +446,48 @@
         "actions": ["view"],
         "convert": ["docx", "bmp", "docm", "dotm", "dotx", "epub", "fb2", "gif", "html", "jpg", "odt", "ott", "pdf", "pdfa", "png", "rtf", "txt"],
         "mime": ["application/vnd.ms-xpsdocument", "application/xps"]
+    },
+    {
+        "name": "vsdx",
+        "type": "diagram",
+        "actions": ["view"],
+        "convert": ["bmp", "gif", "jpg", "pdf", "pdfa", "png"],
+        "mime": ["application/vnd.ms-visio.drawing, application/vnd.visio2013", "application/vnd.visio"]
+    },
+    {
+        "name": "vsdm",
+        "type": "diagram",
+        "actions": ["view"],
+        "convert": ["bmp", "gif", "jpg", "pdf", "pdfa", "png"],
+        "mime": ["application/vnd.ms-visio.drawing.macroEnabled.12"]
+    },
+    {
+        "name": "vssm",
+        "type": "diagram",
+        "actions": ["view"],
+        "convert": ["bmp", "gif", "jpg", "pdf", "pdfa", "png"],
+        "mime": ["application/vnd.ms-visio.stencil.macroEnabled.12"]
+    },
+    {
+        "name": "vssx",
+        "type": "diagram",
+        "actions": ["view"],
+        "convert": ["bmp", "gif", "jpg", "pdf", "pdfa", "png"],
+        "mime": ["application/vnd.ms-visio.stencil"]
+    },
+    {
+        "name": "vstm",
+        "type": "diagram",
+        "actions": ["view"],
+        "convert": ["bmp", "gif", "jpg", "pdf", "pdfa", "png"],
+        "mime": ["application/vnd.ms-visio.template.macroEnabled.12"]
+    },
+    {
+        "name": "vstx",
+        "type": "diagram",
+        "actions": ["view"],
+        "convert": ["bmp", "gif", "jpg", "pdf", "pdfa", "png"],
+        "mime": ["application/vnd.ms-visio.template"]
     },
     {
         "name": "bmp",

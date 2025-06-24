@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.0.0
+- diagram documentType for vsdx, vssx, vstx, vsdm, vssm, vstm
+- view odg, md
+- edit xlsb
+
 ## 2.1.0
 - hwp, hwpx formats
 - pages, numbers, key formats
