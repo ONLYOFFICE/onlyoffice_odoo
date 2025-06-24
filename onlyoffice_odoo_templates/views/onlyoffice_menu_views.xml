@@ -7,13 +7,16 @@
       <form string="Create template">
         <sheet>
           <group string="Template creation">
-            <div class="text-muted" colspan="2"> Use this form to create a new fillable PDF template
-              for use with your Odoo modules. Enter a <span class="fw-bolder">name</span> for your
-              template. It will help you identify it later in the ONLYOFFICE Templates list. Choose
-              the <span class="fw-bolder">Odoo
-                model</span> (e.g., Employee, Invoice, Sales Order) for which this template is
-              intended. The model determines which data fields will be available for automatic form
-              filling. </div>
+            <div class="text-muted" colspan="2">
+              Use this form to create a new fillable PDF template for use with your Odoo modules.
+              Enter a <span class="fw-bolder">name</span> for your template.
+              It will help you identify it later in the ONLYOFFICE Templates list.
+            </div>
+            <div class="text-muted" colspan="2">
+              Choose the <span class="fw-bolder">Odoo model</span> (e.g., Employee, Invoice, Sales Order)
+              for which this template is intended. The model determines which data fields will be available
+              for automatic form filling.
+            </div>
             <field name="name" required="1" />
             <field
               name="template_model_id"
@@ -25,8 +28,10 @@
             <field name="template_model_model" invisible="1" />
           </group>
           <group string="Template uploading">
-            <div class="text-muted" colspan="2"> If you already have a <span class="fw-bolder">prepared
-              PDF file</span> with fillable fields, you can upload it here </div>
+            <div class="text-muted" colspan="2">
+              If you already have a <span class="fw-bolder">prepared PDF file</span>
+              with fillable fields, you can upload it here
+            </div>
             <field
               name="file"
               options="{'accepted_file_extensions': '.pdf'}"
@@ -34,10 +39,14 @@
             />
           </group>
           <group>
-            <div class="p-3" style="background-color: #C8E7EE" colspan="2">
-              <div>After saving the template, go back to the ONLYOFFICE Templates list.</div>
-              <div>From there, select your new template and configure how form fields in ONLYOFFICE
-                editor should be linked to data fields from the selected Odoo model.</div>
+            <div colspan="2">
+              <div class="text-muted">
+                After saving the template, go back to the ONLYOFFICE Templates list.
+              </div>
+              <div class="text-muted">
+                From there, select your new template and configure how form fields in ONLYOFFICE
+                editor should be linked to data fields from the selected Odoo model.
+              </div>
             </div>
           </group>
         </sheet>
