@@ -1,5 +1,9 @@
 # Change Log
 
+## Added
+
+- converting pdf to form when creating/modifying a template
+
 ## 1.1.2
 
 ## Added

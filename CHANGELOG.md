@@ -1,8 +1,12 @@
 # Change Log
 
+
+## Added
+
 - open to view vsdx, vssx, vstx, vsdm, vssm, vstm diagram formats
 - open to view odg, md
 - edit xlsb
+- Catalan, Danish, Hungarian, Indonesian, Romanian empty file templates
 
 ## 3.1.0
 
