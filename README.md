@@ -6,13 +6,24 @@ This app allows users to edit and collaborate on office documents within [Odoo](
 
 The app allows to:
 
-* Edit text documents, spreadsheets, and presentations.
+* Open text documents, spreadsheets, presentations, pdf, and diagram.
 * Co-edit documents in real time using two co-editing modes (Fast and Strict), Track Changes, comments, and built-in chat.
 
 Supported formats:
 
-* For editing: DOCX, XLSX, PPTX, PDF.
-* For viewing: DJVU, DOC, DOCM, DOCXF, DOT, DOTM, DOTX, EPUB, FB2, FODT, HTML, MHT, ODT, OFORM, OTT, OXPS, RTF, TXT, XPS, XML, CSV, FODS, ODS, OTS, XLS, XLSB, XLSM, XLT, XLTM, XLTX, FODP, ODP, OTP, POT, POTM, POTX, PPS, PPSM, PPSX, PPT, PPTM.
+**For viewing:**
+* **WORD**: DOC, DOCM, DOCX, DOT, DOTM, DOTX, EPUB, FB2, FODT, HTM, HTML, HWP, HWPX, MD, MHT, MHTML, ODT, OTT, PAGES, RTF, STW, SXW, TXT, WPS, WPT, XML
+* **CELL**: CSV, ET, ETT, FODS, NUMBERS, ODS, OTS, SXC, XLS, XLSM, XLSX, XLT, XLTM, XLTX
+* **SLIDE**: DPS, DPT, FODP, KEY, ODG, ODP, OTP, POT, POTM, POTX, PPS, PPSM, PPSX, PPT, PPTM, PPTX, SXI
+* **PDF**: DJVU, DOCXF, OFORM, OXPS, PDF, XPS
+* **DIAGRAM**: VSDM, VSDX, VSSM, VSSX, VSTM, VSTX
+
+**For editing:**
+
+* **WORD**: DOCM, DOCX, DOTM, DOTX
+* **CELL**: XLSB, XLSM, XLSX, XLTM, XLTX
+* **SLIDE**: POTM, POTX, PPSM, PPSX, PPTM, PPTX
+* **PDF**: PDF
 
 ## Installing ONLYOFFICE Docs
 
