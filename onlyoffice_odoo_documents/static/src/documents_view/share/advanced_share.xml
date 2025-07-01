@@ -135,7 +135,7 @@
                                       title="Remove access"
                                       t-on-click="() => removeUserAccess(user.user.id)"
                                     >
-                                      <i class="fa fa-archive" />
+                                      <i class="fa fa-trash" />
                                     </button>
                                   </div>
                                 </div>
