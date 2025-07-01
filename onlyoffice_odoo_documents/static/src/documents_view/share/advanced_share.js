@@ -74,9 +74,9 @@ export class ShareDialog extends Component {
     this.state.usersAccess = this.sortUsersByRole(shareData.users_access)
     this.state.usersAccessBackup = [...this.state.usersAccess]
     this.state.initialInternalAccess = shareData.internal_users
-    this.state.usersAccessRoles = shareData.users_access_roles
+    this.state.usersAccessRoles = this.roleSorting(shareData.users_access_roles)
     this.state.internalAccess = shareData.internal_users
-    this.state.internalAccessRoles = shareData.internal_users_roles
+    this.state.internalAccessRoles = this.roleSorting(shareData.internal_users_roles)
   }
 
   async loadInitialUsers() {
@@ -90,6 +90,12 @@ export class ShareDialog extends Component {
 
   sortUsersByRole = (users) => {
     return [...users].sort((a, b) => ROLE_ORDER[a.role.role] - ROLE_ORDER[b.role.role])
+  }
+
+  roleSorting = (role) => {
+    return Object.entries(role)
+      .sort((a, b) => ROLE_ORDER[a[0]] - ROLE_ORDER[b[0]])
+      .map(([key, value]) => ({ [key]: value }))
   }
 
   getDomain = () => {

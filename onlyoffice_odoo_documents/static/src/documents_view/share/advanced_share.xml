@@ -66,14 +66,14 @@
                                   t-on-change="(ev) => onUserRoleAdd(ev.target.value)"
                                 >
                                   <t
-                                    t-foreach="Object.entries(state.usersAccessRoles)"
+                                    t-foreach="state.usersAccessRoles"
                                     t-as="users_access_role"
-                                    t-key="users_access_role[0]"
+                                    t-key="Object.keys(users_access_role)[0]"
                                   >
                                     <option
-                                      t-att-value="users_access_role[0]"
-                                      t-esc="users_access_role[1]"
-                                      t-att-selected="users_access_role[0] == state.newUserAccess"
+                                      t-att-value="Object.keys(users_access_role)[0]"
+                                      t-esc="Object.values(users_access_role)[0]"
+                                      t-att-selected="Object.keys(users_access_role)[0] == state.newUserAccess"
                                     />
                                   </t>
                                 </select>
@@ -118,14 +118,14 @@
                                         t-on-change="(ev) => onUserRoleChange(user.user.id, ev.target.value)"
                                       >
                                         <t
-                                          t-foreach="Object.entries(state.usersAccessRoles)"
+                                          t-foreach="state.usersAccessRoles"
                                           t-as="users_access_role"
-                                          t-key="users_access_role[0]"
+                                          t-key="Object.keys(users_access_role)[0]"
                                         >
                                           <option
-                                            t-att-value="users_access_role[0]"
-                                            t-esc="users_access_role[1]"
-                                            t-att-selected="users_access_role[0] == user.role.role"
+                                            t-att-value="Object.keys(users_access_role)[0]"
+                                            t-esc="Object.values(users_access_role)[0]"
+                                            t-att-selected="Object.keys(users_access_role)[0] == user.role.role"
                                           />
                                         </t>
                                       </select>
@@ -165,14 +165,14 @@
                                 t-on-change="onInternalAccessChange"
                               >
                                 <t
-                                  t-foreach="Object.entries(state.internalAccessRoles)"
+                                  t-foreach="state.internalAccessRoles"
                                   t-as="internal_users_role"
-                                  t-key="internal_users_role[0]"
+                                  t-key="Object.keys(internal_users_role)[0]"
                                 >
                                   <option
-                                    t-att-value="internal_users_role[0]"
-                                    t-esc="internal_users_role[1]"
-                                    t-att-selected="internal_users_role[0] == state.internalAccess"
+                                    t-att-value="Object.keys(internal_users_role)[0]"
+                                    t-esc="Object.values(internal_users_role)[0]"
+                                    t-att-selected="Object.keys(internal_users_role)[0] == state.internalAccess"
                                   />
                                 </t>
                               </select>
