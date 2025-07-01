@@ -32,7 +32,7 @@ export class CreateDialog extends Component {
     this.dp = new DropPrevious()
   }
 
-  async _createFile() {
+  async _createFile(configureAccess = false) {
     if (this._buttonDisabled()) {
       return
     }
@@ -62,25 +62,23 @@ export class CreateDialog extends Component {
         type: "info",
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 500))
-
-      /* Const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-      if (same_tab) {
-        const action = {
-          params: { attachment_id: result.file_id },
-          tag: "onlyoffice_editor",
-          target: "current",
-          type: "ir.actions.client",
-        }
-        return this.actionService.doAction(action)
+      if (configureAccess) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        this.props.onShare([result.document_id])
       } else {
-        const action = () => {
-          return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+        const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        if (same_tab) {
+          const action = {
+            params: { attachment_id: result.file_id },
+            tag: "onlyoffice_editor",
+            target: "current",
+            type: "ir.actions.client",
+          }
+          return this.actionService.doAction(action)
         }
-      } */
-
+        return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+      }
       this.data.close()
-      this.props.onShare([result.document_id])
     }
   }
 
