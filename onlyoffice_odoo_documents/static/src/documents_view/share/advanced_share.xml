@@ -42,7 +42,7 @@
                                 <Many2XAutocomplete
                                   placeholder="'Add people...'"
                                   resModel="'res.users'"
-                                  value="state.usersInput"
+                                  value="state.usersInput || ''"
                                   update.bind="onAddUsers"
                                   options="{'no_create': True}"
                                   activeActions="{create: false, create_edit: false}"
