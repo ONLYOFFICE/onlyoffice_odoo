@@ -28,6 +28,7 @@ export class FormGalleryDialog extends Component {
     this.state = useState({
       categories: [],
       error: null,
+      form: null,
       forms: [],
       limit: 12,
       loading: false,
@@ -113,6 +114,7 @@ export class FormGalleryDialog extends Component {
   }
 
   async fetchOforms() {
+    this.state.form = null
     this.state.error = null
 
     try {
@@ -210,18 +212,28 @@ export class FormGalleryDialog extends Component {
     )
   }
 
-  async download(form) {
-    this.action.doAction({
-      context: {
-        default_hide_file_field: true,
-        default_name: form.attributes.name_form,
-        url: form.attributes.file_oform.data[0].attributes.url,
-      },
-      res_model: "onlyoffice.odoo.templates",
-      target: "current",
-      type: "ir.actions.act_window",
-      view_mode: "form",
-      views: [[false, "form"]],
-    })
+  selectForm(form) {
+    if (this.state.form && this.state.form.id === form.id) {
+      this.state.form = null
+    } else {
+      this.state.form = form
+    }
+  }
+
+  async download() {
+    if (this.state.form) {
+      this.action.doAction({
+        context: {
+          default_hide_file_field: true,
+          default_name: this.state.form.attributes.name_form,
+          url: this.state.form.attributes.file_oform.data[0].attributes.url,
+        },
+        res_model: "onlyoffice.odoo.templates",
+        target: "current",
+        type: "ir.actions.act_window",
+        view_mode: "form",
+        views: [[false, "form"]],
+      })
+    }
   }
 }

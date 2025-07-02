@@ -90,33 +90,44 @@
           <div class="alert alert-danger" t-esc="state.error" />
         </t>
 
-        <div class="row" t-if="!state.loading and !state.error">
+        <div class="row w-auto" t-if="!state.loading and !state.error">
           <t t-foreach="state.forms" t-as="form" t-key="form.id">
-            <div class="col-md-3 mb-3">
-              <div class="card h-100">
+            <div class="col-md-3 mb-3 o_content">
+              <div class="o_documents_kanban_view">
                 <div
-                  class="card-img-top-container"
-                  style="height: 200px; overflow: hidden; cursor:zoom-in;"
-                  t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url)"
+                  class="card h-100 o_kanban_record w-auto"
+                  t-attf-class="{{ state.form and form.id == state.form.id ? 'o_record_selected' : '' }}"
                 >
-                  <img
-                    t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
-                    class="card-img-top"
-                    style="object-fit: contain; height: 100%; width: 100%;"
-                    t-att-alt="form.attributes.name_form"
-                  />
-                </div>
-                <div class="card-body">
-                  <h5 class="card-title" t-esc="form.attributes.name_form" />
-                  <p class="card-text text-muted" t-esc="form.attributes.description_card" />
-                </div>
-                <div class="card-footer bg-transparent">
-                  <button class="btn btn-primary btn-sm" t-on-click="() => this.download(form)">
-                    <i class="fa fa-download" /> Download
-                </button>
-                  <button class="btn btn-outline-secondary btn-sm float-end">
-                    <i class="fa fa-info-circle" /> Details
-                </button>
+                  <div
+                    class="card-img-top-container o_kanban_attachment"
+                    style="height: 200px; overflow: hidden; cursor:zoom-in;"
+                  >
+                    <div>
+                      <i
+                        class="fa fa-circle-thin o_record_selector"
+                        title="Select document"
+                        style="cursor:pointer;"
+                        t-on-click="() => this.selectForm(form)"
+                      />
+                    </div>
+                    <div>
+                      <img
+                        t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
+                        class="card-img-top"
+                        style="object-fit: contain; height: 100%; width: 100%;"
+                        t-att-alt="form.attributes.name_form"
+                        t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url)"
+                      />
+                    </div>
+                  </div>
+                  <div class="card-footer bg-transparent d-flex justify-content-between" style="column-gap: 10px;">
+                    <div>
+                      <h5 class="card-title" t-esc="form.attributes.name_form" />
+                    </div>
+                    <div>
+                      <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -133,9 +144,10 @@
       </div>
 
       <t t-set-slot="footer">
-        <button class="btn btn-secondary" t-on-click="props.close">
-          <t>Close</t>
-        </button>
+        <t t-if="state.form">
+          <button class="btn btn-primary" t-on-click="download">Create</button>
+        </t>
+        <button class="btn btn-secondary" t-on-click="props.close">Back</button>
       </t>
     </Dialog>
   </t>
