@@ -116,7 +116,7 @@
                         class="card-img-top"
                         style="object-fit: contain; height: 100%; width: 100%;"
                         t-att-alt="form.attributes.name_form"
-                        t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url)"
+                        t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form )"
                       />
                     </div>
                   </div>

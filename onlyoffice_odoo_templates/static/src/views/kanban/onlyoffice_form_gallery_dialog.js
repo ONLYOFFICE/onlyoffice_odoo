@@ -192,7 +192,7 @@ export class FormGalleryDialog extends Component {
     return form.attributes?.card_prewiew?.data?.attributes?.url
   }
 
-  previewForm(path) {
+  previewForm(path, name) {
     const url = `/onlyoffice/template/gallery/preview?form_path=${encodeURIComponent(path)}`
 
     this.env.services.dialog.add(
@@ -201,7 +201,7 @@ export class FormGalleryDialog extends Component {
         close: () => {
           this.env.services.dialog.close()
         },
-        title: "PDF Preview - " + path.split("/").pop(),
+        title: "PDF Preview - " + name,
         url: url,
       },
       {
