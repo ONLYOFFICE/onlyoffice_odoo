@@ -121,6 +121,7 @@ class OnlyOfficeTemplate(models.Model):
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
         else:
             vals["file"] = base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
+            is_pdf_form = True
 
         vals["mimetype"] = file_utils.get_mime_by_ext("pdf")
         datas = vals.pop("file")
