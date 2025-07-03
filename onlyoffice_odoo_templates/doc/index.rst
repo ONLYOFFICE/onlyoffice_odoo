@@ -16,7 +16,7 @@ To adjust the main app settings within your Odoo, go to *Home menu -> Settings -
 
 In the **Document Server Url**, specify the URL of the installed ONLYOFFICE Docs or the address of ONLYOFFICE Docs Cloud.
 
-**Document Server JWT Secret**: JWT is enabled by default and the secret key is generated automatically to restrict the access to ONLYOFFICE Docs. if you want to specify your own secret key in this field, also specify the same secret key in the ONLYOFFICE Docs `config file <https://api.onlyoffice.com/editors/signature/>`_ to enable the validation.
+**Document Server JWT Secret**: JWT is enabled by default and the secret key is generated automatically to restrict the access to ONLYOFFICE Docs. if you want to specify your own secret key in this field, also specify the same secret key in the ONLYOFFICE Docs `config file <https://api.onlyoffice.com/docs/docs-api/additional-api/signature/>`_ to enable the validation.
 
 **Document Server JWT Header**: Standard JWT header used in ONLYOFFICE is Authorization. In case this header is in conflict with your setup, you can change the header to the custom one.
 

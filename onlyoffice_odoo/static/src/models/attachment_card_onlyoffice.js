@@ -11,50 +11,17 @@ import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
 
-const oo_editable_formats = ["docx", "xlsx", "pptx", "pdf"]
+let formats = []
+const loadFormats = async () => {
+  try {
+    const data = await fetch("/onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json")
+    formats = await data.json()
+  } catch (error) {
+    console.error("Error loading formats data:", error)
+  }
+}
 
-const oo_viewable_formats = [
-  "djvu",
-  "doc",
-  "docm",
-  "docxf",
-  "dot",
-  "dotm",
-  "dotx",
-  "epub",
-  "fb2",
-  "fodt",
-  "html",
-  "mht",
-  "odt",
-  "ott",
-  "oxps",
-  "rtf",
-  "txt",
-  "xps",
-  "xml",
-  "csv",
-  "fods",
-  "ods",
-  "ots",
-  "xls",
-  "xlsb",
-  "xlsm",
-  "xlt",
-  "xltm",
-  "xltx",
-  "fodp",
-  "odp",
-  "otp",
-  "pot",
-  "potm",
-  "potx",
-  "pps",
-  "ppsm",
-  "ppsx",
-  "ppt",
-  "pptm",
-]
+loadFormats()
 
 patch(AttachmentList.prototype, {
   setup() {
@@ -65,10 +32,8 @@ patch(AttachmentList.prototype, {
   },
   // eslint-disable-next-line sort-keys
   onlyofficeCanOpen(attachment) {
-    return (
-      oo_editable_formats.includes(attachment.extension.toLowerCase()) ||
-      oo_viewable_formats.includes(attachment.extension.toLowerCase())
-    )
+    const format = formats.find((f) => f.name === attachment.extension.toLowerCase())
+    return format && format.actions && (format.actions.includes("view") || format.actions.includes("edit"))
   },
   async openOnlyoffice(attachment) {
     const demo = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_demo"))
