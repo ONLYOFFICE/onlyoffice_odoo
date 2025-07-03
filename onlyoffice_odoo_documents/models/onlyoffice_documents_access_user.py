@@ -9,11 +9,11 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     user_id = fields.Many2one("res.users", required=True, string="User")
     role = fields.Selection(
         [
-            ("deny_access", _("Deny access")),
-            ("read_only", _("Read only")),
-            ("comment", _("Comment")),
+            ("none", _("None")),
+            ("viewer", _("Viewer")),
+            ("commenter", _("Commenter")),
             ("reviewer", _("Reviewer")),
-            ("full_access", _("Full access")),
+            ("editor", _("Editor")),
             ("form_filling", _("Form Filling")),
         ],
         required=True,

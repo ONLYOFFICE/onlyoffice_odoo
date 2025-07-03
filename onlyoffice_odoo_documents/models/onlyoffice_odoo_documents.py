@@ -52,9 +52,9 @@ class OnlyofficeDocuments(models.Model):
                 "id": document.id,
                 "text": document.name,
             },
-            "internal_users": access.internal_users if access else "deny_access",
+            "internal_users": access.internal_users if access else "none",
             "internal_users_roles": roles,
-            "link_access": access.link_access if access else "read_only",
+            "link_access": access.link_access if access else "viewer",
             "link_access_roles": roles,
             "users_access": users_access,
             "users_access_roles": roles,
@@ -64,11 +64,11 @@ class OnlyofficeDocuments(models.Model):
         ext = filename.split(".")[-1].lower() if "." in filename else ""
 
         roles = {
-            "deny_access": _("Deny access"),
-            "read_only": _("Read only"),
-            "comment": _("Comment"),
+            "none": _("None"),
+            "viewer": _("Viewer"),
+            "commenter": _("Commenter"),
             "reviewer": _("Reviewer"),
-            "full_access": _("Full access"),
+            "editor": _("Editor"),
             "form_filling": _("Form Filling"),
         }
 
@@ -81,13 +81,13 @@ class OnlyofficeDocuments(models.Model):
             roles.pop("reviewer", None)
             roles.pop("form_filling", None)
         elif ext == "pdf":
-            roles.pop("comment", None)
+            roles.pop("commenter", None)
             roles.pop("reviewer", None)
         else:
             roles = {
-                "deny_access": _("Deny access"),
-                "read_only": _("Read only"),
-                "full_access": _("Full access"),
+                "none": _("None"),
+                "viewer": _("Viewer"),
+                "editor": _("Editor"),
             }
 
         return roles
@@ -111,8 +111,8 @@ class OnlyofficeDocuments(models.Model):
             access = self.env["onlyoffice.odoo.documents.access"].create(
                 {
                     "document_id": document_id[0],
-                    "internal_users": vals.get("internal_users", "deny_access"),
-                    "link_access": "read_only",
+                    "internal_users": vals.get("internal_users", "none"),
+                    "link_access": "viewer",
                 }
             )
         else:
