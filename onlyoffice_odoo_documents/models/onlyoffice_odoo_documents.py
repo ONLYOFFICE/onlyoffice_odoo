@@ -13,7 +13,7 @@ class OnlyofficeDocuments(models.Model):
             raise AccessError(_("No document selected for sharing."))
 
         if len(document_id) > 1:
-            raise AccessError(_("Please select only one document for sharing."))
+            raise AccessError(_("Please select only one document for advanced sharing."))
 
         is_admin = self.env.user.has_group("base.group_system")
         document = self.env["documents.document"].browse(document_id)
@@ -23,7 +23,7 @@ class OnlyofficeDocuments(models.Model):
         ext = document.name.split(".")[-1].lower() if "." in document.name else ""
 
         if ext not in ["docx", "xlsx", "pptx", "pdf"]:
-            raise AccessError(_("Incorrect file type for Advanced share, please choose another document."))
+            raise AccessError(_("Incorrect file type for advanced sharing. Please select a different document."))
 
         roles = self._get_available_roles(document.name)
 
@@ -99,7 +99,7 @@ class OnlyofficeDocuments(models.Model):
             raise AccessError(_("No document selected for sharing."))
 
         if len(document_id) > 1:
-            raise AccessError(_("Please select only one document for sharing."))
+            raise AccessError(_("Please select only one document for advanced sharing."))
 
         is_admin = self.env.user.has_group("base.group_system")
         document = self.env["documents.document"].browse(document_id)
