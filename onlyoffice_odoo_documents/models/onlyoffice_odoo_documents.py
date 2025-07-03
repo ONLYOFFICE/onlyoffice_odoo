@@ -17,7 +17,7 @@ class OnlyofficeDocuments(models.Model):
 
         is_admin = self.env.user.has_group("base.group_system")
         document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.create_uid != self.env.user:
+        if not is_admin and document.owner_id != self.env.user:
             raise AccessError(_("Only the owner or administrator can share documents."))
 
         ext = document.name.split(".")[-1].lower() if "." in document.name else ""
