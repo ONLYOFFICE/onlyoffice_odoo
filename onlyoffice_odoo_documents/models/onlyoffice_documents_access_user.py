@@ -15,6 +15,7 @@ class OnlyofficeDocumentsAccessUser(models.Model):
             ("reviewer", _("Reviewer")),
             ("editor", _("Editor")),
             ("form_filling", _("Form Filling")),
+            ("custom_filter", _("Custom Filter")),
         ],
         required=True,
         string="Access Level",

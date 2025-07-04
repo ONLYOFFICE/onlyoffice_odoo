@@ -273,6 +273,10 @@ class Onlyoffice_Connector(http.Controller):
             root_config["editorConfig"]["mode"] = "edit"
             root_config["document"]["permissions"]["edit"] = False
             root_config["document"]["permissions"]["fillForms"] = True
+        elif role == "custom_filter":
+            root_config["editorConfig"]["mode"] = "edit"
+            root_config["document"]["permissions"]["edit"] = True
+            root_config["document"]["permissions"]["modifyFilter"] = False
 
         return root_config
 

@@ -70,19 +70,23 @@ class OnlyofficeDocuments(models.Model):
             "reviewer": _("Reviewer"),
             "editor": _("Editor"),
             "form_filling": _("Form Filling"),
+            "custom_filter": _("Custom Filter"),
         }
 
         if ext == "docx":
             roles.pop("form_filling", None)
+            roles.pop("custom_filter", None)
         elif ext == "xlsx":
             roles.pop("reviewer", None)
             roles.pop("form_filling", None)
         elif ext == "pptx":
             roles.pop("reviewer", None)
             roles.pop("form_filling", None)
+            roles.pop("custom_filter", None)
         elif ext == "pdf":
             roles.pop("commenter", None)
             roles.pop("reviewer", None)
+            roles.pop("custom_filter", None)
         else:
             roles = {
                 "none": _("None"),

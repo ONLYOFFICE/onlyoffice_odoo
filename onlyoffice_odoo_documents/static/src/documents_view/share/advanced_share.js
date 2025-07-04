@@ -18,10 +18,12 @@ const ROLE_ORDER = {
   // eslint-disable-next-line sort-keys
   form_filling: 2,
   // eslint-disable-next-line sort-keys
-  commenter: 3,
-  viewer: 4,
+  custom_filter: 3,
   // eslint-disable-next-line sort-keys
-  none: 5,
+  commenter: 4,
+  viewer: 5,
+  // eslint-disable-next-line sort-keys
+  none: 6,
 }
 
 export class ShareDialog extends Component {
