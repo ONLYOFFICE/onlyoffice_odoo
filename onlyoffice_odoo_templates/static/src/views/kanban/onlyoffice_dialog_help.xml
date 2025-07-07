@@ -8,7 +8,7 @@
         </span>
         <p>The ONLYOFFICE Templates module allows you to create, manage, and use fillable PDF <span
           class="fw-bolder"
-        >templates </span> for any installed Odoo model (e.g., Sales, Invoicing, CRM). These templates can then be filled in automatically with real-time data from your Odoo system — no manual input needed.</p>
+        >templates </span> for any installed Odoo module (e.g., Sales, Invoicing, CRM). These templates can then be filled in automatically with real-time data from your Odoo system — no manual input needed.</p>
         <p
         >On this page, you can create form templates for any Odoo module, such as Invoice, Receipt, Employee Leave Form, etc. Just click <span
           class="fw-bolder"
@@ -21,7 +21,7 @@
           <li>Click on the Action button.</li>
           <li>Select Print with ONLYOFFICE.</li>
           <li>Choose the required template to fill in with Odoo data.</li>
-          <li>Press button Print.</li>
+          <li>Press the Print button.</li>
         </ol>
         <p
         >This will generate a PDF document with your template, automatically filled with the corresponding record's data.</p>
