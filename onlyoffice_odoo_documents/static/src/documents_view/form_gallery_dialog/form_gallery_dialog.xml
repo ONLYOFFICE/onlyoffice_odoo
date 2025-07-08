@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
-<t t-name="onlyoffice_odoo_templates.FormGalleryDialog" owl="1">
+<t t-name="onlyoffice_odoo_documents.FormGalleryDialog" owl="1">
     <Dialog title="title" size="'xl'" footer="true">
       <div class="container-fluid">
         <div class="row mb-3" t-if="!state.loading and !state.error and state.total > state.limit">
@@ -15,7 +15,7 @@
           </div>
         </div>
         <div class="row mb-3 justify-content-end" t-if="!state.loading and !state.error">
-          <div class="col-md-3">
+          <div class="col-md-2">
             <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
               <t t-set-slot="toggler">
                 <i class="me-1 fa fa-filter" />
@@ -46,7 +46,49 @@
               </t>
             </Dropdown>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
+            <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
+              <t t-set-slot="toggler">
+                <i class="me-1 fa fa-filter" />
+                <span class="o_dropdown_title">
+                  Type
+                </span>
+              </t>
+              <span
+                class="dropdown-item o_menu_item"
+                t-on-click="() => this.onChangeType('pdf')"
+                tabindex="0"
+                aria-checked="false"
+              >
+                Form
+              </span>
+              <span
+                class="dropdown-item o_menu_item"
+                t-on-click="() => this.onChangeType('docx')"
+                tabindex="0"
+                aria-checked="false"
+              >
+                Document
+              </span>
+              <span
+                class="dropdown-item o_menu_item"
+                t-on-click="() => this.onChangeType('xlsx')"
+                tabindex="0"
+                aria-checked="false"
+              >
+                Spreadsheet
+              </span>
+              <span
+                class="dropdown-item o_menu_item"
+                t-on-click="() => this.onChangeType('pptx')"
+                tabindex="0"
+                aria-checked="false"
+              >
+                Presentation
+              </span>
+            </Dropdown>
+          </div>
+          <div class="col-md-2">
             <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
               <t t-set-slot="toggler">
                 <i class="me-1 fa fa-language" />

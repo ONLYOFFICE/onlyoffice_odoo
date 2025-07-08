@@ -5,12 +5,12 @@ import { DropdownItem } from "@web/core/dropdown/dropdown_item"
 import { _t } from "@web/core/l10n/translation"
 import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
-import { OnlyofficePDFPreview } from "../widget/onlyoffice_pdf_preview"
+import { OnlyofficePreview } from "../form_preview/onlyoffice_form_preview"
 
 const { Component, useState, onWillStart } = owl
 
 export class FormGalleryDialog extends Component {
-  static template = "onlyoffice_odoo_templates.FormGalleryDialog"
+  static template = "onlyoffice_odoo_documents.FormGalleryDialog"
 
   static components = {
     Dialog,
@@ -24,6 +24,7 @@ export class FormGalleryDialog extends Component {
     this.action = useService("action")
     this.notification = useService("notification")
     this.rpc = useService("rpc")
+    this.orm = useService("orm")
 
     this.state = useState({
       categories: [],
@@ -50,6 +51,7 @@ export class FormGalleryDialog extends Component {
         id: "all",
       },
       total: 0,
+      type: "pdf",
     })
 
     onWillStart(async () => {
@@ -63,7 +65,7 @@ export class FormGalleryDialog extends Component {
 
   async fetchLocales() {
     try {
-      const url = "/onlyoffice/oforms/locales"
+      const url = "/onlyoffice/documents/oforms/locales"
       const response = await this.rpc(url)
 
       let localesData = []
@@ -89,7 +91,7 @@ export class FormGalleryDialog extends Component {
 
   async fetchCategoryTypes() {
     try {
-      const response = await this.rpc("/onlyoffice/oforms/category-types", { locale: this.state.locale.code })
+      const response = await this.rpc("/onlyoffice/documents/oforms/category-types", { locale: this.state.locale.code })
       this.state.categories = response.data || []
       response.data.forEach(async (categoryTypes) => {
         await this.fetchSubcategories(categoryTypes.categoryId)
@@ -102,7 +104,7 @@ export class FormGalleryDialog extends Component {
   async fetchSubcategories(categoryId) {
     try {
       const category = this.state.categories.find((c) => c.categoryId === categoryId)
-      const response = await this.rpc("/onlyoffice/oforms/subcategories", {
+      const response = await this.rpc("/onlyoffice/documents/oforms/subcategories", {
         category_type: category.type,
         locale: this.state.locale.code,
       })
@@ -124,13 +126,14 @@ export class FormGalleryDialog extends Component {
         locale: this.state.locale.code,
         "pagination[pageSize]": this.state.limit,
         "pagination[page]": Math.floor(this.state.offset / this.state.limit) + 1,
+        type: this.state.type,
       }
 
       if (this.state.search) {
         params["filters[name_form][$containsi]"] = this.state.search
       }
 
-      const response = await this.rpc("/onlyoffice/oforms", { params: params })
+      const response = await this.rpc("/onlyoffice/documents/oforms", { params: params })
 
       this.state.forms = response.data || []
       this.state.total = response.meta?.pagination?.total || 0
@@ -141,8 +144,19 @@ export class FormGalleryDialog extends Component {
     this.state.loading = false
   }
 
+  async onChangeType(type) {
+    this.state.type = type
+    this.state.subcategory = {
+      category_type: "category",
+      id: "all",
+    }
+    this.state.offset = 0
+    await this.fetchOforms()
+  }
+
   async onSubcategorySelect(subcategory) {
     this.state.subcategory = subcategory
+    this.state.type = "pdf"
     this.state.offset = 0
     await this.fetchOforms()
   }
@@ -195,15 +209,15 @@ export class FormGalleryDialog extends Component {
   }
 
   previewForm(path, name) {
-    const url = `/onlyoffice/template/gallery/preview?form_path=${encodeURIComponent(path)}`
+    const url = `/onlyoffice/documents/gallery/preview?form_path=${encodeURIComponent(path)}`
 
     this.env.services.dialog.add(
-      OnlyofficePDFPreview,
+      OnlyofficePreview,
       {
         close: () => {
           this.env.services.dialog.close()
         },
-        title: "PDF Preview - " + name,
+        title: "Preview - " + name,
         url: url,
       },
       {
@@ -224,18 +238,43 @@ export class FormGalleryDialog extends Component {
 
   async download() {
     if (this.state.form) {
-      this.action.doAction({
-        context: {
-          default_hide_file_field: true,
-          default_name: this.state.form.attributes.name_form,
-          url: this.state.form.attributes.file_oform.data[0].attributes.url,
-        },
-        res_model: "onlyoffice.odoo.templates",
-        target: "current",
-        type: "ir.actions.act_window",
-        view_mode: "form",
-        views: [[false, "form"]],
+      const json = await this.rpc("/onlyoffice/documents/file/create", {
+        folder_id: this.props.folderId,
+        supported_format: this.state.form.attributes.file_oform.data[0].attributes.url.split(".").pop(),
+        title: this.state.form.attributes.name_form,
+        url: this.state.form.attributes.file_oform.data[0].attributes.url,
       })
+
+      const result = JSON.parse(json)
+
+      this.props.model.load()
+      this.props.model.notify()
+
+      if (result.error) {
+        this.notification.add(result.error, {
+          sticky: false,
+          type: "error",
+        })
+      } else {
+        this.notification.add(_t("New document created in Documents"), {
+          sticky: false,
+          type: "info",
+        })
+
+        const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        if (same_tab) {
+          const action = {
+            params: { attachment_id: result.file_id },
+            tag: "onlyoffice_editor",
+            target: "current",
+            type: "ir.actions.client",
+          }
+          return this.action.doAction(action)
+        }
+        window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+      }
+
+      this.props.close()
     }
   }
 }

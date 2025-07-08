@@ -30,9 +30,9 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_util
 logger = logging.getLogger(__name__)
 
 
-class OnlyOfficeOFormsController(http.Controller):
-    CMSOFORMS_URL = "https://cmsoforms.teamlab.info/api"
-    OFORMS_URL = "https://oforms.teamlab.info/dashboard/api"
+class OnlyOfficeOFormsTemplatesController(http.Controller):
+    CMSOFORMS_URL = "https://cmsoforms.onlyoffice.com/api"
+    OFORMS_URL = "https://oforms.onlyoffice.com/dashboard/api"
     TIMEOUT = 20  # seconds
 
     def _make_api_request(self, url, endpoint, params=None, method="GET", data=None, files=None):
@@ -195,7 +195,7 @@ class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
             return request.not_found(f"Error: {str(e)}")
 
     @http.route("/onlyoffice/template/gallery/preview", type="http", auth="user")
-    def preview_form_gallery(self, form_path, **kwargs):
+    def preview_template_gallery(self, form_path, **kwargs):
         unique = int(time.time() * 1000)
         form_path = base64.urlsafe_b64encode(form_path.encode()).decode()
         file_url = f"/onlyoffice/template/gallery/pdf_content/{form_path}"
