@@ -15,7 +15,14 @@
             </div>
             <div class="o_wrap_input flex-grow-1 flex-sm-grow-0 w-100">
               <div class="o_field_widget o_field_char">
-                <input class="o_input" id="title" t-model.trim="state.title" type="text" autocomplete="off" />
+                <input
+                  class="o_input"
+                  id="title"
+                  t-model.trim="state.title"
+                  type="text"
+                  autocomplete="off"
+                  t-ref="autofocus"
+                />
               </div>
             </div>
           </div>
@@ -83,7 +90,7 @@
             <t>Create</t>
           </button>
           <button
-            class="btn btn-primary o-onlyoffice-create-ok-button"
+            class="btn btn-secondary o-onlyoffice-create-ok-button"
             t-att-disabled="_buttonDisabled()"
             t-on-click="() => this._createFile(true)"
           >

@@ -3,7 +3,7 @@
 import { Dialog } from "@web/core/dialog/dialog"
 
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
-import { useService } from "@web/core/utils/hooks"
+import { useService, useAutofocus } from "@web/core/utils/hooks"
 import { getDefaultConfig } from "@web/views/view"
 import { DropPrevious } from "web.concurrency"
 import { _t } from "web.core"
@@ -17,6 +17,7 @@ export class CreateDialog extends Component {
     this.viewService = useService("view")
     this.notificationService = useService("notification")
     this.actionService = useService("action")
+    this.inputRef = useAutofocus()
 
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
@@ -30,6 +31,10 @@ export class CreateDialog extends Component {
     })
     useSubEnv({ config: { ...getDefaultConfig() } })
     this.dp = new DropPrevious()
+
+    if (this.inputRef.el) {
+      this.inputRef.el.focus()
+    }
   }
 
   async _createFile(configureAccess = false) {
