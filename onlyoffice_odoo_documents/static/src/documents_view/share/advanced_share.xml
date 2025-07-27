@@ -196,11 +196,7 @@
                   </button>
                 </t>
                 <t t-else="">
-                  <button
-                    class="btn btn-primary ms-2"
-                    t-att-disabled="state.saving"
-                    t-on-click="() => this.props.close()"
-                  >
+                  <button class="btn btn-primary ms-2" t-att-disabled="state.saving" t-on-click="close">
                     Done
                   </button>
                 </t>

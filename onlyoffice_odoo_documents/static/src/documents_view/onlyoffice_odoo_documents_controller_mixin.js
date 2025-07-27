@@ -18,15 +18,14 @@ export const OnlyofficeDocumentsControllerMixin = {
       context: this.props.context,
       folderId: this.env.searchModel.getSelectedFolderId(),
       model: this.env.model,
-      onShare: (document_id) => this.onClickAdvancedShare(document_id),
+      onShare: (document_id) => this.onClickAdvancedShare(document_id, true),
     })
   },
   // eslint-disable-next-line sort-keys
-  async onClickAdvancedShare(document_id) {
+  async onClickAdvancedShare(document_id, openEditor = false) {
     this.dialogService.add(ShareDialog, {
       document_id: document_id || (await this.env.model.root.getResIds(true)),
-      folderId: this.env.searchModel.getSelectedFolderId(),
-      onChangesSaved: () => this.env.searchModel.trigger("update"),
+      openEditor,
     })
   },
 }

@@ -38,6 +38,7 @@ export class ShareDialog extends Component {
   setup() {
     this.orm = useService("orm")
     this.notification = useService("notification")
+    this.action = useService("action")
 
     this.state = useState({
       document: null,
@@ -250,5 +251,23 @@ export class ShareDialog extends Component {
       this.notification.add("Error saving sharing settings", { type: "danger" })
       this.state.saving = false
     }
+  }
+
+  async close() {
+    if (this.props.openEditor) {
+      const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+      if (same_tab) {
+        const action = {
+          params: { document_id: this.props.document_id[0] },
+          tag: "onlyoffice_editor",
+          target: "current",
+          type: "ir.actions.client",
+        }
+        return this.action.doAction(action)
+      }
+      this.props.close()
+      return window.open(`/onlyoffice/editor/document/${this.props.document_id[0]}`, "_blank")
+    }
+    this.props.close()
   }
 }

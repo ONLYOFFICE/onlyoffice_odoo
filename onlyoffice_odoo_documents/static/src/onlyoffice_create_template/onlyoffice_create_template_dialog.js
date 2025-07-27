@@ -69,6 +69,7 @@ export class CreateDialog extends Component {
 
       if (configureAccess) {
         await new Promise((resolve) => setTimeout(resolve, 500))
+        this.data.close()
         this.props.onShare([result.document_id])
       } else {
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
@@ -81,9 +82,9 @@ export class CreateDialog extends Component {
           }
           return this.actionService.doAction(action)
         }
+        this.data.close()
         return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
       }
-      this.data.close()
     }
   }
 
