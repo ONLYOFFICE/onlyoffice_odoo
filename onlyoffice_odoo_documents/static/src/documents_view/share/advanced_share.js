@@ -60,11 +60,6 @@ export class ShareDialog extends Component {
     onWillStart(async () => {
       this.state.loading = true
       await this.loadShareData()
-
-      if (this.props.initialUsers) {
-        await this.loadInitialUsers()
-      }
-
       this.state.loading = false
     })
   }
@@ -81,15 +76,6 @@ export class ShareDialog extends Component {
     this.state.usersAccessRoles = this.roleSorting(shareData.users_access_roles)
     this.state.internalAccess = shareData.internal_users
     this.state.internalAccessRoles = this.roleSorting(shareData.internal_users_roles)
-  }
-
-  async loadInitialUsers() {
-    const names = await this.orm.nameGet("res.users", this.props.initialUsers)
-    this.state.users = names.map(([id, name]) => ({
-      id,
-      name,
-    }))
-    names.forEach(([id, name]) => (this.state.userNames[id] = name))
   }
 
   sortUsersByRole = (users) => {
