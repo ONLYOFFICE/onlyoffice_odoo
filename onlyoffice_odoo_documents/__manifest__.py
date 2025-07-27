@@ -27,7 +27,6 @@
         "web.assets_backend": [
             "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
-            "onlyoffice_odoo_documents/static/src/documents_view/filtered_selection.js",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
         ],
     },
