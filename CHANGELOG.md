@@ -7,6 +7,13 @@
 - edit xlsb
 - Catalan, Danish, Hungarian, Indonesian, Romanian empty file templates
 
+## 4.2.0
+
+## Changed
+
+- fix saving internal secret
+- increased timeout
+
 ## 4.1.0
 
 ## Added
