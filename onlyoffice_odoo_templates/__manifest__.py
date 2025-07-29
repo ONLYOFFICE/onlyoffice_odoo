@@ -6,7 +6,7 @@
     "author": "ONLYOFFICE",
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
-    "version": "3.1.2",
+    "version": "3.2.2",
     "depends": ["base", "onlyoffice_odoo", "web"],
     "external_dependencies": {"python": ["pyjwt"]},
     # always loaded
