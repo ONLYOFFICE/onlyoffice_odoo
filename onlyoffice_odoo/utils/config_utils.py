@@ -40,7 +40,7 @@ def get_internal_jwt_secret(env):
     secret = env["ir.config_parameter"].sudo().get_param(config_constants.INTERNAL_JWT_SECRET)
     if not secret:
         secret = uuid.uuid4().hex
-        env["ir.config_parameter"].set_param(config_constants.INTERNAL_JWT_SECRET, secret)
+        env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, secret)
 
     return secret
 
