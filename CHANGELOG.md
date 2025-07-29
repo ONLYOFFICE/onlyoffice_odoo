@@ -1,5 +1,12 @@
 # Change Log
 
+##
+
+## Changed
+
+- fix saving internal secret
+- increased timeout
+
 ## 4.1.0
 
 ## Added
