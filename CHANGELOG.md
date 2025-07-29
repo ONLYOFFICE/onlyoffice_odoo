@@ -1,6 +1,6 @@
 # Change Log
 
-##
+## 3.2.0
 
 ## Changed
 
