@@ -1,6 +1,6 @@
 # Change Log
 
-##
+## 5.2.0
 
 ## Changed
 
