@@ -151,7 +151,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                attachment.write({"raw": urlopen(file_url, timeout=30).read(), "mimetype": guess_type(file_url)[0]})
+                attachment.write({"raw": urlopen(file_url, timeout=120).read(), "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
             response_json["error"] = 1

@@ -32,7 +32,8 @@ def get_file_type(context):
 def can_view(context):
     for supported_format in format_utils.get_supported_formats():
         if supported_format.name == get_file_ext(context):
-            return True
+            if "view" in supported_format.actions:
+                return True
 
     return False
 
@@ -40,7 +41,8 @@ def can_view(context):
 def can_edit(context):
     for supported_format in format_utils.get_supported_formats():
         if supported_format.name == get_file_ext(context):
-            return supported_format.edit
+            if "edit" in supported_format.actions:
+                return True
 
     return False
 
@@ -48,7 +50,8 @@ def can_edit(context):
 def can_fill_form(context):
     for supported_format in format_utils.get_supported_formats():
         if supported_format.name == get_file_ext(context):
-            return supported_format.fillForm
+            if "fill" in supported_format.actions:
+                return True
 
     return False
 
@@ -99,6 +102,11 @@ def get_default_file_template(lang, ext):
         "vi": "vi-VN",
         "zh-CN": "zh-CN",
         "zh-TW": "zh-TW",
+        "ca": "ca-ES",
+        "da": "da-DK",
+        "hu": "hu-HU",
+        "id": "id-ID",
+        "ro": "ro-RO",
     }
 
     lang = lang.replace("_", "-")

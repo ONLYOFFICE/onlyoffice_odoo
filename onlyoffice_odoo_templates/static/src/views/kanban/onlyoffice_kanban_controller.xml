@@ -22,6 +22,7 @@
       <button class="btn btn-secondary ms-1" t-on-click="() => this.openFormGallery()">
         Open Form Gallery
       </button>
+      <button class="btn btn-secondary ms-1" t-on-click="() => this.help()"> Help </button>
     </xpath>
   </t>
 </templates>
