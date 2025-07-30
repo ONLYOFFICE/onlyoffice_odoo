@@ -19,7 +19,7 @@
       </button>
     </xpath>
     <xpath expr="//div[hasclass('o_cp_buttons')]" position="inside">
-      <button class="btn btn-primary ms-1" t-on-click="() => this._test()"> Help </button>
+      <button class="btn btn-secondary ms-1" t-on-click="() => this.help()"> Help </button>
     </xpath>
   </t>
 </templates>

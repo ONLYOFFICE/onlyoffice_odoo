@@ -11,7 +11,7 @@ export class OnlyofficeKanbanController extends KanbanController {
     this.dialog = useService("dialog")
   }
 
-  async _test() {
+  async help() {
     this.dialog.add(HelpDialog, {})
   }
 }
