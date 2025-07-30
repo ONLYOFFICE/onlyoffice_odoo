@@ -3,7 +3,7 @@
   <t t-name="onlyoffice_odoo_documents.ShareDialog" owl="1">
     <div class="o_onlyoffice_advanced_share">
       <t t-if="!state.loading">
-        <Dialog title="'Advanced Share'" onClosed="() => this.props.close()">
+        <Dialog title="'Advanced Share'">
           <div class="o_view_controller o_form_view">
             <div class="o_form_view_container">
               <div class="o_content">
