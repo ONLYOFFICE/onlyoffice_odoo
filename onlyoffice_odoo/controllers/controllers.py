@@ -208,7 +208,7 @@ class Onlyoffice_Connector(http.Controller):
             },
         }
 
-        if can_write:  # TODO: check rules before writing
+        if can_write:
             root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
 
         if attachment.res_model != "documents.document":
@@ -236,7 +236,7 @@ class Onlyoffice_Connector(http.Controller):
         )
         if access_user:
             if access_user.role == "none":
-                raise AccessError(_("TODO: access denied"))
+                raise AccessError(_("User has no read access rights to open this document"))
             elif access_user.role == "editor" and can_write:
                 role = "editor"
             else:
@@ -247,14 +247,14 @@ class Onlyoffice_Connector(http.Controller):
             )
             if access:
                 if access.internal_users == "none":
-                    raise AccessError(_("TODO: access denied"))
+                    raise AccessError(_("User has no read access rights to open this document"))
                 elif access.internal_users == "editor" and can_write:
                     role = "editor"
                 else:
                     role = access.internal_users
 
         if not role:
-            raise AccessError(_("TODO: access denied"))
+            raise AccessError(_("User has no read access rights to open this document"))
         elif role == "viewer":
             root_config["editorConfig"]["mode"] = "view"
             root_config["document"]["permissions"]["edit"] = False
