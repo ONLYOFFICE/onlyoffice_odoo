@@ -138,6 +138,9 @@ function fillElementByType(oElement) {
   if (oElementClassType === "table") {
     fillTable(oElement)
   }
+  if (oElementClassType === "pictureForm") {
+    fillForm(oElement)
+  }
 }
 
 function fillParagraph(oParagraph) {
