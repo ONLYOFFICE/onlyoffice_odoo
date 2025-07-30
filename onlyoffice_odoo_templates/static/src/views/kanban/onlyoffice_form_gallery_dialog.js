@@ -7,7 +7,7 @@ import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
 import { OnlyofficePDFPreview } from "../widget/onlyoffice_pdf_preview"
 
-const { Component, useState, onWillStart } = owl
+const { Component, useState, onWillStart, onWillUnmount } = owl
 
 export class FormGalleryDialog extends Component {
   static template = "onlyoffice_odoo_templates.FormGalleryDialog"
@@ -24,6 +24,8 @@ export class FormGalleryDialog extends Component {
     this.action = useService("action")
     this.notification = useService("notification")
     this.rpc = useService("rpc")
+
+    this.searchTimeout = null
 
     this.state = useState({
       categories: [],
@@ -58,6 +60,12 @@ export class FormGalleryDialog extends Component {
       await this.fetchCategoryTypes()
       await this.fetchOforms()
       this.state.loading = false
+    })
+
+    onWillUnmount(() => {
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout)
+      }
     })
   }
 
@@ -157,9 +165,16 @@ export class FormGalleryDialog extends Component {
   }
 
   async onSearch(search) {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout)
+    }
+
     this.state.search = search
-    this.state.offset = 0
-    await this.fetchOforms()
+
+    this.searchTimeout = setTimeout(async () => {
+      this.state.offset = 0
+      await this.fetchOforms()
+    }, 1000)
   }
 
   async onLocaleChange(locale) {
