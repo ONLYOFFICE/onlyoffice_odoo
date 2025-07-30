@@ -152,7 +152,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                datas = urlopen(file_url, timeout=30).read()
+                datas = urlopen(file_url, timeout=120).read()
                 if attachment.res_model == "documents.document":
                     datas = base64.encodebytes(datas)
                     document = request.env["documents.document"].browse(int(attachment.res_id))
@@ -165,7 +165,6 @@ class Onlyoffice_Connector(http.Controller):
                     )
                 else:
                     attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
-
 
         except Exception as ex:
             response_json["error"] = 1
