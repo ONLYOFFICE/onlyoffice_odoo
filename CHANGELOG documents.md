@@ -1,5 +1,9 @@
 # Change Log
 
+## Added
+
+- form gallery
+
 ## 3.1.1
 
 ## Added
