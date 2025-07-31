@@ -3,7 +3,7 @@
 import { Dialog } from "@web/core/dialog/dialog"
 
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
-import { useService } from "@web/core/utils/hooks"
+import { useService, useAutofocus } from "@web/core/utils/hooks"
 import { getDefaultConfig } from "@web/views/view"
 import { DropPrevious } from "web.concurrency"
 import { _t } from "web.core"
@@ -17,6 +17,7 @@ export class CreateDialog extends Component {
     this.viewService = useService("view")
     this.notificationService = useService("notification")
     this.actionService = useService("action")
+    this.inputRef = useAutofocus()
 
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
@@ -30,9 +31,13 @@ export class CreateDialog extends Component {
     })
     useSubEnv({ config: { ...getDefaultConfig() } })
     this.dp = new DropPrevious()
+
+    if (this.inputRef.el) {
+      this.inputRef.el.focus()
+    }
   }
 
-  async _createFile() {
+  async _createFile(configureAccess = false) {
     if (this._buttonDisabled()) {
       return
     }
@@ -62,20 +67,25 @@ export class CreateDialog extends Component {
         type: "info",
       })
 
-      const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-      if (same_tab) {
-        const action = {
-          params: { attachment_id: result.file_id },
-          tag: "onlyoffice_editor",
-          target: "current",
-          type: "ir.actions.client",
+      if (configureAccess) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        this.data.close()
+        this.props.onShare([result.document_id])
+      } else {
+        const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        if (same_tab) {
+          const action = {
+            params: { attachment_id: result.file_id },
+            tag: "onlyoffice_editor",
+            target: "current",
+            type: "ir.actions.client",
+          }
+          return this.actionService.doAction(action)
         }
-        return this.actionService.doAction(action)
+        this.data.close()
+        return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
       }
-      window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
     }
-
-    this.data.close()
   }
 
   _selectedFormat(format) {
