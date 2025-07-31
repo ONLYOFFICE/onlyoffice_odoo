@@ -1,5 +1,7 @@
 # Change Log
 
+- updated format icons
+
 ## 3.1.1
 
 ## Added
