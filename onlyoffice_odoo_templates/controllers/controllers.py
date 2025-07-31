@@ -26,6 +26,7 @@ from odoo.tools import (
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
+from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
 logger = logging.getLogger(__name__)
 
@@ -393,10 +394,17 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 template_name = getattr(template, "display_name", getattr(template, "name", "Filled Template"))
                 filename = re.sub(r"[<>:'/\\|?*\x00-\x1f]", " ", f"{template_name} - {record_name}")
 
-                docbuilder_content += f"""
-                    builder.SaveFile("pdf", "{filename}.pdf");
-                    builder.CloseFile();
-                """
+                editable_form_fields = templates_config_utils.get_editable_form_fields(http.request.env)
+                if editable_form_fields:
+                    docbuilder_content += f"""
+                        builder.SaveFile("pdf",  "{filename}.pdf", "<m_sJsonParams>{{&quot;isPrint&quot;:true}}</m_sJsonParams>")
+                        builder.CloseFile();
+                    """  # noqa: E501
+                else:
+                    docbuilder_content += f"""
+                        builder.SaveFile("pdf", "{filename}.pdf");
+                        builder.CloseFile();
+                    """
 
             headers = {
                 "Content-Disposition": "attachment; filename='fill_template.docbuilder'",

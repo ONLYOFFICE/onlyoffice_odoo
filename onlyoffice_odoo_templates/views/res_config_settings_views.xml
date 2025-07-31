@@ -58,6 +58,22 @@
               </div>
             </div>
           </div>
+          <div class="row mt16 o_settings_container">
+            <div class="col-12 col-lg-6 o_setting_box">
+              <div class="o_setting_left_pane">
+                <field name="editable_form_fields" />
+              </div>
+              <div class="o_setting_right_pane">
+                <label class="o_form_label" for="editable_form_fields">
+                  Disable form fields after printing PDF form
+                </label>
+                <div class="text-muted">
+                  Form fields cannot be filled in manually if they were not automatically filled in
+                  with data from Odoo
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </xpath>
     </field>
