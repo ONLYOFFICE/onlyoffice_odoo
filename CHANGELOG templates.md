@@ -1,5 +1,11 @@
 # Change Log
 
+## 2.2.2
+
+## Changed
+
+- support for the textForm element type from Document Server v9.0
+
 ## 2.1.2
 
 ## Added
