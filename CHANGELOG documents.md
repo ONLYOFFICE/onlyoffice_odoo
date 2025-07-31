@@ -4,6 +4,10 @@
 
 - saves the history of document changes
 
+## Changed
+
+- updated format icons
+
 ## 3.1.1
 
 ## Added
