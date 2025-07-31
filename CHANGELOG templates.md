@@ -2,6 +2,7 @@
 
 ## Added
 
+- setting to disable form fields editing
 - converting pdf to form when creating/modifying a template
 
 ## 1.2.2
