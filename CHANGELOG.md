@@ -1,5 +1,12 @@
 # Change Log
 
+## 3.2.0
+
+## Changed
+
+- fix saving internal secret
+- increased timeout
+
 ## 3.1.0
 
 ## Added

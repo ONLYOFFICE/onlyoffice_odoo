@@ -130,13 +130,16 @@ function fillElementByType(oElement) {
       fillParagraph(oElement)
     }
   }
-  if (oElementClassType === "form") {
+  if (oElementClassType === "form" || oElementClassType === "textForm") {
     fillForm(oElement)
   }
   if (oElementClassType === "run") {
   }
   if (oElementClassType === "table") {
     fillTable(oElement)
+  }
+  if (oElementClassType === "pictureForm") {
+    fillForm(oElement)
   }
 }
 
@@ -156,7 +159,7 @@ function fillNumbering(oParagraph) {
     var oElement = oParagraph.GetElement(i)
     var oElementClassType = oElement.GetClassType()
 
-    if (oElementClassType === "form") {
+    if (oElementClassType === "form" || oElementClassType === "textForm") {
       var oForm = oElement
       var oFormKey = oForm.GetFormKey()
 
@@ -181,7 +184,7 @@ function fillNumbering(oParagraph) {
         var oElement = oNewParagraph.GetElement(element)
         var oElementClassType = oElement.GetClassType()
 
-        if (oElementClassType === "form") {
+        if (oElementClassType === "form" || oElementClassType === "textForm") {
           var oForm = oElement
           var oFormKey = oForm.GetFormKey()
 
@@ -224,7 +227,7 @@ function fillTable(oTable) {
           for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
             var oParagraphElement = oCellElement.GetElement(paragraphElement)
 
-            if (oParagraphElement.GetClassType() !== "form") {
+            if (oParagraphElement.GetClassType() !== "form" && oParagraphElement.GetClassType() !== "textForm") {
               fillElementByType(oParagraphElement)
             } else {
               // Fill the first element and count the number of required rows
@@ -265,7 +268,10 @@ function fillTable(oTable) {
               var oParagraphElementsCount = oNewCellElement.GetElementsCount()
               for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
                 var oNewParagraphElement = oNewCellElement.GetElement(paragraphElement)
-                if (oNewParagraphElement.GetClassType() === "form") {
+                if (
+                  oNewParagraphElement.GetClassType() === "form" ||
+                  oNewParagraphElement.GetClassType() === "textForm"
+                ) {
                   var oForm = oNewParagraphElement
                   var oFormKey = oForm.GetFormKey()
 
@@ -292,7 +298,7 @@ function fillTable(oTable) {
 function fillForm(oForm, data = null) {
   var oFormFormType = oForm.GetFormType()
 
-  if (oFormFormType === "textForm") {
+  if (oFormFormType === "form" || oFormFormType === "textForm") {
     function fillTextForm(data) {
       data = String(data)
       if (data === "false" || data === "undefined") {
