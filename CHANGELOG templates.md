@@ -3,6 +3,7 @@
 ## Added
 
 - converting pdf to form when creating/modifying a template
+- new template files
 
 ## 1.2.2
 
