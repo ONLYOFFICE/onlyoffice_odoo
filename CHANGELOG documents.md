@@ -1,5 +1,9 @@
 # Change Log
 
+## Added
+
+- saves the history of document changes
+
 ## 3.1.1
 
 ## Added
