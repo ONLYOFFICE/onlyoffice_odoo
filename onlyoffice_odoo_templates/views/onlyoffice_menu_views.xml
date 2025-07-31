@@ -22,13 +22,14 @@
             />
             <field name="template_model_related_name" invisible="1" />
             <field name="template_model_model" invisible="1" />
+            <field name="hide_file_field" invisible="1" />
           </group>
-          <group string="Template uploading">
+          <group string="Template uploading" attrs="{'invisible': [('hide_file_field', '=', True)]}">
             <div class="text-muted" colspan="2"> If you already have a <span class="fw-bolder">prepared
               PDF file</span> with fillable fields, you can upload it here </div>
             <field
               name="file"
-              options="{'accepted_file_extensions': '.pdf'}"
+              options="{'accepted_file_extensions': '.pdf', 'attachment': False}"
               help="Select an existing template. Leave the field blank to create a blank template."
             />
           </group>

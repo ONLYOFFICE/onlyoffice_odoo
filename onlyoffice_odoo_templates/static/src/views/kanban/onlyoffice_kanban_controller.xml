@@ -19,6 +19,9 @@
       </button>
     </xpath>
     <xpath expr="//div[hasclass('o_cp_buttons')]" position="inside">
+      <button class="btn btn-secondary ms-1" t-on-click="() => this.openFormGallery()">
+        Open Form Gallery
+      </button>
       <button class="btn btn-secondary ms-1" t-on-click="() => this.help()"> Help </button>
     </xpath>
   </t>

@@ -2,6 +2,7 @@
 
 ## Added
 
+- form gallery
 - saves the history of document changes
 - advanced sharing permissions
 
