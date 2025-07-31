@@ -1,5 +1,12 @@
 # Change Log
 
+## 5.2.0
+
+## Changed
+
+- fix saving internal secret
+- increased timeout
+
 ## 5.1.0
 
 ## Added
