@@ -2,7 +2,12 @@
 
 ## Added
 
-- advance access
+- saves the history of document changes
+- advanced sharing permissions
+
+## Changed
+
+- updated format icons
 
 ## 3.1.1
 

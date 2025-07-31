@@ -2,240 +2,41 @@
 # (c) Copyright Ascensio System SIA 2024
 #
 
+import json
+import os
+
 
 class Format:
-    def __init__(self, name, t, edit=False, fill_form=False, convert_to=None):
-        if convert_to is None:
-            convert_to = []
+    def __init__(self, name, type, actions=None, convert=None, mime=None):
+        if actions is None:
+            actions = []
+        if convert is None:
+            convert = []
+        if mime is None:
+            mime = []
         self.name = name
-        self.type = t
-        self.edit = edit
-        self.fill_form = fill_form
-        self.convert_to = convert_to
+        self.type = type
+        self.actions = actions
+        self.convert = convert
+        self.mime = mime
 
 
 def get_supported_formats():
-    return [
-        Format("djvu", "pdf"),
-        Format(
-            "doc",
-            "word",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format(
-            "docm",
-            "word",
-            convert_to=["docx", "dotm", "dotx", "epub", "fb2", "html", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "docx",
-            "word",
-            True,
-            convert_to=["docm", "dotm", "dotx", "epub", "fb2", "html", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "docxf",
-            "pdf",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format(
-            "dot",
-            "word",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format(
-            "dotm",
-            "word",
-            convert_to=["docx", "docm", "dotx", "epub", "fb2", "html", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "dotx",
-            "word",
-            convert_to=["docx", "docm", "dotm", "epub", "fb2", "html", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "epub",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "fb2", "html", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "fb2",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "html", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "fodt",
-            "word",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format(
-            "html",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "fb2", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "mht",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "fb2", "odt", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "odt",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "fb2", "html", "ott", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "ott",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "fb2", "html", "odt", "pdf", "pdfa", "rtf", "txt"],
-        ),
-        Format(
-            "oxps",
-            "pdf",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format(
-            "pdf",
-            "pdf",
-            True,
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "fb2", "html", "odt", "ott", "pdfa", "rtf", "txt"],
-            fill_form=True,
-        ),
-        Format(
-            "rtf",
-            "word",
-            convert_to=["docx", "docm", "dotm", "dotx", "epub", "fb2", "html", "odt", "ott", "pdf", "pdfa", "txt"],
-        ),
-        Format("txt", "word"),
-        Format(
-            "xps",
-            "pdf",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format(
-            "xml",
-            "word",
-            convert_to=[
-                "docx",
-                "docm",
-                "dotm",
-                "dotx",
-                "epub",
-                "fb2",
-                "html",
-                "odt",
-                "ott",
-                "pdf",
-                "pdfa",
-                "rtf",
-                "txt",
-            ],
-        ),
-        Format("oform", "pdf"),
-        Format("csv", "cell"),
-        Format("fods", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("ods", "cell", convert_to=["xlsx", "csv", "ots", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("ots", "cell", convert_to=["xlsx", "csv", "ods", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("xls", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("xlsb", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("xlsm", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xltm", "xltx"]),
-        Format("xlsx", "cell", True, convert_to=["csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("xlt", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltm", "xltx"]),
-        Format("xltm", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltx"]),
-        Format("xltx", "cell", convert_to=["xlsx", "csv", "ods", "ots", "pdf", "pdfa", "xlsm", "xltm"]),
-        Format("fodp", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("odp", "slide", convert_to=["pptx", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("otp", "slide", convert_to=["pptx", "odp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("pot", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("potm", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potx", "pptm"]),
-        Format("potx", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "pptm"]),
-        Format("pps", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("ppsm", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("ppsx", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("ppt", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-        Format("pptm", "slide", convert_to=["pptx", "odp", "otp", "pdf", "pdfa", "potm", "potx"]),
-        Format("pptx", "slide", True, convert_to=["odp", "otp", "pdf", "pdfa", "potm", "potx", "pptm"]),
-    ]
+    file_path = os.path.join(
+        os.path.dirname(__file__), "..", "static", "assets", "document_formats", "onlyoffice-docs-formats.json"
+    )
+
+    with open(file_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    formats = []
+    for item in data:
+        n = item["name"]
+        t = item["type"]
+        a = item.get("actions", [])
+        c = item.get("convert", [])
+        m = item.get("mime", [])
+
+        formats.append(Format(n, t, a, c, m))
+
+    return formats
