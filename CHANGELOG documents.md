@@ -1,5 +1,14 @@
 # Change Log
 
+## Added
+
+- saves the history of document changes
+- advanced sharing permissions
+
+## Changed
+
+- updated format icons
+
 ## 3.1.1
 
 ## Added

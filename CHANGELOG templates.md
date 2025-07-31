@@ -1,5 +1,15 @@
 # Change Log
 
+## Added
+
+- converting pdf to form when creating/modifying a template
+
+## 1.2.2
+
+## Changed
+
+- support for the textForm element type from Document Server v9.0
+
 ## 1.1.2
 
 ## Added

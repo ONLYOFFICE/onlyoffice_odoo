@@ -42,7 +42,7 @@ def check_mixed_content(base_url, public_url, demo):
 
 def check_doc_serv_url(public_url, demo):
     try:
-        response = urlopen(os.path.join(public_url, "healthcheck"), timeout=10)
+        response = urlopen(os.path.join(public_url, "healthcheck"), timeout=30)
         healthcheck = response.read()
 
         if not healthcheck:
@@ -72,7 +72,7 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
             os.path.join(url, "coauthoring/CommandService.ashx"),
             data=json.dumps(body_json),
             headers=headers,
-            timeout=10,
+            timeout=30,
         )
 
         if response.json()["error"] == 6:
@@ -123,7 +123,7 @@ def convert(env, file_url, public_url, jwt_secret, jwt_header):
 
     try:
         response = requests.post(
-            os.path.join(public_url, "ConvertService.ashx"), data=json.dumps(body_json), headers=headers, timeout=10
+            os.path.join(public_url, "ConvertService.ashx"), data=json.dumps(body_json), headers=headers, timeout=30
         )
 
         if response.status_code == 200:

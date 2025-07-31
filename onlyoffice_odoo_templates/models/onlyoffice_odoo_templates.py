@@ -1,12 +1,19 @@
 import base64
+import json
+import logging
 import os
+import time
 
-from odoo import _, api, fields, models, tools
+import requests
+
+from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.modules import get_module_path
 
-from odoo.addons.onlyoffice_odoo.utils import file_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
+
+logger = logging.getLogger(__name__)
 
 
 class OnlyOfficeTemplate(models.Model):
@@ -43,11 +50,29 @@ class OnlyOfficeTemplate(models.Model):
         if self.file and self.create_date:  # if file exist
             decode_file = base64.b64decode(self.file)
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
-            if not is_pdf_form:
-                self.file = False
-                raise UserError(_("Only PDF Form can be uploaded."))
-            self.attachment_id.datas = self.file
+            old_datas = self.attachment_id.datas
+            self.attachment_id.write({"datas": self.file})
             self.file = False
+
+            if not is_pdf_form:
+                self.env.cr.commit()
+                converted_result = self._convert_to_form(self.attachment_id)
+                if converted_result.get("error"):
+                    self.attachment_id.write({"datas": old_datas})
+                    self.env.cr.commit()
+                    raise UserError(converted_result.get("message"))
+                if converted_result.get("fileUrl"):
+                    try:
+                        response = requests.get(converted_result["fileUrl"], timeout=60)
+                        response.raise_for_status()
+                        new_datas = base64.b64encode(response.content)
+                        self.attachment_id.write({"datas": new_datas})
+                        self.env.cr.commit()
+                    except Exception as e:
+                        logger.error("Failed to download and update PDF form: %s", str(e))
+                        self.attachment_id.write({"datas": old_datas})
+                        self.env.cr.commit()
+                        raise UserError("Failed to download converted PDF form") from e
 
     @api.model
     def _create_demo_data(self):
@@ -90,36 +115,132 @@ class OnlyOfficeTemplate(models.Model):
 
     @api.model
     def create(self, vals):
+        is_pdf_form = None
         if vals.get("file"):
             decode_file = base64.b64decode(vals.get("file"))
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
-            if not is_pdf_form:
-                raise UserError(_("Only PDF Form can be uploaded."))
+        else:
+            vals["file"] = base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
+            is_pdf_form = True
 
-        file = vals.get("file") or base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
-        mimetype = file_utils.get_mime_by_ext("pdf")
-
-        vals["file"] = file
-        vals["mimetype"] = mimetype
-
-        datas = vals.pop("file", None)
+        vals["mimetype"] = file_utils.get_mime_by_ext("pdf")
+        datas = vals.pop("file")
         model = self.env["ir.model"].search([("id", "=", vals["template_model_id"])], limit=1)
         vals["template_model_name"] = model.name
         vals["template_model_model"] = model.model
         record = super().create(vals)
-        if datas:
-            attachment = self.env["ir.attachment"].create(
-                {
-                    "name": vals.get("name", record.name) + ".pdf",
-                    "display_name": vals.get("name", record.name),
-                    "mimetype": vals.get("mimetype", ""),
-                    "datas": datas,
-                    "res_model": self._name,
-                    "res_id": record.id,
-                }
-            )
-            record.attachment_id = attachment.id
+
+        attachment = self.env["ir.attachment"].create(
+            {
+                "name": vals.get("name", record.name) + ".pdf",
+                "display_name": vals.get("name", record.name),
+                "mimetype": vals.get("mimetype"),
+                "datas": datas,
+                "res_model": self._name,
+                "res_id": record.id,
+            }
+        )
+        record.attachment_id = attachment.id
+
+        if not is_pdf_form:
+            self.env.cr.commit()
+            converted_result = self._convert_to_form(attachment)
+            if converted_result.get("error"):
+                attachment.unlink()
+                record.unlink()
+                super().unlink()
+                self.env.cr.commit()
+                raise UserError(converted_result.get("message"))
+            if converted_result.get("fileUrl"):
+                try:
+                    response = requests.get(converted_result["fileUrl"], timeout=60)
+                    response.raise_for_status()
+                    new_datas = base64.b64encode(response.content)
+                    attachment.write({"datas": new_datas, "mimetype": vals.get("mimetype")})
+                    self.env.cr.commit()
+                except Exception as e:
+                    logger.error("Failed to download and update PDF form: %s", str(e))
+                    attachment.unlink()
+                    record.unlink()
+                    super().unlink()
+                    self.env.cr.commit()
+                    raise UserError("Failed to download converted PDF form") from e
         return record
+
+    @api.model
+    def _convert_to_form(self, attachment):
+        jwt_header = config_utils.get_jwt_header(self.env)
+        jwt_secret = config_utils.get_jwt_secret(self.env)
+        public_url = config_utils.get_doc_server_public_url(self.env)
+        odoo_url = config_utils.get_base_or_odoo_url(self.env)
+        internal_jwt_secret = config_utils.get_internal_jwt_secret(self.env)
+
+        oo_security_token = jwt_utils.encode_payload(self.env, {"id": self.env.user.id}, internal_jwt_secret)
+        oo_security_token = (
+            oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
+        )
+
+        conversion_url = os.path.join(public_url, "ConvertService.ashx")
+
+        payload = {
+            "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",
+            "key": int(time.time()),
+            "filetype": "pdf",
+            "outputtype": "pdf",
+            "pdf": {
+                "form": True,
+            },
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+
+        if bool(jwt_secret):
+            payload = {"payload": payload}
+            token = jwt_utils.encode_payload(self.env, payload, jwt_secret)
+            headers[jwt_header] = "Bearer " + token
+            payload["token"] = token
+
+        try:
+            response = requests.post(conversion_url, data=json.dumps(payload), headers=headers, timeout=60)
+
+            if response.status_code == 200:
+                response_json = response.json()
+                if "error" in response_json:
+                    return {
+                        "error": response_json.get("error"),
+                        "message": self._get_conversion_error_message(response_json.get("error")),
+                    }
+                else:
+                    return response_json
+            else:
+                return {
+                    "error": response.status_code,
+                    "message": f"Document conversion service returned status {response.status_code}",
+                }
+        except Exception:
+            return {
+                "error": 1,
+                "message": "Document conversion service cannot be reached",
+            }
+
+    def _get_conversion_error_message(self, error_code):
+        error_dictionary = {
+            -1: "Unknown error",
+            -2: "Conversion timeout error",
+            -3: "Conversion error",
+            -4: "Error while downloading the document file to be converted",
+            -5: "Incorrect password",
+            -6: "Error while accessing the conversion result database",
+            -7: "Input error",
+            -8: "Invalid token",
+        }
+        try:
+            return error_dictionary[error_code]
+        except Exception:
+            return "Undefined error code"
 
     @api.model
     def get_fields_for_model(self, model, prefix="", parent_name="", exclude=None):
