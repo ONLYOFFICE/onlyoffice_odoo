@@ -194,16 +194,20 @@
             <div class="d-flex justify-content-between w-100">
               <div>
                 <t t-if="state.hasChanges">
-                  <button class="btn btn-primary ms-2" t-att-disabled="state.saving" t-on-click="save">
+                  <button class="btn btn-primary" t-att-disabled="state.saving" t-on-click="save">
                     Save
                   </button>
                 </t>
                 <t t-else="">
-                  <button class="btn btn-primary ms-2" t-att-disabled="state.saving" t-on-click="close">
+                  <button class="btn btn-primary" t-att-disabled="state.saving" t-on-click="close">
                     Done
                   </button>
                 </t>
-                <button class="btn btn-secondary" t-att-disabled="state.saving" t-on-click="() => this.props.close()">
+                <button
+                  class="btn btn-secondary ms-2"
+                  t-att-disabled="state.saving"
+                  t-on-click="() => this.props.close()"
+                >
                   Cancel
                 </button>
               </div>
