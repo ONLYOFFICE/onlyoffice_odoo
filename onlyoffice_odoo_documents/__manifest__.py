@@ -9,7 +9,7 @@
     "version": "4.1.1",
     "depends": ["onlyoffice_odoo", "documents"],
     # always loaded
-    "data": [],
+    "data": ["security/ir.model.access.csv"],
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
     "images": [

@@ -15,7 +15,14 @@
             </div>
             <div class="o_wrap_input flex-grow-1 flex-sm-grow-0 w-100">
               <div class="o_field_widget o_field_char">
-                <input class="o_input" id="title" t-model.trim="state.title" type="text" autocomplete="off" />
+                <input
+                  class="o_input"
+                  id="title"
+                  t-model.trim="state.title"
+                  type="text"
+                  autocomplete="off"
+                  t-ref="autofocus"
+                />
               </div>
             </div>
           </div>
@@ -24,7 +31,7 @@
           <div
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('docx')"
-            t-on-dblclick="_createFile"
+            t-on-dblclick="() => this._createFile(false)"
             t-att-class="_isSelected('docx') ? 'o-template-selected': ''"
           >
             <img
@@ -37,7 +44,7 @@
           <div
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('xlsx')"
-            t-on-dblclick="_createFile"
+            t-on-dblclick="() => this._createFile(false)"
             t-att-class="_isSelected('xlsx') ? 'o-template-selected': ''"
           >
             <img
@@ -50,7 +57,7 @@
           <div
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('pptx')"
-            t-on-dblclick="_createFile"
+            t-on-dblclick="() => this._createFile(false)"
             t-att-class="_isSelected('pptx') ? 'o-template-selected': ''"
           >
             <img
@@ -63,7 +70,7 @@
           <div
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('pdf')"
-            t-on-dblclick="_createFile"
+            t-on-dblclick="() => this._createFile(false)"
             t-att-class="_isSelected('pdf') ? 'o-template-selected': ''"
           >
             <img
@@ -78,9 +85,16 @@
           <button
             class="btn btn-primary o-onlyoffice-create-ok-button"
             t-att-disabled="_buttonDisabled()"
-            t-on-click="_createFile"
+            t-on-click="() => this._createFile(false)"
           >
             <t>Create</t>
+          </button>
+          <button
+            class="btn btn-secondary o-onlyoffice-create-ok-button"
+            t-att-disabled="_buttonDisabled()"
+            t-on-click="() => this._createFile(true)"
+          >
+            <t>Create&amp;Set Permissions</t>
           </button>
           <button class="btn btn-secondary" t-on-click="data.close">
             <t>Cancel</t>

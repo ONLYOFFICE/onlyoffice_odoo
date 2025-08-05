@@ -1,5 +1,15 @@
 # Change Log
 
+## Added
+
+- form gallery
+- saves the history of document changes
+- advanced sharing permissions
+
+## Changed
+
+- updated format icons
+
 ## 4.1.1
 
 ## Added
