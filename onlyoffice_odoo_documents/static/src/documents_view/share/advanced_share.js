@@ -162,7 +162,7 @@ export class ShareDialog extends Component {
 
   onInternalAccessChange = (ev) => {
     this.state.internalAccess = ev.target.value
-    this.state.hasChanges = true
+    this.checkForChanges()
   }
 
   checkForChanges = () => {
