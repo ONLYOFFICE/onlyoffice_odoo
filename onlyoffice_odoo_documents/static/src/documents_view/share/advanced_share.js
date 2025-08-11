@@ -44,8 +44,11 @@ export class ShareDialog extends Component {
       document: null,
       hasChanges: false,
       initialInternalAccess: null,
+      initialLinkAccess: null,
       internalAccess: "none",
       internalAccessRoles: {},
+      linkAccess: "viewer",
+      linkAccessRoles: {},
       loading: true,
       newUserAccess: "editor",
       saving: false,
@@ -73,9 +76,12 @@ export class ShareDialog extends Component {
     this.state.usersAccess = this.sortUsersByRole(shareData.users_access)
     this.state.usersAccessBackup = [...this.state.usersAccess]
     this.state.initialInternalAccess = shareData.internal_users
+    this.state.initialLinkAccess = shareData.link_access
     this.state.usersAccessRoles = this.roleSorting(shareData.users_access_roles)
     this.state.internalAccess = shareData.internal_users
     this.state.internalAccessRoles = this.roleSorting(shareData.internal_users_roles)
+    this.state.linkAccess = shareData.link_access
+    this.state.linkAccessRoles = this.roleSorting(shareData.link_access_roles)
   }
 
   sortUsersByRole = (users) => {
@@ -107,6 +113,26 @@ export class ShareDialog extends Component {
   }
 
   async onAddUsers(users) {
+    for (let i = 0; i < users.length; i += 1) {
+      if (!users[i].display_name) {
+        const userId = users[i].id
+        if (!userId || typeof userId !== "number") {
+          continue
+        }
+        try {
+          const user = await this.orm.read("res.users", [userId], ["name", "display_name"])
+          if (user && user.length > 0) {
+            users[i] = {
+              display_name: user[0].display_name || user[0].name,
+              id: user[0].id,
+            }
+          }
+        } catch (error) {
+          console.error("failed to fetch user:", userId, error)
+        }
+      }
+    }
+
     if (!users?.length) {
       return
     }
@@ -160,6 +186,11 @@ export class ShareDialog extends Component {
     this.state.hasChanges = true
   }
 
+  onLinkAccessChange = (ev) => {
+    this.state.linkAccess = ev.target.value
+    this.checkForChanges()
+  }
+
   checkForChanges = () => {
     if (!this.state.usersAccessBackup.length) {
       return
@@ -172,13 +203,17 @@ export class ShareDialog extends Component {
     const hasUserChanges = [...backupRoles.keys()].some((id) => !currentRoles.has(id))
 
     this.state.hasChanges =
-      hasRoleChanges || hasUserChanges || this.state.internalAccess !== this.state.initialInternalAccess
+      hasRoleChanges ||
+      hasUserChanges ||
+      this.state.internalAccess !== this.state.initialInternalAccess ||
+      this.state.linkAccess !== this.state.initialLinkAccess
   }
 
   resetChanges = () => {
     this.state.newUserAccess = "editor"
     this.state.usersAccess = [...this.state.usersAccessBackup]
     this.state.internalAccess = this.state.initialInternalAccess
+    this.state.linkAccess = this.state.initialLinkAccess
     this.state.users = []
     this.state.hasChanges = false
   }
@@ -216,6 +251,7 @@ export class ShareDialog extends Component {
         {
           document_id: this.props.document_id,
           internal_users: this.state.internalAccess,
+          link_access: this.state.linkAccess,
           user_accesses: userAccesses,
         },
       ])
