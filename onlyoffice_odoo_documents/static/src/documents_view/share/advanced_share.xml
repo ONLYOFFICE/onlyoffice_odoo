@@ -182,6 +182,33 @@
                             </div>
                           </div>
                         </div>
+                        <div class="o_wrap_field d-flex d-sm-contents flex-column mb-3 mb-sm-0">
+                          <div class="o_cell o_wrap_label flex-grow-1 flex-sm-grow-0 w-100 text-break text-900">
+                            <label class="o_form_label" for="link_access_roles">Link Access</label>
+                          </div>
+                          <div class="o_cell o_wrap_input flex-grow-1 flex-sm-grow-0 text-break">
+                            <div name="link_access_roles" class="o_field_widget o_field_filtered_selection">
+                              <select
+                                class="o_input pe-3"
+                                id="link_access_roles"
+                                t-att-disabled="state.saving"
+                                t-on-change="onLinkAccessChange"
+                              >
+                                <t
+                                  t-foreach="state.linkAccessRoles"
+                                  t-as="link_access_roles"
+                                  t-key="Object.keys(link_access_roles)[0]"
+                                >
+                                  <option
+                                    t-att-value="Object.keys(link_access_roles)[0]"
+                                    t-esc="Object.values(link_access_roles)[0]"
+                                    t-att-selected="Object.keys(link_access_roles)[0] == state.linkAccess"
+                                  />
+                                </t>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
