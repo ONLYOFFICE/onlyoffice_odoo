@@ -39,6 +39,13 @@
         <t t-call="onlyoffice_odoo_documents.OnlyofficeIcon" />
         Create with ONLYOFFICE
       </button>
+      <!--<button
+        type="button"
+        t-attf-class="btn btn-link dropdown-item o_documents_kanban_onlyoffice_odoo_documents {{additionalClasses}}"
+        t-on-click.stop.prevent="() => this.onClickAdvancedShare()"
+      >
+        Advanced Share
+      </button>-->
     </xpath>
   </t>
 </templates>

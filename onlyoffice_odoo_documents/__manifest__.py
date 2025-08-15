@@ -9,7 +9,10 @@
     "version": "5.1.1",
     "depends": ["onlyoffice_odoo", "documents"],
     # always loaded
-    "data": [],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/onlyoffice_templates_share.xml",
+    ],
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
     "images": [
@@ -26,6 +29,7 @@
             "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
+            "onlyoffice_odoo_documents/static/src/css/*",
         ],
     },
 }

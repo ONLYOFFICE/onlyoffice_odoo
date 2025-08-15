@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="onlyoffice_odoo_documents.CreateModeDialog" owl="1">
+    <div>
+      <Dialog title="dialogTitle" size="'md'" contentClass="'o-onlyoffice-create-templates-dialog'" footer="true">
+        <div class="o-onlyoffice-create-templates-container">
+          <div
+            class="o-onlyoffice-create-template"
+            t-on-click="() => this._selectedMode('blank')"
+            t-on-dblclick="_choiceDialog"
+            t-att-class="_isSelected('blank') ? 'o-template-selected': ''"
+          >
+            <img
+              class="o-onlyoffice-create-icon"
+              src="/onlyoffice_odoo_documents/static/svg/choice/blank.svg"
+              t-att-title="Blank"
+            />
+            <div class="o-template-item-name">Blank</div>
+          </div>
+          <div
+            class="o-onlyoffice-create-template"
+            t-on-click="() => this._selectedMode('template')"
+            t-on-dblclick="_choiceDialog"
+            t-att-class="_isSelected('template') ? 'o-template-selected': ''"
+          >
+            <img
+              class="o-onlyoffice-create-icon"
+              src="/onlyoffice_odoo_documents/static/svg/choice/template.svg"
+              t-att-title="Template"
+            />
+            <div class="o-template-item-name">From Template</div>
+          </div>
+        </div>
+        <t t-set-slot="footer">
+          <button
+            class="btn btn-primary o-onlyoffice-create-ok-button"
+            t-att-disabled="_buttonDisabled()"
+            t-on-click="_choiceDialog"
+          >
+            <t>Create</t>
+          </button>
+          <button class="btn btn-secondary" t-on-click="data.close">
+            <t>Cancel</t>
+          </button>
+        </t>
+      </Dialog>
+    </div>
+  </t>
+</templates>

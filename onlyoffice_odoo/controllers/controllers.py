@@ -2,6 +2,7 @@
 # (c) Copyright Ascensio System SIA 2024
 #
 
+import base64
 import json
 import logging
 import re
@@ -12,7 +13,7 @@ from urllib.request import urlopen
 import markupsafe
 from werkzeug.exceptions import Forbidden
 
-from odoo import http
+from odoo import _, http
 from odoo.exceptions import AccessError
 from odoo.http import request
 
@@ -124,8 +125,8 @@ class Onlyoffice_Connector(http.Controller):
 
         try:
             body = request.get_json_data()
-
-            attachment = self.get_attachment(attachment_id, self.get_user_from_token(oo_security_token))
+            user = self.get_user_from_token(oo_security_token)
+            attachment = self.get_attachment(attachment_id, user)
             if not attachment:
                 raise Exception("attachment not found")
 
@@ -151,7 +152,19 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                attachment.write({"raw": urlopen(file_url, timeout=120).read(), "mimetype": guess_type(file_url)[0]})
+                datas = urlopen(file_url, timeout=120).read()
+                if attachment.res_model == "documents.document":
+                    datas = base64.encodebytes(datas)
+                    document = request.env["documents.document"].browse(int(attachment.res_id))
+                    document.with_user(user).write(
+                        {
+                            "name": attachment.name,
+                            "datas": datas,
+                            "mimetype": guess_type(file_url)[0],
+                        }
+                    )
+                else:
+                    attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
 
         except Exception as ex:
             response_json["error"] = 1
@@ -199,10 +212,9 @@ class Onlyoffice_Connector(http.Controller):
                 "url": odoo_url + "onlyoffice/file/content/" + path_part,
                 "fileType": file_utils.get_file_ext(filename),
                 "key": key,
-                "permissions": {"edit": can_write},
+                "permissions": {},
             },
             "editorConfig": {
-                "mode": "edit" if can_write else "view",
                 "lang": request.env.user.lang,
                 "user": {"id": str(request.env.user.id), "name": request.env.user.name},
                 "customization": {},
@@ -211,6 +223,13 @@ class Onlyoffice_Connector(http.Controller):
 
         if can_write:
             root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
+
+        if attachment.res_model != "documents.document":
+            root_config["editorConfig"]["mode"] = "edit" if can_write else "view"
+            root_config["document"]["permissions"]["edit"] = can_write
+        elif attachment.res_model == "documents.document":
+            # TODO: for 17 and 18 odoo - check user/anonymous access
+            root_config = self.get_documents_permissions(attachment, can_write, root_config)
 
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
@@ -221,6 +240,58 @@ class Onlyoffice_Connector(http.Controller):
             "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }
+
+    def get_documents_permissions(self, attachment, can_write, root_config):
+        role = None
+        document = request.env["documents.document"].browse(int(attachment.res_id))
+        access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
+            [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+        )
+        if access_user:
+            if access_user.role == "none":
+                raise AccessError(_("User has no read access rights to open this document"))
+            elif access_user.role == "edit" and can_write:
+                role = "edit"
+            else:
+                role = access_user.role
+        if not role:
+            access = request.env["onlyoffice.odoo.documents.access"].search(
+                [("document_id", "=", document.id)], limit=1
+            )
+            if access:
+                if access.internal_users == "none":
+                    raise AccessError(_("User has no read access rights to open this document"))
+                elif access.internal_users == "edit" and can_write:
+                    role = "edit"
+                else:
+                    role = access.internal_users
+
+        if not role:
+            raise AccessError(_("User has no read access rights to open this document"))
+        elif role == "view":
+            root_config["editorConfig"]["mode"] = "view"
+            root_config["document"]["permissions"]["edit"] = False
+        elif role == "commenter":
+            root_config["editorConfig"]["mode"] = "edit"
+            root_config["document"]["permissions"]["edit"] = False
+            root_config["document"]["permissions"]["comment"] = True
+        elif role == "reviewer":
+            root_config["editorConfig"]["mode"] = "edit"
+            root_config["document"]["permissions"]["edit"] = False
+            root_config["document"]["permissions"]["review"] = True
+        elif role == "edit":
+            root_config["editorConfig"]["mode"] = "edit"
+            root_config["document"]["permissions"]["edit"] = True
+        elif role == "form_filling":
+            root_config["editorConfig"]["mode"] = "edit"
+            root_config["document"]["permissions"]["edit"] = False
+            root_config["document"]["permissions"]["fillForms"] = True
+        elif role == "custom_filter":
+            root_config["editorConfig"]["mode"] = "edit"
+            root_config["document"]["permissions"]["edit"] = True
+            root_config["document"]["permissions"]["modifyFilter"] = False
+
+        return root_config
 
     def get_attachment(self, attachment_id, user=None):
         IrAttachment = request.env["ir.attachment"]
