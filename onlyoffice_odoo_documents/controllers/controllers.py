@@ -197,7 +197,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
             request.env["onlyoffice.odoo.documents.access.user"].create(
                 {
                     "document_id": document.id,
-                    "user_id": request.env.user.id,
+                    "user_id": request.env.user.partner_id.id,
                     "role": "edit",
                 }
             )
@@ -444,6 +444,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
                         "mimetype": guess_type(file_url)[0],
                     }
                 )
+                document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
 
         except Exception as ex:
             response_json["error"] = 1

@@ -13,7 +13,7 @@ from urllib.request import urlopen
 import markupsafe
 from werkzeug.exceptions import Forbidden
 
-from odoo import _, http
+from odoo import _, fields, http
 from odoo.exceptions import AccessError
 from odoo.http import request
 
@@ -163,6 +163,7 @@ class Onlyoffice_Connector(http.Controller):
                             "mimetype": guess_type(file_url)[0],
                         }
                     )
+                    document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
                 else:
                     attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
 
@@ -228,7 +229,6 @@ class Onlyoffice_Connector(http.Controller):
             root_config["editorConfig"]["mode"] = "edit" if can_write else "view"
             root_config["document"]["permissions"]["edit"] = can_write
         elif attachment.res_model == "documents.document":
-            # TODO: for 17 and 18 odoo - check user/anonymous access
             root_config = self.get_documents_permissions(attachment, can_write, root_config)
 
         if jwt_utils.is_jwt_enabled(request.env):
@@ -241,13 +241,21 @@ class Onlyoffice_Connector(http.Controller):
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }
 
-    def get_documents_permissions(self, attachment, can_write, root_config):
+    def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        now = fields.Datetime.now()
+        document_access_id = document.access_ids.filtered(lambda a: a.partner_id == request.env.user.partner_id)
+        expired_timer = False
+        if document_access_id and document_access_id.exists():
+            if document_access_id.expiration_date:
+                expired_timer = document_access_id.expiration_date < now
+
         access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-            [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+            [("document_id", "=", document.id), ("user_id", "=", request.env.user.partner_id.id)], limit=1
         )
-        if access_user:
+        if access_user and not expired_timer:
             if access_user.role == "none":
                 raise AccessError(_("User has no read access rights to open this document"))
             elif access_user.role == "edit" and can_write:
@@ -264,7 +272,15 @@ class Onlyoffice_Connector(http.Controller):
                 elif access.internal_users == "edit" and can_write:
                     role = "edit"
                 else:
-                    role = access.internal_users
+                    if access.link_access == "edit" and can_write:
+                        role = "edit"
+                    else:
+                        role = access.internal_users
+
+        if document.attachment_id.id != attachment.id:  # history files
+            root_config["editorConfig"]["mode"] = "view"
+            root_config["document"]["permissions"]["edit"] = False
+            return root_config
 
         if not role:
             raise AccessError(_("User has no read access rights to open this document"))
