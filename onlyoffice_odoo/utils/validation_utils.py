@@ -23,7 +23,7 @@ def valid_url(url):
 
 
 def settings_validation(self):
-    base_url = self.env["ir.config_parameter"].get_param("web.base.url")
+    base_url = self.doc_server_odoo_url
     public_url = self.doc_server_public_url
     jwt_secret = self.doc_server_jwt_secret
     jwt_header = self.doc_server_jwt_header
