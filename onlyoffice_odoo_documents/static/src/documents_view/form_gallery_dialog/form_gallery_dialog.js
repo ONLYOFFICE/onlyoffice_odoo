@@ -1,11 +1,11 @@
 /** @odoo-module **/
+import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { Dialog } from "@web/core/dialog/dialog"
 import { Dropdown } from "@web/core/dropdown/dropdown"
 import { DropdownItem } from "@web/core/dropdown/dropdown_item"
 import { _t } from "@web/core/l10n/translation"
 import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
-import { OnlyofficePreview } from "../form_preview/onlyoffice_form_preview"
 
 const { Component, useState, onWillStart, onWillUnmount } = owl
 
@@ -223,16 +223,14 @@ export class FormGalleryDialog extends Component {
     return form.attributes?.card_prewiew?.data?.attributes?.url
   }
 
-  previewForm(path, name) {
-    const url = `/onlyoffice/documents/gallery/preview?form_path=${encodeURIComponent(path)}`
-
+  previewForm(url, title, ext) {
     this.env.services.dialog.add(
       OnlyofficePreview,
       {
         close: () => {
           this.env.services.dialog.close()
         },
-        title: "Preview - " + name,
+        title: title + "." + ext.split(".").pop(),
         url: url,
       },
       {

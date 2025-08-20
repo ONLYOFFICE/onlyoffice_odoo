@@ -31,6 +31,7 @@
         "web.assets_backend": [
             "onlyoffice_odoo/static/src/actions/*",
             "onlyoffice_odoo/static/src/components/*/*.xml",
+            "onlyoffice_odoo/static/src/views/**/*",
         ],
     },
 }

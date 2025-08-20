@@ -4,9 +4,7 @@
 
 import json
 import logging
-import time
 
-import markupsafe
 import requests
 from werkzeug.exceptions import Forbidden
 
@@ -16,7 +14,7 @@ from odoo.http import request
 from odoo.tools.translate import _
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import file_utils
 
 _logger = logging.getLogger(__name__)
 
@@ -206,48 +204,6 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
-    @http.route("/onlyoffice/documents/gallery/preview", type="http", auth="user")
-    def preview_documents_gallery(self, form_path, **kwargs):
-        filename = form_path.split("/")[-1]
-        document_type = file_utils.get_file_type(filename)
-
-        key = str(int(time.time() * 1000))
-
-        docserver_url = config_utils.get_doc_server_public_url(request.env)
-
-        root_config = {
-            "width": "100%",
-            "height": "100%",
-            "type": "embedded",
-            "documentType": document_type,
-            "document": {
-                "title": filename,
-                "url": form_path,
-                "fileType": file_utils.get_file_ext(filename),
-                "key": key,
-                "permissions": {"edit": False},
-            },
-            "editorConfig": {
-                "mode": "view",
-                "lang": request.env.user.lang,
-                "user": {"id": str(request.env.user.id), "name": request.env.user.name},
-                "customization": {},
-            },
-        }
-
-        if jwt_utils.is_jwt_enabled(request.env):
-            root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
-
-        return request.render(
-            "onlyoffice_odoo.onlyoffice_editor",
-            {
-                "docTitle": filename,
-                "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
-                "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
-                "editorConfig": markupsafe.Markup(json.dumps(root_config)),
-            },
-        )
-
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
         return request.render(
