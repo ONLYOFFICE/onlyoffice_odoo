@@ -27,6 +27,21 @@
             </div>
             <div class="row mt16 o_settings_container">
               <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane">
+                  <field name="doc_server_disable_certificate" />
+                </div>
+                <div class="o_setting_right_pane">
+                  <label class="o_form_label" for="doc_server_disable_certificate">
+                    Disable certificate verification
+                  </label>
+                  <div class="text-muted">
+                    Only use when accessing Document Server with a self-signed certificate
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">

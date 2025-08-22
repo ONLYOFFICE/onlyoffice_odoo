@@ -24,7 +24,7 @@ from odoo.tools import (
     get_lang,
 )
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
+from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
@@ -261,7 +261,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 filename = filename.encode("ascii", "ignore").decode("ascii")
                 if not filename:
                     filename = "document.pdf"
-                response = requests.get(quote(url, safe="/:?=&"), timeout=120)
+                response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
@@ -278,7 +278,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 stream = io.BytesIO()
                 with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
                     for filename, url in templates.items():
-                        response = requests.get(url, timeout=120)
+                        response = onlyoffice_request(url=url, method="get")
                         if response.status_code == 200:
                             archive.writestr(filename, response.content)
                         else:
@@ -327,12 +327,22 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
         try:
             if jwt_secret:
-                docbuilder_response = requests.post(
-                    docbuilder_url, json=docbuilder_payload, headers=docbuilder_headers, timeout=120
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                        "headers": docbuilder_headers,
+                    },
                 )
             else:
-                docbuilder_response = requests.post(docbuilder_url, json=docbuilder_payload, timeout=120)
-            docbuilder_response.raise_for_status()
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                    },
+                )
             docbuilder_json = docbuilder_response.json()
             if docbuilder_json.get("error"):
                 e = self.get_docbuilder_error(docbuilder_json.get("error"))
@@ -436,12 +446,22 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
         try:
             if jwt_secret:
-                docbuilder_response = requests.post(
-                    docbuilder_url, json=docbuilder_payload, headers=docbuilder_headers, timeout=120
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                        "headers": docbuilder_headers,
+                    },
                 )
             else:
-                docbuilder_response = requests.post(docbuilder_url, json=docbuilder_payload, timeout=120)
-            docbuilder_response.raise_for_status()
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                    },
+                )
             docbuilder_json = docbuilder_response.json()
             if docbuilder_json.get("error"):
                 e = self.get_docbuilder_error(docbuilder_json.get("error"))
@@ -449,8 +469,10 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
             urls = docbuilder_json.get("urls")
             keys_url = urls.get("keys.txt")
-            keys_response = requests.get(keys_url, timeout=120)
-            keys_response.raise_for_status()
+            keys_response = onlyoffice_request(
+                url=keys_url,
+                method="get",
+            )
             response_content = codecs.decode(keys_response.content, "utf-8-sig")
 
             return json.loads(response_content)

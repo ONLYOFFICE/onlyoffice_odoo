@@ -11,6 +11,7 @@ from mimetypes import guess_type
 from urllib.request import urlopen
 
 import markupsafe
+import requests
 from werkzeug.exceptions import Forbidden
 
 from odoo import _, http
@@ -21,6 +22,55 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_util
 
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
+
+
+def onlyoffice_request(url, method, opts=None):
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+    if opts is None:
+        opts = {}
+
+    if url.startswith("https://") and cert_verify_disabled and "verify" not in opts:
+        opts["verify"] = False
+
+    if "timeout" not in opts and "timeout" not in url:
+        opts["timeout"] = 120
+
+    try:
+        if method.lower() == "post":
+            response = requests.post(url, **opts)
+        else:
+            response = requests.get(url, **opts)
+
+        response.raise_for_status()
+        return response
+
+    except requests.exceptions.RequestException as e:
+        error_details = {
+            "error_type": type(e).__name__,
+            "url": url,
+            "method": method.upper(),
+            "request_options": opts,
+            "original_error": str(e),
+        }
+
+        _logger.error("ONLYOFFICE request failed: %s", error_details)
+        raise requests.exceptions.RequestException(
+            f"ONLYOFFICE request failed to {method.upper()} {url}: {str(e)}"
+        ) from e
+
+    except Exception as e:
+        error_details = {
+            "error_type": type(e).__name__,
+            "url": url,
+            "method": method.upper(),
+            "request_options": opts,
+            "original_error": str(e),
+        }
+
+        _logger.error("Unexpected error in ONLYOFFICE request: %s", error_details)
+        raise requests.exceptions.RequestException(
+            f"Unexpected error in ONLYOFFICE request to {method.upper()} {url}: {str(e)}"
+        ) from e
 
 
 class Onlyoffice_Connector(http.Controller):

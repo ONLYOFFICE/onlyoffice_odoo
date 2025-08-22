@@ -16,6 +16,7 @@ class ResConfigSettings(models.TransientModel):
     doc_server_jwt_secret = fields.Char("Document Server JWT Secret")
     doc_server_jwt_header = fields.Char("Document Server JWT Header")
     doc_server_demo = fields.Boolean("Connect to demo ONLYOFFICE Docs server")
+    doc_server_disable_certificate = fields.Boolean("Disable certificate verification")
     same_tab = fields.Boolean("Open file in the same tab")
 
     internal_jwt_secret = fields.Char("Internal JWT Secret")
@@ -36,6 +37,7 @@ class ResConfigSettings(models.TransientModel):
         config_utils.set_jwt_secret(self.env, self.doc_server_jwt_secret)
         config_utils.set_jwt_header(self.env, self.doc_server_jwt_header)
         config_utils.set_demo(self.env, self.doc_server_demo)
+        config_utils.set_certificate_verify_disabled(self.env, self.doc_server_disable_certificate)
         config_utils.set_same_tab(self.env, self.same_tab)
 
     def set_values(self):
@@ -56,6 +58,7 @@ class ResConfigSettings(models.TransientModel):
         doc_server_jwt_secret = config_utils.get_jwt_secret(self.env)
         doc_server_jwt_header = config_utils.get_jwt_header(self.env)
         doc_server_demo = config_utils.get_demo(self.env)
+        doc_server_disable_certificate = config_utils.get_certificate_verify_disabled(self.env)
         same_tab = config_utils.get_same_tab(self.env)
 
         res.update(
@@ -65,6 +68,7 @@ class ResConfigSettings(models.TransientModel):
             doc_server_jwt_secret=doc_server_jwt_secret,
             doc_server_jwt_header=doc_server_jwt_header,
             doc_server_demo=doc_server_demo,
+            doc_server_disable_certificate=doc_server_disable_certificate,
             same_tab=same_tab,
         )
 
