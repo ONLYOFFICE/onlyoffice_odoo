@@ -32,6 +32,7 @@
             "onlyoffice_odoo/static/src/actions/*",
             "onlyoffice_odoo/static/src/components/*/*.xml",
             "onlyoffice_odoo/static/src/views/**/*",
+            "onlyoffice_odoo/static/src/css/*",
         ],
     },
 }
