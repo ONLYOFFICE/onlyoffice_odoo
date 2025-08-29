@@ -191,7 +191,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 {
                     "document_id": document.id,
                     "internal_users": "none",
-                    "link_access": "view",
+                    "link_access": "none",
                 }
             )
             request.env["onlyoffice.odoo.documents.access.user"].create(

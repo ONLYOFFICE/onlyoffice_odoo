@@ -54,7 +54,7 @@ class OnlyofficeDocuments(models.Model):
             },
             "internal_users": access.internal_users if access else "none",
             "internal_users_roles": roles,
-            "link_access": access.link_access if access else "view",
+            "link_access": access.link_access if access else "none",
             "link_access_roles": roles,
             "users_access": users_access,
             "users_access_roles": roles,
