@@ -143,7 +143,7 @@ export class TemplateDialog extends Component {
 
   previewTemplate() {
     const t = this.state.templates.find((item) => item.id === this.state.selectedTemplateId)
-    const url = `/web/content/ir.attachment/${t.attachment_id[0]}/datas`
+    const url = `/onlyoffice/file/content/${t.attachment_id[0]}`
 
     this.env.services.dialog.add(
       OnlyofficePreview,

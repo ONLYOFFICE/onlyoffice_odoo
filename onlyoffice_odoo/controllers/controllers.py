@@ -332,6 +332,13 @@ class Onlyoffice_Connector(http.Controller):
         docserver_url = config_utils.get_doc_server_public_url(request.env)
         odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
+        if url and url.startswith("/onlyoffice/file/content/"):
+            internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
+            user_id = request.env.user.id
+            security_token = jwt_utils.encode_payload(request.env, {"id": user_id}, internal_jwt_secret)
+            security_token = security_token.decode("utf-8") if isinstance(security_token, bytes) else security_token
+            url = url + "?oo_security_token=" + security_token
+
         if url and not url.startswith(("http://", "https://")):
             url = odoo_url.rstrip("/") + "/" + url.lstrip("/")
 
