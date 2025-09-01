@@ -6,60 +6,6 @@ class OnlyofficeDocuments(models.Model):
     _name = "onlyoffice.odoo.documents"
     _description = "ONLYOFFICE Documents"
 
-    @api.model
-    def advanced_share_data(self, vals):
-        document_id = vals.get("document_id")
-        if not document_id:
-            raise AccessError(_("No document selected for sharing."))
-
-        if len(document_id) > 1:
-            raise AccessError(_("Please select only one document for advanced sharing."))
-
-        is_admin = self.env.user.has_group("base.group_system")
-        document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.owner_id != self.env.user:
-            raise AccessError(_("Only the owner or administrator can share documents."))
-
-        ext = document.name.split(".")[-1].lower() if "." in document.name else ""
-
-        if ext not in ["docx", "xlsx", "pptx", "pdf"]:
-            raise AccessError(_("Incorrect file type for advanced sharing. Please select a different document."))
-
-        roles = self._get_available_roles(document.name)
-
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
-
-        users_access = []
-        for user_access in self.env["onlyoffice.odoo.documents.access.user"].search(
-            [("document_id", "=", document_id)]
-        ):
-            users_access.append(
-                {
-                    "user": {
-                        "id": user_access.user_id.id,
-                        "name": user_access.user_id.name,
-                        "email": user_access.user_id.email,
-                    },
-                    "role": {
-                        "id": user_access.id,
-                        "role": user_access.role,
-                    },
-                }
-            )
-
-        return {
-            "document": {
-                "id": document.id,
-                "text": document.name,
-            },
-            "internal_users": access.internal_users if access else "none",
-            "internal_users_roles": roles,
-            "link_access": access.link_access if access else "none",
-            "link_access_roles": roles,
-            "users_access": users_access,
-            "users_access_roles": roles,
-        }
-
     def _get_available_roles(self, filename):
         ext = filename.split(".")[-1].lower() if "." in filename else ""
 

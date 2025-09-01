@@ -1,6 +1,5 @@
 /** @odoo-module **/
 
-import { ShareDialog } from "@onlyoffice_odoo_documents/documents_view/share/advanced_share"
 import { useService } from "@web/core/utils/hooks"
 import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"
 
@@ -19,17 +18,6 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       folderId: this.env.searchModel.getSelectedFolderId(),
       model: this.env.model,
       onShare: (document_id) => this.onClickAdvancedShare(document_id, true),
-    })
-  },
-  // eslint-disable-next-line sort-keys
-  async onClickAdvancedShare(document_id = null, openEditor = false) {
-    if (!document_id) {
-      const selection = this.env.model.root.selection
-      document_id = selection.filter((rec) => rec._values.type !== "empty").map((rec) => rec.resId)
-    }
-    this.dialogService.add(ShareDialog, {
-      document_id: document_id,
-      openEditor,
     })
   },
 })

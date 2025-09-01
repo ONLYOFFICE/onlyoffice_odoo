@@ -1,5 +1,6 @@
 /** @odoo-module **/
 
+import { DocumentsPermissionPanel } from "@documents/components/documents_permission_panel/documents_permission_panel"
 import { Dialog } from "@web/core/dialog/dialog"
 
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
@@ -19,6 +20,7 @@ export class CreateDialog extends Component {
     this.notificationService = useService("notification")
     this.actionService = useService("action")
     this.inputRef = useAutofocus()
+    this.dialogService = useService("dialog")
 
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
@@ -71,7 +73,8 @@ export class CreateDialog extends Component {
       if (configureAccess) {
         await new Promise((resolve) => setTimeout(resolve, 500))
         this.data.close()
-        this.props.onShare([result.document_id])
+        const document = { id: result.document_id }
+        this.dialogService.add(DocumentsPermissionPanel, { document })
       } else {
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
         if (same_tab) {
