@@ -5,6 +5,7 @@
 import base64
 import json
 import logging
+import os
 import re
 import string
 from mimetypes import guess_type
@@ -163,7 +164,27 @@ class Onlyoffice_Connector(http.Controller):
                             "mimetype": guess_type(file_url)[0],
                         }
                     )
+
+                    attachment_version = attachment.oo_attachment_version
+                    attachment.write({"oo_attachment_version": attachment_version + 1})
                     document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
+
+                    previous_attachments = (
+                        request.env["ir.attachment"]
+                        .sudo()
+                        .search(
+                            [
+                                ("res_model", "=", "documents.document"),
+                                ("res_id", "=", document.id),
+                                ("oo_attachment_version", "=", attachment_version),
+                            ],
+                            limit=1,
+                        )
+                    )
+                    name = attachment.name
+                    filename, ext = os.path.splitext(attachment.name)
+                    name = f"{filename} ({attachment_version}){ext}"
+                    previous_attachments.sudo().write({"name": name})
                 else:
                     attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
 
