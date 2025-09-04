@@ -9,6 +9,7 @@ DOC_SERVER_JWT_SECRET = "onlyoffice_connector.doc_server_jwt_secret"
 DOC_SERVER_JWT_HEADER = "onlyoffice_connector.doc_server_jwt_header"
 DOC_SERVER_DEMO = "onlyoffice_connector.doc_server_demo"
 DOC_SERVER_DEMO_DATE = "onlyoffice_connector.doc_server_demo_date"
+DOC_SERVER_DISABLE_CERTIFICATE = "onlyoffice_connector.doc_server_disable_certificate"
 SAME_TAB = "onlyoffice_connector.same_tab"
 
 INTERNAL_JWT_SECRET = "onlyoffice_connector.internal_jwt_secret"
