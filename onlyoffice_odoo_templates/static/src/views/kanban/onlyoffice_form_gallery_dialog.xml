@@ -109,6 +109,7 @@
                       class="fa fa-circle-thin o_record_selector"
                       title="Select document"
                       t-on-click="() => this.selectForm(form)"
+                      style="text-shadow: none;"
                     />
                     <div class="o_kanban_image_wrapper oe_kanban_previewer" style="height: auto;">
                       <div class="o_documents_image">
