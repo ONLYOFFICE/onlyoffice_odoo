@@ -2,8 +2,8 @@
 
 import { Component, onMounted, onWillUnmount } from "@odoo/owl"
 
-export class OnlyofficePDFPreview extends Component {
-  static template = "onlyoffice_odoo_templates.OnlyofficePDFPreview"
+export class OnlyofficePreview extends Component {
+  static template = "onlyoffice_odoo.OnlyofficePreview"
 
   static props = {
     close: Function,
@@ -12,6 +12,12 @@ export class OnlyofficePDFPreview extends Component {
   }
 
   setup() {
+    this.title = "Preview - " + this.props.title
+    this.url =
+      "/onlyoffice/preview" +
+      `?url=${encodeURIComponent(this.props.url)}&` +
+      `title=${encodeURIComponent(this.props.title)}`
+
     const handleKeyDown = (ev) => {
       if (ev.key === "Escape") {
         ev.stopPropagation()

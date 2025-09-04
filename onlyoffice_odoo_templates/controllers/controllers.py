@@ -7,7 +7,6 @@ import io
 import json
 import logging
 import re
-import time
 import zipfile
 from datetime import datetime
 from urllib.parse import quote
@@ -170,46 +169,10 @@ class OnlyOfficeOFormsTemplatesController(http.Controller):
 
 
 class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
-    @http.route("/onlyoffice/template/preview", type="http", auth="user")
-    def preview_template(self, template_path, **kwargs):
-        unique = int(time.time() * 1000)
-        file_url = f"/onlyoffice/template/pdf_content/{template_path.replace('/', '_')}"
-        viewer_url = f"/web/static/lib/pdfjs/web/viewer.html?unique={unique}&file={file_url}"
-
-        return request.redirect(viewer_url)
-
-    @http.route("/onlyoffice/template/pdf_content/<string:template_path>", type="http", auth="user")
-    def get_pdf_content(self, template_path, **kwargs):
+    @http.route("/onlyoffice/template/template_content/<string:path>", auth="public")
+    def get_template_content(self, path):
         try:
-            file_content = request.env["onlyoffice.odoo.demo.templates"].get_template_content(
-                template_path.replace("_", "/")
-            )
-
-            return request.make_response(
-                file_content,
-                headers=[
-                    ("Content-Type", "application/pdf"),
-                    ("Content-Disposition", 'inline; filename="preview.pdf"'),
-                ],
-            )
-        except Exception as e:
-            return request.not_found(f"Error: {str(e)}")
-
-    @http.route("/onlyoffice/template/gallery/preview", type="http", auth="user")
-    def preview_template_gallery(self, form_path, **kwargs):
-        unique = int(time.time() * 1000)
-        form_path = base64.urlsafe_b64encode(form_path.encode()).decode()
-        file_url = f"/onlyoffice/template/gallery/pdf_content/{form_path}"
-        viewer_url = f"/web/static/lib/pdfjs/web/viewer.html?unique={unique}&file={file_url}"
-
-        return request.redirect(viewer_url)
-
-    @http.route("/onlyoffice/template/gallery/pdf_content/<string:form_path>", type="http", auth="user")
-    def get_form_gallery_pdf_content(self, form_path, **kwargs):
-        try:
-            form_path = form_path + "=" * (-len(form_path) % 4)
-            form_path = base64.urlsafe_b64decode(form_path).decode()
-            file_content = request.env["onlyoffice.odoo.form.gallery"].get_template_content(form_path)
+            file_content = request.env["onlyoffice.odoo.demo.templates"].get_template_content(path.replace("_", "/"))
 
             return request.make_response(
                 file_content,

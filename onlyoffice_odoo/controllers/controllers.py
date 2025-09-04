@@ -7,6 +7,7 @@ import json
 import logging
 import re
 import string
+import time
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -381,3 +382,54 @@ class Onlyoffice_Connector(http.Controller):
         except AccessError as e:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden() from e
+
+    @http.route("/onlyoffice/preview", type="http", auth="user")
+    def preview(self, url, title):
+        docserver_url = config_utils.get_doc_server_public_url(request.env)
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
+
+        if url and url.startswith("/onlyoffice/file/content/"):
+            internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
+            user_id = request.env.user.id
+            security_token = jwt_utils.encode_payload(request.env, {"id": user_id}, internal_jwt_secret)
+            security_token = security_token.decode("utf-8") if isinstance(security_token, bytes) else security_token
+            url = url + "?oo_security_token=" + security_token
+
+        if url and not url.startswith(("http://", "https://")):
+            url = odoo_url.rstrip("/") + "/" + url.lstrip("/")
+
+        document_type = file_utils.get_file_type(title)
+        key = str(int(time.time() * 1000))
+
+        root_config = {
+            "width": "100%",
+            "height": "100%",
+            "type": "embedded",
+            "documentType": document_type,
+            "document": {
+                "title": self.filter_xss(title),
+                "url": url,
+                "fileType": file_utils.get_file_ext(title),
+                "key": key,
+                "permissions": {"edit": False},
+            },
+            "editorConfig": {
+                "mode": "view",
+                "lang": request.env.user.lang,
+                "user": {"id": str(request.env.user.id), "name": request.env.user.name},
+                "customization": {},
+            },
+        }
+
+        if jwt_utils.is_jwt_enabled(request.env):
+            root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
+
+        return request.render(
+            "onlyoffice_odoo.onlyoffice_editor",
+            {
+                "docTitle": title,
+                "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
+                "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
+                "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            },
+        )
