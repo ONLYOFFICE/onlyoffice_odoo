@@ -228,7 +228,6 @@ class Onlyoffice_Connector(http.Controller):
             root_config["editorConfig"]["mode"] = "edit" if can_write else "view"
             root_config["document"]["permissions"]["edit"] = can_write
         elif attachment.res_model == "documents.document":
-            # TODO: for 17 and 18 odoo - check user/anonymous access
             root_config = self.get_documents_permissions(attachment, can_write, root_config)
 
         if jwt_utils.is_jwt_enabled(request.env):
@@ -241,30 +240,38 @@ class Onlyoffice_Connector(http.Controller):
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }
 
-    def get_documents_permissions(self, attachment, can_write, root_config):
+    def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
-        access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-            [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
-        )
-        if access_user:
-            if access_user.role == "none":
-                raise AccessError(_("User has no read access rights to open this document"))
-            elif access_user.role == "editor" and can_write:
+        if document.owner_id.id == request.env.user.id:
+            if can_write:
                 role = "editor"
             else:
-                role = access_user.role
-        if not role:
-            access = request.env["onlyoffice.odoo.documents.access"].search(
-                [("document_id", "=", document.id)], limit=1
+                role = "viewer"
+        else:
+            access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
+                [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
             )
-            if access:
-                if access.internal_users == "none":
+            if access_user:
+                if access_user.role == "none":
                     raise AccessError(_("User has no read access rights to open this document"))
-                elif access.internal_users == "editor" and can_write:
+                elif access_user.role == "editor" and can_write:
                     role = "editor"
                 else:
-                    role = access.internal_users
+                    role = access_user.role
+            if not role:
+                access = request.env["onlyoffice.odoo.documents.access"].search(
+                    [("document_id", "=", document.id)], limit=1
+                )
+                if access:
+                    if access.internal_users == "none":
+                        raise AccessError(_("User has no read access rights to open this document"))
+                    elif access.internal_users == "editor" and can_write:
+                        role = "editor"
+                    else:
+                        role = access.internal_users
+                else:
+                    role = "viewer"  # default role for internal users
 
         if not role:
             raise AccessError(_("User has no read access rights to open this document"))
@@ -311,9 +318,8 @@ class Onlyoffice_Connector(http.Controller):
         return user
 
     def filter_xss(self, text):
-        allowed_symbols = set(string.ascii_letters + string.digits + " _-,.:@+")
-        text = "".join(char for char in text if char in allowed_symbols)
-
+        allowed_symbols = set(string.digits + " _-,.:@+")
+        text = "".join(char for char in text if char.isalpha() or char in allowed_symbols)
         return text
 
     def _check_document_access(self, document):

@@ -126,6 +126,9 @@
               </div>
             </div>
           </t>
+          <t t-if="state.ghost">
+            <div t-foreach="state.ghost" t-as="i" t-key="i_index" class="col-md-3 mb-3 o_content" />
+          </t>
         </div>
 
         <t t-if="!state.loading and !state.error and state.forms.length === 0">

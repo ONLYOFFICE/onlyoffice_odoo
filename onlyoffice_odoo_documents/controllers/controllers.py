@@ -208,7 +208,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route("/onlyoffice/documents/gallery/preview", type="http", auth="user")
     def preview_documents_gallery(self, form_path, **kwargs):
-        filename = form_path.split("/")[-1]
+        filename = self.filter_xss(form_path.split("/")[-1])
         document_type = file_utils.get_file_type(filename)
 
         key = str(int(time.time() * 1000))
