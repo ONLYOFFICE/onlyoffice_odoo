@@ -12,6 +12,7 @@ from mimetypes import guess_type
 from urllib.request import urlopen
 
 import markupsafe
+import requests
 from werkzeug.exceptions import Forbidden
 
 from odoo import _, http
@@ -22,6 +23,55 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_util
 
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
+
+
+def onlyoffice_request(url, method, opts=None):
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+    if opts is None:
+        opts = {}
+
+    if url.startswith("https://") and cert_verify_disabled and "verify" not in opts:
+        opts["verify"] = False
+
+    if "timeout" not in opts and "timeout" not in url:
+        opts["timeout"] = 120
+
+    try:
+        if method.lower() == "post":
+            response = requests.post(url, **opts)
+        else:
+            response = requests.get(url, **opts)
+
+        response.raise_for_status()
+        return response
+
+    except requests.exceptions.RequestException as e:
+        error_details = {
+            "error_type": type(e).__name__,
+            "url": url,
+            "method": method.upper(),
+            "request_options": opts,
+            "original_error": str(e),
+        }
+
+        _logger.error("ONLYOFFICE request failed: %s", error_details)
+        raise requests.exceptions.RequestException(
+            f"ONLYOFFICE request failed to {method.upper()} {url}: {str(e)}"
+        ) from e
+
+    except Exception as e:
+        error_details = {
+            "error_type": type(e).__name__,
+            "url": url,
+            "method": method.upper(),
+            "request_options": opts,
+            "original_error": str(e),
+        }
+
+        _logger.error("Unexpected error in ONLYOFFICE request: %s", error_details)
+        raise requests.exceptions.RequestException(
+            f"Unexpected error in ONLYOFFICE request to {method.upper()} {url}: {str(e)}"
+        ) from e
 
 
 class Onlyoffice_Connector(http.Controller):
@@ -229,7 +279,6 @@ class Onlyoffice_Connector(http.Controller):
             root_config["editorConfig"]["mode"] = "edit" if can_write else "view"
             root_config["document"]["permissions"]["edit"] = can_write
         elif attachment.res_model == "documents.document":
-            # TODO: for 17 and 18 odoo - check user/anonymous access
             root_config = self.get_documents_permissions(attachment, can_write, root_config)
 
         if jwt_utils.is_jwt_enabled(request.env):
@@ -242,30 +291,38 @@ class Onlyoffice_Connector(http.Controller):
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }
 
-    def get_documents_permissions(self, attachment, can_write, root_config):
+    def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
-        access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-            [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
-        )
-        if access_user:
-            if access_user.role == "none":
-                raise AccessError(_("User has no read access rights to open this document"))
-            elif access_user.role == "editor" and can_write:
+        if document.owner_id.id == request.env.user.id:
+            if can_write:
                 role = "editor"
             else:
-                role = access_user.role
-        if not role:
-            access = request.env["onlyoffice.odoo.documents.access"].search(
-                [("document_id", "=", document.id)], limit=1
+                role = "viewer"
+        else:
+            access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
+                [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
             )
-            if access:
-                if access.internal_users == "none":
+            if access_user:
+                if access_user.role == "none":
                     raise AccessError(_("User has no read access rights to open this document"))
-                elif access.internal_users == "editor" and can_write:
+                elif access_user.role == "editor" and can_write:
                     role = "editor"
                 else:
-                    role = access.internal_users
+                    role = access_user.role
+            if not role:
+                access = request.env["onlyoffice.odoo.documents.access"].search(
+                    [("document_id", "=", document.id)], limit=1
+                )
+                if access:
+                    if access.internal_users == "none":
+                        raise AccessError(_("User has no read access rights to open this document"))
+                    elif access.internal_users == "editor" and can_write:
+                        role = "editor"
+                    else:
+                        role = access.internal_users
+                else:
+                    role = "viewer"  # default role for internal users
 
         if not role:
             raise AccessError(_("User has no read access rights to open this document"))
@@ -312,9 +369,8 @@ class Onlyoffice_Connector(http.Controller):
         return user
 
     def filter_xss(self, text):
-        allowed_symbols = set(string.ascii_letters + string.digits + " _-,.:@+")
-        text = "".join(char for char in text if char in allowed_symbols)
-
+        allowed_symbols = set(string.digits + " _-,.:@+")
+        text = "".join(char for char in text if char.isalpha() or char in allowed_symbols)
         return text
 
     def _check_document_access(self, document):

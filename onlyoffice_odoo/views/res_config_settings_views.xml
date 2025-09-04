@@ -11,16 +11,62 @@
     <field name="arch" type="xml">
       <xpath expr="//div[hasclass('settings')]" position="inside">
         <div class="app_settings_block" string="ONLYOFFICE" data-string="ONLYOFFICE" data-key="onlyoffice_odoo">
-          <link type="text/css" rel="stylesheet" href="onlyoffice_odoo/static/src/css/res_config_settings_views.css" />
+          <div>
+            <h2>Welcome to ONLYOFFICE!</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    About
+                  </span>
+                  <div class="text-muted" style="text-wrap: nowrap;">
+                    This app enables users to edit and collaborate on office documents within Odoo
+                    Documents using ONLYOFFICE Docs.
+                  </div>
+                  <div>
+                    <a
+                      class="oe_link"
+                      href="https://api.onlyoffice.com/docs/docs-api/get-started/ready-to-use-connectors/odoo-integration/"
+                      target="_blank"
+                    >
+                      <i class="fa fa-arrow-right" /> Learn more </a>
+                    <br />
+                    <a
+                      class="oe_link"
+                      href="https://feedback.onlyoffice.com/forums/966080-your-voice-matters?category_id=519288"
+                      target="_blank"
+                    >
+                      <i class="fa fa-arrow-right" /> Suggest a feature </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div>
             <h2>General Settings</h2>
             <div class="row mt16 o_settings_container">
               <div class="col-12 col-lg-6 o_setting_box">
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
-                  <span class="o_form_label">Document Server Url</span>
+                  <span class="o_form_label">ONLYOFFICE Docs address</span>
                   <div class="text-muted content-group mt16">
                     <field name="doc_server_public_url" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane">
+                  <field name="doc_server_disable_certificate" />
+                </div>
+                <div class="o_setting_right_pane">
+                  <label class="o_form_label" for="doc_server_disable_certificate">
+                    Disable certificate verification
+                  </label>
+                  <div class="text-muted">
+                    Only use when accessing Document Server with a self-signed certificate
                   </div>
                 </div>
               </div>
@@ -30,7 +76,7 @@
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">
-                    Server address for internal requests from the Document Editing Service
+                    ONLYOFFICE Docs address for internal requests from the server
                   </span>
                   <div class="text-muted content-group mt16">
                     <field name="doc_server_odoo_url" />
@@ -43,7 +89,7 @@
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">
-                    Document Editing Service address for internal requests from the server
+                    Server address for internal requests from ONLYOFFICE Docs
                   </span>
                   <div class="text-muted content-group mt16">
                     <field name="doc_server_inner_url" />
@@ -59,7 +105,7 @@
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">
-                    Document Server JWT Secret
+                    ONLYOFFICE Docs secret key
                   </span>
                   <div class="text-muted content-group mt16">
                     <field name="doc_server_jwt_secret" password="True" />
@@ -72,7 +118,7 @@
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">
-                    Document Server JWT Header
+                    JWT Header
                   </span>
                   <div class="text-muted content-group mt16">
                     <field name="doc_server_jwt_header" />

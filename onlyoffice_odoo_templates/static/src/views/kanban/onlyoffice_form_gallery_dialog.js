@@ -32,6 +32,7 @@ export class FormGalleryDialog extends Component {
       error: null,
       form: null,
       forms: [],
+      ghost: 0,
       limit: 12,
       loading: false,
       locale: {
@@ -99,9 +100,9 @@ export class FormGalleryDialog extends Component {
     try {
       const response = await this.rpc("/onlyoffice/oforms/category-types", { locale: this.state.locale.code })
       this.state.categories = response.data || []
-      response.data.forEach(async (categoryTypes) => {
+      for (const categoryTypes of response.data) {
         await this.fetchSubcategories(categoryTypes.categoryId)
-      })
+      }
     } catch (_error) {
       this.notification.add(_t("Failed to load categories"), { type: "danger" })
     }
@@ -141,6 +142,14 @@ export class FormGalleryDialog extends Component {
       const response = await this.rpc("/onlyoffice/oforms", { params: params })
 
       this.state.forms = response.data || []
+
+      const oKanbanGhost = 4 - (this.state.forms.length % 4)
+      if (oKanbanGhost === 4) {
+        this.state.ghost = new Array(0).fill()
+      } else {
+        this.state.ghost = new Array(oKanbanGhost).fill()
+      }
+
       this.state.total = response.meta?.pagination?.total || 0
     } catch (_error) {
       this.state.error = _t("Failed to load forms")
@@ -178,6 +187,8 @@ export class FormGalleryDialog extends Component {
   }
 
   async onLocaleChange(locale) {
+    this.state.loading = true
+
     this.state.locale = locale
     this.state.subcategory = {
       category_type: "category",
@@ -186,6 +197,8 @@ export class FormGalleryDialog extends Component {
     this.state.offset = 0
     await this.fetchCategoryTypes()
     await this.fetchOforms()
+
+    this.state.loading = false
   }
 
   async onPageChange({ offset }) {
