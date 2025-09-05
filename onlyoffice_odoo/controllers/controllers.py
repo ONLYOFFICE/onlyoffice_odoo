@@ -314,6 +314,12 @@ class Onlyoffice_Connector(http.Controller):
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        if document.attachment_id.id != attachment.id:  # history files
+            root_config["editorConfig"]["mode"] = "view"
+            root_config["document"]["permissions"]["edit"] = False
+            return root_config
+
         if document.owner_id.id == request.env.user.id:
             if can_write:
                 role = "editor"
