@@ -29,6 +29,7 @@
             "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
+            "onlyoffice_odoo_documents/static/src/css/*",
         ],
     },
 }

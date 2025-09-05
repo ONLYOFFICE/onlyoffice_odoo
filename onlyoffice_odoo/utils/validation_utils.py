@@ -4,10 +4,9 @@ import re
 import time
 from urllib.request import urlopen
 
-import requests
-
 from odoo.exceptions import ValidationError
 
+from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 
 
@@ -23,16 +22,17 @@ def valid_url(url):
 
 
 def settings_validation(self):
-    base_url = self.env["ir.config_parameter"].get_param("web.base.url")
+    base_url = self.doc_server_odoo_url
     public_url = self.doc_server_public_url
     jwt_secret = self.doc_server_jwt_secret
     jwt_header = self.doc_server_jwt_header
+    disable_certificate = self.doc_server_disable_certificate
     demo = self.doc_server_demo
 
     check_mixed_content(base_url, public_url, demo)
     check_doc_serv_url(public_url, demo)
-    check_doc_serv_command_service(self.env, public_url, jwt_secret, jwt_header, demo)
-    check_doc_serv_convert_service(self.env, public_url, base_url, jwt_secret, jwt_header, demo)
+    check_doc_serv_command_service(self.env, public_url, jwt_secret, jwt_header, disable_certificate, demo)
+    check_doc_serv_convert_service(self.env, public_url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
 
 
 def check_mixed_content(base_url, public_url, demo):
@@ -54,7 +54,7 @@ def check_doc_serv_url(public_url, demo):
         get_message_error("ONLYOFFICE cannot be reached", demo)
 
 
-def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
+def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, disable_certificate, demo):
     try:
         headers = {"Content-Type": "application/json"}
         body_json = {"c": "version"}
@@ -68,11 +68,13 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
             token = jwt_utils.encode_payload(env, body_json, jwt_secret)
             body_json["token"] = token
 
-        response = requests.post(
-            os.path.join(url, "coauthoring/CommandService.ashx"),
-            data=json.dumps(body_json),
-            headers=headers,
-            timeout=30,
+        response = onlyoffice_request(
+            url=os.path.join(url, "coauthoring/CommandService.ashx"),
+            method="post",
+            opts={
+                "data": json.dumps(body_json),
+                "headers": headers,
+            },
         )
 
         if response.json()["error"] == 6:
@@ -92,16 +94,16 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, demo):
         get_message_error("Error when trying to check CommandService", demo)
 
 
-def check_doc_serv_convert_service(env, public_url, base_url, jwt_secret, jwt_header, demo):
+def check_doc_serv_convert_service(env, public_url, base_url, jwt_secret, jwt_header, disable_certificate, demo):
     file_url = os.path.join(base_url, "onlyoffice/file/content/test.txt")
 
-    result = convert(env, file_url, public_url, jwt_secret, jwt_header)
+    result = convert(env, file_url, public_url, jwt_secret, jwt_header, disable_certificate)
 
     if isinstance(result, str):
         return get_message_error(result, demo)
 
 
-def convert(env, file_url, public_url, jwt_secret, jwt_header):
+def convert(env, file_url, public_url, jwt_secret, jwt_header, disable_certificate):
     body_json = {
         "key": int(time.time()),
         "url": file_url,
@@ -122,8 +124,13 @@ def convert(env, file_url, public_url, jwt_secret, jwt_header):
         body_json["token"] = token
 
     try:
-        response = requests.post(
-            os.path.join(public_url, "ConvertService.ashx"), data=json.dumps(body_json), headers=headers, timeout=30
+        response = onlyoffice_request(
+            url=os.path.join(public_url, "ConvertService.ashx"),
+            method="post",
+            opts={
+                "data": json.dumps(body_json),
+                "headers": headers,
+            },
         )
 
         if response.status_code == 200:

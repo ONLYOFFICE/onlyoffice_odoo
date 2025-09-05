@@ -7,7 +7,6 @@ import io
 import json
 import logging
 import re
-import time
 import zipfile
 from datetime import datetime
 from urllib.parse import quote
@@ -24,7 +23,7 @@ from odoo.tools import (
     get_lang,
 )
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
+from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
@@ -170,46 +169,10 @@ class OnlyOfficeOFormsTemplatesController(http.Controller):
 
 
 class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
-    @http.route("/onlyoffice/template/preview", type="http", auth="user")
-    def preview_template(self, template_path, **kwargs):
-        unique = int(time.time() * 1000)
-        file_url = f"/onlyoffice/template/pdf_content/{template_path.replace('/', '_')}"
-        viewer_url = f"/web/static/lib/pdfjs/web/viewer.html?unique={unique}&file={file_url}"
-
-        return request.redirect(viewer_url)
-
-    @http.route("/onlyoffice/template/pdf_content/<string:template_path>", type="http", auth="user")
-    def get_pdf_content(self, template_path, **kwargs):
+    @http.route("/onlyoffice/template/template_content/<string:path>", auth="public")
+    def get_template_content(self, path):
         try:
-            file_content = request.env["onlyoffice.odoo.demo.templates"].get_template_content(
-                template_path.replace("_", "/")
-            )
-
-            return request.make_response(
-                file_content,
-                headers=[
-                    ("Content-Type", "application/pdf"),
-                    ("Content-Disposition", 'inline; filename="preview.pdf"'),
-                ],
-            )
-        except Exception as e:
-            return request.not_found(f"Error: {str(e)}")
-
-    @http.route("/onlyoffice/template/gallery/preview", type="http", auth="user")
-    def preview_template_gallery(self, form_path, **kwargs):
-        unique = int(time.time() * 1000)
-        form_path = base64.urlsafe_b64encode(form_path.encode()).decode()
-        file_url = f"/onlyoffice/template/gallery/pdf_content/{form_path}"
-        viewer_url = f"/web/static/lib/pdfjs/web/viewer.html?unique={unique}&file={file_url}"
-
-        return request.redirect(viewer_url)
-
-    @http.route("/onlyoffice/template/gallery/pdf_content/<string:form_path>", type="http", auth="user")
-    def get_form_gallery_pdf_content(self, form_path, **kwargs):
-        try:
-            form_path = form_path + "=" * (-len(form_path) % 4)
-            form_path = base64.urlsafe_b64decode(form_path).decode()
-            file_content = request.env["onlyoffice.odoo.form.gallery"].get_template_content(form_path)
+            file_content = request.env["onlyoffice.odoo.demo.templates"].get_template_content(path.replace("_", "/"))
 
             return request.make_response(
                 file_content,
@@ -261,7 +224,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 filename = filename.encode("ascii", "ignore").decode("ascii")
                 if not filename:
                     filename = "document.pdf"
-                response = requests.get(quote(url, safe="/:?=&"), timeout=120)
+                response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
@@ -278,7 +241,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 stream = io.BytesIO()
                 with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
                     for filename, url in templates.items():
-                        response = requests.get(url, timeout=120)
+                        response = onlyoffice_request(url=url, method="get")
                         if response.status_code == 200:
                             archive.writestr(filename, response.content)
                         else:
@@ -327,12 +290,22 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
         try:
             if jwt_secret:
-                docbuilder_response = requests.post(
-                    docbuilder_url, json=docbuilder_payload, headers=docbuilder_headers, timeout=120
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                        "headers": docbuilder_headers,
+                    },
                 )
             else:
-                docbuilder_response = requests.post(docbuilder_url, json=docbuilder_payload, timeout=120)
-            docbuilder_response.raise_for_status()
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                    },
+                )
             docbuilder_json = docbuilder_response.json()
             if docbuilder_json.get("error"):
                 e = self.get_docbuilder_error(docbuilder_json.get("error"))
@@ -436,12 +409,22 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
         try:
             if jwt_secret:
-                docbuilder_response = requests.post(
-                    docbuilder_url, json=docbuilder_payload, headers=docbuilder_headers, timeout=120
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                        "headers": docbuilder_headers,
+                    },
                 )
             else:
-                docbuilder_response = requests.post(docbuilder_url, json=docbuilder_payload, timeout=120)
-            docbuilder_response.raise_for_status()
+                docbuilder_response = onlyoffice_request(
+                    url=docbuilder_url,
+                    method="post",
+                    opts={
+                        "json": docbuilder_payload,
+                    },
+                )
             docbuilder_json = docbuilder_response.json()
             if docbuilder_json.get("error"):
                 e = self.get_docbuilder_error(docbuilder_json.get("error"))
@@ -449,8 +432,10 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
             urls = docbuilder_json.get("urls")
             keys_url = urls.get("keys.txt")
-            keys_response = requests.get(keys_url, timeout=120)
-            keys_response.raise_for_status()
+            keys_response = onlyoffice_request(
+                url=keys_url,
+                method="get",
+            )
             response_content = codecs.decode(keys_response.content, "utf-8-sig")
 
             return json.loads(response_content)

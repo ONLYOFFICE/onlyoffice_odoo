@@ -4,12 +4,11 @@ import logging
 import os
 import time
 
-import requests
-
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.modules import get_module_path
 
+from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
 
@@ -64,8 +63,10 @@ class OnlyOfficeTemplate(models.Model):
                     raise UserError(converted_result.get("message"))
                 if converted_result.get("fileUrl"):
                     try:
-                        response = requests.get(converted_result["fileUrl"], timeout=60)
-                        response.raise_for_status()
+                        response = onlyoffice_request(
+                            url=converted_result["fileUrl"],
+                            method="get",
+                        )
                         new_datas = base64.b64encode(response.content)
                         self.attachment_id.write({"datas": new_datas})
                         self.env.cr.commit()
@@ -119,8 +120,10 @@ class OnlyOfficeTemplate(models.Model):
         url = self._context.get("url", None)
         if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
             try:
-                response = requests.get(url)
-                response.raise_for_status()
+                response = onlyoffice_request(
+                    url=url,
+                    method="get",
+                )
 
                 file_content = response.content
                 vals["file"] = base64.b64encode(file_content)
@@ -180,8 +183,10 @@ class OnlyOfficeTemplate(models.Model):
                 raise UserError(converted_result.get("message"))
             if converted_result.get("fileUrl"):
                 try:
-                    response = requests.get(converted_result["fileUrl"], timeout=60)
-                    response.raise_for_status()
+                    response = onlyoffice_request(
+                        url=converted_result["fileUrl"],
+                        method="get",
+                    )
                     new_datas = base64.b64encode(response.content)
                     attachment.write({"datas": new_datas, "mimetype": vals.get("mimetype")})
                     self.env.cr.commit()
@@ -231,8 +236,14 @@ class OnlyOfficeTemplate(models.Model):
             payload["token"] = token
 
         try:
-            response = requests.post(conversion_url, data=json.dumps(payload), headers=headers, timeout=60)
-
+            response = onlyoffice_request(
+                url=conversion_url,
+                method="get",
+                opts={
+                    "data": json.dumps(payload),
+                    "headers": headers,
+                },
+            )
             if response.status_code == 200:
                 response_json = response.json()
                 if "error" in response_json:
