@@ -1,12 +1,10 @@
 #
 # (c) Copyright Ascensio System SIA 2024
 #
-
 import base64
 import json
 import logging
 import re
-import time
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -212,50 +210,10 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
-    @http.route("/onlyoffice/documents/gallery/preview", type="http", auth="user")
-    def preview_documents_gallery(self, form_path, **kwargs):
-        filename = form_path.split("/")[-1]
-        document_type = file_utils.get_file_type(filename)
-
-        key = str(int(time.time() * 1000))
-
-        docserver_url = config_utils.get_doc_server_public_url(request.env)
-
-        root_config = {
-            "width": "100%",
-            "height": "100%",
-            "type": "embedded",
-            "documentType": document_type,
-            "document": {
-                "title": filename,
-                "url": form_path,
-                "fileType": file_utils.get_file_ext(filename),
-                "key": key,
-                "permissions": {"edit": False},
-            },
-            "editorConfig": {
-                "mode": "view",
-                "lang": request.env.user.lang,
-                "user": {"id": str(request.env.user.id), "name": request.env.user.name},
-                "customization": {},
-            },
-        }
-
-        if jwt_utils.is_jwt_enabled(request.env):
-            root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
-
-        return request.render(
-            "onlyoffice_odoo.onlyoffice_editor",
-            {
-                "docTitle": filename,
-                "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
-                "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
-                "editorConfig": markupsafe.Markup(json.dumps(root_config)),
-            },
-        )
-
-    @http.route(["/onlyoffice/documents/share/<access_token>"], type="http", auth="public")
-    def render_shared_document_editor(self, access_token):
+    @http.route(
+        ["/onlyoffice/documents/share/<int:share_id>/<access_token>/<int:document_id>"], type="http", auth="public"
+    )
+    def render_shared_document_editor(self, document_id=None, access_token=None, share_id=None):
         try:
             document = ShareRoute._from_access_token(access_token, skip_log=True)
 

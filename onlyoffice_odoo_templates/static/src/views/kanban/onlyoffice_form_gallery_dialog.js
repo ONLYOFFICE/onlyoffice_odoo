@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { Dialog } from "@web/core/dialog/dialog"
 import { Dropdown } from "@web/core/dropdown/dropdown"
 import { DropdownItem } from "@web/core/dropdown/dropdown_item"
@@ -6,7 +7,6 @@ import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
-import { OnlyofficePDFPreview } from "../widget/onlyoffice_pdf_preview"
 
 const { Component, useState, onWillStart, onWillUnmount } = owl
 
@@ -188,6 +188,8 @@ export class FormGalleryDialog extends Component {
   }
 
   async onLocaleChange(locale) {
+    this.state.loading = true
+
     this.state.locale = locale
     this.state.subcategory = {
       category_type: "category",
@@ -196,6 +198,8 @@ export class FormGalleryDialog extends Component {
     this.state.offset = 0
     await this.fetchCategoryTypes()
     await this.fetchOforms()
+
+    this.state.loading = false
   }
 
   async onPageChange({ offset }) {
@@ -219,16 +223,14 @@ export class FormGalleryDialog extends Component {
     return form.attributes?.card_prewiew?.data?.attributes?.url
   }
 
-  previewForm(path, name) {
-    const url = `/onlyoffice/template/gallery/preview?form_path=${encodeURIComponent(path)}`
-
+  previewForm(url, title) {
     this.env.services.dialog.add(
-      OnlyofficePDFPreview,
+      OnlyofficePreview,
       {
         close: () => {
           this.env.services.dialog.close()
         },
-        title: "PDF Preview - " + name,
+        title: title + ".pdf",
         url: url,
       },
       {

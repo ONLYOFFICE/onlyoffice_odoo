@@ -138,7 +138,7 @@
                           t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
                           style="object-fit: contain;"
                           t-att-alt="form.attributes.name_form"
-                          t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form )"
+                          t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form, form.attributes.file_oform.data[0].attributes.name )"
                         />
                       </div>
                     </div>

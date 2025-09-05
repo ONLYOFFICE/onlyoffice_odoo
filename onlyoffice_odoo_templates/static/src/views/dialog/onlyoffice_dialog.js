@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
@@ -10,7 +11,6 @@ import { KeepLast } from "@web/core/utils/concurrency"
 import { useService } from "@web/core/utils/hooks"
 import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
-import { OnlyofficePDFPreview } from "../widget/onlyoffice_pdf_preview"
 
 const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
 
@@ -145,10 +145,10 @@ export class TemplateDialog extends Component {
 
   previewTemplate() {
     const t = this.state.templates.find((item) => item.id === this.state.selectedTemplateId)
-    const url = `/web/content/ir.attachment/${t.attachment_id[0]}/datas`
+    const url = `/onlyoffice/file/content/${t.attachment_id[0]}`
 
     this.env.services.dialog.add(
-      OnlyofficePDFPreview,
+      OnlyofficePreview,
       {
         close: () => {
           this.env.services.dialog.close()

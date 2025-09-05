@@ -1,9 +1,9 @@
 /** @odoo-module **/
 
 import { Component, useState, onWillStart } from "@odoo/owl"
+import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { registry } from "@web/core/registry"
 import { useService } from "@web/core/utils/hooks"
-import { OnlyofficePDFPreview } from "./onlyoffice_pdf_preview"
 
 export class TemplatesTree extends Component {
   setup() {
@@ -56,15 +56,15 @@ export class TemplatesTree extends Component {
   }
 
   previewTemplate(path) {
-    const url = `/onlyoffice/template/preview?template_path=${encodeURIComponent(path)}`
+    const url = `/onlyoffice/template/template_content/${encodeURIComponent(path.replace("/", "_"))}`
 
     this.env.services.dialog.add(
-      OnlyofficePDFPreview,
+      OnlyofficePreview,
       {
         close: () => {
           this.env.services.dialog.close()
         },
-        title: "PDF Preview - " + path.split("/").pop(),
+        title: path.split("/").pop(),
         url: url,
       },
       {
