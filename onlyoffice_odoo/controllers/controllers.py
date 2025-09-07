@@ -5,6 +5,7 @@
 import base64
 import json
 import logging
+import os
 import re
 import string
 import time
@@ -214,6 +215,25 @@ class Onlyoffice_Connector(http.Controller):
                             "mimetype": guess_type(file_url)[0],
                         }
                     )
+
+                    attachment_version = attachment.oo_attachment_version
+                    attachment.write({"oo_attachment_version": attachment_version + 1})
+                    previous_attachments = (
+                        request.env["ir.attachment"]
+                        .sudo()
+                        .search(
+                            [
+                                ("res_model", "=", "documents.document"),
+                                ("res_id", "=", document.id),
+                                ("oo_attachment_version", "=", attachment_version),
+                            ],
+                            limit=1,
+                        )
+                    )
+                    name = attachment.name
+                    filename, ext = os.path.splitext(attachment.name)
+                    name = f"{filename} ({attachment_version}){ext}"
+                    previous_attachments.sudo().write({"name": name})
                 else:
                     attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
 
@@ -294,6 +314,12 @@ class Onlyoffice_Connector(http.Controller):
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        if document.attachment_id.id != attachment.id:  # history files
+            root_config["editorConfig"]["mode"] = "view"
+            root_config["document"]["permissions"]["edit"] = False
+            return root_config
+
         if document.owner_id.id == request.env.user.id:
             if can_write:
                 role = "editor"
