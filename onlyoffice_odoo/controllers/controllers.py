@@ -1,3 +1,4 @@
+#
 # (c) Copyright Ascensio System SIA 2024
 #
 
