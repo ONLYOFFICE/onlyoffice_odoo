@@ -33,7 +33,7 @@ for (var i = 0; i < oHeaderElementsCount; i++) {
   }
 }
 for (var i = 0; i < oFooterElementsCount; i++) {
-  var oElement = oHeader.GetElement(i)
+  var oElement = oFooter.GetElement(i)
   var oElementClassType = oElement.GetClassType()
   if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
     continue
