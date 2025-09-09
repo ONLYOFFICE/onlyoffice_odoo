@@ -9,7 +9,7 @@ from odoo.exceptions import UserError
 from odoo.modules import get_module_path
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
 
 logger = logging.getLogger(__name__)
@@ -203,7 +203,9 @@ class OnlyOfficeTemplate(models.Model):
     def _convert_to_form(self, attachment):
         jwt_header = config_utils.get_jwt_header(self.env)
         jwt_secret = config_utils.get_jwt_secret(self.env)
-        public_url = config_utils.get_doc_server_public_url(self.env)
+        docserver_url = config_utils.get_doc_server_public_url(self.env)
+        docserver_url = url_utils.replace_public_url_to_internal(self.env, docserver_url)
+
         odoo_url = config_utils.get_base_or_odoo_url(self.env)
         internal_jwt_secret = config_utils.get_internal_jwt_secret(self.env)
 
@@ -212,7 +214,7 @@ class OnlyOfficeTemplate(models.Model):
             oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
         )
 
-        conversion_url = os.path.join(public_url, "ConvertService.ashx")
+        conversion_url = os.path.join(docserver_url, "ConvertService.ashx")
 
         payload = {
             "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",

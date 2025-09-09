@@ -26,8 +26,21 @@ _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
 
+def onlyoffice_urlopen(url, timeout=120, context=None):
+    url = url_utils.replace_public_url_to_internal(request.env, url)
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+
+    if cert_verify_disabled and url.startswith("https://"):
+        import ssl
+
+        context = context or ssl._create_unverified_context()
+
+    return urlopen(url, timeout=timeout, context=context)
+
+
 def onlyoffice_request(url, method, opts=None):
     _logger.info("External request: %s %s", method.upper(), url)
+    url = url_utils.replace_public_url_to_internal(request.env, url)
     cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
     if opts is None:
         opts = {}
@@ -223,7 +236,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                datas = urlopen(file_url, timeout=120).read()
+                datas = onlyoffice_urlopen(file_url).read()
                 if attachment.res_model == "documents.document":
                     datas = base64.encodebytes(datas)
                     document = request.env["documents.document"].browse(int(attachment.res_id))

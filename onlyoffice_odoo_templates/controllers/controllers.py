@@ -24,7 +24,7 @@ from odoo.tools import (
 )
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
 logger = logging.getLogger(__name__)
@@ -277,6 +277,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
     def fill_template(self, oo_security_token, record_ids, template_id):
         logger.info("fill_template - template: %s, records: %s", template_id, record_ids)
         docserver_url = config_utils.get_doc_server_public_url(request.env)
+        docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
         docbuilder_url = f"{docserver_url}docbuilder"
         jwt_header = config_utils.get_jwt_header(request.env)
         jwt_secret = config_utils.get_jwt_secret(request.env)
@@ -415,6 +416,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
     def get_keys(self, attachment_id, oo_security_token):
         logger.info("get_keys - attachment: %s", attachment_id)
         docserver_url = config_utils.get_doc_server_public_url(request.env)
+        docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
         docbuilder_url = f"{docserver_url}docbuilder"
         jwt_header = config_utils.get_jwt_header(request.env)
         jwt_secret = config_utils.get_jwt_secret(request.env)
