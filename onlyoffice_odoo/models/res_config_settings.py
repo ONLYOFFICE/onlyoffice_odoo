@@ -49,6 +49,8 @@ class ResConfigSettings(models.TransientModel):
         current_inner_url = config_utils.get_doc_server_inner_url(self.env)
         current_jwt_secret = config_utils.get_jwt_secret(self.env)
         current_jwt_header = config_utils.get_jwt_header(self.env)
+        current_disable_certificate = config_utils.get_certificate_verify_disabled(self.env)
+
         current_same_tab = config_utils.get_same_tab(self.env)
 
         settings_changed = (
@@ -58,6 +60,7 @@ class ResConfigSettings(models.TransientModel):
             or self.doc_server_jwt_secret != current_jwt_secret
             or self.doc_server_jwt_header != current_jwt_header
             or self.doc_server_demo != current_demo_state
+            or self.doc_server_disable_certificate != current_disable_certificate
             or self.same_tab != current_same_tab
         )
 

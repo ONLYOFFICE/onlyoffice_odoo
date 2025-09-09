@@ -4,9 +4,10 @@ import re
 import time
 from urllib.request import urlopen
 
+import requests
+
 from odoo.exceptions import ValidationError
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 
 
@@ -24,29 +25,43 @@ def valid_url(url):
 def settings_validation(self):
     base_url = self.doc_server_odoo_url
     public_url = self.doc_server_public_url
+    inner_url = self.doc_server_inner_url
     jwt_secret = self.doc_server_jwt_secret
     jwt_header = self.doc_server_jwt_header
     disable_certificate = self.doc_server_disable_certificate
     demo = self.doc_server_demo
 
-    check_mixed_content(base_url, public_url, demo)
-    check_doc_serv_url(public_url, demo)
-    check_doc_serv_command_service(self.env, public_url, jwt_secret, jwt_header, disable_certificate, demo)
-    check_doc_serv_convert_service(self.env, public_url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
+    url = public_url
+    if inner_url and inner_url != public_url:
+        url = inner_url
+
+    check_mixed_content(base_url, url, demo)
+    check_doc_serv_url(url, demo, disable_certificate)
+    check_doc_serv_command_service(self.env, url, jwt_secret, jwt_header, disable_certificate, demo)
+    check_doc_serv_convert_service(self.env, url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
 
 
-def check_mixed_content(base_url, public_url, demo):
-    if base_url.startswith("https") and not public_url.startswith("https"):
+def check_mixed_content(base_url, url, demo):
+    if base_url.startswith("https") and not url.startswith("https"):
         get_message_error("Mixed Active Content is not allowed. HTTPS address for Document Server is required.", demo)
 
 
-def check_doc_serv_url(public_url, demo):
+def check_doc_serv_url(url, demo, disable_certificate):
     try:
-        response = urlopen(os.path.join(public_url, "healthcheck"), timeout=30)
+        url = os.path.join(url, "healthcheck")
+
+        context = None
+        if disable_certificate and url.startswith("https://"):
+            import ssl
+
+            context = ssl._create_unverified_context()
+
+        response = urlopen(url, timeout=30, context=context)
+
         healthcheck = response.read()
 
         if not healthcheck:
-            get_message_error(os.path.join(public_url, "healthcheck") + " returned false.", demo)
+            get_message_error(os.path.join(url, "healthcheck") + " returned false.", demo)
 
     except ValidationError as e:
         get_message_error(str(e), demo)
@@ -68,13 +83,12 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, disable_cer
             token = jwt_utils.encode_payload(env, body_json, jwt_secret)
             body_json["token"] = token
 
-        response = onlyoffice_request(
-            url=os.path.join(url, "coauthoring/CommandService.ashx"),
-            method="post",
-            opts={
-                "data": json.dumps(body_json),
-                "headers": headers,
-            },
+        response = requests.post(
+            os.path.join(url, "coauthoring/CommandService.ashx"),
+            verify=not disable_certificate,
+            timeout=60,
+            data=json.dumps(body_json),
+            headers=headers,
         )
 
         if response.json()["error"] == 6:
@@ -94,16 +108,16 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, disable_cer
         get_message_error("Error when trying to check CommandService", demo)
 
 
-def check_doc_serv_convert_service(env, public_url, base_url, jwt_secret, jwt_header, disable_certificate, demo):
+def check_doc_serv_convert_service(env, url, base_url, jwt_secret, jwt_header, disable_certificate, demo):
     file_url = os.path.join(base_url, "onlyoffice/file/content/test.txt")
 
-    result = convert(env, file_url, public_url, jwt_secret, jwt_header, disable_certificate)
+    result = convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate)
 
     if isinstance(result, str):
         return get_message_error(result, demo)
 
 
-def convert(env, file_url, public_url, jwt_secret, jwt_header, disable_certificate):
+def convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate):
     body_json = {
         "key": int(time.time()),
         "url": file_url,
@@ -124,13 +138,12 @@ def convert(env, file_url, public_url, jwt_secret, jwt_header, disable_certifica
         body_json["token"] = token
 
     try:
-        response = onlyoffice_request(
-            url=os.path.join(public_url, "ConvertService.ashx"),
-            method="post",
-            opts={
-                "data": json.dumps(body_json),
-                "headers": headers,
-            },
+        response = requests.post(
+            os.path.join(url, "ConvertService.ashx"),
+            verify=not disable_certificate,
+            timeout=60,
+            data=json.dumps(body_json),
+            headers=headers,
         )
 
         if response.status_code == 200:
