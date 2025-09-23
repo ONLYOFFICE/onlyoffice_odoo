@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates xml:space="preserve">
-<t t-name="onlyoffice_odoo_templates.FormGalleryDialog" owl="1">
+<t t-name="onlyoffice_odoo.FormGallery" owl="1">
     <Dialog title="title" size="'xl'" footer="true">
       <div class="container-fluid">
         <div class="row mb-3" t-if="!state.loading and !state.error and state.total > state.limit">
@@ -9,7 +9,7 @@
           </div>
         </div>
         <div class="row mb-3 justify-content-end" t-if="!state.loading and !state.error">
-          <div class="col-md-3">
+          <div t-att-class="props.showType ? 'col-md-2' : 'col-md-3'">
             <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
               <t t-set-slot="toggler">
                 <i class="me-1 fa fa-filter" />
@@ -40,7 +40,51 @@
               </t>
             </Dropdown>
           </div>
-          <div class="col-md-3">
+          <t t-if="props.showType">
+            <div class="col-md-2">
+              <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
+                <t t-set-slot="toggler">
+                  <i class="me-1 fa fa-filter" />
+                  <span class="o_dropdown_title">
+                    Type
+                  </span>
+                </t>
+                <span
+                  class="dropdown-item o_menu_item"
+                  t-on-click="() => this.onChangeType('pdf')"
+                  tabindex="0"
+                  aria-checked="false"
+                >
+                  Form
+                </span>
+                <span
+                  class="dropdown-item o_menu_item"
+                  t-on-click="() => this.onChangeType('docx')"
+                  tabindex="0"
+                  aria-checked="false"
+                >
+                  Document
+                </span>
+                <span
+                  class="dropdown-item o_menu_item"
+                  t-on-click="() => this.onChangeType('xlsx')"
+                  tabindex="0"
+                  aria-checked="false"
+                >
+                  Spreadsheet
+                </span>
+                <span
+                  class="dropdown-item o_menu_item"
+                  t-on-click="() => this.onChangeType('pptx')"
+                  tabindex="0"
+                  aria-checked="false"
+                >
+                  Presentation
+                </span>
+              </Dropdown>
+            </div>
+          </t>
+          <div t-att-class="props.showType ? 'col-md-2' : 'col-md-3'">
             <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
               <t t-set-slot="toggler">
                 <i class="me-1 fa fa-language" />
@@ -84,50 +128,45 @@
           <div class="alert alert-danger" t-esc="state.error" />
         </t>
 
-        <div class="row w-auto" t-if="!state.loading and !state.error">
+        <div t-if="!state.loading and !state.error" class="o_onlyoffice_kanban_renderer d-flex flex-wrap">
           <t t-foreach="state.forms" t-as="form" t-key="form.id">
-            <div class="col-md-3 mb-3 o_content">
-              <div class="o_documents_kanban_view">
-                <div
-                  class="card h-100 o_kanban_record w-auto"
-                  t-attf-class="{{ state.form and form.id == state.form.id ? 'o_record_selected' : '' }}"
-                >
-                  <div
-                    class="card-img-top-container o_kanban_attachment"
-                    style="height: 200px; overflow: hidden; cursor:zoom-in;"
-                  >
-                    <div>
-                      <i
-                        class="fa fa-circle-thin o_record_selector"
-                        title="Select document"
-                        style="cursor:pointer;"
-                        t-on-click="() => this.selectForm(form)"
-                      />
-                    </div>
-                    <div>
-                      <img
-                        t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
-                        class="card-img-top"
-                        style="object-fit: contain; height: 100%; width: 100%;"
-                        t-att-alt="form.attributes.name_form"
-                        t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form )"
-                      />
-                    </div>
+            <div class="o_onlyoffice_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0 m-0">
+              <div
+                class="position-relative d-flex flex-column h-100"
+                t-attf-class="{{ state.form and form.id == state.form.id ? 'o_onlyoffice_record_selected' : '' }}"
+              >
+                <i
+                  class="o_onlyoffice_record_selector fa fa-circle-thin"
+                  title="Select document"
+                  t-on-click="() => this.selectForm(form)"
+                />
+                <div class="o_onlyoffice_kanban_previewer">
+                  <div>
+                    <img
+                      class="o_onlyoffice_kanban_image"
+                      t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
+                      t-att-alt="form.attributes.name_form"
+                      t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form, form.attributes.file_oform.data[0].attributes.name )"
+                    />
                   </div>
-                  <div class="card-footer bg-transparent d-flex justify-content-between" style="column-gap: 10px;">
-                    <div>
-                      <h5 class="card-title" t-esc="form.attributes.name_form" />
-                    </div>
-                    <div>
-                      <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
-                    </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <div class="o_onlyoffice_kanban_details_wrapper w-100 justify-content-between d-flex m-2">
+                    <span t-esc="form.attributes.name_form" />
+                    <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
                   </div>
                 </div>
               </div>
             </div>
           </t>
           <t t-if="state.ghost">
-            <div t-foreach="state.ghost" t-as="i" t-key="i_index" class="col-md-3 mb-3 o_content" />
+            <div
+              t-foreach="state.ghost"
+              t-as="i"
+              t-key="i_index"
+              class="o_kanban_ghost o_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0 m-0"
+              style="width: 200px;"
+            />
           </t>
         </div>
 
