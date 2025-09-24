@@ -59,7 +59,7 @@ class TemplateEditor extends Component {
         const theme = this.cookies.current.color_scheme
         config.editorConfig.customization = {
           ...config.editorConfig.customization,
-          uiTheme: theme ? `theme-${theme}` : "theme-light",
+          uiTheme: theme ? `default-${theme}` : "default-light",
         }
         this.config = config
 
