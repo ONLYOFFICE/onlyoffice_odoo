@@ -10,7 +10,6 @@
     <field name="inherit_id" ref="base.res_config_settings_view_form" />
     <field name="arch" type="xml">
       <xpath expr="//form" position="inside">
-        <link type="text/css" rel="stylesheet" href="onlyoffice_odoo/static/src/css/res_config_settings_views.css" />
         <app data-string="ONLYOFFICE" string="ONLYOFFICE" name="onlyoffice_odoo" groups="base.group_system">
           <block title="About">
             <setting
@@ -34,25 +33,27 @@
             <setting string="ONLYOFFICE Docs address">
               <field name="doc_server_public_url" />
             </setting>
+            <br />
             <setting string="Disable certificate verification">
               <field name="doc_server_disable_certificate" />
             </setting>
-            <setting string="ONLYOFFICE Docs address for internal requests from the server">
-              <field name="doc_server_odoo_url" />
-            </setting>
-            <setting string="Server address for internal requests from ONLYOFFICE Docs">
-              <field name="doc_server_inner_url" />
-            </setting>
-          </block>
-          <block title="Security" name="onlyoffice_odoo" id="o_onlyoffice_settings_security">
+            <br />
             <setting string="ONLYOFFICE Docs secret key">
               <field name="doc_server_jwt_secret" password="True" />
             </setting>
+            <br />
             <setting string="JWT Header">
               <field name="doc_server_jwt_header" />
             </setting>
-          </block>
-          <block title="Other" name="onlyoffice_odoo">
+            <br />
+            <setting string="ONLYOFFICE Docs address for internal requests from the server">
+              <field name="doc_server_odoo_url" />
+            </setting>
+            <br />
+            <setting string="Server address for internal requests from ONLYOFFICE Docs">
+              <field name="doc_server_inner_url" />
+            </setting>
+            <br />
             <div class="o_setting_box col-12 col-lg-6 o_searchable_setting">
               <div class="o_setting_left_pane">
                 <field name="doc_server_demo" />
@@ -84,9 +85,7 @@
                 </div>
               </div>
             </div>
-            <setting string="Open file in the same tab">
-              <field name="same_tab" />
-            </setting>
+            <br />
             <setting>
               <div class="onlyoffice_link_container">
                 <a
@@ -97,6 +96,11 @@
                   GET NOW
                 </a>
               </div>
+            </setting>
+          </block>
+          <block title="Other" name="onlyoffice_odoo" id="o_onlyoffice_settings_common">
+            <setting string="Open file in the same tab">
+              <field name="same_tab" />
             </setting>
           </block>
         </app>
