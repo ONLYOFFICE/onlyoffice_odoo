@@ -6,7 +6,7 @@
     "author": "ONLYOFFICE",
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
-    "version": "4.1.1",
+    "version": "4.2.1",
     "depends": ["onlyoffice_odoo", "documents"],
     # always loaded
     "data": [
