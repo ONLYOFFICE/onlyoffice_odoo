@@ -5,7 +5,6 @@
 ## Added
 
 - help section
-- disable certificate verification option
 - setting to disable form fields editing
 - form gallery
 - converting pdf to form when creating/modifying a template
