@@ -1,5 +1,7 @@
 # Change Log
 
+## 1.3.2
+
 ## Added
 
 - setting to disable form fields editing
