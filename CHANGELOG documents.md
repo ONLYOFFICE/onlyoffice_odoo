@@ -4,6 +4,7 @@
 
 ## Added
 
+- opening documents in the ONLYOFFICE editor via a share link
 - form gallery
 - saves the history of document changes
 - advanced sharing permissions
