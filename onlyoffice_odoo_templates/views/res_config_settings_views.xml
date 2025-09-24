@@ -33,7 +33,7 @@
     <field name="priority" eval="10" />
     <field name="inherit_id" ref="base.res_config_settings_view_form" />
     <field name="arch" type="xml">
-      <xpath expr="//div[hasclass('o_onlyoffice_settings_security')]" position="after">
+      <xpath expr="//div[hasclass('o_onlyoffice_settings_common')]" position="after">
         <div>
           <h2>ONLYOFFICE Templates</h2>
           <div class="row mt16 o_settings_container">
