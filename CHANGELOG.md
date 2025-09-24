@@ -1,5 +1,7 @@
 # Change Log
 
+## 3.3.0
+
 ## Added
 
 - open to view vsdx, vssx, vstx, vsdm, vssm, vstm diagram formats
