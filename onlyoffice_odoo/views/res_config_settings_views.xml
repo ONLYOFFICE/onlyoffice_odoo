@@ -76,35 +76,6 @@
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane">
                   <span class="o_form_label">
-                    ONLYOFFICE Docs address for internal requests from the server
-                  </span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_odoo_url" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
-                    Server address for internal requests from ONLYOFFICE Docs
-                  </span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_inner_url" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="o_onlyoffice_settings_security">
-            <h2>Security</h2>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
                     ONLYOFFICE Docs secret key
                   </span>
                   <div class="text-muted content-group mt16">
@@ -126,9 +97,32 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div>
-            <h2>Other</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    ONLYOFFICE Docs address for internal requests from the server
+                  </span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_odoo_url" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane" />
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">
+                    Server address for internal requests from ONLYOFFICE Docs
+                  </span>
+                  <div class="text-muted content-group mt16">
+                    <field name="doc_server_inner_url" />
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="row mt16 o_settings_container">
               <div class="col-12 col-lg-6 o_setting_box">
                 <div class="o_setting_left_pane">
@@ -151,18 +145,6 @@
             </div>
             <div class="row mt16 o_settings_container">
               <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane">
-                  <field name="same_tab" />
-                </div>
-                <div class="o_setting_right_pane">
-                  <label class="o_form_label" for="same_tab">
-                    Open file in the same tab
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
                 <div class="o_setting_left_pane" />
                 <div class="o_setting_right_pane onlyoffice_link_pane">
                   <div class="onlyoffice_link_container">
@@ -174,6 +156,21 @@
                       GET NOW
                     </a>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="o_onlyoffice_settings_common">
+            <h2>Common settings</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_left_pane">
+                  <field name="same_tab" />
+                </div>
+                <div class="o_setting_right_pane">
+                  <label class="o_form_label" for="same_tab">
+                    Open file in the same tab
+                  </label>
                 </div>
               </div>
             </div>
