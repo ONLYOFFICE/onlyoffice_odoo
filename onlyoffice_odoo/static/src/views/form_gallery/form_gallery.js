@@ -9,8 +9,8 @@ import { useService } from "@web/core/utils/hooks"
 
 const { Component, useState, onWillStart, onWillUnmount } = owl
 
-export class FormGalleryDialog extends Component {
-  static template = "onlyoffice_odoo_templates.FormGalleryDialog"
+export class FormGallery extends Component {
+  static template = "onlyoffice_odoo.FormGallery"
 
   static components = {
     Dialog,
@@ -24,6 +24,7 @@ export class FormGalleryDialog extends Component {
     this.action = useService("action")
     this.notification = useService("notification")
     this.rpc = useService("rpc")
+    this.orm = useService("orm")
 
     this.searchTimeout = null
 
@@ -53,6 +54,7 @@ export class FormGalleryDialog extends Component {
         id: "all",
       },
       total: 0,
+      type: "pdf",
     })
 
     onWillStart(async () => {
@@ -133,6 +135,7 @@ export class FormGalleryDialog extends Component {
         locale: this.state.locale.code,
         "pagination[pageSize]": this.state.limit,
         "pagination[page]": Math.floor(this.state.offset / this.state.limit) + 1,
+        type: this.state.type,
       }
 
       if (this.state.search) {
@@ -158,8 +161,19 @@ export class FormGalleryDialog extends Component {
     this.state.loading = false
   }
 
+  async onChangeType(type) {
+    this.state.type = type
+    this.state.subcategory = {
+      category_type: "category",
+      id: "all",
+    }
+    this.state.offset = 0
+    await this.fetchOforms()
+  }
+
   async onSubcategorySelect(subcategory) {
     this.state.subcategory = subcategory
+    this.state.type = "pdf"
     this.state.offset = 0
     await this.fetchOforms()
   }
@@ -222,14 +236,14 @@ export class FormGalleryDialog extends Component {
     return form.attributes?.card_prewiew?.data?.attributes?.url
   }
 
-  previewForm(url, title) {
+  previewForm(url, title, ext) {
     this.env.services.dialog.add(
       OnlyofficePreview,
       {
         close: () => {
           this.env.services.dialog.close()
         },
-        title: title + ".pdf",
+        title: title + "." + ext.split(".").pop(),
         url: url,
       },
       {
@@ -249,19 +263,11 @@ export class FormGalleryDialog extends Component {
   }
 
   async download() {
-    if (this.state.form) {
-      this.action.doAction({
-        context: {
-          default_hide_file_field: true,
-          default_name: this.state.form.attributes.name_form,
-          url: this.state.form.attributes.file_oform.data[0].attributes.url,
-        },
-        res_model: "onlyoffice.odoo.templates",
-        target: "current",
-        type: "ir.actions.act_window",
-        view_mode: "form",
-        views: [[false, "form"]],
-      })
+    if (this.props.onDownload && this.state.form) {
+      await this.props.onDownload(this.state.form)
+      if (this.props.close) {
+        this.props.close()
+      }
     }
   }
 }
