@@ -3,7 +3,7 @@
   <t t-name="onlyoffice_odoo_templates.KanbanView.Buttons" t-inherit="web.KanbanView.Buttons" t-inherit-mode="primary">
     <xpath expr="//div[hasclass('o_cp_buttons')]" position="inside">
       <button class="btn btn-secondary ms-1" t-on-click="() => this.openFormGallery()">
-        Open Form Gallery
+        Open Document templates
       </button>
       <button class="btn btn-secondary ms-1" t-on-click="() => this.help()"> Help </button>
     </xpath>
