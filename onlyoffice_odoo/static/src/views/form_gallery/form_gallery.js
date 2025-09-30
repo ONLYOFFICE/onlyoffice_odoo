@@ -20,7 +20,7 @@ export class FormGallery extends Component {
   }
 
   setup() {
-    this.title = _t("Form Gallery")
+    this.title = _t("Document templates")
     this.action = useService("action")
     this.notification = useService("notification")
     this.rpc = useService("rpc")

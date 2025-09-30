@@ -21,15 +21,10 @@
                     About
                   </span>
                   <div class="text-muted" style="text-wrap: nowrap;">
-                    This app enables users to edit and collaborate on office documents within Odoo
-                    Documents using ONLYOFFICE Docs.
+                    This app enables creating, editing, and collaborating on fillable forms, office files, and attached documents in Odoo using ONLYOFFICE Docs.
                   </div>
                   <div>
-                    <a
-                      class="oe_link"
-                      href="https://api.onlyoffice.com/docs/docs-api/get-started/ready-to-use-connectors/odoo-integration/"
-                      target="_blank"
-                    >
+                    <a class="oe_link" href="https://helpcenter.onlyoffice.com/integration/odoo.aspx" target="_blank">
                       <i class="fa fa-arrow-right" /> Learn more </a>
                     <br />
                     <a

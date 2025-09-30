@@ -74,7 +74,7 @@ class OnlyOfficeTemplate(models.Model):
                         logger.error("Failed to download and update PDF form: %s", str(e))
                         self.attachment_id.write({"datas": old_datas})
                         self.env.cr.commit()
-                        raise UserError("Failed to download converted PDF form") from e
+                        raise UserError(_("Failed to download converted PDF form")) from e
 
     @api.model
     def _create_demo_data(self):
@@ -196,7 +196,7 @@ class OnlyOfficeTemplate(models.Model):
                     record.unlink()
                     super().unlink()
                     self.env.cr.commit()
-                    raise UserError("Failed to download converted PDF form") from e
+                    raise UserError(_("Failed to download converted PDF form")) from e
         return record
 
     @api.model
