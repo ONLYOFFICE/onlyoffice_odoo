@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0-20221116\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:14+0000\n"
-"PO-Revision-Date: 2025-05-13 14:24+0300\n"
+"PO-Revision-Date: 2025-10-01 18:51+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -19,36 +19,96 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid ""
-"<span class=\"o_form_label\">Document Editing Service address for internal "
-"requests from the server</span>"
-msgstr ""
-"<span class=\"o_form_label\">Adresse du service d'édition de documents pour "
-"les demandes internes du serveur</span>"
+msgid "<i class=\"fa fa-arrow-right\"/> Learn more"
+msgstr "<i class=\"fa fa-arrow-right\"/> En savoir plus"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">Document Server JWT Header</span>"
-msgstr "<span class=\"o_form_label\">En-tête JWT du Document Server</span>"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">Document Server JWT Secret</span>"
-msgstr "<span class=\"o_form_label\">Secret JWT du Document Server</span>"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">Document Server Url</span>"
-msgstr "<span class=\"o_form_label\">URL du Document Server</span>"
+msgid "<i class=\"fa fa-arrow-right\"/> Suggest a feature"
+msgstr "<i class=\"fa fa-arrow-right\"/> Suggérer une fonctionnalité"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
-"<span class=\"o_form_label\">Server address for internal requests from the "
-"Document Editing Service</span>"
+"<span class=\"o_form_label\">\n"
+"                    About\n"
+"                  </span>"
 msgstr ""
-"<span class=\"o_form_label\">Adresse du serveur pour les demandes internes "
-"du Service d'édition de documents</span>"
+"<span class=\"o_form_label\">\n"
+"                    À propos\n"
+"                  </span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
+"<span class=\"o_form_label\">\n"
+"                    JWT Header\n"
+"                  </span>"
+msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    En-tête JWT\n"
+"                  </span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
+"<span class=\"o_form_label\">\n"
+"                    ONLYOFFICE Docs address for internal requests from the "
+"server\n"
+"                  </span>"
+msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    Adresse ONLYOFFICE Docs pour les requêtes internes "
+"depuis le serveur\n"
+"                  </span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
+"<span class=\"o_form_label\">\n"
+"                    ONLYOFFICE Docs secret key\n"
+"                  </span>"
+msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    Clé secrète ONLYOFFICE Docs\n"
+"                  </span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
+"<span class=\"o_form_label\">\n"
+"                    Server address for internal requests from ONLYOFFICE "
+"Docs\n"
+"                  </span>"
+msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    Adresse du serveur pour les requêtes internes depuis "
+"ONLYOFFICE Docs\n"
+"                  </span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "<span class=\"o_form_label\">ONLYOFFICE Docs address</span>"
+msgstr "<span class=\"o_form_label\">Adresse ONLYOFFICE Docs</span>"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Back"
+msgstr "Retour"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Categories"
+msgstr "Catégories"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Common settings"
+msgstr "Paramètres communs"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
@@ -62,6 +122,13 @@ msgid "Connect to demo ONLYOFFICE Docs server"
 msgstr "Connexion au serveur de démonstration ONLYOFFICE Docs"
 
 #. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Create"
+msgstr "Créer"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__create_uid
 msgid "Created by"
 msgstr "Créé par"
@@ -72,9 +139,22 @@ msgid "Created on"
 msgstr "Créé le"
 
 #. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_disable_certificate
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Disable certificate verification"
+msgstr "Désactiver la vérification du certificat"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
 msgid "Display Name"
 msgstr "Afficher le nom"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Document"
+msgstr "Document texte"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_inner_url
@@ -97,6 +177,41 @@ msgid "Document Server Public URL"
 msgstr "URL public de Document Server"
 
 #. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+#, python-format
+msgid "Document templates"
+msgstr "Modèles de documents"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+#, python-format
+msgid "Error loading forms"
+msgstr "Erreur lors du chargement des formulaires"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+#, python-format
+msgid "Failed to load categories"
+msgstr "Échec du chargement des catégories"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+#, python-format
+msgid "Failed to load forms"
+msgstr "Échec du chargement des formulaires"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Form"
+msgstr "Formulaire"
+
+#. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "GET NOW"
 msgstr "OBTENIR MAINTENANT"
@@ -117,6 +232,13 @@ msgid "Internal JWT Secret"
 msgstr "Secret JWT interne"
 
 #. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Language"
+msgstr "Langue"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo____last_update
 msgid "Last Modified on"
 msgstr "Dernière modification le"
@@ -130,6 +252,20 @@ msgstr "Dernière mise à jour par"
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__write_date
 msgid "Last Updated on"
 msgstr "Dernière mise à jour le"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Loading forms..."
+msgstr "Chargement des formulaires..."
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "No forms found"
+msgstr "Aucun formulaire trouvé"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -170,6 +306,13 @@ msgid "Odoo URL"
 msgstr "URL de Odoo"
 
 #. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Only use when accessing Document Server with a self-signed certificate"
+msgstr ""
+"À utiliser uniquement lors de l'accès à Document Server avec un certificat "
+"auto-signé"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Open file in the same tab"
@@ -183,19 +326,37 @@ msgid "Open in ONLYOFFICE"
 msgstr "Ouvrir dans ONLYOFFICE"
 
 #. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Other"
-msgstr "Autre"
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Presentation"
+msgstr "Présentation"
 
 #. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Security"
-msgstr "Sécurité"
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Search..."
+msgstr "Recherche..."
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Select document"
+msgstr "Sélectionner un document"
 
 #. module: onlyoffice_odoo
 #: model:ir.actions.act_window,name:onlyoffice_odoo.action_onlyoffice_config_settings
 msgid "Settings"
 msgstr "Paramètres"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Spreadsheet"
+msgstr "Feuille de calcul"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -211,9 +372,53 @@ msgstr ""
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
+"This app enables creating, editing, and collaborating on fillable forms, "
+"office files, and attached documents in Odoo using ONLYOFFICE Docs."
+msgstr ""
+"Cette application permet de créer, modifier et coéditer des formulaires à "
+"remplir, des fichiers bureautiques et des documents joints dans Odoo à "
+"l'aide d'ONLYOFFICE Docs."
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid ""
 "This is a public test server, please do not use it for private sensitive "
 "data. The server will be available during a 30-day period."
 msgstr ""
 "Il s'agit d'un serveur de test public, veuillez ne pas l'utiliser pour des "
 "données sensibles privées. Le serveur sera disponible pendant une période de "
 "30 jours."
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Try changing your search or filters"
+msgstr "Essayez de modifier votre recherche ou vos filtres"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Type"
+msgstr "Type"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/controllers.py:0
+#, python-format
+msgid "User has no read access rights to open this document"
+msgstr ""
+"L'utilisateur n'a pas les droits d'accès en lecture pour ouvrir ce document"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "View all templates"
+msgstr "Voir tous les modèles"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Welcome to ONLYOFFICE!"
+msgstr "Bienvenue dans ONLYOFFICE !"
