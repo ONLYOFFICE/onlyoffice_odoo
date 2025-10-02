@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0-20221116\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:20+0000\n"
-"PO-Revision-Date: 2025-10-01 17:45+0300\n"
+"PO-Revision-Date: 2025-10-02 20:24+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru_RU\n"
@@ -20,26 +20,26 @@ msgstr ""
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__role
 msgid "Access Level"
-msgstr ""
+msgstr "Уровень доступа"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "Add people"
-msgstr ""
+msgstr "Добавить пользователей"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/onlyoffice_odoo_documents_controller_mixin.xml:0
 #, python-format
 msgid "Advanced Share"
-msgstr ""
+msgstr "Расширенный доступ"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_ir_attachment
 msgid "Attachment"
-msgstr ""
+msgstr "Вложение"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -57,14 +57,19 @@ msgstr "Отменить"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#. module: onlyoffice_odoo_documents
-#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__commenter
+#, python-format
+msgid "Commenter"
+msgstr "Комментатор"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
 #, python-format
 msgid "Create"
@@ -83,7 +88,7 @@ msgstr "Создать с помощью ONLYOFFICE"
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
 #, python-format
 msgid "Create&Set Permissions"
-msgstr ""
+msgstr "Создать и установить разрешения"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__create_uid
@@ -96,7 +101,6 @@ msgstr "Создано"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__create_date
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__create_date
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__create_date
-#, fuzzy
 msgid "Created on"
 msgstr "Дата создания"
 
@@ -110,7 +114,7 @@ msgstr "Дата создания"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__custom_filter
 #, python-format
 msgid "Custom Filter"
-msgstr ""
+msgstr "Пользовательский фильтр"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__display_name
@@ -162,21 +166,21 @@ msgstr "Не удалось создать документ"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__form_filling
 #, python-format
 msgid "Form Filling"
-msgstr ""
+msgstr "Заполнение формы"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #, python-format
 msgid "From Template"
-msgstr ""
+msgstr "Из шаблона"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "General access"
-msgstr ""
+msgstr "Общий доступ"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__id
@@ -190,25 +194,24 @@ msgstr "ID"
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #, python-format
 msgid "Incorrect file type for advanced sharing. Please select a different document."
-msgstr ""
+msgstr "Неверный тип файла для расширенного доступа. Выберите другой документ."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "Internal Users"
-msgstr ""
+msgstr "Внутренние пользователи"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__internal_users
 msgid "Internal Users Access"
-msgstr ""
+msgstr "Доступ внутренних пользователей"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents____last_update
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access____last_update
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user____last_update
-#, fuzzy
 msgid "Last Modified on"
 msgstr "Дата последнего изменения"
 
@@ -223,14 +226,13 @@ msgstr "Последнее обновление"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_date
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__write_date
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__write_date
-#, fuzzy
 msgid "Last Updated on"
 msgstr "Дата последнего обновления"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__link_access
 msgid "Link Access"
-msgstr ""
+msgstr "Доступ по ссылке:"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -251,7 +253,7 @@ msgstr "Новый документ создан в Документах"
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #, python-format
 msgid "No document selected for sharing."
-msgstr ""
+msgstr "Не выбран документ для предоставления доступа."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -280,24 +282,24 @@ msgstr "ONLYOFFICE Документы"
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents_access
 msgid "ONLYOFFICE Documents Access"
-msgstr ""
+msgstr "ONLYOFFICE Documents Access"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents_access_user
 msgid "ONLYOFFICE Documents Access Users"
-msgstr ""
+msgstr "ONLYOFFICE Documents Access Users"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #, python-format
 msgid "Only the owner or administrator can share documents."
-msgstr ""
+msgstr "Предоставлять доступ к документам может только владелец или администратор."
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
 msgid "Oo Attachment"
-msgstr ""
+msgstr "Oo Attachment"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -332,28 +334,28 @@ msgstr "PDF форма"
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "People with access"
-msgstr ""
+msgstr "Пользователи с доступом"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #, python-format
 msgid "Please select only one document for advanced sharing."
-msgstr ""
+msgstr "Пользователи с доступом"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "Remove access"
-msgstr ""
+msgstr "Запретить доступ"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "Reset Changes"
-msgstr ""
+msgstr "Сбросить изменения"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -365,7 +367,7 @@ msgstr ""
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__reviewer
 #, python-format
 msgid "Reviewer"
-msgstr ""
+msgstr "Рецензент"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -379,7 +381,7 @@ msgstr "Сохранить"
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "Shared Document"
-msgstr ""
+msgstr "Общий документ"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -405,7 +407,7 @@ msgstr "Пользователь"
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "User Access"
-msgstr ""
+msgstr "Доступ пользователя"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -417,4 +419,4 @@ msgstr ""
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__viewer
 #, python-format
 msgid "Viewer"
-msgstr ""
+msgstr "Зритель"
