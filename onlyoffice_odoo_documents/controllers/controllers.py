@@ -73,10 +73,8 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
-    @http.route(
-        ["/onlyoffice/documents/share/<int:share_id>/<access_token>/<int:document_id>"], type="http", auth="public"
-    )
-    def render_shared_document_editor(self, document_id=None, access_token=None, share_id=None):
+    @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
+    def render_shared_document_editor(self, access_token=None):
         try:
             document = ShareRoute._from_access_token(access_token, skip_log=True)
 
