@@ -12,6 +12,7 @@
     "data": [
         "security/ir.model.access.csv",
         "views/onlyoffice_templates_share.xml",
+        "views/documents_sharing_views.xml",
     ],
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
@@ -26,10 +27,9 @@
     "assets": {
         "web.assets_backend": [
             "onlyoffice_odoo_documents/static/src/models/*.js",
-            "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
-            "onlyoffice_odoo_documents/static/src/css/*",
+            "onlyoffice_odoo_documents/static/src/components/**/*",
         ],
     },
 }

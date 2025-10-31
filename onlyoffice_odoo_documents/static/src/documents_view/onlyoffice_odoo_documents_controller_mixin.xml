@@ -25,18 +25,23 @@
     </svg>
   </t>
   <t
-    t-name="onlyoffice_odoo_documents.DocumentsViews.ControlPanel"
+    t-name="onlyoffice_odoo_documents.DocumentsViews.Buttons"
     t-inherit="documents.DocumentsViews.ControlPanel"
     t-inherit-mode="extension"
   >
-    <xpath expr="//ul" position="inside">
-      <button
-        type="button"
-        t-attf-class="btn btn-link dropdown-item o_documents_kanban_onlyoffice_odoo_documents {{additionalClasses}}"
-        t-att-disabled="!canUploadInFolder(folder)"
-        t-on-click.stop.prevent="onClickCreateOnlyoffice"
+    <xpath expr="//DropdownItem[@onSelected='onClickDocumentsAddUrl']" position="after">
+      <DropdownItem
+        tag="'button'"
+        class="'btn btn-link o_documents_kanban_onlyoffice_odoo_documents'"
+        t-if="userIsInternal"
+        onSelected="() => this.onClickCreateOnlyoffice()"
+        attrs="{disabled: !canUploadInFolder(folder)}"
       >
-        <t t-call="onlyoffice_odoo_documents.OnlyofficeIcon" /> Create with ONLYOFFICE </button>
+        <i class="me-2">
+          <t t-call="onlyoffice_odoo_documents.OnlyofficeIcon" />
+        </i>
+        <span>Create with ONLYOFFICE</span>
+      </DropdownItem>
     </xpath>
   </t>
 </templates>

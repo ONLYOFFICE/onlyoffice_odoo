@@ -1,4 +1,4 @@
-from odoo import _, api, models
+from odoo import api, models
 
 
 class Document(models.Model):
@@ -14,65 +14,20 @@ class Document(models.Model):
                 record.thumbnail_status = False
         return
 
-    @api.readonly
-    def permission_panel_data(self):
-        result = super().permission_panel_data()
+    def _is_custom_role(self, role):
+        if not role:
+            return False
+        clean_role = role.replace("write_", "") if role.startswith("write_") else role
+        return clean_role in ["commenter", "reviewer", "form_filling", "custom_filter"]
 
-        if result["record"]["type"] == "binary":
-            roles = list(self._get_available_roles(self.name).items())
-
-            for key in ["access_via_link", "access_internal", "doc_access_roles"]:
-                if key in result["selections"]:
-                    result["selections"][key] = roles + result["selections"][key]
-
-        document_id = result["record"]["id"]
-
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)])
-        if access and access.exists():
-            result["record"]["access_internal"] = access.internal_users
-            result["record"]["access_via_link"] = access.link_access
-
-        access_user = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document_id)])
-        if access_user and access_user.exists():
-            user_roles = {access.user_id.id: access.role for access in access_user if access.user_id}
-            for access_id in result["record"].get("access_ids", []):
-                partner_id = access_id["partner_id"]["id"]
-                if partner_id in user_roles:
-                    access_id["role"] = user_roles[partner_id]
-
-        return result
-
-    def _get_available_roles(self, filename):
-        ext = filename.split(".")[-1].lower() if "." in filename else ""
-
-        roles = {
-            "commenter": _("Commenter"),
-            "reviewer": _("Reviewer"),
-            "form_filling": _("Form Filling"),
-            "custom_filter": _("Custom Filter"),
-        }
-
-        if ext == "docx":
-            roles.pop("form_filling", None)
-            roles.pop("custom_filter", None)
-        elif ext == "xlsx":
-            roles.pop("reviewer", None)
-            roles.pop("form_filling", None)
-        elif ext == "pptx":
-            roles.pop("reviewer", None)
-            roles.pop("form_filling", None)
-            roles.pop("custom_filter", None)
-        elif ext == "pdf":
-            roles.pop("commenter", None)
-            roles.pop("reviewer", None)
-            roles.pop("custom_filter", None)
-        else:
-            roles = {
-                "view": _("Viewer"),
-                "edit": _("Editor"),
-            }
-
-        return roles
+    def _convert_custom_role_to_standard(self, role):
+        """Convert custom roles to 'view' for base documents model."""
+        if not role:
+            return role
+        clean_role = role.replace("write_", "") if role.startswith("write_") else role
+        if clean_role in ["commenter", "reviewer", "form_filling", "custom_filter"]:
+            return "view"
+        return role
 
     def action_update_access_rights(
         self,
@@ -80,82 +35,88 @@ class Document(models.Model):
         access_via_link=None,
         is_access_via_link_hidden=None,
         partners=None,
-        notify=False,
-        message="",
+        no_propagation=False,
     ):
-        def convert_custom_role(role):
-            if role in ["commenter", "reviewer", "form_filling"]:
-                return "view"
-            elif role == "custom_filter":
-                return "edit"
-            return role
+        """Synchronize roles between documents and ONLYOFFICE modules."""
+        original_access_internal = access_internal
+        original_access_via_link = access_via_link
+        original_partners = partners.copy() if partners else None
 
+        if access_internal:
+            access_internal = self._convert_custom_role_to_standard(access_internal)
+
+        if access_via_link:
+            access_via_link = self._convert_custom_role_to_standard(access_via_link)
+
+        partners_with_standard_roles = {}
         if partners:
-            partners_with_standard_roles = {}
             for partner_id, role_data in partners.items():
-                if isinstance(role_data, list):
-                    role = role_data[0]
-                    expiration_date = role_data[1]
-                    partners_with_standard_roles[partner_id] = [convert_custom_role(role), expiration_date]
+                if isinstance(role_data, tuple):
+                    role, expiration_date = role_data
+                    converted_role = self._convert_custom_role_to_standard(role) if role else role
+                    partners_with_standard_roles[partner_id] = (converted_role, expiration_date)
                 else:
-                    partners_with_standard_roles[partner_id] = convert_custom_role(role_data)
-        else:
-            partners_with_standard_roles = partners
+                    converted_role = self._convert_custom_role_to_standard(role_data) if role_data else role_data
+                    partners_with_standard_roles[partner_id] = converted_role
 
         result = super().action_update_access_rights(
-            convert_custom_role(access_internal),
-            convert_custom_role(access_via_link),
+            access_internal,
+            access_via_link,
             is_access_via_link_hidden,
             partners_with_standard_roles,
-            notify,
-            message,
+            no_propagation,
         )
 
-        specification = self._permission_specification()
-        records = self.sudo().with_context(active_test=False).web_search_read([("id", "=", self.id)], specification)
-        record = records["records"][0]
-
-        user_accesses = []
-        users_to_remove = []
-
-        if partners:
-            for partner_id, role_data in partners.items():
-                partner = self.env["res.partner"].browse(int(partner_id))
-                if partner.exists():
-                    role = role_data[0] if isinstance(role_data, list) else role_data
-
-                    if role is False:
-                        users_to_remove.append(partner.id)
-                    else:
-                        user_accesses.append(
-                            {
-                                "user_id": partner.id,
-                                "role": role,
-                            }
-                        )
-
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", self.id)])
-
-        if not access_internal:
-            if access and access.exists():
-                access_internal = access.internal_users
-            else:
-                access_internal = record["access_internal"]
-
-        if not access_via_link:
-            if access and access.exists():
-                access_via_link = access.link_access
-            else:
-                access_via_link = record["access_via_link"]
-
-        vals = {
-            "document_id": self.id,
-            "internal_users": access_internal,
-            "link_access": access_via_link,
-            "user_accesses": user_accesses,
-            "users_to_remove": users_to_remove,
-        }
-
-        self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)
+        self._save_onlyoffice_roles(
+            original_access_internal,
+            original_access_via_link,
+            original_partners,
+        )
 
         return result
+
+    def _save_onlyoffice_roles(self, access_internal, access_via_link, partners):
+        for document in self:
+            user_accesses = []
+            users_to_remove = []
+
+            if partners:
+                for partner_id, role_data in partners.items():
+                    partner = self.env["res.partner"].browse(int(partner_id))
+                    if partner.exists():
+                        if isinstance(role_data, tuple):
+                            role, expiration_date = role_data
+                        else:
+                            role = role_data
+
+                        if role is False:
+                            users_to_remove.append(partner.id)
+                        else:
+                            user_accesses.append(
+                                {
+                                    "user_id": partner.id,
+                                    "role": role,
+                                }
+                            )
+
+            access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
+
+            if access_internal is not None:
+                internal_to_save = access_internal
+            else:
+                internal_to_save = access.internal_users if access else None
+
+            if access_via_link is not None:
+                link_to_save = access_via_link
+            else:
+                link_to_save = access.link_access if access else None
+
+            if internal_to_save or link_to_save or user_accesses or users_to_remove:
+                vals = {
+                    "document_id": document.id,
+                    "internal_users": internal_to_save or "none",
+                    "link_access": link_to_save or "none",
+                    "user_accesses": user_accesses,
+                    "users_to_remove": users_to_remove,
+                }
+                self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)

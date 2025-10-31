@@ -81,7 +81,7 @@ export class CreateModeDialog extends Component {
           }
           return this.action.doAction(action)
         }
-        window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+        window.open(`/onlyoffice/editor/document/${result.file_id}`, "_blank")
       }
     }
     this.dialogService.add(

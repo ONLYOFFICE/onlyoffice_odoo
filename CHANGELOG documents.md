@@ -1,5 +1,9 @@
 # Change Log
 
+## Added
+
+- compatible with Odoo 19
+
 ## 5.2.1
 
 ## Added

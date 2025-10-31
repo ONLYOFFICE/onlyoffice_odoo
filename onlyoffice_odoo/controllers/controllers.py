@@ -5,7 +5,6 @@
 import base64
 import json
 import logging
-import os
 import re
 import string
 import time
@@ -104,7 +103,7 @@ class Onlyoffice_Connector(http.Controller):
             _logger.warning("POST /onlyoffice/editor/get_config - attachment not found: %s", attachment_id)
             return request.not_found()
 
-        attachment.validate_access(access_token)
+        attachment._can_return_content(access_token=access_token)
 
         if attachment.res_model == "documents.document" and not document:
             document = request.env["documents.document"].browse(int(attachment.res_id))
@@ -147,7 +146,7 @@ class Onlyoffice_Connector(http.Controller):
             _logger.warning("GET /onlyoffice/file/content/%s - attachment not found", attachment_id)
             return request.not_found()
 
-        attachment.validate_access(access_token)
+        attachment._can_return_content(access_token=access_token)
         attachment.has_access("read")
 
         if jwt_utils.is_jwt_enabled(request.env):
@@ -176,7 +175,7 @@ class Onlyoffice_Connector(http.Controller):
             _logger.warning("GET /onlyoffice/editor/%s - attachment not found", attachment_id)
             return request.not_found()
 
-        attachment.validate_access(access_token)
+        attachment._can_return_content(access_token=access_token)
 
         if attachment.res_model == "documents.document":
             document = request.env["documents.document"].browse(int(attachment.res_id))
@@ -212,7 +211,7 @@ class Onlyoffice_Connector(http.Controller):
                 _logger.warning("POST /onlyoffice/editor/callback/%s - attachment not found", attachment_id)
                 raise Exception("attachment not found")
 
-            attachment.validate_access(access_token)
+            attachment._can_return_content(access_token=access_token)
             attachment.has_access("write")
 
             if jwt_utils.is_jwt_enabled(request.env):
@@ -240,6 +239,7 @@ class Onlyoffice_Connector(http.Controller):
                 if attachment.res_model == "documents.document":
                     datas = base64.encodebytes(datas)
                     document = request.env["documents.document"].browse(int(attachment.res_id))
+
                     document.with_user(user).write(
                         {
                             "name": attachment.name,
@@ -248,26 +248,7 @@ class Onlyoffice_Connector(http.Controller):
                         }
                     )
 
-                    attachment_version = attachment.oo_attachment_version
-                    attachment.write({"oo_attachment_version": attachment_version + 1})
                     document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
-
-                    previous_attachments = (
-                        request.env["ir.attachment"]
-                        .sudo()
-                        .search(
-                            [
-                                ("res_model", "=", "documents.document"),
-                                ("res_id", "=", document.id),
-                                ("oo_attachment_version", "=", attachment_version),
-                            ],
-                            limit=1,
-                        )
-                    )
-                    name = attachment.name
-                    filename, ext = os.path.splitext(attachment.name)
-                    name = f"{filename} ({attachment_version}){ext}"
-                    previous_attachments.sudo().write({"name": name})
                 else:
                     attachment.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
 
@@ -453,7 +434,7 @@ class Onlyoffice_Connector(http.Controller):
         return text
 
     def _check_document_access(self, document):
-        if document.is_locked and document.lock_uid.id != request.env.user.id:
+        if document.lock_uid and document.lock_uid.id != request.env.user.id:
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:

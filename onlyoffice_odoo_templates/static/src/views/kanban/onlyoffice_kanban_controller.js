@@ -5,6 +5,8 @@ import { KanbanController } from "@web/views/kanban/kanban_controller"
 import { HelpDialog } from "./onlyoffice_dialog_help"
 
 export class OnlyofficeKanbanController extends KanbanController {
+  static template = "onlyoffice_odoo_templates.KanbanView.Buttons"
+
   setup() {
     super.setup()
     this.action = useService("action")

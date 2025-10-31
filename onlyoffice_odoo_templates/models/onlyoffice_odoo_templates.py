@@ -23,7 +23,9 @@ class OnlyOfficeTemplate(models.Model):
     template_model_id = fields.Many2one("ir.model", string="Select Model")
     template_model_name = fields.Char(string="Model Description", compute="_compute_template_model_fields", store=True)
     template_model_related_name = fields.Char("Model Description", related="template_model_id.name")
-    template_model_model = fields.Char(string=" ", compute="_compute_template_model_fields", store=True)
+    template_model_model = fields.Char(
+        string="Technical model name", compute="_compute_template_model_fields", store=True
+    )
     file = fields.Binary(string="Upload an existing template")
     hide_file_field = fields.Boolean(string="Hide File Field", default=False)
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
@@ -116,88 +118,95 @@ class OnlyOfficeTemplate(models.Model):
         return
 
     @api.model
-    def create(self, vals):
-        url = self._context.get("url", None)
-        if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
-            try:
-                response = onlyoffice_request(
-                    url=url,
-                    method="get",
-                )
+    def create(self, vals_list):
+        results = []
+        for vals in vals_list:
+            vals_copy = vals.copy()
 
-                file_content = response.content
-                vals["file"] = base64.b64encode(file_content)
-            except Exception as e:
-                raise UserError(_("Failed to download form")) from e
-
-        is_pdf_form = None
-        if "file" in vals and vals["file"]:
-            try:
-                decode_file = base64.b64decode(vals["file"])
-                is_pdf_form = pdf_utils.is_pdf_form(decode_file)
-            except Exception as e:
-                raise UserError(_("Invalid file format.")) from e
-        else:
-            vals["file"] = base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
-            is_pdf_form = True
-
-        model = self.env["ir.model"].search([("id", "=", vals["template_model_id"])], limit=1)
-        vals["template_model_name"] = model.name
-        vals["template_model_model"] = model.model
-        vals["mimetype"] = file_utils.get_mime_by_ext("pdf")
-
-        datas = vals.pop("file")
-        vals.pop("hide_file_field", None)
-        vals.pop("datas", None)
-
-        record = super().create(
-            {
-                "name": vals.get("name", "New Template"),
-                "template_model_id": vals.get("template_model_id"),
-                "mimetype": vals.get("mimetype", "application/pdf"),
-                "template_model_name": vals.get("template_model_name", ""),
-                "template_model_model": vals.get("template_model_model", ""),
-            }
-        )
-
-        attachment = self.env["ir.attachment"].create(
-            {
-                "name": vals.get("name", record.name) + ".pdf",
-                "display_name": vals.get("name", record.name),
-                "mimetype": vals.get("mimetype"),
-                "datas": datas,
-                "res_model": self._name,
-                "res_id": record.id,
-            }
-        )
-        record.attachment_id = attachment.id
-
-        if not is_pdf_form:
-            self.env.cr.commit()
-            converted_result = self._convert_to_form(attachment)
-            if converted_result.get("error"):
-                attachment.unlink()
-                record.unlink()
-                super().unlink()
-                self.env.cr.commit()
-                raise UserError(converted_result.get("message"))
-            if converted_result.get("fileUrl"):
+            url = self._context.get("url", None)
+            if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
                 try:
                     response = onlyoffice_request(
-                        url=converted_result["fileUrl"],
+                        url=url,
                         method="get",
                     )
-                    new_datas = base64.b64encode(response.content)
-                    attachment.write({"datas": new_datas, "mimetype": vals.get("mimetype")})
-                    self.env.cr.commit()
+
+                    file_content = response.content
+                    vals_copy["file"] = base64.b64encode(file_content)
                 except Exception as e:
-                    logger.error("Failed to download and update PDF form: %s", str(e))
+                    raise UserError(_("Failed to download form")) from e
+
+            is_pdf_form = None
+            if "file" in vals_copy and vals_copy["file"]:
+                try:
+                    decode_file = base64.b64decode(vals_copy["file"])
+                    is_pdf_form = pdf_utils.is_pdf_form(decode_file)
+                except Exception as e:
+                    raise UserError(_("Invalid file format.")) from e
+            else:
+                vals_copy["file"] = base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
+                is_pdf_form = True
+
+            model = self.env["ir.model"].search([("id", "=", vals_copy["template_model_id"])], limit=1)
+            vals_copy["template_model_name"] = model.name
+            vals_copy["template_model_model"] = model.model
+            vals_copy["mimetype"] = file_utils.get_mime_by_ext("pdf")
+
+            datas = vals_copy.pop("file")
+            vals_copy.pop("hide_file_field", None)
+            vals_copy.pop("datas", None)
+
+            record = super().create(
+                {
+                    "name": vals_copy.get("name", "New Template"),
+                    "template_model_id": vals_copy.get("template_model_id"),
+                    "mimetype": vals_copy.get("mimetype", "application/pdf"),
+                    "template_model_name": vals_copy.get("template_model_name", ""),
+                    "template_model_model": vals_copy.get("template_model_model", ""),
+                }
+            )
+
+            attachment = self.env["ir.attachment"].create(
+                {
+                    "name": vals_copy.get("name", record.name) + ".pdf",
+                    "display_name": vals_copy.get("name", record.name),
+                    "mimetype": vals_copy.get("mimetype"),
+                    "datas": datas,
+                    "res_model": self._name,
+                    "res_id": record.id,
+                }
+            )
+            record.attachment_id = attachment.id
+
+            if not is_pdf_form:
+                self.env.cr.commit()
+                converted_result = self._convert_to_form(attachment)
+                if converted_result.get("error"):
                     attachment.unlink()
                     record.unlink()
-                    super().unlink()
+                    super().unlink([record.id])
                     self.env.cr.commit()
-                    raise UserError(_("Failed to download converted PDF form")) from e
-        return record
+                    raise UserError(converted_result.get("message"))
+                if converted_result.get("fileUrl"):
+                    try:
+                        response = onlyoffice_request(
+                            url=converted_result["fileUrl"],
+                            method="get",
+                        )
+                        new_datas = base64.b64encode(response.content)
+                        attachment.write({"datas": new_datas, "mimetype": vals_copy.get("mimetype")})
+                        self.env.cr.commit()
+                    except Exception as e:
+                        logger.error("Failed to download and update PDF form: %s", str(e))
+                        attachment.unlink()
+                        record.unlink()
+                        super().unlink([record.id])
+                        self.env.cr.commit()
+                        raise UserError("Failed to download converted PDF form") from e
+
+            results.append(record.id)
+
+        return self.browse(results)
 
     @api.model
     def _convert_to_form(self, attachment):
