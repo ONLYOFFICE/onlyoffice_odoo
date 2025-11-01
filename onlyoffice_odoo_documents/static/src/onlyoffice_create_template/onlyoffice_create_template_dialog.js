@@ -85,7 +85,7 @@ export class CreateDialog extends Component {
           return this.actionService.doAction(action)
         }
         this.data.close()
-        return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+        return window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
       }
     }
   }
