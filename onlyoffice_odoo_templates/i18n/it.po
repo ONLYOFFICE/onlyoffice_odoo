@@ -376,6 +376,7 @@ msgstr "Modelli di ONLYOFFICE"
 msgid "Ok"
 msgstr "OK"
 
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format
@@ -554,5 +555,3 @@ msgstr "per qualsiasi modulo Odoo installato (ad es., Vendite, Fatturazione, CRM
 #, python-format
 msgid "templates"
 msgstr "modelli"
-
-#~ msgstr "Modello ONLYOFFICE"

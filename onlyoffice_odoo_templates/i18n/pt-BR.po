@@ -400,6 +400,7 @@ msgstr "Modelos ONLYOFFICE"
 msgid "Ok"
 msgstr "ОК"
 
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format

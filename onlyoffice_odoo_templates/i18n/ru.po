@@ -400,6 +400,7 @@ msgstr "Шаблоны ONLYOFFICE"
 msgid "Ok"
 msgstr "OK"
 
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format
