@@ -7,16 +7,26 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0+e-20240216\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:20+0000\n"
-"PO-Revision-Date: 2025-05-13 16:27+0300\n"
+"PO-Revision-Date: 2025-10-02 20:51+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru_RU\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && "
+"(n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.4.1\n"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid ""
+", select the desired Odoo module, and create or upload a PDF template with fillable "
+"fields."
+msgstr ""
+", выберите нужный модуль Odoo, создайте или загрузите PDF-шаблон с заполняемыми полями."
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
@@ -54,9 +64,7 @@ msgstr "Вы можете открыть шаблоны ONLYOFFICE для про
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,comment:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
 msgid "Can open, create, edit and print ONLYOFFICE templates."
-msgstr ""
-"Вы можете открывать, создавать, редактировать и распечатывать шаблоны "
-"ONLYOFFICE."
+msgstr "Вы можете открывать, создавать, редактировать и распечатывать шаблоны ONLYOFFICE."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -68,12 +76,25 @@ msgstr "Отменить"
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
 msgid ""
-"Check templates you want to export to the ONLYOFFICE Templates module and "
-"press Export. You can do this as many times as you need."
+"Check templates you want to export to the ONLYOFFICE Templates module and press Export. "
+"You can do this as many times as you need."
 msgstr ""
-"Отметьте шаблоны, которые вы хотите экспортировать в модуль шаблонов "
-"ONLYOFFICE, и нажмите «Экспортировать». Вы можете сделать это столько раз, "
-"сколько необходимо."
+"Отметьте шаблоны, которые вы хотите экспортировать в модуль шаблонов ONLYOFFICE, и "
+"нажмите «Экспортировать». Вы можете сделать это столько раз, сколько необходимо."
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid ""
+"Choose the <span class=\"fw-bolder\">Odoo module </span>\n"
+"              (e.g., Employee, Invoice, Sales Order) that the template will be linked "
+"to. The chosen\n"
+"              model defines the data fields available for automatic form filling."
+msgstr ""
+"Выберите <span class=\"fw-bolder\">модуль Odoo</span>\n"
+"               (например, Сотрудники, Выставление счетов, Продажи), с которым будет "
+"связан шаблон. Выбранная\n"
+"              модель определяет поля данных, доступные для автоматического заполнения "
+"формы."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -84,10 +105,29 @@ msgstr "Выберите поле ниже, чтобы вставить выбр
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "Choose the required template to fill in with Odoo data."
+msgstr "Выберите нужный шаблон для заполнения данными Odoo."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "Click on the Action button."
+msgstr "Нажмите кнопку «Действие»."
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_res_config_settings
+msgid "Config Settings"
+msgstr "Настройки конфигурации"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
 #, python-format
 msgid "Couldn't insert the field. Please check Automation API."
-msgstr "Нельзя вставить поле. Пожалуйста, проверьте API автоматизацию."
+msgstr "Не удалось вставить поле. Проверьте API автоматизации."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -115,6 +155,12 @@ msgstr "Дата создания:"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Delete"
 msgstr "Удалить"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_res_config_settings__editable_form_fields
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
+msgid "Disable form fields after printing PDF form"
+msgstr "Отключить поля формы после печати PDF-формы"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__display_name
@@ -147,6 +193,20 @@ msgid "Export templates to the ONLYOFFICE Templates module"
 msgstr "Экспортировать шаблоны в модуль шаблонов ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
+#, python-format
+msgid "Failed to download converted PDF form"
+msgstr "Не удалось загрузить сконвертированную PDF-форму"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
+#, python-format
+msgid "Failed to download form"
+msgstr "Не удалось загрузить форму"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
 #, python-format
@@ -154,14 +214,59 @@ msgid "Fields"
 msgstr "Поля"
 
 #. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
+msgid ""
+"Form fields cannot be filled in manually if they were not automatically filled in\n"
+"                  with data from Odoo"
+msgstr ""
+"Нельзя заполнить поля формы вручную, если они не были автоматически заполнены\n"
+"                  данными из Odoo."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "Go to the relevant Odoo module (e.g., Sales, Invoices)."
+msgstr "Перейдите в соответствующий модуль Odoo (например, Продажи, Выставление счетов)."
+
+#. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban_search
 msgid "Group By"
 msgstr "Группировать по"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.js:0
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
+#, python-format
+msgid "Help"
+msgstr "Помощь"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__hide_file_field
+msgid "Hide File Field"
+msgstr "Скрыть поле файла"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__id
 msgid "ID"
 msgstr "ID"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid ""
+"If you already have a <span class=\"fw-bolder\">prepared\n"
+"              PDF file</span> with fillable fields, you can upload it here"
+msgstr ""
+"Если у вас уже есть <span class=\"fw-bolder\">готовый\n"
+"              PDF-файл</span> с заполняемыми полями, вы можете загрузить его здесь"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
+#, python-format
+msgid "Invalid file format."
+msgstr "Неверный формат файла."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -191,6 +296,19 @@ msgstr "Дата последнего обновления:"
 #, python-format
 msgid "Loading templates..."
 msgstr "Загрузка шаблонов..."
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid ""
+"Locate your newly created template and set up the connections between the form\n"
+"                fields in the ONLYOFFICE editor and the corresponding data fields from "
+"the selected\n"
+"                Odoo model."
+msgstr ""
+"Найдите вновь созданный шаблон и настройте связи между полями\n"
+"                формы в редакторе ONLYOFFICE и соответствующими полями данных из "
+"выбранной\n"
+"                модели Odoo."
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_demo_templates
@@ -251,11 +369,17 @@ msgstr "Шаблоны ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "ONLYOFFICE Templates module"
+msgstr "Модуль «Шаблоны ONLYOFFICE»"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
 #, python-format
 msgid "ONLYOFFICE cannot be reached. Please contact admin."
-msgstr ""
-"Приложение ONLYOFFICE недоступно. Пожалуйста, свяжитесь с администратором."
+msgstr "Приложение ONLYOFFICE недоступно. Пожалуйста, свяжитесь с администратором."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -270,11 +394,55 @@ msgid "ONLYOFFICE templates"
 msgstr "Шаблоны ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
-#. odoo-python
-#: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format
-msgid "Only PDF Form can be uploaded."
-msgstr "Можно загрузить только PDF-форму."
+msgid "Ok"
+msgstr "OK"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid ""
+"On this page, you can create form templates for any Odoo module, such as Invoice, "
+"Receipt, Employee Leave Form, etc. Just click"
+msgstr ""
+"На этой странице вы можете создать шаблоны форм для любого модуля Odoo, например: "
+"Выставление счетов, Чеки, Отпуска и так далее. Просто нажмите"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "Once you've saved the template, return to the ONLYOFFICE Templates list."
+msgstr "После сохранения шаблона вернитесь к списку шаблонов ONLYOFFICE."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
+#, python-format
+msgid "Open Document templates"
+msgstr "Открыть шаблоны документов"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "Open a record."
+msgstr "Открыть запись."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "Press the Print button."
+msgstr "Нажмите кнопку «Печать»."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
+#, python-format
+msgid "Preview"
+msgstr "Предварительный просмотр"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -303,13 +471,16 @@ msgid "Select Model"
 msgstr "Выбрать модель"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "Select Print with ONLYOFFICE."
+msgstr "Выберите «Печать с помощью ONLYOFFICE»."
+
+#. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
-msgid ""
-"Select an existing template. Leave the field blank to create a blank "
-"template."
-msgstr ""
-"Выберите существующий шаблон. Оставьте поле пустым, чтобы создать пустой "
-"шаблон."
+msgid "Select an existing template. Leave the field blank to create a blank template."
+msgstr "Выберите существующий шаблон. Оставьте поле пустым, чтобы создать пустой шаблон."
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__selected_templates
@@ -346,6 +517,31 @@ msgid "Template uploading"
 msgstr "Загрузка шаблона"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "The ONLYOFFICE Templates module allows you to create, manage, and use fillable PDF"
+msgstr "Модуль «Шаблоны ONLYOFFICE» позволяет создавать, использовать заполняемые PDF-"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid ""
+"This will generate a PDF document with your template, automatically filled with the "
+"corresponding record's data."
+msgstr ""
+"Будет создан PDF-документ с вашим шаблоном, автоматически заполненный данными "
+"соответствующей записи."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "To fill in a template with Odoo data:"
+msgstr "Чтобы заполнить шаблон данными Odoo:"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__file
 msgid "Upload an existing template"
 msgstr "Загрузить существующий шаблон"
@@ -358,6 +554,19 @@ msgid "Use a technical name"
 msgstr "Использовать техническое имя"
 
 #. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid ""
+"Use this form to create a new fillable PDF template\n"
+"              for your Odoo modules. Start by entering a <span class=\"fw-bolder\">name "
+"</span> for\n"
+"              your template to easily identify it later in the ONLYOFFICE Templates list."
+msgstr ""
+"Используйте эту форму для создания нового заполняемого PDF-шаблона\n"
+"              для ваших модулей Odoo. Начните с ввода <span class=\"fw-bolder\">имени</"
+"span>\n"
+"              вашего шаблона, чтобы его было проще найти в списке шаблонов ONLYOFFICE."
+
+#. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
 msgid "User"
 msgstr "Пользователь"
@@ -367,11 +576,28 @@ msgstr "Пользователь"
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
 #, python-format
 msgid ""
-"You don't have any templates yet. Please go to the ONLYOFFICE Templates app "
-"to create a new template or ask your admin to create it."
+"You don't have any templates yet. Please go to the ONLYOFFICE Templates app to create a "
+"new template or ask your admin to create it."
 msgstr ""
-"У вас пока нет шаблонов. Перейдите в приложение Шаблоны ONLYOFFICE, чтобы "
-"создать новый шаблон, или попросите администратора создать его."
+"У вас пока нет шаблонов. Перейдите в приложение Шаблоны ONLYOFFICE, чтобы создать новый "
+"шаблон, или попросите администратора создать его."
 
-#~ msgid "ONLYOFFICE Template"
-#~ msgstr "Шаблон ONLYOFFICE"
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid ""
+"for any installed Odoo module (e.g., Sales, Invoicing, CRM). These templates can then be "
+"filled in automatically with real-time data from your Odoo system — no manual input "
+"needed."
+msgstr ""
+"для любого установленного модуля Odoo и управлять ими (например, Продажи, Выставление "
+"счетов, CRM). Эти шаблоны можно затем автоматически заполнять данными из вашей системы "
+"Odoo в режиме реального времени — ввод данных вручную не требуется."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
+#, python-format
+msgid "templates"
+msgstr "шаблоны"
