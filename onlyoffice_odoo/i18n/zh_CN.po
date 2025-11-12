@@ -4,51 +4,66 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 16.0-20221116\n"
+"Project-Id-Version: Odoo Server 18.0+e-20250520\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-03 08:14+0000\n"
-"PO-Revision-Date: 2025-05-13 14:35+0300\n"
+"POT-Creation-Date: 2025-11-12 16:18+0000\n"
+"PO-Revision-Date: 2025-11-12 16:18+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.4.1\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=1; plural=0;"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "<i class=\"fa fa-arrow-right\"/> Learn more"
+msgstr "<i class=\"fa fa-arrow-right\"/> 了解更多"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "<i class=\"fa fa-arrow-right\"/> Suggest a feature"
+msgstr "<i class=\"fa fa-arrow-right\"/> 建议功能"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
-"<span class=\"o_form_label\">Document Editing Service address for internal "
-"requests from the server</span>"
+"<span searchabletext=\"Connect to demo ONLYOFFICE Docs server\">\n"
+"                    Connect to demo ONLYOFFICE Docs server\n"
+"                  </span>"
 msgstr ""
-"<span class=\"o_form_label\">文档编辑服务地址，用于来自服务器的内部请求</"
-"span>"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">Document Server JWT Header</span>"
-msgstr "<span class=\"o_form_label\">文档服务器 JWT 头</span>"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">Document Server JWT Secret</span>"
-msgstr "<span class=\"o_form_label\">文档服务器 JWT 秘密</span>"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">Document Server Url</span>"
-msgstr "<span class=\"o_form_label\">文档服务器网址（URL）</span>"
+"<span searchabletext=\"连接到 ONLYOFFICE 文档服务器演示版\">\n"
+"                    连接到 ONLYOFFICE 文档服务器演示版\n"
+"                  </span>"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
-"<span class=\"o_form_label\">Server address for internal requests from the "
-"Document Editing Service</span>"
+"<span searchabletext=\"This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.\">\n"
+"                      This is a public test server, please do not use it for private sensitive data.\n"
+"                      The server will be available during a 30-day period.\n"
+"                    </span>"
 msgstr ""
-"<span class=\"o_form_label\">服务器地址，用于来自文档编辑服务的内部请求</"
-"span>"
+"<span searchabletext=\"这是公共测试服务器，请勿用于私人敏感 数据。服务器将在 30 天内可用。\">\n"
+"                      这是公共测试服务器，请勿用于私人敏感 数据。服务器将在 30 天内可用。\n"
+"                    </span>"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "About"
+msgstr "关于"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Back"
+msgstr "返回"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Categories"
+msgstr "分类"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
@@ -57,9 +72,14 @@ msgstr "配置设置"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_demo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Connect to demo ONLYOFFICE Docs server"
 msgstr "连接到 ONLYOFFICE 文档服务器演示版"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Create"
+msgstr "创建"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__create_uid
@@ -72,9 +92,21 @@ msgid "Created on"
 msgstr "创建于"
 
 #. module: onlyoffice_odoo
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_disable_certificate
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Disable certificate verification"
+msgstr "禁用证书验证"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
 msgid "Display Name"
 msgstr "显示名称"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Document"
+msgstr "文档"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_inner_url
@@ -97,6 +129,42 @@ msgid "Document Server Public URL"
 msgstr "文档服务器公共 URL"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/controllers.py:0
+msgid "Document edited by %(user)s"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+msgid "Document templates"
+msgstr "文档模板"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+msgid "Error loading forms"
+msgstr "加载表单时出错"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+msgid "Failed to load categories"
+msgstr "加载分类失败"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
+msgid "Failed to load forms"
+msgstr "加载表单失败"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Form"
+msgstr "表单"
+
+#. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "GET NOW"
 msgstr "立即获取"
@@ -117,9 +185,15 @@ msgid "Internal JWT Secret"
 msgstr "内部 JWT 秘密"
 
 #. module: onlyoffice_odoo
-#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo____last_update
-msgid "Last Modified on"
-msgstr "上次修改日期"
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "JWT Header"
+msgstr "JWT 头部"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Language"
+msgstr "语言"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__write_uid
@@ -132,14 +206,41 @@ msgid "Last Updated on"
 msgstr "上次更新日期"
 
 #. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Loading forms..."
+msgstr "正在加载表单..."
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "No forms found"
+msgstr "未找到表单"
+
+#. module: onlyoffice_odoo
+#: model:ir.model,name:onlyoffice_odoo.model_onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "ONLYOFFICE"
 msgstr "ONLYOFFICE"
 
 #. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE Docs address"
+msgstr "ONLYOFFICE 文档地址"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE Docs address for internal requests from the server"
+msgstr "ONLYOFFICE 文档服务器内部请求地址"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE Docs secret key"
+msgstr "ONLYOFFICE 文档密钥"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/models/attachment_onlyoffice.js:0
-#, python-format
+#: code:addons/onlyoffice_odoo/static/src/models/attachment_card_onlyoffice.js:0
 msgid "ONLYOFFICE Docs server"
 msgstr "ONLYOFFICE 文档服务器"
 
@@ -149,16 +250,18 @@ msgid ""
 "ONLYOFFICE Templates requires a properly licensed Document Server connected "
 "with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper "
 "license."
-msgstr ""
-"ONLYOFFICE 模板需通过具有正确授权的文档服务器与 Odoo 连接。请邮件联系 "
-"sales@onlyoffice.com 获取相应授权许可。"
+msgstr "ONLYOFFICE 模板需通过具有正确授权的文档服务器与 Odoo 连接。请邮件联系 sales@onlyoffice.com 获取相应授权许可。"
 
 #. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/actions/documents_action.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.onlyoffice_editor
 msgid "ONLYOFFICE cannot be reached. Please contact admin."
 msgstr "ONLYOFFICE 无法访问，请联系管理员。"
 
 #. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/actions/documents_action.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.onlyoffice_editor
 msgid "ONLYOFFICE logo"
 msgstr "ONLYOFFICE logo"
@@ -177,19 +280,36 @@ msgstr "在同一标签页中打开文件"
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/components/attachment_card_onlyoffice/attachment_card_onlyoffice.xml:0
-#, python-format
 msgid "Open in ONLYOFFICE"
 msgstr "用 ONLYOFFICE 打开"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr "其他"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Presentation"
+msgstr "演示文稿"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Search..."
+msgstr "搜索..."
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Select document"
+msgstr "选择文档"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Security"
-msgstr "安全"
+msgid "Server address for internal requests from ONLYOFFICE Docs"
+msgstr "ONLYOFFICE 文档内部请求的服务器地址"
 
 #. module: onlyoffice_odoo
 #: model:ir.actions.act_window,name:onlyoffice_odoo.action_onlyoffice_config_settings
@@ -198,16 +318,50 @@ msgstr "设置"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/models/attachment_onlyoffice.js:0
-#, python-format
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Spreadsheet"
+msgstr "电子表格"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/models/attachment_card_onlyoffice.js:0
 msgid ""
-"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE "
-"Docs server"
+"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
+" Docs server"
 msgstr "30 天测试期结束后，您将无法再访问 ONLYOFFICE文档服务器演示版"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
-"This is a public test server, please do not use it for private sensitive "
-"data. The server will be available during a 30-day period."
-msgstr "这是公共测试服务器，请勿用于私人敏感 数据。服务器将在 30 天内可用。"
+"This app enables creating, editing, and collaborating on fillable forms, "
+"office files, and attached documents in Odoo using ONLYOFFICE Docs."
+msgstr "此应用可在 Odoo 中通过 ONLYOFFICE 文档创建、编辑和协作处理可填写表单、办公文件及附件。"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Try changing your search or filters"
+msgstr "请尝试更改搜索条件或筛选项"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "Type"
+msgstr "类型"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/controllers.py:0
+msgid "User has no read access rights to open this document"
+msgstr "用户没有查看权限，无法打开此文档"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+msgid "View all templates"
+msgstr "查看所有模板"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Welcome to ONLYOFFICE!"
+msgstr "欢迎使用 ONLYOFFICE!"

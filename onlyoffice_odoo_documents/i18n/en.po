@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e-20250520\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-30 09:02+0000\n"
-"PO-Revision-Date: 2025-09-30 09:02+0000\n"
+"POT-Creation-Date: 2025-11-12 16:20+0000\n"
+"PO-Revision-Date: 2025-11-12 16:20+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -245,8 +245,6 @@ msgstr ""
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
-#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_product_document__oo_attachment_version
-#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_quotation_document__oo_attachment_version
 msgid "Oo Attachment Version"
 msgstr ""
 

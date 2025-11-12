@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { FormGallery } from "@onlyoffice_odoo/views/form_gallery/form_gallery"
+import { ShareDialog } from "@onlyoffice_odoo_documents/documents_view/share/advanced_share"
 import { CreateDialog } from "@onlyoffice_odoo_documents/onlyoffice_create_template/onlyoffice_create_template_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
@@ -92,6 +93,17 @@ export class CreateModeDialog extends Component {
       },
       {
         onClose: () => {
+          this.dialogService.add(CreateModeDialog, {
+            context: this.props.context,
+            folderId: this.props.folderId,
+            model: this.props.model,
+            onShare: (document_id) => {
+              this.dialogService.add(ShareDialog, {
+                document_id: document_id,
+                openEditor: true,
+              })
+            },
+          })
           this.data.close()
         },
       },
