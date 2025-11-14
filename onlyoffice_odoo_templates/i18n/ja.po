@@ -22,6 +22,8 @@ msgid ""
 ", select the desired Odoo module, and create or upload a PDF template with "
 "fillable fields."
 msgstr ""
+"必要なOdooモジュールを選択し、入力可能フィールド付きPDFテンプレートを作成またはアップロー"
+"ドしてください。"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
@@ -64,6 +66,9 @@ msgid ""
 "              (e.g., Employee, Invoice, Sales Order) that the template will be linked to. The chosen\n"
 "              model defines the data fields available for automatic form filling."
 msgstr ""
+"テンプレートを紐づける <span class=\"fw-bolder\">Odooモジュール </span>\n"
+"              （例：従業員、請求書、販売注文）を選択します。\n"
+"              選択したモデルにより、自動入力に使用できるデータフィールドが定義されます。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -75,24 +80,24 @@ msgstr "選択したパラメータをカーソルに貼り付けるには、下
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Choose the required template to fill in with Odoo data."
-msgstr ""
+msgstr "Odooデータで入力するテンプレートを選択します。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Click on the Action button."
-msgstr ""
+msgstr "アクションボタンをクリックします。"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_res_config_settings
 msgid "Config Settings"
-msgstr "構成の設定"
+msgstr "設定"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
 msgid "Couldn't insert the field. Please check Automation API."
-msgstr "フィールドを挿入できませんでした。オートメーションAPIをご確認ください。"
+msgstr "フィールドを挿入できません。Automation APIを確認してください。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -125,7 +130,7 @@ msgstr "削除"
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_res_config_settings__editable_form_fields
 msgid "Disable form fields after printing PDF form"
-msgstr ""
+msgstr "PDFフォーム印刷後にフォームフィールドを無効化"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__display_name
@@ -157,13 +162,13 @@ msgstr "テンプレートを「ONLYOFFICEテンプレート」モジュール�
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
 msgid "Failed to download converted PDF form"
-msgstr ""
+msgstr "変換済みPDFフォームのダウンロードに失敗しました"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
 msgid "Failed to download form"
-msgstr ""
+msgstr "フォームのダウンロードに失敗しました"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -177,12 +182,14 @@ msgid ""
 "Form fields cannot be filled in manually if they were not automatically "
 "filled in with data from Odoo"
 msgstr ""
+"Odooのデータで自動入力されなかったフィールドは、\n"
+"                  手動で入力できません"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Go to the relevant Odoo module (e.g., Sales, Invoices)."
-msgstr ""
+msgstr "該当するOdooモジュール（例：販売、請求）に移動します。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban_search
@@ -199,7 +206,7 @@ msgstr "ヘルプ"
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__hide_file_field
 msgid "Hide File Field"
-msgstr ""
+msgstr "ファイルフィールドを非表示"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__id
@@ -213,12 +220,14 @@ msgid ""
 "If you already have a <span class=\"fw-bolder\">prepared\n"
 "              PDF file</span> with fillable fields, you can upload it here"
 msgstr ""
+"入力可能フィールド付きの <span class=\"fw-bolder\">準備済み\n"
+"              PDFファイル</span> がある場合は、ここにアップロードできます"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
 msgid "Invalid file format."
-msgstr ""
+msgstr "無効なファイル形式です。"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__write_uid
@@ -245,6 +254,9 @@ msgid ""
 "                fields in the ONLYOFFICE editor and the corresponding data fields from the selected\n"
 "                Odoo model."
 msgstr ""
+"作成したテンプレートを開き、\n"
+"                ONLYOFFICEエディター内のフォームフィールドと選択した\n"
+"                Odooモデルの対応フィールドを接続します。"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_demo_templates
@@ -306,7 +318,7 @@ msgstr "ONLYOFFICEテンプレート"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "ONLYOFFICE Templates module"
-msgstr ""
+msgstr "ONLYOFFICEテンプレートモジュール"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -338,30 +350,31 @@ msgid ""
 "On this page, you can create form templates for any Odoo module, such as "
 "Invoice, Receipt, Employee Leave Form, etc. Just click"
 msgstr ""
+"このページでは、請求書、領収書、休暇申請など、任意のOdooモジュール用にフォームテンプレー"
+"トを作成できます。クリックして開始してください。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
-msgid ""
-"Once you've saved the template, return to the ONLYOFFICE Templates list."
-msgstr ""
+msgid "Once you've saved the template, return to the ONLYOFFICE Templates list."
+msgstr "テンプレートを保存したら、ONLYOFFICEテンプレートリストに戻ります。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
 msgid "Open Document templates"
-msgstr ""
+msgstr "ドキュメントテンプレートを開く"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Open a record."
-msgstr ""
+msgstr "レコードを開きます。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Press the Print button."
-msgstr ""
+msgstr "印刷ボタンを押します。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -397,7 +410,7 @@ msgstr "モデルを選択"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Select Print with ONLYOFFICE."
-msgstr ""
+msgstr "ONLYOFFICEで印刷を選択します。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
@@ -435,7 +448,7 @@ msgstr "テンプレートがアップロードされています"
 #. module: onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
 msgid "Templates"
-msgstr ""
+msgstr "テンプレート"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
@@ -448,7 +461,7 @@ msgstr "テンプレートギャラリー"
 msgid ""
 "The ONLYOFFICE Templates module allows you to create, manage, and use "
 "fillable PDF"
-msgstr ""
+msgstr "ONLYOFFICEテンプレートモジュールでは、入力可能なPDFの作成、管理、利用が可能です"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -457,12 +470,14 @@ msgid ""
 "This will generate a PDF document with your template, automatically filled "
 "with the corresponding record's data."
 msgstr ""
+"これにより、テンプレートに基づいたPDF文書が生成され、対応するレコードのデータが自動的に入"
+"力されます。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "To fill in a template with Odoo data:"
-msgstr ""
+msgstr "テンプレートにOdooデータを入力する手順："
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__file
@@ -482,6 +497,10 @@ msgid ""
 "              for your Odoo modules. Start by entering a <span class=\"fw-bolder\">name </span> for\n"
 "              your template to easily identify it later in the ONLYOFFICE Templates list."
 msgstr ""
+"このフォームを使用して、\n"
+"              Odooモジュール用の新しい入力可能PDFテンプレートを作成します。まずテンプレー"
+"トに <span class=\"fw-bolder\">名前</span> を付け、\n"
+"              ONLYOFFICEテンプレート一覧で識別しやすくします。"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
@@ -504,9 +523,12 @@ msgid ""
 " can then be filled in automatically with real-time data from your Odoo "
 "system — no manual input needed."
 msgstr ""
+"インストール済みのOdooモジュール（例：販売、請求書発行、CRM）向けに用意されています。これ"
+"らのテンプレートには、Odooシステムからのリアルタイムデータが自動的に入力されるため、手動"
+"入力は不要です。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "templates"
-msgstr ""
+msgstr "テンプレート"

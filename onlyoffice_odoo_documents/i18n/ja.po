@@ -18,12 +18,12 @@ msgstr ""
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__role
 msgid "Access Level"
-msgstr ""
+msgstr "アクセスレベル"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_ir_attachment
 msgid "Attachment"
-msgstr ""
+msgstr "添付ファイル"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -48,7 +48,7 @@ msgstr "キャンセル"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__commenter
 msgid "Commenter"
-msgstr ""
+msgstr "コメント可"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -69,7 +69,7 @@ msgstr "ONLYOFFICEで作成"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
 msgid "Create&Set Permissions"
-msgstr ""
+msgstr "作成 & 権限設定"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__create_uid
@@ -95,7 +95,7 @@ msgstr "作成日"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__custom_filter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__custom_filter
 msgid "Custom Filter"
-msgstr "ユーザー設定フィルター"
+msgstr "カスタムフィルター"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__display_name
@@ -117,7 +117,7 @@ msgstr "ドキュメント"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 msgid "Document edited by %(user)s"
-msgstr ""
+msgstr "%(user)sによって編集されたドキュメント"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -129,7 +129,7 @@ msgstr ""
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__edit
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__edit
 msgid "Editor"
-msgstr "エディタ"
+msgstr "編集可"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -147,13 +147,13 @@ msgstr "文書の作成に失敗しました"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__form_filling
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__form_filling
 msgid "Form Filling"
-msgstr ""
+msgstr "フォーム入力"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 msgid "From Template"
-msgstr ""
+msgstr "テンプレートから"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__id
@@ -165,14 +165,21 @@ msgstr "ID"
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__internal_users
 msgid "Internal Users Access"
-msgstr ""
+msgstr "内部ユーザーアクセス"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents____last_update
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access____last_update
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user____last_update
+msgid "Last Modified on"
+msgstr "最終変更日"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_uid
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__write_uid
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__write_uid
 msgid "Last Updated by"
-msgstr "最終更新したユーザー"
+msgstr "最終更新者"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_date
@@ -184,7 +191,7 @@ msgstr "最終更新日"
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__link_access
 msgid "Link Access"
-msgstr ""
+msgstr "リンクアクセス"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -203,7 +210,7 @@ msgstr "「文書」に新規文書が作成されました"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 msgid "No document selected for sharing."
-msgstr ""
+msgstr "共有するドキュメントが選択されていません。"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -230,23 +237,23 @@ msgstr "ONLYOFFICE Documents"
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents_access
 msgid "ONLYOFFICE Documents Access"
-msgstr ""
+msgstr "ONLYOFFICE Documentsアクセス"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents_access_user
 msgid "ONLYOFFICE Documents Access Users"
-msgstr ""
+msgstr "ONLYOFFICE Documentsアクセスユーザー"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 msgid "Only the owner or administrator can share documents."
-msgstr ""
+msgstr "ドキュメントを共有できるのは所有者または管理者のみです。"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
-msgid "Oo Attachment Version"
-msgstr ""
+msgid "Oo Attachment"
+msgstr "Oo添付バージョン"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -278,7 +285,7 @@ msgstr "プレゼンテーション"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__reviewer
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__reviewer
 msgid "Reviewer"
-msgstr "レビュー"
+msgstr "レビュー可"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -309,7 +316,7 @@ msgstr "ユーザー"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 msgid "User has no read access rights to open this document"
-msgstr ""
+msgstr "ユーザーにはこのドキュメントを開く権限がありません"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -321,4 +328,4 @@ msgstr ""
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__view
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__view
 msgid "Viewer"
-msgstr "閲覧用"
+msgstr "閲覧のみ"

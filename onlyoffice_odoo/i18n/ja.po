@@ -18,12 +18,12 @@ msgstr ""
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "<i class=\"fa fa-arrow-right\"/> Learn more"
-msgstr ""
+msgstr "<i class=\"fa fa-arrow-right\"/> 詳細を見る"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "<i class=\"fa fa-arrow-right\"/> Suggest a feature"
-msgstr ""
+msgstr "<i class=\"fa fa-arrow-right\"/> 機能を提案"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -51,7 +51,7 @@ msgstr ""
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "About"
-msgstr ""
+msgstr "概要"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -63,7 +63,12 @@ msgstr "戻る"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Categories"
-msgstr "カテゴリー"
+msgstr "カテゴリ"
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Common settings"
+msgstr "共通設定"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
@@ -95,7 +100,7 @@ msgstr "作成日"
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_disable_certificate
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Disable certificate verification"
-msgstr ""
+msgstr "証明書検証を無効化"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
@@ -138,25 +143,25 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Document templates"
-msgstr ""
+msgstr "ドキュメントテンプレート"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
-msgstr ""
+msgstr "フォームの読み込みエラー"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Failed to load categories"
-msgstr ""
+msgstr "カテゴリの読み込みに失敗しました"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Failed to load forms"
-msgstr ""
+msgstr "フォームの読み込みに失敗しました"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -187,7 +192,7 @@ msgstr "内部JWTシクレット"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "JWT Header"
-msgstr ""
+msgstr "JWTヘッダー"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -209,13 +214,13 @@ msgstr "最終更新日"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Loading forms..."
-msgstr ""
+msgstr "フォームを読み込み中..."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "No forms found"
-msgstr ""
+msgstr "フォームが見つかりません"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_onlyoffice_odoo
@@ -226,17 +231,17 @@ msgstr "ONLYOFFICE"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "ONLYOFFICE Docs address"
-msgstr ""
+msgstr "ONLYOFFICE Docsアドレス"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "ONLYOFFICE Docs address for internal requests from the server"
-msgstr ""
+msgstr "サーバーからの内部リクエスト用ONLYOFFICE Docsアドレス"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "ONLYOFFICE Docs secret key"
-msgstr ""
+msgstr "ONLYOFFICE Docsシークレットキー"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -272,6 +277,11 @@ msgid "Odoo URL"
 msgstr "Odoo URL"
 
 #. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Only use when accessing Document Server with a self-signed certificate"
+msgstr "自己署名証明書使用時のみ有効"
+
+#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Open file in the same tab"
@@ -286,7 +296,7 @@ msgstr "ONLYOFFICEで開く"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr ""
+msgstr "その他"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -298,18 +308,18 @@ msgstr "プレゼンテーション"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Search..."
-msgstr ""
+msgstr "検索..."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Select document"
-msgstr ""
+msgstr "ドキュメントを選択"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Server address for internal requests from ONLYOFFICE Docs"
-msgstr ""
+msgstr "ONLYOFFICE Docsからの内部リクエスト用サーバーアドレス"
 
 #. module: onlyoffice_odoo
 #: model:ir.actions.act_window,name:onlyoffice_odoo.action_onlyoffice_config_settings
@@ -336,12 +346,14 @@ msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
 msgstr ""
+"このアプリを使用すると、Odoo内でONLYOFFICE Docsを使って、入力可能なフォームや"
+"オフィスファイル、添付ドキュメントを作成・編集・共同編集できます。"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Try changing your search or filters"
-msgstr ""
+msgstr "検索条件やフィルターを変更してみてください"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -353,15 +365,15 @@ msgstr "種類"
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/controllers.py:0
 msgid "User has no read access rights to open this document"
-msgstr ""
+msgstr "ユーザーにはこのドキュメントを開く権限がありません"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "View all templates"
-msgstr ""
+msgstr "すべてのテンプレートを見る"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Welcome to ONLYOFFICE!"
-msgstr ""
+msgstr "ONLYOFFICEへようこそ！"
