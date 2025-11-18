@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0-20221116\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-07-03 08:14+0000\n"
-"PO-Revision-Date: 2025-10-02 20:26+0300\n"
+"PO-Revision-Date: 2025-11-14 10:52+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ja_JP\n"
@@ -20,12 +20,12 @@ msgstr ""
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "<i class=\"fa fa-arrow-right\"/> Learn more"
-msgstr ""
+msgstr "<i class=\"fa fa-arrow-right\"/> 詳細を見る"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "<i class=\"fa fa-arrow-right\"/> Suggest a feature"
-msgstr ""
+msgstr "<i class=\"fa fa-arrow-right\"/> 機能を提案"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -34,6 +34,9 @@ msgid ""
 "                    About\n"
 "                  </span>"
 msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    概要\n"
+"                  </span>"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -42,6 +45,9 @@ msgid ""
 "                    JWT Header\n"
 "                  </span>"
 msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    JWTヘッダー\n"
+"                  </span>"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -51,6 +57,9 @@ msgid ""
 "server\n"
 "                  </span>"
 msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    サーバーからの内部リクエスト用ONLYOFFICE Docsアドレス\n"
+"                  </span>"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -59,6 +68,9 @@ msgid ""
 "                    ONLYOFFICE Docs secret key\n"
 "                  </span>"
 msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    ONLYOFFICE Docsシークレットキー\n"
+"                  </span>"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -68,11 +80,14 @@ msgid ""
 "Docs\n"
 "                  </span>"
 msgstr ""
+"<span class=\"o_form_label\">\n"
+"                    ONLYOFFICE Docsからの内部リクエスト用サーバーアドレス\n"
+"                  </span>"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "<span class=\"o_form_label\">ONLYOFFICE Docs address</span>"
-msgstr ""
+msgstr "<span class=\"o_form_label\">ONLYOFFICE Docsアドレス</span>"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -86,12 +101,12 @@ msgstr "戻る"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Categories"
-msgstr "カテゴリー"
+msgstr "カテゴリ"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Common settings"
-msgstr ""
+msgstr "共通設定"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
@@ -125,7 +140,7 @@ msgstr "作成日"
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_disable_certificate
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Disable certificate verification"
-msgstr ""
+msgstr "証明書検証を無効化"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
@@ -164,28 +179,28 @@ msgstr "ドキュメントサーバ公開URL"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
 msgid "Document templates"
-msgstr ""
+msgstr "ドキュメントテンプレート"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
 msgid "Error loading forms"
-msgstr ""
+msgstr "フォームの読み込みエラー"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
 msgid "Failed to load categories"
-msgstr ""
+msgstr "カテゴリの読み込みに失敗しました"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
 msgid "Failed to load forms"
-msgstr ""
+msgstr "フォームの読み込みに失敗しました"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -241,14 +256,14 @@ msgstr "最終更新日"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Loading forms..."
-msgstr ""
+msgstr "フォームを読み込み中..."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "No forms found"
-msgstr ""
+msgstr "フォームが見つかりません"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -291,7 +306,7 @@ msgstr "Odoo URL"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Only use when accessing Document Server with a self-signed certificate"
-msgstr ""
+msgstr "自己署名証明書使用時のみ有効"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
@@ -318,14 +333,14 @@ msgstr "プレゼンテーション"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Search..."
-msgstr ""
+msgstr "検索..."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Select document"
-msgstr ""
+msgstr "ドキュメントを選択"
 
 #. module: onlyoffice_odoo
 #: model:ir.actions.act_window,name:onlyoffice_odoo.action_onlyoffice_config_settings
@@ -356,6 +371,8 @@ msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
 msgstr ""
+"このアプリを使用すると、Odoo内でONLYOFFICE Docsを使って、入力可能なフォームや"
+"オフィスファイル、添付ドキュメントを作成・編集・共同編集できます。"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -371,12 +388,12 @@ msgstr ""
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Try changing your search or filters"
-msgstr ""
+msgstr "検索条件やフィルターを変更してみてください"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, fuzzy, python-format
+#, python-format
 msgid "Type"
 msgstr "種類"
 
@@ -385,16 +402,16 @@ msgstr "種類"
 #: code:addons/onlyoffice_odoo/controllers/controllers.py:0
 #, python-format
 msgid "User has no read access rights to open this document"
-msgstr ""
+msgstr "ユーザーにはこのドキュメントを開く権限がありません"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "View all templates"
-msgstr ""
+msgstr "すべてのテンプレートを見る"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Welcome to ONLYOFFICE!"
-msgstr ""
+msgstr "ONLYOFFICEへようこそ！"
