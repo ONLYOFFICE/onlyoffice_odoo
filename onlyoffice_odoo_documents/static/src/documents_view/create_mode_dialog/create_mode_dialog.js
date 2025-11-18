@@ -92,17 +92,6 @@ export class CreateModeDialog extends Component {
       },
       {
         onClose: () => {
-          this.dialogService.add(CreateModeDialog, {
-            context: this.props.context,
-            folderId: this.props.folderId,
-            model: this.props.model,
-            onShare: (document_id) => {
-              this.dialogService.add(ShareDialog, {
-                document_id: document_id,
-                openEditor: true,
-              })
-            },
-          })
           this.data.close()
         },
       },
