@@ -167,7 +167,7 @@
 
       <t t-set-slot="footer">
         <button class="btn btn-primary" t-on-click="download" t-att-disabled="!state.form">Create</button>
-        <button class="btn btn-secondary" t-on-click="props.close">Back</button>
+        <button class="btn btn-secondary" t-on-click="props.close">Cancel</button>
       </t>
     </Dialog>
   </t>

@@ -4,6 +4,7 @@ This repository contains the list of file formats (electronic documents, forms, 
 
 The repository is used in:
 * [Document Server integration example](https://github.com/ONLYOFFICE/document-server-integration)
+* [ONLYOFFICE addon for Plone](https://github.com/ONLYOFFICE/onlyoffice-plone)
 * [ONLYOFFICE app for Box](https://github.com/ONLYOFFICE/onlyoffice-box)
 * [ONLYOFFICE app for Confluence Cloud](https://github.com/ONLYOFFICE/onlyoffice-confluence-cloud)
 * [ONLYOFFICE app for Dropbox](https://github.com/ONLYOFFICE/onlyoffice-dropbox)
@@ -12,6 +13,7 @@ The repository is used in:
 * [ONLYOFFICE app for Nextcloud](https://github.com/ONLYOFFICE/onlyoffice-nextcloud)
 * [ONLYOFFICE app for Odoo](https://github.com/ONLYOFFICE/onlyoffice_odoo)
 * [ONLYOFFICE app for ownCloud](https://github.com/ONLYOFFICE/onlyoffice-owncloud)
+* [ONLYOFFICE app for Slack](https://github.com/ONLYOFFICE/onlyoffice-slack)
 * [ONLYOFFICE bot for Telegram](https://github.com/ONLYOFFICE/onlyoffice-telegram)
 * [ONLYOFFICE DocSpace](https://github.com/ONLYOFFICE/DocSpace)
 * [ONLYOFFICE Docs Integration Java SDK](https://github.com/ONLYOFFICE/docs-integration-sdk-java)
@@ -31,7 +33,7 @@ Official website: [www.onlyoffice.com](https://www.onlyoffice.com/)
 
 **For viewing:**
 
-* **WORD**: DOC, DOCM, DOCX, DOT, DOTM, DOTX, EPUB, FB2, FODT, GDOC, HTM, HTML, HWP, HWPX, MD, MHT, MHTML, ODT, OTT, PAGES, RTF, STW, SXW, TXT, WPS, WPT, XML
+* **WORD**: DOC, DOCM, DOCX, DOT, DOTM, DOTX, EPUB, FB2, FODT, GDOC, HML, HTM, HTML, HWP, HWPX, MD, MHT, MHTML, ODT, OTT, PAGES, RTF, STW, SXW, TXT, WPS, WPT, XML
 * **CELL**: CSV, ET, ETT, FODS, GSHEET, NUMBERS, ODS, OTS, SXC, XLS, XLSM, XLSX, XLT, XLTM, XLTX
 * **SLIDE**: DPS, DPT, FODP, GSLIDE, KEY, ODG, ODP, OTP, POT, POTM, POTX, PPS, PPSM, PPSX, PPT, PPTM, PPTX, SXI
 * **PDF**: DJVU, DOCXF, OFORM, OXPS, PDF, XPS
@@ -78,7 +80,7 @@ Official website: [www.onlyoffice.com](https://www.onlyoffice.com/)
 
 **For converting to Office Open XML formats:**
 
-* **WORD**: DOC, DOCM, DOCX, DOT, DOTM, DOTX, EPUB, FB2, FODT, HTM, HTML, HWP, HWPX, MD, MHT, MHTML, ODT, OTT, PAGES, RTF, STW, SXW, TXT, WPS, WPT, XML
+* **WORD**: DOC, DOCM, DOCX, DOT, DOTM, DOTX, EPUB, FB2, FODT, HML, HTM, HTML, HWP, HWPX, MD, MHT, MHTML, ODT, OTT, PAGES, RTF, STW, SXW, TXT, WPS, WPT, XML
 * **CELL**: CSV, ET, ETT, FODS, NUMBERS, ODS, OTS, SXC, XLS, XLSB, XLSM, XLSX, XLT, XLTM, XLTX
 * **SLIDE**: DPS, DPT, FODP, KEY, ODG, ODP, OTP, POT, POTM, POTX, PPS, PPSM, PPSX, PPT, PPTM, PPTX, SXI
 * **PDF**: DOCXF, OXPS, PDF, XPS
