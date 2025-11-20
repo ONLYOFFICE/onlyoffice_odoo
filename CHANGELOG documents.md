@@ -1,9 +1,10 @@
 # Change Log
 
-## 3.2.1
+## 4.2.1
 
 ## Added
 
+- opening documents in the ONLYOFFICE editor via a share link
 - form gallery
 - saves the history of document changes
 - advanced sharing permissions
@@ -12,7 +13,7 @@
 
 - updated format icons
 
-## 3.1.1
+## 4.1.1
 
 ## Added
 
@@ -28,7 +29,7 @@
 - pointer cursor for list of created documents
 - open documents with file extensions in capital letters
 
-## 3.0.1
+## 4.0.1
 
 ## Changed
 

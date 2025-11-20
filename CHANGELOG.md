@@ -1,6 +1,6 @@
 # Change Log
 
-## 3.3.0
+## 4.3.0
 
 ## Added
 
@@ -12,14 +12,14 @@
 - edit xlsb
 - Catalan, Danish, Hungarian, Indonesian, Romanian empty file templates
 
-## 3.2.0
+## 4.2.0
 
 ## Changed
 
 - fix saving internal secret
 - increased timeout
 
-## 3.1.0
+## 4.1.0
 
 ## Added
 
@@ -34,7 +34,7 @@
 
 - demo server address changed
 
-## 3.0.0
+## 4.0.0
 
 ## Added
 
@@ -46,6 +46,12 @@
 ## Changed
 
 - replace docxf with pdf as a form template
+
+## 2.1.0
+
+## Added
+
+- compatible with Odoo 17
 
 ## 2.0.0
 

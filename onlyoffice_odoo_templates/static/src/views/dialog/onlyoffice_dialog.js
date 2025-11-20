@@ -3,12 +3,13 @@ import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_pre
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
+import { _t } from "@web/core/l10n/translation"
 import { download } from "@web/core/network/download"
 import { Pager } from "@web/core/pager/pager"
+import { KeepLast } from "@web/core/utils/concurrency"
 import { useService } from "@web/core/utils/hooks"
 import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
-import { DropPrevious } from "web.concurrency"
 
 const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
 
@@ -23,7 +24,7 @@ export class TemplateDialog extends Component {
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 
-    this.dialogTitle = this.env._t("Print from template")
+    this.dialogTitle = _t("Print from template")
     this.limit = 8
     this.state = useState({
       currentOffset: 0,
@@ -44,7 +45,7 @@ export class TemplateDialog extends Component {
 
     useChildSubEnv({ searchModel: this.model })
 
-    this.dp = new DropPrevious()
+    this.dp = new KeepLast()
 
     onWillStart(async () => {
       const { resModel } = this.props
@@ -73,20 +74,22 @@ export class TemplateDialog extends Component {
 
   async fetchTemplates(offset = 0) {
     const { domain, context } = this.model
-    const { records, length } = await this.dp.add(
-      this.rpc("/web/dataset/search_read", {
+    const records = await this.orm.searchRead(
+      "onlyoffice.odoo.templates",
+      domain,
+      ["display_name", "name", "create_date", "create_uid", "attachment_id", "mimetype"],
+      {
         context,
-        domain,
-        fields: ["display_name", "name", "create_date", "create_uid", "attachment_id", "mimetype"],
         limit: this.limit,
-        model: "onlyoffice.odoo.templates",
         offset,
-        sort: "id",
-      }),
+        order: "id",
+      },
     )
+    this.state.templates = records
+    const length = await this.orm.searchCount("onlyoffice.odoo.templates", domain, { context })
     if (!length) {
       this.dialog.add(AlertDialog, {
-        body: this.env._t(
+        body: _t(
           // eslint-disable-next-line @stylistic/max-len
           "You don't have any templates yet. Please go to the ONLYOFFICE Templates app to create a new template or ask your admin to create it.",
         ),
@@ -94,7 +97,6 @@ export class TemplateDialog extends Component {
       })
       return this.data.close()
     }
-    this.state.templates = records
     this.state.totalTemplates = length
   }
 

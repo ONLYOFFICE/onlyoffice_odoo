@@ -1,4 +1,5 @@
 /** @odoo-module **/
+import { cookie } from "@web/core/browser/cookie"
 import { registry } from "@web/core/registry"
 import { useService } from "@web/core/utils/hooks"
 
@@ -11,7 +12,6 @@ export class DocumentsAction extends Component {
     this.orm = useService("orm")
     this.actionService = useService("action")
     this.router = useService("router")
-    this.cookies = useService("cookie")
 
     onMounted(async () => {
       try {
@@ -27,7 +27,7 @@ export class DocumentsAction extends Component {
         }
         const response = await this.rpc("/onlyoffice/editor/get_config", args)
         const config = JSON.parse(response.editorConfig)
-        const theme = this.cookies.current.color_scheme
+        const theme = cookie.get("color_scheme")
         config.editorConfig.customization = {
           ...config.editorConfig.customization,
           uiTheme: theme ? `default-${theme}` : "default-light",

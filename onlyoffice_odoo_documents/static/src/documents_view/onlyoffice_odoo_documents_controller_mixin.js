@@ -4,9 +4,9 @@ import { ShareDialog } from "@onlyoffice_odoo_documents/documents_view/share/adv
 import { useService } from "@web/core/utils/hooks"
 import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"
 
-export const OnlyofficeDocumentsControllerMixin = {
+export const OnlyofficeDocumentsControllerMixin = () => ({
   setup() {
-    this._super(...arguments)
+    super.setup(...arguments)
     this.action = useService("action")
     this.dialogService = useService("dialog")
     this.notification = useService("notification")
@@ -22,10 +22,14 @@ export const OnlyofficeDocumentsControllerMixin = {
     })
   },
   // eslint-disable-next-line sort-keys
-  async onClickAdvancedShare(document_id, openEditor = false) {
+  async onClickAdvancedShare(document_id = null, openEditor = false) {
+    if (!document_id) {
+      const selection = this.env.model.root.selection
+      document_id = selection.filter((rec) => rec._values.type !== "empty").map((rec) => rec.resId)
+    }
     this.dialogService.add(ShareDialog, {
-      document_id: document_id || (await this.env.model.root.getResIds(true)),
+      document_id: document_id,
       openEditor,
     })
   },
-}
+})

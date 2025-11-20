@@ -116,11 +116,16 @@ class OnlyofficeDocuments(models.Model):
                 {
                     "document_id": document_id[0],
                     "internal_users": vals.get("internal_users", "none"),
-                    "link_access": "viewer",
+                    "link_access": vals.get("link_access", "none"),
                 }
             )
         else:
-            access.write({"internal_users": vals.get("internal_users")})
+            access.write(
+                {
+                    "internal_users": vals.get("internal_users"),
+                    "link_access": vals.get("link_access"),
+                }
+            )
 
         user_accesses = vals.get("user_accesses", [])
         current_accesses = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document_id)])

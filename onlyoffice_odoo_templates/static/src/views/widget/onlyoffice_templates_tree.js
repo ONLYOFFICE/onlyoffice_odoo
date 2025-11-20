@@ -78,4 +78,4 @@ export class TemplatesTree extends Component {
 
 TemplatesTree.template = "onlyoffice_odoo_templates.TemplatesTree"
 
-registry.category("fields").add("onlyoffice_template_tree", TemplatesTree)
+registry.category("fields").add("onlyoffice_template_tree", { component: TemplatesTree })

@@ -24,7 +24,7 @@
             <field name="template_model_model" invisible="1" />
             <field name="hide_file_field" invisible="1" />
           </group>
-          <group string="Template uploading" attrs="{'invisible': [('hide_file_field', '=', True)]}">
+          <group string="Template uploading" invisible="hide_file_field">
             <div class="text-muted" colspan="2"> If you already have a <span class="fw-bolder">prepared
               PDF file</span> with fillable fields, you can upload it here </div>
             <field
@@ -82,6 +82,15 @@
         <field name="template_model_related_name" />
         <field name="template_model_model" />
         <templates>
+          <t t-name="kanban-menu">
+            <a t-if="widget.editable" type="edit" class="dropdown-item">Edit</a>
+            <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
+            <a
+              t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/datas?download=true"
+              download=""
+              class="dropdown-item"
+            >Download</a>
+          </t>
           <t t-name="kanban-box">
             <div class="oe_kanban_global_area o_kanban_attachment oe_kanban_global_click">
               <div class="o_kanban_image">
@@ -106,29 +115,8 @@
                     <span class="oe_kanban_bottom_left">
                       <field name="create_date" widget="date" />
                     </span>
-                    <div class="oe_kanban_bottom_right oe_onlyoffice_kanban_bottom_right">
+                    <div class="oe_kanban_bottom_right">
                       <field name="create_uid" widget="many2one_avatar_user" />
-                    </div>
-                  </div>
-                  <div class="o_dropdown_kanban dropdown" tabindex="-1">
-                    <a
-                      class="dropdown-toggle o-no-caret btn"
-                      data-bs-toggle="dropdown"
-                      href="#"
-                      role="button"
-                      aria-label="Dropdown menu"
-                      title="Dropdown menu"
-                    >
-                      <span class="fa fa-ellipsis-v" />
-                    </a>
-                    <div class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-                      <a t-if="widget.editable" type="edit" class="dropdown-item">Edit</a>
-                      <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
-                      <a
-                        t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/datas?download=true"
-                        download=""
-                        class="dropdown-item"
-                      >Download</a>
                     </div>
                   </div>
                 </div>
@@ -149,9 +137,16 @@
   <menuitem
     id="onlyoffice_menu"
     name="ONLYOFFICE Templates"
-    web_icon="onlyoffice_odoo_templates,static/description/icon.svg"
+    web_icon="onlyoffice_odoo_templates,static/description/icon.png"
     sequence="30"
     groups="onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user,onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin"
+    action="action_onlyoffice_odoo_templates"
+  />
+
+  <menuitem
+    id="onlyoffice_submenu"
+    name="Templates"
+    parent="onlyoffice_menu"
     action="action_onlyoffice_odoo_templates"
   />
 </odoo>

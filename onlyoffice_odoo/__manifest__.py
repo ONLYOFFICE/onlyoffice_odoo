@@ -6,9 +6,10 @@
     "author": "ONLYOFFICE",
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
-    "version": "3.3.0",
+    "version": "4.3.0",
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},
+    # always loaded
     "data": [
         "views/templates.xml",
         "views/res_config_settings_views.xml",
@@ -25,12 +26,10 @@
     "installable": True,
     "application": True,
     "assets": {
-        "mail.assets_messaging": [
-            "onlyoffice_odoo/static/src/models/*.js",
-        ],
         "web.assets_backend": [
             "onlyoffice_odoo/static/src/actions/*",
             "onlyoffice_odoo/static/src/components/*/*.xml",
+            "onlyoffice_odoo/static/src/models/*.js",
             "onlyoffice_odoo/static/src/views/**/*",
             "onlyoffice_odoo/static/src/css/*",
         ],

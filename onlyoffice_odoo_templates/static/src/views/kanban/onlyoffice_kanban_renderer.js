@@ -5,7 +5,7 @@ import { OnlyofficeKanbanRecord } from "./onlyoffice_kanban_record"
 
 export class OnlyofficeKanbanRenderer extends KanbanRenderer {
   setup() {
-    super.setup()
+    super.setup(...arguments)
   }
 
   /**

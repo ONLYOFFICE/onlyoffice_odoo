@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.3.2
+## 2.3.2
 
 ## Added
 
@@ -10,13 +10,13 @@
 - converting pdf to form when creating/modifying a template
 - new template files
 
-## 1.2.2
+## 2.2.2
 
 ## Changed
 
 - support for the textForm element type from Document Server v9.0
 
-## 1.1.2
+## 2.1.2
 
 ## Added
 
@@ -25,7 +25,7 @@
 - settings menu for demo template installation
 - batch print in list view
 
-## 1.0.2
+## 2.0.2
 
 ## Added
 

@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 16.0+e-20250909\n"
+"Project-Id-Version: Odoo Server 17.0+e-20250918\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 05:15+0000\n"
-"PO-Revision-Date: 2025-09-29 05:15+0000\n"
+"POT-Creation-Date: 2025-11-12 12:53+0000\n"
+"PO-Revision-Date: 2025-11-12 12:53+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -25,23 +25,8 @@ msgid ""
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
-msgid ""
-"<span class=\"o_form_label\">\n"
-"                  Templates gallery\n"
-"                </span>"
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
 msgid "Administrator"
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_record.js:0
-#, python-format
-msgid "Are you sure you want to delete this record?"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
@@ -70,8 +55,8 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
 msgid ""
-"Check templates you want to export to the ONLYOFFICE Templates module and "
-"press Export. You can do this as many times as you need."
+"Check templates you want to export to the ONLYOFFICE Templates module and press Export.\n"
+"          You can do this as many times as you need."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
@@ -118,7 +103,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
 #, python-format
 msgid "Create or Upload"
 msgstr ""
@@ -147,7 +131,6 @@ msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_res_config_settings__editable_form_fields
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
 msgid "Disable form fields after printing PDF form"
 msgstr ""
 
@@ -160,11 +143,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Download"
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
-msgid "Dropdown menu"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
@@ -207,8 +185,8 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
 msgid ""
-"Form fields cannot be filled in manually if they were not automatically filled in\n"
-"                  with data from Odoo"
+"Form fields cannot be filled in manually if they were not automatically "
+"filled in with data from Odoo"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
@@ -254,19 +232,6 @@ msgstr ""
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
 #, python-format
 msgid "Invalid file format."
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_record.js:0
-#, python-format
-msgid "Kanban: no action for type: "
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
-#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates____last_update
-#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates____last_update
-msgid "Last Modified on"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
@@ -495,15 +460,18 @@ msgid "Template creation"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_record.js:0
-#, python-format
-msgid "Template removed"
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "Template uploading"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
-msgid "Template uploading"
+#: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
+msgid "Templates"
+msgstr ""
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
+msgid "Templates gallery"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates

@@ -100,12 +100,21 @@
             </Dropdown>
           </div>
           <div class="col-md-6">
-            <div class="o_searchview h-100" role="search" aria-autocomplete="list">
-              <i class="o_searchview_icon oi oi-search p-2" role="img" aria-label="Search..." title="Search..." />
-              <div class="o_searchview_input_container h-100">
+            <div
+              class="o_searchview form-control d-print-contents d-flex align-items-center py-1"
+              role="search"
+              aria-autocomplete="list"
+            >
+              <i
+                class="o_searchview_icon d-print-none oi oi-search me-2"
+                role="img"
+                aria-label="Search..."
+                title="Search..."
+              />
+              <div class="o_searchview_input_container d-flex flex-grow-1 flex-wrap gap-1">
                 <input
                   type="text"
-                  class="o_searchview_input"
+                  class="o_searchview_input o_input d-print-none flex-grow-1 w-auto border-0"
                   placeholder="Search..."
                   role="searchbox"
                   data-hotkey="Q"

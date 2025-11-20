@@ -8,7 +8,7 @@
 
 import { DocumentsInspector } from "@documents/views/inspector/documents_inspector"
 import { useService } from "@web/core/utils/hooks"
-import { patch } from "web.utils"
+import { patch } from "@web/core/utils/patch"
 
 let formats = []
 const loadFormats = async () => {
@@ -22,9 +22,9 @@ const loadFormats = async () => {
 
 loadFormats()
 
-patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
+patch(DocumentsInspector.prototype, {
   setup() {
-    this._super(...arguments)
+    super.setup(...arguments)
     this.notification = useService("notification")
     this.actionService = useService("action")
     this.onlyofficeEditorUrl = this.onlyofficeEditorUrl.bind(this)
@@ -58,7 +58,6 @@ patch(DocumentsInspector.prototype, "ONLYOFFICE_patch", {
         }
       }
     }
-
     const { same_tab } = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_same_tab"))
     if (same_tab) {
       const action = {

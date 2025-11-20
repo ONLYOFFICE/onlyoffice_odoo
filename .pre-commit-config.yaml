@@ -49,7 +49,7 @@ repos:
       - id: oca-gen-addon-readme
         args:
           - --addons-dir=.
-          - --branch=develop
+          - --branch=17.0
           - --org-name=ONLYOFFICE
           - --repo-name=onlyoffice_odoo
           - --if-source-changed

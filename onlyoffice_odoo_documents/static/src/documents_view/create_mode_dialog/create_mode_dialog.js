@@ -17,7 +17,7 @@ export class CreateModeDialog extends Component {
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 
-    this.dialogTitle = this.env._t("Create with ONLYOFFICE")
+    this.dialogTitle = _t("Create with ONLYOFFICE")
     this.state = useState({
       isChosen: false,
       selectedMode: null,

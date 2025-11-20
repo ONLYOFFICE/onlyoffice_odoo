@@ -1,51 +1,12 @@
 /** @odoo-module **/
-import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { useService } from "@web/core/utils/hooks"
 import { CANCEL_GLOBAL_CLICK, KanbanRecord } from "@web/views/kanban/kanban_record"
 
 export class OnlyofficeKanbanRecord extends KanbanRecord {
   setup() {
-    super.setup()
+    super.setup(...arguments)
     this.orm = useService("orm")
     this.actionService = useService("action")
-  }
-
-  /**
-   * @override
-   */
-  triggerAction(params) {
-    const env = this.env
-    const { group, list, openRecord, record } = this.props
-    const { type } = params
-    switch (type) {
-      case "edit": {
-        return openRecord(record, "edit")
-      }
-      case "delete": {
-        const listOrGroup = group || list
-        if (listOrGroup.deleteRecords) {
-          this.dialog.add(ConfirmationDialog, {
-            body: env._t("Are you sure you want to delete this record?"),
-            cancel: () => {
-              return
-            },
-            confirm: async () => {
-              await listOrGroup.deleteRecords([record])
-              this.props.record.model.load()
-              this.props.record.model.notify()
-              return this.notification.add(env._t("Template removed"), {
-                sticky: false,
-                type: "info",
-              })
-            },
-          })
-        }
-        return
-      }
-      default: {
-        return this.notification.add(env._t("Kanban: no action for type: ") + type, { type: "danger" })
-      }
-    }
   }
 
   /**

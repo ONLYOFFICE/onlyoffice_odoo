@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 16.0+e-20250909\n"
+"Project-Id-Version: Odoo Server 17.0+e-20250918\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-29 04:21+0000\n"
-"PO-Revision-Date: 2025-09-29 04:21+0000\n"
+"POT-Creation-Date: 2025-11-12 12:48+0000\n"
+"PO-Revision-Date: 2025-11-12 12:48+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -28,46 +28,23 @@ msgstr ""
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
-"<span class=\"o_form_label\">\n"
-"                    About\n"
+"<span searchabletext=\"Connect to demo ONLYOFFICE Docs server\">\n"
+"                    Connect to demo ONLYOFFICE Docs server\n"
 "                  </span>"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
-"<span class=\"o_form_label\">\n"
-"                    JWT Header\n"
-"                  </span>"
+"<span searchabletext=\"This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period.\">\n"
+"                      This is a public test server, please do not use it for private sensitive data.\n"
+"                      The server will be available during a 30-day period.\n"
+"                    </span>"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid ""
-"<span class=\"o_form_label\">\n"
-"                    ONLYOFFICE Docs address for internal requests from the server\n"
-"                  </span>"
-msgstr ""
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid ""
-"<span class=\"o_form_label\">\n"
-"                    ONLYOFFICE Docs secret key\n"
-"                  </span>"
-msgstr ""
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid ""
-"<span class=\"o_form_label\">\n"
-"                    Server address for internal requests from ONLYOFFICE Docs\n"
-"                  </span>"
-msgstr ""
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<span class=\"o_form_label\">ONLYOFFICE Docs address</span>"
+msgid "About"
 msgstr ""
 
 #. module: onlyoffice_odoo
@@ -85,18 +62,12 @@ msgid "Categories"
 msgstr ""
 
 #. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Common settings"
-msgstr ""
-
-#. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
 msgid "Config Settings"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_demo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Connect to demo ONLYOFFICE Docs server"
 msgstr ""
 
@@ -211,15 +182,15 @@ msgid "Internal JWT Secret"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "JWT Header"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Language"
-msgstr ""
-
-#. module: onlyoffice_odoo
-#: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo____last_update
-msgid "Last Modified on"
 msgstr ""
 
 #. module: onlyoffice_odoo
@@ -253,8 +224,23 @@ msgid "ONLYOFFICE"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE Docs address"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE Docs address for internal requests from the server"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "ONLYOFFICE Docs secret key"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/models/attachment_onlyoffice.js:0
+#: code:addons/onlyoffice_odoo/static/src/models/attachment_card_onlyoffice.js:0
 #, python-format
 msgid "ONLYOFFICE Docs server"
 msgstr ""
@@ -289,11 +275,6 @@ msgid "Odoo URL"
 msgstr ""
 
 #. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Only use when accessing Document Server with a self-signed certificate"
-msgstr ""
-
-#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Open file in the same tab"
@@ -302,9 +283,13 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/components/attachment_card_onlyoffice/attachment_card_onlyoffice.xml:0
-#: code:addons/onlyoffice_odoo/static/src/components/attachment_card_onlyoffice/attachment_card_onlyoffice.xml:0
 #, python-format
 msgid "Open in ONLYOFFICE"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Other"
 msgstr ""
 
 #. module: onlyoffice_odoo
@@ -331,6 +316,11 @@ msgid "Select document"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
+msgid "Server address for internal requests from ONLYOFFICE Docs"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #: model:ir.actions.act_window,name:onlyoffice_odoo.action_onlyoffice_config_settings
 msgid "Settings"
 msgstr ""
@@ -344,7 +334,7 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/models/attachment_onlyoffice.js:0
+#: code:addons/onlyoffice_odoo/static/src/models/attachment_card_onlyoffice.js:0
 #, python-format
 msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
@@ -356,13 +346,6 @@ msgstr ""
 msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
-msgstr ""
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid ""
-"This is a public test server, please do not use it for private sensitive data.\n"
-"                    The server will be available during a 30-day period."
 msgstr ""
 
 #. module: onlyoffice_odoo

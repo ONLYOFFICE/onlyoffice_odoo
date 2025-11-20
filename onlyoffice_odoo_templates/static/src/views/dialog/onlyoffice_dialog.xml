@@ -56,11 +56,14 @@
                       <div class="oe_kanban_bottom_right">
                         <div
                           name="create_uid"
-                          class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user o_field_many2one_avatar"
+                          class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user o_field_many2one_avatar_kanban o_field_many2one_avatar"
                         >
-                          <div class="d-flex" t-att-data-tooltip="template.create_uid[1]">
-                            <span class="o_m2o_avatar">
-                              <img t-att-src="'/web/image/res.users/' + template.create_uid[0] + '/avatar_128'" />
+                          <div class="d-flex align-items-center gap-1" t-att-data-tooltip="template.create_uid[1]">
+                            <span class="o_avatar o_m2o_avatar d-flex">
+                              <img
+                                class="rounded"
+                                t-att-src="'/web/image/res.users/' + template.create_uid[0] + '/avatar_128'"
+                              />
                             </span>
                           </div>
                         </div>

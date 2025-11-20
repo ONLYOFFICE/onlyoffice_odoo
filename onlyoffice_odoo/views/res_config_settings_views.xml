@@ -9,168 +9,96 @@
     <field name="priority" eval="10" />
     <field name="inherit_id" ref="base.res_config_settings_view_form" />
     <field name="arch" type="xml">
-      <xpath expr="//div[hasclass('settings')]" position="inside">
-        <div class="app_settings_block" string="ONLYOFFICE" data-string="ONLYOFFICE" data-key="onlyoffice_odoo">
-          <div>
-            <h2>Welcome to ONLYOFFICE!</h2>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
-                    About
-                  </span>
-                  <div class="text-muted" style="text-wrap: nowrap;">
-                    This app enables creating, editing, and collaborating on fillable forms, office files, and attached documents in Odoo using ONLYOFFICE Docs.
-                  </div>
-                  <div>
-                    <a class="oe_link" href="https://helpcenter.onlyoffice.com/integration/odoo.aspx" target="_blank">
-                      <i class="fa fa-arrow-right" /> Learn more </a>
-                    <br />
-                    <a
-                      class="oe_link"
-                      href="https://feedback.onlyoffice.com/forums/966080-your-voice-matters?category_id=519288"
-                      target="_blank"
-                    >
-                      <i class="fa fa-arrow-right" /> Suggest a feature </a>
-                  </div>
-                </div>
+      <xpath expr="//form" position="inside">
+        <app data-string="ONLYOFFICE" string="ONLYOFFICE" name="onlyoffice_odoo" groups="base.group_system">
+          <block title="About">
+            <setting
+              string="Welcome to ONLYOFFICE!"
+              help="This app enables creating, editing, and collaborating on fillable forms, office files, and attached documents in Odoo using ONLYOFFICE Docs."
+            >
+              <a
+                href="https://api.onlyoffice.com/docs/docs-api/get-started/ready-to-use-connectors/odoo-integration/"
+                target="_blank"
+              >
+                <i class="fa fa-arrow-right" /> Learn more </a>
+              <br />
+              <a
+                href="https://feedback.onlyoffice.com/forums/966080-your-voice-matters?category_id=519288"
+                target="_blank"
+              >
+                <i class="fa fa-arrow-right" /> Suggest a feature </a>
+            </setting>
+          </block>
+          <block title="General Settings" name="onlyoffice_odoo">
+            <setting string="ONLYOFFICE Docs address">
+              <field name="doc_server_public_url" />
+            </setting>
+            <br />
+            <setting string="Disable certificate verification">
+              <field name="doc_server_disable_certificate" />
+            </setting>
+            <br />
+            <setting string="ONLYOFFICE Docs secret key">
+              <field name="doc_server_jwt_secret" password="True" />
+            </setting>
+            <br />
+            <setting string="JWT Header">
+              <field name="doc_server_jwt_header" />
+            </setting>
+            <br />
+            <setting string="ONLYOFFICE Docs address for internal requests from the server">
+              <field name="doc_server_odoo_url" />
+            </setting>
+            <br />
+            <setting string="Server address for internal requests from ONLYOFFICE Docs">
+              <field name="doc_server_inner_url" />
+            </setting>
+            <br />
+            <div class="o_setting_box col-12 col-lg-6 o_searchable_setting">
+              <div class="o_setting_left_pane">
+                <field name="doc_server_demo" />
               </div>
-            </div>
-          </div>
-          <div>
-            <h2>General Settings</h2>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">ONLYOFFICE Docs address</span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_public_url" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane">
-                  <field name="doc_server_disable_certificate" />
-                </div>
-                <div class="o_setting_right_pane">
-                  <label class="o_form_label" for="doc_server_disable_certificate">
-                    Disable certificate verification
-                  </label>
-                  <div class="text-muted">
-                    Only use when accessing Document Server with a self-signed certificate
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
-                    ONLYOFFICE Docs secret key
-                  </span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_jwt_secret" password="True" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
-                    JWT Header
-                  </span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_jwt_header" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
-                    ONLYOFFICE Docs address for internal requests from the server
-                  </span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_odoo_url" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane">
-                  <span class="o_form_label">
-                    Server address for internal requests from ONLYOFFICE Docs
-                  </span>
-                  <div class="text-muted content-group mt16">
-                    <field name="doc_server_inner_url" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane">
-                  <field name="doc_server_demo" />
-                </div>
-                <div class="o_setting_right_pane">
-                  <label class="o_form_label" for="doc_server_demo">
+              <div class="o_setting_right_pane">
+                <label class="o_form_label" for="doc_server_demo">
+                  <span searchabletext="Connect to demo ONLYOFFICE Docs server">
                     Connect to demo ONLYOFFICE Docs server
-                  </label>
-                  <a
-                    title="ONLYOFFICE Templates requires a properly licensed Document Server connected with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper license."
-                    class="o_doc_link"
-                  />
+                  </span>
+                </label>
+                <a
+                  title="ONLYOFFICE Templates requires a properly licensed Document Server connected with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper license."
+                  class="o_doc_link"
+                />
+                <div class="mt16">
                   <div class="text-muted">
-                    This is a public test server, please do not use it for private sensitive data.
-                    The server will be available during a 30-day period.
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane" />
-                <div class="o_setting_right_pane onlyoffice_link_pane">
-                  <div class="onlyoffice_link_container">
-                    <a
-                      class="onlyoffice_link_button"
-                      href="https://www.onlyoffice.com/docs-registration.aspx"
-                      target="_blank"
+                    <span
+                      searchabletext="This is a public test server, please do not use it for private sensitive data. The server will be available during a 30-day period."
                     >
-                      GET NOW
-                    </a>
+                      This is a public test server, please do not use it for private sensitive data.
+                      The server will be available during a 30-day period.
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="o_onlyoffice_settings_common">
-            <h2>Common settings</h2>
-            <div class="row mt16 o_settings_container">
-              <div class="col-12 col-lg-6 o_setting_box">
-                <div class="o_setting_left_pane">
-                  <field name="same_tab" />
-                </div>
-                <div class="o_setting_right_pane">
-                  <label class="o_form_label" for="same_tab">
-                    Open file in the same tab
-                  </label>
-                </div>
+            <br />
+            <setting>
+              <div class="onlyoffice_link_container">
+                <a
+                  class="onlyoffice_link_button"
+                  href="https://www.onlyoffice.com/docs-registration.aspx"
+                  target="_blank"
+                >
+                  GET NOW
+                </a>
               </div>
-            </div>
-          </div>
-        </div>
+            </setting>
+          </block>
+          <block title="Other" name="onlyoffice_odoo" id="o_onlyoffice_settings_common">
+            <setting string="Open file in the same tab">
+              <field name="same_tab" />
+            </setting>
+          </block>
+        </app>
       </xpath>
     </field>
   </record>
