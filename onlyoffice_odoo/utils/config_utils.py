@@ -58,6 +58,10 @@ def get_same_tab(env):
     return env["ir.config_parameter"].sudo().get_param(config_constants.SAME_TAB)
 
 
+def get_certificate_verify_disabled(env):
+    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DISABLE_CERTIFICATE)
+
+
 def set_doc_server_public_url(env, url):
     if not url:
         url = "http://documentserver/"
@@ -107,6 +111,10 @@ def set_demo_date(env):
 
 def set_same_tab(env, param):
     env["ir.config_parameter"].sudo().set_param(config_constants.SAME_TAB, param)
+
+
+def set_certificate_verify_disabled(env, param):
+    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DISABLE_CERTIFICATE, param)
 
 
 def fix_url(url):

@@ -1,5 +1,17 @@
 # Change Log
 
+## 4.3.0
+
+## Added
+
+- disable certificate verification option
+- opening a preview of documents in the ONLYOFFICE editor
+- About panel and update the texts in the settings
+- open to view vsdx, vssx, vstx, vsdm, vssm, vstm diagram formats
+- open to view odg, md
+- edit xlsb
+- Catalan, Danish, Hungarian, Indonesian, Romanian empty file templates
+
 ## 4.2.0
 
 ## Changed

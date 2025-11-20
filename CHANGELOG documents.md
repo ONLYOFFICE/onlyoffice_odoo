@@ -1,5 +1,18 @@
 # Change Log
 
+## 4.2.1
+
+## Added
+
+- opening documents in the ONLYOFFICE editor via a share link
+- form gallery
+- saves the history of document changes
+- advanced sharing permissions
+
+## Changed
+
+- updated format icons
+
 ## 4.1.1
 
 ## Added

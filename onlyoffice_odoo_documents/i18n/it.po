@@ -1,38 +1,84 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* onlyoffice_odoo
+# 	* onlyoffice_odoo_documents
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 16.0-20221116\n"
+"Project-Id-Version: Odoo Server 17.0+e-20250918\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-03 08:20+0000\n"
-"PO-Revision-Date: 2024-07-03 17:27+0300\n"
+"POT-Creation-Date: 2025-11-12 12:49+0000\n"
+"PO-Revision-Date: 2025-11-12 12:49+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Language: it_IT\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4.4\n"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__role
+msgid "Access Level"
+msgstr "Livello di accesso"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Add people"
+msgstr "Aggiungi persone"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/onlyoffice_odoo_documents_controller_mixin.xml:0
+#, python-format
+msgid "Advanced Share"
+msgstr "Condivisione avanzata"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model,name:onlyoffice_odoo_documents.model_ir_attachment
+msgid "Attachment"
+msgstr "Allegato"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
+#, python-format
+msgid "Blank"
+msgstr "Vuoto"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
 #, python-format
 msgid "Cancel"
 msgstr "Annulla"
 
 #. module: onlyoffice_odoo_documents
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__commenter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__commenter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__commenter
 #, python-format
-msgid "Create"
-msgstr "Creare"
+msgid "Commenter"
+msgstr "Commentatore"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Create"
+msgstr "Crea"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.js:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/onlyoffice_odoo_documents_controller_mixin.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
 #, python-format
@@ -43,8 +89,73 @@ msgstr "Crea con ONLYOFFICE"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
 #, python-format
+msgid "Create&Set Permissions"
+msgstr "Crea e imposta permessi"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__create_uid
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__create_uid
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__create_uid
+msgid "Created by"
+msgstr "Creato da"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__create_date
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__create_date
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__create_date
+msgid "Created on"
+msgstr "Creato il"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__custom_filter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__custom_filter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__custom_filter
+#, python-format
+msgid "Custom Filter"
+msgstr "Filtro personalizzato"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__display_name
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__display_name
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__display_name
+msgid "Display Name"
+msgstr "Visualizza nome"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#: model:ir.model,name:onlyoffice_odoo_documents.model_documents_document
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__document_id
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__document_id
+#, python-format
 msgid "Document"
 msgstr "Documento"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Done"
+msgstr "Fatto"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__editor
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__editor
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__editor
+#, python-format
+msgid "Editor"
+msgstr "Editor"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -52,6 +163,83 @@ msgstr "Documento"
 #, python-format
 msgid "Failed to create document"
 msgstr "Non è stato possibile creare un documento"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__form_filling
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__form_filling
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__form_filling
+#, python-format
+msgid "Form Filling"
+msgstr "Compilazione del modulo"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
+#, python-format
+msgid "From Template"
+msgstr "Da modello"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "General access"
+msgstr "Accesso generale"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__id
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__id
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__id
+msgid "ID"
+msgstr "ID"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#, python-format
+msgid ""
+"Incorrect file type for advanced sharing. Please select a different "
+"document."
+msgstr "Tipo di file non corretto per la condivisione avanzata. Seleziona un documento diverso."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Internal Users"
+msgstr "Utenti interni"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__internal_users
+msgid "Internal Users Access"
+msgstr "Accesso utenti interni"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_uid
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__write_uid
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__write_uid
+msgid "Last Updated by"
+msgstr "Ultimo aggiornamento da"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_date
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__write_date
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__write_date
+msgid "Last Updated on"
+msgstr "Ultimo aggiornamento il"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__link_access
+#, python-format
+msgid "Link Access"
+msgstr "Accesso utenti interni"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -62,10 +250,33 @@ msgstr "Nuovo documento"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.js:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
 #, python-format
 msgid "New document created in Documents"
 msgstr "Nuovo documento è stato creato in Documenti"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#, python-format
+msgid "No document selected for sharing."
+msgstr "Nessun documento selezionato per la condivisione."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__none
+#, python-format
+msgid "None"
+msgstr "Nessuno"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -75,25 +286,42 @@ msgid "ONLYOFFICE Docs server"
 msgstr "Server ONLYOFFICE Docs"
 
 #. module: onlyoffice_odoo_documents
+#: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents
+msgid "ONLYOFFICE Documents"
+msgstr "ONLYOFFICE Documents"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents_access
+msgid "ONLYOFFICE Documents Access"
+msgstr "ONLYOFFICE Documents Access"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents_access_user
+msgid "ONLYOFFICE Documents Access Users"
+msgstr "ONLYOFFICE Documents Access Users"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#, python-format
+msgid "Only the owner or administrator can share documents."
+msgstr "Solo il proprietario o l’amministratore può condividere documenti."
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
+msgid "Oo Attachment Version"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_documents.share_files_page
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_documents.share_workspace_page
 #, python-format
 msgid "Open in ONLYOFFICE"
 msgstr "Aprire in ONLYOFFICE"
-
-#. module: onlyoffice_odoo_documents
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
-#, python-format
-msgid "Presentation"
-msgstr "Presentazione"
-
-#. module: onlyoffice_odoo_documents
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
-#, python-format
-msgid "Spreadsheet"
-msgstr "Foglio di calcolo"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -104,14 +332,82 @@ msgstr "Modulo PDF"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "People with access"
+msgstr "Persone con accesso"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#, python-format
+msgid "Please select only one document for advanced sharing."
+msgstr "Seleziona un solo documento per la condivisione avanzata."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Presentation"
+msgstr "Presentazione"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Remove access"
+msgstr "Rimuovi accesso"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Reset Changes"
+msgstr "Ripristina modifiche"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__reviewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__reviewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__reviewer
+#, python-format
+msgid "Reviewer"
+msgstr "Recensore"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Save"
+msgstr "Salva"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "Shared Document"
+msgstr "Documento condiviso"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#, python-format
+msgid "Spreadsheet"
+msgstr "Foglio di calcolo"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 #, python-format
 msgid ""
-"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE "
-"Docs server"
-msgstr ""
-"Il periodo di prova di 30 giorni è terminato, non puoi più connetterti alla "
-"demo ONLYOFFICE Docs Server"
+"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
+" Docs server"
+msgstr "Il periodo di prova di 30 giorni è terminato, non puoi più connetterti alla demo ONLYOFFICE Docs Server"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -119,3 +415,36 @@ msgstr ""
 #, python-format
 msgid "Title"
 msgstr "Titolo"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__user_id
+msgid "User"
+msgstr "Utente"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
+#, python-format
+msgid "User Access"
+msgstr "Accesso utente"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "User has no read access rights to open this document"
+msgstr ""
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__viewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__viewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access_user__role__viewer
+#, python-format
+msgid "Viewer"
+msgstr "Visualizzatore"

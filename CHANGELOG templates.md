@@ -1,5 +1,15 @@
 # Change Log
 
+## 2.3.2
+
+## Added
+
+- help section
+- setting to disable form fields editing
+- form gallery
+- converting pdf to form when creating/modifying a template
+- new template files
+
 ## 2.2.2
 
 ## Changed
