@@ -36,9 +36,7 @@
         t-att-disabled="!canUploadInFolder(folder)"
         t-on-click.stop.prevent="onClickCreateOnlyoffice"
       >
-        <t t-call="onlyoffice_odoo_documents.OnlyofficeIcon" />
-        Create with ONLYOFFICE
-      </button>
+        <t t-call="onlyoffice_odoo_documents.OnlyofficeIcon" /> Create with ONLYOFFICE </button>
     </xpath>
   </t>
 </templates>

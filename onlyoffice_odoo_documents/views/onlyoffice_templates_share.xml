@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+  <template id="onlyoffice_odoo_documents.share_file" inherit_id="documents.share_file">
+    <xpath expr="//div[hasclass('mt16') and hasclass('mb8')]/a" position="inside">
+      <a
+        t-if="onlyoffice_supported"
+        class="btn btn-secondary rounded-pill mt-2"
+        t-att-href="'/onlyoffice/documents/share/' + document.access_token"
+        target="_blank"
+      >
+        <img
+        class="mb-1"
+        src="/onlyoffice_odoo_documents/static/svg/edit_black.svg"
+        role="img"
+      /> Open in ONLYOFFICE </a>
+    </xpath>
+  </template>
+
+  <template id="onlyoffice_odoo_documents.public_folder_page" inherit_id="documents.public_folder_page">
+    <!-- For binary files -->
+    <xpath expr="//article[@id='documents-binary']//div[hasclass('o_card_right')]" position="before">
+      <t t-set="current_doc_id" t-value="str(document.id)" />
+      <t t-set="is_supported" t-value="False" />
+
+      <t t-foreach="onlyoffice_supported" t-as="supported_doc">
+        <t t-if="str(supported_doc['document'].id) == current_doc_id and
+    supported_doc['onlyoffice_supported']">
+          <t t-set="is_supported" t-value="True" />
+        </t>
+      </t>
+
+      <t t-if="is_supported">
+        <div class="o_card_right d-flex flex-column flex-nowrap justify-content-end text-end me-1">
+          <a
+            t-att-href="'/onlyoffice/documents/share/' + document.access_token"
+            title="Open in ONLYOFFICE"
+            target="_blank"
+          >
+            <img class="mb-1" src="/onlyoffice_odoo_documents/static/svg/edit_black.svg" role="img" />
+          </a>
+        </div>
+      </t>
+    </xpath>
+  </template>
+</odoo>

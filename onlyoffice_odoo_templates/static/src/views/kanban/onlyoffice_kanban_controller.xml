@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+  <t t-name="onlyoffice_odoo_templates.KanbanView.Buttons" t-inherit="web.KanbanView.Buttons" t-inherit-mode="primary">
+    <xpath expr="//div[hasclass('o_cp_buttons')]" position="inside">
+      <button class="btn btn-secondary ms-1" t-on-click="() => this.openFormGallery()" style="text-wrap: nowrap;">
+        Open Document templates
+      </button>
+      <button class="btn btn-secondary ms-1" t-on-click="() => this.help()"> Help </button>
+    </xpath>
+  </t>
+</templates>

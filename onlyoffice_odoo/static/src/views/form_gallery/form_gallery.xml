@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+<t t-name="onlyoffice_odoo.FormGallery" owl="1">
+    <Dialog title="title" size="'xl'" footer="true">
+      <div class="container-fluid">
+        <div class="row mb-3" t-if="!state.loading and !state.error and state.total > state.limit">
+          <div class="col text-center o-pager">
+            <Pager offset="state.offset" limit="state.limit" total="state.total" onUpdate.bind="onPageChange" />
+          </div>
+        </div>
+        <div class="row mb-3 justify-content-end" t-if="!state.loading and !state.error">
+          <div t-att-class="props.showType ? 'col-md-2' : 'col-md-3'">
+            <Dropdown>
+              <button class="btn btn-light">
+                <i class="me-1 fa fa-filter me-1" />
+                <span class="o_dropdown_title">Categories</span>
+              </button>
+              <t t-set-slot="content">
+                <DropdownItem onSelected="() => this.onAllSubcategorySelect()">
+                    View all templates
+                </DropdownItem>
+                <div role="separator" class="dropdown-divider" />
+                <t t-foreach="state.categories" t-as="category" t-key="category.id">
+                  <Dropdown t-props="dropdownProps">
+                    <button class="btn btn-light">
+                      <span class="o_dropdown_title" t-out="category.name" />
+                    </button>
+                    <t t-set-slot="content">
+                      <t t-foreach="state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
+                        <DropdownItem onSelected="() => this.onSubcategorySelect(subcat)">
+                          <span t-esc="subcat.name" />
+                        </DropdownItem>
+                      </t>
+                    </t>
+                  </Dropdown>
+                </t>
+              </t>
+            </Dropdown>
+          </div>
+          <t t-if="props.showType">
+            <div class="col-md-2">
+              <Dropdown>
+                <button class="btn btn-light">
+                  <i class="me-1 fa fa-filter me-1" />
+                  <span class="o_dropdown_title">Type</span>
+                </button>
+                <t t-set-slot="content">
+                  <DropdownItem onSelected="() => this.onChangeType('pdf')">
+                    Form
+                  </DropdownItem>
+                  <DropdownItem onSelected="() => this.onChangeType('docx')">
+                    Document
+                  </DropdownItem>
+                  <DropdownItem onSelected="() => this.onChangeType('xlsx')">
+                    Spreadsheet
+                  </DropdownItem>
+                  <DropdownItem onSelected="() => this.onChangeType('pptx')">
+                    Presentation
+                  </DropdownItem>
+                </t>
+              </Dropdown>
+            </div>
+          </t>
+          <div t-att-class="props.showType ? 'col-md-2' : 'col-md-3'">
+            <Dropdown>
+              <button class="btn btn-light">
+                <i class="me-1 fa fa-language me-1" />
+                <span class="o_dropdown_title">Language</span>
+              </button>
+              <t t-set-slot="content">
+                <t t-foreach="state.locales" t-as="locale" t-key="locale.code">
+                  <DropdownItem onSelected="() => this.onLocaleChange(locale)">
+                    <t t-esc="locale.name" />
+                  </DropdownItem>
+                </t>
+              </t>
+            </Dropdown>
+          </div>
+          <div class="col-md-6">
+            <div
+              class="o_searchview form-control d-print-contents d-flex align-items-center py-1"
+              role="search"
+              aria-autocomplete="list"
+            >
+              <i
+                class="o_searchview_icon d-print-none oi oi-search me-2"
+                role="img"
+                aria-label="Search..."
+                title="Search..."
+              />
+              <div class="o_searchview_input_container d-flex flex-grow-1 flex-wrap gap-1">
+                <input
+                  type="text"
+                  class="o_searchview_input o_input d-print-none flex-grow-1 w-auto border-0"
+                  placeholder="Search..."
+                  role="searchbox"
+                  data-hotkey="Q"
+                  t-att-value="state.search"
+                  t-on-input="(ev) => this.onSearch(ev.target.value)"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <t t-if="state.loading">
+          <div class="text-center py-5">
+            <i class="fa fa-refresh fa-spin fa-3x" />
+            <p>Loading forms...</p>
+          </div>
+        </t>
+
+        <t t-if="state.error">
+          <div class="alert alert-danger" t-esc="state.error" />
+        </t>
+
+        <div t-if="!state.loading and !state.error" class="o_onlyoffice_kanban_renderer d-flex flex-wrap">
+          <t t-foreach="state.forms" t-as="form" t-key="form.id">
+            <div class="o_onlyoffice_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0 m-0">
+              <div
+                class="position-relative d-flex flex-column h-100"
+                t-attf-class="{{ state.form and form.id == state.form.id ? 'o_onlyoffice_record_selected' : '' }}"
+              >
+                <i
+                  class="o_onlyoffice_record_selector fa fa-circle-thin"
+                  title="Select document"
+                  t-on-click="() => this.selectForm(form)"
+                />
+                <div class="o_onlyoffice_kanban_previewer">
+                  <div>
+                    <img
+                      class="o_onlyoffice_kanban_image"
+                      t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
+                      t-att-alt="form.attributes.name_form"
+                      t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form, form.attributes.file_oform.data[0].attributes.name )"
+                    />
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <div class="o_onlyoffice_kanban_details_wrapper w-100 justify-content-between d-flex m-2">
+                    <span t-esc="form.attributes.name_form" />
+                    <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </t>
+          <t t-if="state.ghost">
+            <div
+              t-foreach="state.ghost"
+              t-as="i"
+              t-key="i_index"
+              class="o_kanban_ghost o_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0 m-0"
+              style="width: 200px;"
+            />
+          </t>
+        </div>
+
+        <t t-if="!state.loading and !state.error and state.forms.length === 0">
+          <div class="text-center py-5">
+            <i class="fa fa-file-text-o fa-4x text-muted" />
+            <h4 class="mt-3">No forms found</h4>
+            <p class="text-muted">Try changing your search or filters</p>
+          </div>
+        </t>
+      </div>
+
+      <t t-set-slot="footer">
+        <button class="btn btn-primary" t-on-click="download" t-att-disabled="!state.form">Create</button>
+        <button class="btn btn-secondary" t-on-click="props.close">Cancel</button>
+      </t>
+    </Dialog>
+  </t>
+</templates>

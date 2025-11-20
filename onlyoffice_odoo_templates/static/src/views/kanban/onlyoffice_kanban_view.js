@@ -1,11 +1,14 @@
 /** @odoo-module */
 import { registry } from "@web/core/registry"
 import { kanbanView } from "@web/views/kanban/kanban_view"
+import { OnlyofficeKanbanController } from "./onlyoffice_kanban_controller"
 import { OnlyofficeKanbanRenderer } from "./onlyoffice_kanban_renderer"
 
 export const onlyofficeKanbanView = {
   ...kanbanView,
+  Controller: OnlyofficeKanbanController,
   Renderer: OnlyofficeKanbanRenderer,
+  buttonTemplate: "onlyoffice_odoo_templates.KanbanView.Buttons",
 }
 
 registry.category("views").add("onlyoffice_kanban", onlyofficeKanbanView)

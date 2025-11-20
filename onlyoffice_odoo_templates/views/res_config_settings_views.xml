@@ -16,7 +16,8 @@
     <field name="arch" type="xml">
       <form>
         <p>
-          Check templates you want to export to the ONLYOFFICE Templates module and press Export. You can do this as many times as you need.
+          Check templates you want to export to the ONLYOFFICE Templates module and press Export.
+          You can do this as many times as you need.
         </p>
         <field name="selected_templates" widget="onlyoffice_template_tree" />
         <footer>
@@ -33,7 +34,7 @@
     <field name="priority" eval="10" />
     <field name="inherit_id" ref="base.res_config_settings_view_form" />
     <field name="arch" type="xml">
-      <xpath expr="//block[@id='o_onlyoffice_settings_security']" position="after">
+      <xpath expr="//block[@id='o_onlyoffice_settings_common']" position="after">
         <block title="ONLYOFFICE Templates" name="onlyoffice_odoo_templates">
           <setting string="Templates gallery">
             <div class="text-muted">
@@ -46,6 +47,12 @@
               class="btn-link"
               icon="fa-arrow-right"
             />
+          </setting>
+          <setting
+            id="editable_form_fields_setting"
+            help="Form fields cannot be filled in manually if they were not automatically filled in with data from Odoo"
+          >
+            <field name="editable_form_fields" />
           </setting>
         </block>
       </xpath>
