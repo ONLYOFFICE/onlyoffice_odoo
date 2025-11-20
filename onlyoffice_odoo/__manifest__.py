@@ -6,7 +6,7 @@
     "author": "ONLYOFFICE",
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
-    "version": "3.2.0",
+    "version": "3.3.0",
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},
     "data": [
@@ -31,6 +31,8 @@
         "web.assets_backend": [
             "onlyoffice_odoo/static/src/actions/*",
             "onlyoffice_odoo/static/src/components/*/*.xml",
+            "onlyoffice_odoo/static/src/views/**/*",
+            "onlyoffice_odoo/static/src/css/*",
         ],
     },
 }

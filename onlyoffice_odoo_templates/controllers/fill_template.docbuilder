@@ -33,7 +33,7 @@ for (var i = 0; i < oHeaderElementsCount; i++) {
   }
 }
 for (var i = 0; i < oFooterElementsCount; i++) {
-  var oElement = oHeader.GetElement(i)
+  var oElement = oFooter.GetElement(i)
   var oElementClassType = oElement.GetClassType()
   if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
     continue
@@ -159,7 +159,7 @@ function fillNumbering(oParagraph) {
     var oElement = oParagraph.GetElement(i)
     var oElementClassType = oElement.GetClassType()
 
-    if (oElementClassType === "form" || oElementClassType === "textForm") {
+    if (oElementClassType === "form" || oElementClassType === "textForm" || oElementClassType === "pictureForm") {
       var oForm = oElement
       var oFormKey = oForm.GetFormKey()
 
@@ -184,7 +184,7 @@ function fillNumbering(oParagraph) {
         var oElement = oNewParagraph.GetElement(element)
         var oElementClassType = oElement.GetClassType()
 
-        if (oElementClassType === "form" || oElementClassType === "textForm") {
+        if (oElementClassType === "form" || oElementClassType === "textForm" || oElementClassType === "pictureForm") {
           var oForm = oElement
           var oFormKey = oForm.GetFormKey()
 
@@ -227,7 +227,11 @@ function fillTable(oTable) {
           for (var paragraphElement = 0; paragraphElement < oParagraphElementsCount; paragraphElement++) {
             var oParagraphElement = oCellElement.GetElement(paragraphElement)
 
-            if (oParagraphElement.GetClassType() !== "form" && oParagraphElement.GetClassType() !== "textForm") {
+            if (
+              oParagraphElement.GetClassType() !== "form" &&
+              oParagraphElement.GetClassType() !== "textForm" &&
+              oParagraphElement.GetClassType() !== "pictureForm"
+            ) {
               fillElementByType(oParagraphElement)
             } else {
               // Fill the first element and count the number of required rows
@@ -270,7 +274,8 @@ function fillTable(oTable) {
                 var oNewParagraphElement = oNewCellElement.GetElement(paragraphElement)
                 if (
                   oNewParagraphElement.GetClassType() === "form" ||
-                  oNewParagraphElement.GetClassType() === "textForm"
+                  oNewParagraphElement.GetClassType() === "textForm" ||
+                  oNewParagraphElement.GetClassType() === "pictureForm"
                 ) {
                   var oForm = oNewParagraphElement
                   var oFormKey = oForm.GetFormKey()

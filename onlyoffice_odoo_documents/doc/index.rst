@@ -30,5 +30,5 @@ If you have any questions or suggestions regarding the ONLYOFFICE app for Odoo, 
 
 .. _self-hosted version: https://www.onlyoffice.com/download-docs.aspx
 .. _ONLYOFFICE Docs: https://www.onlyoffice.com/docs-registration.aspx
-.. _config file: https://api.onlyoffice.com/editors/signature/
+.. _config file: https://api.onlyoffice.com/docs/docs-api/additional-api/signature/
 .. _main ONLYOFFICE app for Odoo: https://apps.odoo.com/apps/modules/16.0/onlyoffice_odoo/

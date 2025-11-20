@@ -6,10 +6,10 @@
     "author": "ONLYOFFICE",
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
-    "version": "3.1.1",
+    "version": "3.2.1",
     "depends": ["onlyoffice_odoo", "documents"],
     # always loaded
-    "data": [],
+    "data": ["security/ir.model.access.csv"],
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
     "images": [
@@ -28,6 +28,7 @@
             "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
+            "onlyoffice_odoo_documents/static/src/css/*",
         ],
     },
 }

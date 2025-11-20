@@ -48,7 +48,17 @@
       </div>
       <script type="text/javascript" t-att-src="docApiJS" />
       <script type="text/javascript">
+        function getCookie(name) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) {
+            return parts.pop().split(";").shift();
+          }
+          return null;
+        }
+        const color_scheme = getCookie('color_scheme');
         var config = JSON.parse('<t t-out="editorConfig" />');
+        config.editorConfig.customization.uiTheme = color_scheme ? `default-${color_scheme}` : "default-light";
         if (window?.opener?.location?.href) {
           if (window.opener.location.origin === window.origin) {
             config.editorConfig.customization.goback = {

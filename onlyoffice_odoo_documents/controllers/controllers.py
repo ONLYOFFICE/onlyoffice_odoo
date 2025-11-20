@@ -5,6 +5,7 @@
 import json
 import logging
 
+import requests
 from werkzeug.exceptions import Forbidden
 
 from odoo import http
@@ -20,12 +21,18 @@ _logger = logging.getLogger(__name__)
 
 class OnlyofficeDocuments_Connector(http.Controller):
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="json")
-    def post_file_create(self, folder_id, supported_format, title):
-        result = {"error": None, "file_id": None}
+    def post_file_create(self, folder_id, supported_format, title, url=None):
+        result = {"error": None, "file_id": None, "document_id": None}
 
         try:
             _logger.info(f"Getting new file template {request.env.user.lang} {supported_format}")
-            file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
+
+            if url:
+                response = requests.get(url, stream=True, timeout=30)
+                response.raise_for_status()
+                file_data = response.content
+            else:
+                file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
             data = {
                 "name": title + "." + supported_format,
@@ -35,7 +42,22 @@ class OnlyofficeDocuments_Connector(http.Controller):
             }
 
             document = request.env["documents.document"].create(data)
+            request.env["onlyoffice.odoo.documents.access"].create(
+                {
+                    "document_id": document.id,
+                    "internal_users": "none",
+                    "link_access": "viewer",
+                }
+            )
+            request.env["onlyoffice.odoo.documents.access.user"].create(
+                {
+                    "document_id": document.id,
+                    "user_id": request.env.user.id,
+                    "role": "editor",
+                }
+            )
             result["file_id"] = document.attachment_id.id
+            result["document_id"] = document.id
 
         except Exception as ex:
             _logger.exception(f"Failed to create document {str(ex)}")
