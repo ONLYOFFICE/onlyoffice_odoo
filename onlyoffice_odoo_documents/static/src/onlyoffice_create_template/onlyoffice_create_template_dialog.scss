@@ -14,7 +14,7 @@ $margin-right: 15px;
     .o-onlyoffice-create-template {
       display: flex;
       align-items: center;
-      border: 1px solid #ced4da;
+      border: 1px solid var(--o-input-border-color);
       padding: $margin-right;
       margin: $margin-right;
       flex: 1;
