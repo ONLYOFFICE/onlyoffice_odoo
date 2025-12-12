@@ -30,6 +30,10 @@
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
             "onlyoffice_odoo_documents/static/src/components/**/*",
+            ("remove", "onlyoffice_odoo_documents/static/src/**/*.dark.scss"),
+        ],
+        "web.assets_web_dark": [
+            "onlyoffice_odoo_documents/static/src/**/*.dark.scss",
         ],
     },
 }
