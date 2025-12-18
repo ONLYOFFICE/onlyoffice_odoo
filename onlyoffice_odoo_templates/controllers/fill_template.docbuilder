@@ -353,7 +353,7 @@ function fillForm(oForm, data = null) {
   if (oFormFormType === "pictureForm") {
     function fillPictureForm(data) {
       if (typeof data === "string") {
-        oForm.SetImage(`data:image/png;base64, ${data}`)
+        oForm.SetImage(`data:image/png;base64, ${data}`, Api.MillimetersToEmus(70), Api.MillimetersToEmus(80))
       }
     }
 
