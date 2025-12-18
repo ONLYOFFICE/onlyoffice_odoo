@@ -9,7 +9,7 @@ import { SelectionField, selectionField } from "@web/views/fields/selection/sele
 
 const ROLES_BY_EXTENSION = {
   docx: ["commenter", "reviewer"],
-  pdf: ["form_filling"],
+  pdf: ["commenter", "form_filling"],
   pptx: ["commenter"],
   xlsx: ["commenter", "custom_filter"],
 }

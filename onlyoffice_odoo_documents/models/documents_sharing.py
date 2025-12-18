@@ -42,7 +42,7 @@ class DocumentsSharing(models.TransientModel):
         "docx": ["commenter", "reviewer"],
         "xlsx": ["commenter", "custom_filter"],
         "pptx": ["commenter"],
-        "pdf": ["form_filling"],
+        "pdf": ["commenter", "form_filling"],
     }
 
     def _get_update_rights_params(self):
