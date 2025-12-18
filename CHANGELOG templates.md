@@ -1,5 +1,11 @@
 # Change Log
 
+##
+
+## Changed
+
+- fixed image insertion
+
 ## 3.3.2
 
 ## Added
