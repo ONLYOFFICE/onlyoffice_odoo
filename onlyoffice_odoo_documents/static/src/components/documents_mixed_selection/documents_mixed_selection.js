@@ -1,9 +1,8 @@
 /** @odoo-module **/
 
-import {
-  DocumentsMixedSelectionField,
-  documentsMixedSelectionField,
-} from "@documents/views/fields/documents_selection_mixed/documents_mixed_selection_field"
+// prettier-ignore
+import { DocumentsMixedSelectionField,
+         documentsMixedSelectionField } from "@documents/views/fields/documents_selection_mixed/documents_mixed_selection_field" // eslint-disable-line @stylistic/max-len
 import { registry } from "@web/core/registry"
 import { SelectionField, selectionField } from "@web/views/fields/selection/selection_field"
 

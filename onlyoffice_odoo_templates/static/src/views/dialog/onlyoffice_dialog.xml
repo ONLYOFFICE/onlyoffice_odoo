@@ -42,7 +42,9 @@
                   <div class="d-flex flex-grow-1 align-items-center" />
                   <div class="d-flex">
                     <span t-esc="template.create_date" />
-                    <div class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user ms-auto o_field_many2one_avatar_kanban o_field_many2one_avatar">
+                    <div
+                      class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user ms-auto o_field_many2one_avatar_kanban o_field_many2one_avatar"
+                    >
                       <div>
                         <div class="o-mail-Avatar o_avatar d-flex align-items-center o_m2o_avatar">
                           <img
