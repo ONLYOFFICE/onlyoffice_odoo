@@ -8,7 +8,6 @@ export const onlyofficeKanbanView = {
   ...kanbanView,
   Controller: OnlyofficeKanbanController,
   Renderer: OnlyofficeKanbanRenderer,
-  buttonTemplate: "onlyoffice_odoo_templates.KanbanView.Buttons",
 }
 
 registry.category("views").add("onlyoffice_kanban", onlyofficeKanbanView)

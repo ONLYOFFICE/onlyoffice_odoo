@@ -6,42 +6,6 @@ class OnlyofficeDocuments(models.Model):
     _name = "onlyoffice.odoo.documents"
     _description = "ONLYOFFICE Documents"
 
-    def _get_available_roles(self, filename):
-        ext = filename.split(".")[-1].lower() if "." in filename else ""
-
-        roles = {
-            "none": _("None"),
-            "view": _("Viewer"),
-            "commenter": _("Commenter"),
-            "reviewer": _("Reviewer"),
-            "edit": _("Editor"),
-            "form_filling": _("Form Filling"),
-            "custom_filter": _("Custom Filter"),
-        }
-
-        if ext == "docx":
-            roles.pop("form_filling", None)
-            roles.pop("custom_filter", None)
-        elif ext == "xlsx":
-            roles.pop("reviewer", None)
-            roles.pop("form_filling", None)
-        elif ext == "pptx":
-            roles.pop("reviewer", None)
-            roles.pop("form_filling", None)
-            roles.pop("custom_filter", None)
-        elif ext == "pdf":
-            roles.pop("commenter", None)
-            roles.pop("reviewer", None)
-            roles.pop("custom_filter", None)
-        else:
-            roles = {
-                "none": _("None"),
-                "view": _("Viewer"),
-                "edit": _("Editor"),
-            }
-
-        return roles
-
     @api.model
     def advanced_share_save(self, vals):
         document_id = vals.get("document_id")

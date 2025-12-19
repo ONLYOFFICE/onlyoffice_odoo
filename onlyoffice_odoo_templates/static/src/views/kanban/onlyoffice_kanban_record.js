@@ -19,7 +19,7 @@ export class OnlyofficeKanbanRecord extends KanbanRecord {
   async editTemplate() {
     const action = {
       params: {
-        attachment_id: this.props.record.data.attachment_id[0],
+        attachment_id: this.props.record.data.attachment_id.id,
         id: this.props.record.data.id,
         template_model_model: this.props.record.data.template_model_model,
       },

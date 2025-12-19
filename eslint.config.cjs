@@ -363,7 +363,10 @@ module.exports = [
       "no-unused-labels": "error",
       "no-unused-vars": [
         "warn",
-        { "vars": "local" },
+        {
+          "argsIgnorePattern": "^_",
+          "vars": "local",
+        },
       ],
       "no-use-before-define": "error",
       "no-useless-call": "warn",

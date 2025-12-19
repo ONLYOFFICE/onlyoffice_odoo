@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+  <record id="documents_sharing_view_form_inherit_onlyoffice" model="ir.ui.view">
+    <field name="name">documents.sharing.view.form.inherit.onlyoffice</field>
+    <field name="model">documents.sharing</field>
+    <field name="inherit_id" ref="documents.documents_sharing_view_form" />
+    <field name="arch" type="xml">
+      <field name="access_internal" position="before">
+        <field name="oo_file_extension" invisible="1" />
+      </field>
+
+      <field name="access_internal" position="attributes">
+        <attribute name="widget">onlyoffice_selection</attribute>
+      </field>
+
+      <field name="access_via_link" position="attributes">
+        <attribute name="widget">onlyoffice_selection</attribute>
+      </field>
+
+      <field name="invite_role" position="attributes">
+        <attribute name="widget">onlyoffice_invite_role</attribute>
+      </field>
+    </field>
+  </record>
+
+  <record id="documents_sharing_access_kanban_inherit_onlyoffice" model="ir.ui.view">
+    <field name="name">documents.sharing.access.kanban.inherit.onlyoffice</field>
+    <field name="model">documents.sharing</field>
+    <field name="inherit_id" ref="documents.documents_sharing_view_form" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='share_access_ids']//kanban//field[@name='documents_sharing_id']" position="after">
+        <field name="oo_file_extension" invisible="1" />
+      </xpath>
+
+      <xpath expr="//field[@name='share_access_ids']//kanban//field[@name='role']" position="attributes">
+        <attribute name="widget">onlyoffice_selection</attribute>
+      </xpath>
+    </field>
+  </record>
+</odoo>

@@ -44,7 +44,7 @@ class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
         if not attachment:
             return request.not_found()
 
-        attachment.validate_access(access_token)
+        attachment._can_return_content(access_token=access_token)
 
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]

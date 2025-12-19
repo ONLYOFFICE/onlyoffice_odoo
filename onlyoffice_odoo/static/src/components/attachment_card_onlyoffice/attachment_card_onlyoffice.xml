@@ -4,21 +4,15 @@
 <!-- -->
 <templates xml:space="preserve">
     <t t-inherit="mail.AttachmentList" t-inherit-mode="extension" owl="1">
-    <xpath expr="//div[hasclass('o-mail-AttachmentCard-aside')]" position="before">
-      <div
-        class="o-mail-AttachmentCard-aside position-relative rounded-end overflow-hidden"
-        t-att-class="{ 'o-hasMultipleActions d-flex flex-column': attachment.isDeletable and !env.inComposer }"
+    <xpath expr="//div[hasclass('o-mail-AttachmentButtons')]" position="inside">
+      <button
+        t-if="onlyofficeCanOpen(attachment)"
+        t-on-click.stop="() => this.openOnlyoffice(attachment)"
+        class="btn bg-500 w-100 h-100 o-p-1_5 d-flex justify-content-center align-items-center shadow-sm ms-2"
         title="Open in ONLYOFFICE"
       >
-        <button
-          t-if="onlyofficeCanOpen(attachment)"
-          t-on-click="() => this.openOnlyoffice(attachment)"
-          class="btn d-flex justify-content-center align-items-center w-100 h-100 rounded-0"
-          t-attf-class="bg-300"
-        >
-          <img src="/onlyoffice_odoo/static/svg/edit.svg" role="img" />
-        </button>
-      </div>
+        <img src="/onlyoffice_odoo/static/svg/edit.svg" role="img" width="16" height="16" />
+      </button>
     </xpath>
   </t>
 </templates>
