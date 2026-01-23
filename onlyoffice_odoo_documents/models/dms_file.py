@@ -1,8 +1,8 @@
 from odoo import _, api, models
 
 
-class Document(models.Model):
-    _inherit = "documents.document"
+class DMSFile(models.Model):
+    _inherit = "dms.file"
 
     @api.depends("checksum")
     def _compute_thumbnail(self):

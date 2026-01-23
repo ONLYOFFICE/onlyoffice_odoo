@@ -5,7 +5,7 @@
       <a
         t-if="onlyoffice_supported"
         class="btn btn-secondary rounded-pill mt-2"
-        t-att-href="'/onlyoffice/documents/share/' + document.access_token"
+        t-att-href="'/onlyoffice/dms/share/dms.file/' + str(document.id) + '/' + document.access_token + '/'"
         target="_blank"
       >
         <img
@@ -32,7 +32,7 @@
       <t t-if="is_supported">
         <div class="o_card_right d-flex flex-column flex-nowrap justify-content-end text-end me-1">
           <a
-            t-att-href="'/onlyoffice/documents/share/' + document.access_token"
+            t-att-href="'/onlyoffice/dms/share/dms.file/' + str(document.id) + '/' + document.access_token + '/'"
             title="Open in ONLYOFFICE"
             target="_blank"
           >

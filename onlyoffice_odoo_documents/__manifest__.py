@@ -7,7 +7,7 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "5.2.1",
-    "depends": ["onlyoffice_odoo", "documents"],
+    "depends": ["onlyoffice_odoo", "dms"],
     # always loaded
     "data": [
         "security/ir.model.access.csv",

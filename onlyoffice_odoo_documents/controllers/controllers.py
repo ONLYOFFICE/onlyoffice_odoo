@@ -17,7 +17,8 @@ from odoo.exceptions import AccessError
 from odoo.http import request
 from odoo.tools.translate import _
 
-from odoo.addons.documents.controllers.documents import ShareRoute
+from odoo.addons.portal.controllers.portal import CustomerPortal
+from werkzeug.exceptions import NotFound
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
@@ -47,7 +48,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 "folder_id": int(folder_id),
             }
 
-            document = request.env["documents.document"].create(data)
+            document = request.env["dms.file"].create(data)
             request.env["onlyoffice.odoo.documents.access"].create(
                 {
                     "document_id": document.id,
@@ -73,22 +74,23 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
-    @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
-    def render_shared_document_editor(self, access_token=None):
-        try:
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+    @http.route(["/onlyoffice/dms/share/<string:model>/<int:res_id>/<access_token>/"], type="http", auth="public",
+                website=True)
+    def render_shared_dms_editor(self, model, res_id, access_token=None):
+      try:
+        item = self._dms_check_access(model, res_id, access_token=access_token)
 
-            if not document or not document.exists():
-                raise request.not_found()
+        if not document or not document.exists():
+          raise request.not_found()
 
-            return request.render(
-                "onlyoffice_odoo.onlyoffice_editor", self.prepare_share_editor(document, access_token)
-            )
+        return request.render(
+          "onlyoffice_odoo.onlyoffice_editor", self.prepare_share_editor(document, access_token)
+        )
 
-        except Exception:
-            _logger.error("Ffailed to open shared document")
+      except Exception:
+        _logger.error("Failed to open shared document")
 
-        return request.not_found()
+      return request.not_found()
 
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
@@ -97,7 +99,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         )
 
     def prepare_document_editor(self, document_id, access_token):
-        document = request.env["documents.document"].browse(int(document_id))
+        document = request.env["dms.file"].browse(int(document_id))
         if document.is_locked and document.lock_uid.id != request.env.user.id:
             _logger.error("Document is locked by another user")
             raise Forbidden()
@@ -255,7 +257,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 datas = base64.encodebytes(urlopen(file_url, timeout=120).read())
-                document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
+                document = request.env["dms.file"].sudo().browse(int(attachment.res_id))
                 document.with_user(user).sudo().write(
                     {
                         "name": attachment.name,
@@ -274,30 +276,30 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             status=500 if response_json["error"] == 1 else 200,
             headers=[("Content-Type", "application/json")],
         )
-
-
-class OnlyOfficeShareRoute(ShareRoute):
-    @http.route("/documents/<access_token>", type="http", auth="public")
-    def documents_home(self, access_token):
-        response = super(OnlyOfficeShareRoute, self).documents_home(access_token)  # noqa: UP008
-
-        document_sudo = self._from_access_token(access_token)
-
-        if not request.env.user._is_public() or not hasattr(response, "qcontext"):
-            return
-
-        qcontext = response.qcontext
-
-        if document_sudo.type == "binary" and document_sudo.attachment_id:
-            can_view = file_utils.can_view(document_sudo.name)
-            if can_view:
-                qcontext["onlyoffice_supported"] = True
-
-        if document_sudo.type == "folder":
-            data = []
-            sub_documents_sudo = ShareRoute._get_folder_children(document_sudo)
-            for document in sub_documents_sudo:
-                data.append({"document": document, "onlyoffice_supported": file_utils.can_view(document.name)})
-            qcontext["onlyoffice_supported"] = data
-
-        return response
+#
+#
+# class OnlyOfficeShareRoute(ShareRoute):
+#     @http.route("/documents/<access_token>", type="http", auth="public")
+#     def documents_home(self, access_token):
+#         response = super(OnlyOfficeShareRoute, self).documents_home(access_token)  # noqa: UP008
+#
+#         document_sudo = self._from_access_token(access_token)
+#
+#         if not request.env.user._is_public() or not hasattr(response, "qcontext"):
+#             return
+#
+#         qcontext = response.qcontext
+#
+#         if document_sudo.type == "binary" and document_sudo.attachment_id:
+#             can_view = file_utils.can_view(document_sudo.name)
+#             if can_view:
+#                 qcontext["onlyoffice_supported"] = True
+#
+#         if document_sudo.type == "folder":
+#             data = []
+#             sub_documents_sudo = ShareRoute._get_folder_children(document_sudo)
+#             for document in sub_documents_sudo:
+#                 data.append({"document": document, "onlyoffice_supported": file_utils.can_view(document.name)})
+#             qcontext["onlyoffice_supported"] = data
+#
+#         return response

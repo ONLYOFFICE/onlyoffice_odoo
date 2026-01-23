@@ -49,7 +49,7 @@ class OnlyofficeDocuments(models.Model):
             raise AccessError(_("No document selected for sharing."))
 
         is_admin = self.env.user.has_group("base.group_system")
-        document = self.env["documents.document"].browse(document_id)
+        document = self.env["dms.file"].browse(document_id)
         if not is_admin and document.create_uid != self.env.user:
             raise AccessError(_("Only the owner or administrator can share documents."))
 
