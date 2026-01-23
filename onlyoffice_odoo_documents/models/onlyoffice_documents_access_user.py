@@ -5,7 +5,7 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     _name = "onlyoffice.odoo.documents.access.user"
     _description = "ONLYOFFICE Documents Access Users"
 
-    document_id = fields.Many2one("documents.document", required=True, ondelete="cascade")
+    document_id = fields.Many2one("dms.file", required=True, ondelete="cascade")
     user_id = fields.Many2one("res.partner", required=True, string="User")
     role = fields.Selection(
         [

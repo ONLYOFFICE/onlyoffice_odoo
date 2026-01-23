@@ -1,4 +1,4 @@
-from . import documents
+from . import dms_file
 from . import ir_attachment
 from . import onlyoffice_odoo_documents
 from . import onlyoffice_documents_access
