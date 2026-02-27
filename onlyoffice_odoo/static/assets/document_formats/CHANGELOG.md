@@ -1,5 +1,8 @@
 # Change Log
 
+## 3.2.0
+- conversion to md
+- tsv format
 - comment for docm, docx, dotm, dotx, odt, ott, rtf, ods, ots, xlsb, xlsm, xlsx, xltm, xltx, odp, otp, potm, potx, ppsm, ppsx, pptm, pptx, pdf
 - gdoc, gsheet, gslide
 - encrypt for docm, docx, dotm, dotx, odt, ott, ods, ots, xlsb, xlsm, xlsx, xltm, xltx, odp, otp, potm, potx, ppsm, ppsx, pptm, pptx, pdf

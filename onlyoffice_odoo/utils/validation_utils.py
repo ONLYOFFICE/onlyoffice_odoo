@@ -139,7 +139,7 @@ def convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate):
 
     try:
         response = requests.post(
-            os.path.join(url, "ConvertService.ashx"),
+            os.path.join(url, "converter"),
             verify=not disable_certificate,
             timeout=60,
             data=json.dumps(body_json),
