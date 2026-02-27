@@ -102,7 +102,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:
-            document.check_access_rule("read")
+            document.check_access("read")
         except AccessError:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden()  # noqa: B904
@@ -113,7 +113,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             raise Forbidden()  # noqa: B904
 
         try:
-            document.check_access_rule("write")
+            document.check_access("write")
             return self.prepare_editor_values(attachment, access_token, True)
         except AccessError:
             _logger.debug("Current user has no write access")
