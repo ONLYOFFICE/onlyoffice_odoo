@@ -40,11 +40,22 @@ class OnlyofficeDocuments_Connector(http.Controller):
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
+            if folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
+                folder_id_value = False
+                if folder_id == "COMPANY":
+                    owner_id = request.env.ref("base.user_root").id
+                else:
+                    owner_id = request.env.user.id
+            else:
+                folder_id_value = int(folder_id)
+                owner_id = request.env.user.id
+
             data = {
                 "name": title + "." + supported_format,
                 "mimetype": file_utils.get_mime_by_ext(supported_format),
                 "raw": file_data,
-                "folder_id": int(folder_id),
+                "folder_id": folder_id_value,
+                "owner_id": owner_id,
             }
 
             document = request.env["documents.document"].create(data)
@@ -102,7 +113,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:
-            document.check_access_rule("read")
+            document.check_access("read")
         except AccessError:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden()  # noqa: B904
@@ -113,7 +124,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             raise Forbidden()  # noqa: B904
 
         try:
-            document.check_access_rule("write")
+            document.check_access("write")
             return self.prepare_editor_values(attachment, access_token, True)
         except AccessError:
             _logger.debug("Current user has no write access")

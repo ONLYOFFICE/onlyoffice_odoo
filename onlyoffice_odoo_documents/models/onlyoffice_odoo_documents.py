@@ -84,6 +84,9 @@ class OnlyofficeDocuments(models.Model):
         )
 
         for user_data in user_accesses:
+            role = user_data.get("role")
+            if not role:
+                continue
             if user_data["user_id"] in existing_accesses:
                 self.env["onlyoffice.odoo.documents.access.user"].search(
                     [("document_id", "=", document_id), ("user_id", "=", user_data["user_id"])]

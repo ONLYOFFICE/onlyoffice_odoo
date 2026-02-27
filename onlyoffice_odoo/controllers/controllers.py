@@ -463,7 +463,7 @@ class Onlyoffice_Connector(http.Controller):
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:
-            document.check_access_rule("read")
+            document.check_access("read")
         except AccessError as e:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden() from e
