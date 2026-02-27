@@ -41,7 +41,10 @@ patch(DocumentsControlPanel.prototype, {
     return format && format.actions && (format.actions.includes("view") || format.actions.includes("edit"))
   },
   async onlyofficeEditorUrl() {
-    const doc = this.env.model.root.selection[0]
+    const doc = this.targetRecords[0]
+    if (!doc) {
+      return
+    }
     const demo = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_demo"))
     if (demo && demo.mode && demo.date) {
       const isValidDate = (d) => d instanceof Date && !isNaN(d)
