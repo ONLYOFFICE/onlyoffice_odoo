@@ -113,6 +113,8 @@ class Document(models.Model):
 
         specification = self._permission_specification()
         records = self.sudo().with_context(active_test=False).web_search_read([("id", "=", self.id)], specification)
+        if not records.get("records"):
+            return result
         record = records["records"][0]
 
         user_accesses = []
