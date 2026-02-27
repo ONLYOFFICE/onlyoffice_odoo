@@ -93,7 +93,7 @@ class Document(models.Model):
         if partners:
             partners_with_standard_roles = {}
             for partner_id, role_data in partners.items():
-                if isinstance(role_data, list):
+                if isinstance(role_data, (list, tuple)):  # noqa: UP038
                     role = role_data[0]
                     expiration_date = role_data[1]
                     partners_with_standard_roles[partner_id] = [convert_custom_role(role), expiration_date]
@@ -124,7 +124,7 @@ class Document(models.Model):
             for partner_id, role_data in partners.items():
                 partner = self.env["res.partner"].browse(int(partner_id))
                 if partner.exists():
-                    role = role_data[0] if isinstance(role_data, list) else role_data
+                    role = role_data[0] if isinstance(role_data, (list, tuple)) else role_data  # noqa: UP038
 
                     if role is False:
                         users_to_remove.append(partner.id)

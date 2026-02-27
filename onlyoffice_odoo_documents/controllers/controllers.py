@@ -40,11 +40,22 @@ class OnlyofficeDocuments_Connector(http.Controller):
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
+            if folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
+                folder_id_value = False
+                if folder_id == "COMPANY":
+                    owner_id = request.env.ref("base.user_root").id
+                else:
+                    owner_id = request.env.user.id
+            else:
+                folder_id_value = int(folder_id)
+                owner_id = request.env.user.id
+
             data = {
                 "name": title + "." + supported_format,
                 "mimetype": file_utils.get_mime_by_ext(supported_format),
                 "raw": file_data,
-                "folder_id": int(folder_id),
+                "folder_id": folder_id_value,
+                "owner_id": owner_id,
             }
 
             document = request.env["documents.document"].create(data)
