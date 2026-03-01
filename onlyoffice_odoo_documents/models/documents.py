@@ -51,7 +51,7 @@ class Document(models.Model):
         partners_with_standard_roles = {}
         if partners:
             for partner_id, role_data in partners.items():
-                if isinstance(role_data, tuple):
+                if isinstance(role_data, (list, tuple)):  # noqa: UP038
                     role, expiration_date = role_data
                     converted_role = self._convert_custom_role_to_standard(role) if role else role
                     partners_with_standard_roles[partner_id] = (converted_role, expiration_date)

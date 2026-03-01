@@ -323,12 +323,18 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
+        try:
+            session_info = request.env["ir.http"].get_frontend_session_info()
+        except Exception as e:
+            _logger.error("Failed to get frontend session info: %s", str(e))
+            session_info = {}
         _logger.info("prepare_editor_values - success: %s", attachment.id)
         return {
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            "session_info": markupsafe.Markup(json.dumps(session_info)),
         }
 
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
@@ -438,12 +444,12 @@ class Onlyoffice_Connector(http.Controller):
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:
-            document.check_access_rule("read")
+            document.check_access("read")
         except AccessError as e:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden() from e
 
-    @http.route("/onlyoffice/preview", type="http", auth="user")
+    @http.route("/onlyoffice/preview", type="http", auth="user", website=True)
     def preview(self, url, title):
         _logger.info("GET /onlyoffice/preview - url: %s, title: %s", url, title)
         docserver_url = config_utils.get_doc_server_public_url(request.env)
@@ -485,6 +491,11 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
+        try:
+            session_info = request.env["ir.http"].get_frontend_session_info()
+        except Exception as e:
+            _logger.error("Failed to get frontend session info: %s", str(e))
+            session_info = {}
         _logger.info("GET /onlyoffice/preview - success")
         return request.render(
             "onlyoffice_odoo.onlyoffice_editor",
@@ -493,6 +504,7 @@ class Onlyoffice_Connector(http.Controller):
                 "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
                 "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
                 "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+                "session_info": markupsafe.Markup(json.dumps(session_info)),
             },
         )
 

@@ -223,7 +223,7 @@ class OnlyOfficeTemplate(models.Model):
             oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
         )
 
-        conversion_url = os.path.join(docserver_url, "ConvertService.ashx")
+        conversion_url = os.path.join(docserver_url, "converter")
 
         payload = {
             "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",
@@ -249,7 +249,7 @@ class OnlyOfficeTemplate(models.Model):
         try:
             response = onlyoffice_request(
                 url=conversion_url,
-                method="get",
+                method="post",
                 opts={
                     "data": json.dumps(payload),
                     "headers": headers,
