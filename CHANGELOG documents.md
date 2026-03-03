@@ -1,5 +1,15 @@
 # Change Log
 
+##
+
+## Fixed
+
+- opening a PDF from preview mode
+- create a document from Form Template
+- create and upload documents to system folders (my, company, etc.)
+- upload documents
+- move a document between directories
+
 ## 5.2.1
 
 ## Added
