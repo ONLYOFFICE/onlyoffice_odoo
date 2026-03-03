@@ -2,6 +2,10 @@
 
 ##
 
+## Fixed
+
+- convert PDF to PDF form
+
 ## Changed
 
 - fixed image insertion

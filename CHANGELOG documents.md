@@ -1,5 +1,12 @@
 # Change Log
 
+##
+
+## Fixed
+
+- opening a PDF from preview mode
+- create a document from Form Template
+
 ## 4.2.1
 
 ## Added
