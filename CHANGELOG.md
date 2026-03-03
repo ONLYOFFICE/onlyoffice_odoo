@@ -2,6 +2,10 @@
 
 ##
 
+## Added
+
+- shardKey param to url for requests to Docs
+
 ## Changed
 
 - support tsv
