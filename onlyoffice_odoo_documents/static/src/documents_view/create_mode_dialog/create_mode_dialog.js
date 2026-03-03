@@ -24,6 +24,7 @@ export class CreateModeDialog extends Component {
     })
     this.dialogService = useService("dialog")
     this.notification = useService("notification")
+    this.actionService = useService("action")
   }
 
   async _choiceDialog() {
@@ -79,9 +80,10 @@ export class CreateModeDialog extends Component {
             target: "current",
             type: "ir.actions.client",
           }
-          return this.action.doAction(action)
+          await this.actionService.doAction(action)
+        } else {
+          window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
         }
-        window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
       }
     }
     this.dialogService.add(
