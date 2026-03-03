@@ -14,9 +14,7 @@ from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 def valid_url(url):
     if not url:
         return True
-    # pylint: disable=anomalous-backslash-in-string
-    pattern = "^(https?:\/\/)?[\w-]{1,32}(\.[\w-]{1,32})*[\/\w-]*(:[\d]{1,5}\/?)?$"
-    # pylint: enable=anomalous-backslash-in-string
+    pattern = r"^(https?:\/\/)?[\w-]{1,32}(\.[\w-]{1,32})*[\/\w-]*(:[\d]{1,5}\/?)?$"
     if re.findall(pattern, url):
         return True
     return False
@@ -118,8 +116,9 @@ def check_doc_serv_convert_service(env, url, base_url, jwt_secret, jwt_header, d
 
 
 def convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate):
+    key = int(time.time())
     body_json = {
-        "key": int(time.time()),
+        "key": key,
         "url": file_url,
         "filetype": "txt",
         "outputtype": "txt",
@@ -139,7 +138,7 @@ def convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate):
 
     try:
         response = requests.post(
-            os.path.join(url, "converter"),
+            os.path.join(url, "converter", f"?shardkey={key}"),
             verify=not disable_certificate,
             timeout=60,
             data=json.dumps(body_json),

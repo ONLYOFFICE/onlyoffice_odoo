@@ -211,7 +211,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         return {
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
-            "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
+            "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }
 
