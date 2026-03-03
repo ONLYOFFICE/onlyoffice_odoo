@@ -214,11 +214,12 @@ class OnlyOfficeTemplate(models.Model):
             oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
         )
 
-        conversion_url = os.path.join(docserver_url, "converter")
+        key = int(time.time())
+        conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={key}")
 
         payload = {
             "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",
-            "key": int(time.time()),
+            "key": key,
             "filetype": "pdf",
             "outputtype": "pdf",
             "pdf": {
