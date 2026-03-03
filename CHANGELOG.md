@@ -10,6 +10,12 @@
 
 - support tsv
 
+## Fixed
+
+- receiving session info error
+- change odoo url with demo mode enabled
+- warnings message in log about missing access rules and anomalous backslash in the URL validator
+
 ## 4.3.0
 
 ## Added
