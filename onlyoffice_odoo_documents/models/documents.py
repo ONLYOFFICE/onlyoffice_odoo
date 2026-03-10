@@ -111,53 +111,59 @@ class Document(models.Model):
             message,
         )
 
-        specification = self._permission_specification()
-        records = self.sudo().with_context(active_test=False).web_search_read([("id", "=", self.id)], specification)
-        if not records.get("records"):
-            return result
-        record = records["records"][0]
+        for document in self:
+            if document.type != "binary":
+                continue
 
-        user_accesses = []
-        users_to_remove = []
+            user_accesses = []
+            users_to_remove = []
 
-        if partners:
-            for partner_id, role_data in partners.items():
-                partner = self.env["res.partner"].browse(int(partner_id))
-                if partner.exists():
-                    role = role_data[0] if isinstance(role_data, (list, tuple)) else role_data  # noqa: UP038
-
-                    if role is False:
-                        users_to_remove.append(partner.id)
+            if partners:
+                for partner_key, role_data in partners.items():
+                    if isinstance(partner_key, int):
+                        partner = self.env["res.partner"].browse(partner_key)
+                    elif isinstance(partner_key, str):
+                        partner = self.env["res.partner"].browse(int(partner_key))
                     else:
-                        user_accesses.append(
-                            {
-                                "user_id": partner.id,
-                                "role": role,
-                            }
-                        )
+                        partner = partner_key
 
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", self.id)])
+                    if partner.exists():
+                        role = role_data[0] if isinstance(role_data, (list, tuple)) else role_data  # noqa: UP038
 
-        if not access_internal:
-            if access and access.exists():
-                access_internal = access.internal_users
+                        if role is False:
+                            users_to_remove.append(partner.id)
+                        else:
+                            user_accesses.append(
+                                {
+                                    "user_id": partner.id,
+                                    "role": role,
+                                }
+                            )
+
+            access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
+
+            if access_internal:
+                internal_users = access_internal
+            elif access and access.exists():
+                internal_users = access.internal_users
             else:
-                access_internal = record["access_internal"]
+                internal_users = document.access_internal
 
-        if not access_via_link:
-            if access and access.exists():
-                access_via_link = access.link_access
+            if access_via_link:
+                link_access = access_via_link
+            elif access and access.exists():
+                link_access = access.link_access
             else:
-                access_via_link = record["access_via_link"]
+                link_access = document.access_via_link
 
-        vals = {
-            "document_id": self.id,
-            "internal_users": access_internal,
-            "link_access": access_via_link,
-            "user_accesses": user_accesses,
-            "users_to_remove": users_to_remove,
-        }
+            vals = {
+                "document_id": document.id,
+                "internal_users": internal_users,
+                "link_access": link_access,
+                "user_accesses": user_accesses,
+                "users_to_remove": users_to_remove,
+            }
 
-        self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)
+            self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)
 
         return result
