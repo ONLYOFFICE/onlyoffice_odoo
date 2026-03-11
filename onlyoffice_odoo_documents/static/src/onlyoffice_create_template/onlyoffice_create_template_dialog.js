@@ -73,6 +73,7 @@ export class CreateDialog extends Component {
         this.props.onShare([result.document_id])
       } else {
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        this.data.close()
         if (same_tab) {
           const action = {
             params: { attachment_id: result.file_id },
@@ -82,7 +83,6 @@ export class CreateDialog extends Component {
           }
           return this.actionService.doAction(action)
         }
-        this.data.close()
         return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
       }
     }
