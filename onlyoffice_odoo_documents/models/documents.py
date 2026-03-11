@@ -74,7 +74,7 @@ class Document(models.Model):
 
         return roles
 
-    def action_update_access_rights(
+    def action_update_access_rights(  # noqa: C901
         self,
         access_internal=None,
         access_via_link=None,
