@@ -72,9 +72,10 @@ export class CreateDialog extends Component {
         this.data.close()
         this.props.onShare([result.document_id])
       } else {
+        const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
         this.data.close()
-        if (same_tab) {
+        if (same_tab && !isDesktopEditor) {
           const action = {
             params: { attachment_id: result.file_id },
             tag: "onlyoffice_editor",

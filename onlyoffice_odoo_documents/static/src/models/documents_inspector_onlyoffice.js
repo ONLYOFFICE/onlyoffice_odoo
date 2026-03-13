@@ -58,8 +58,9 @@ patch(DocumentsInspector.prototype, {
         }
       }
     }
+    const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
     const { same_tab } = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_same_tab"))
-    if (same_tab) {
+    if (same_tab && !isDesktopEditor) {
       const action = {
         params: { document_id: id },
         tag: "onlyoffice_editor",
