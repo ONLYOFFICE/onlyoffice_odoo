@@ -1,18 +1,21 @@
 # Copyright (C) 2026 Data Dance s.r.o.
 # License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
 
-from odoo import api, fields, models
-
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
-from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
-
 import io
 import logging
+from collections import OrderedDict
 from urllib.parse import quote
 
-from collections import OrderedDict
+from PIL import Image
+
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError, RedirectWarning
+
+from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
+from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
+
 
 class IrActionsReport(models.Model):
     _inherit = "ir.actions.report"
@@ -27,9 +30,7 @@ class IrActionsReport(models.Model):
     def get_paperformat(self):
         # force the right format (euro/A4) when sending letters, only if we are not using the l10n_DE layout
         res = super().get_paperformat()
-        if self.env.context.get("snailmail_layout") and res != self.env.ref(
-            "l10n_de.paperformat_euro_din", False
-        ):
+        if self.env.context.get("snailmail_layout") and res != self.env.ref("l10n_de.paperformat_euro_din", False):
             paperformat_id = self.env.ref("base.paperformat_euro")
             return paperformat_id
         else:
@@ -47,10 +48,11 @@ class IrActionsReport(models.Model):
     """
         This is inspired by _render_qweb_pdf_prepare_streams from odoo/addnos/base/model/ir_actions_report.py
     """
+
     def _render_onlyoffice_pdf_prepare_streams(self, report_ref, data, res_ids=None):
         if not data:
             data = {}
-        data.setdefault('report_type', 'onlyoffice-pdf')
+        data.setdefault("report_type", "onlyoffice-pdf")
 
         # access the report details with sudo() but evaluation context as current user
         report_sudo = self._get_report(report_ref)
@@ -69,7 +71,11 @@ class IrActionsReport(models.Model):
 
                 stream = None
                 attachment = None
-                if not has_duplicated_ids and report_sudo.attachment and not self._context.get("report_pdf_no_attachment"):
+                if (
+                    not has_duplicated_ids
+                    and report_sudo.attachment
+                    and not self._context.get("report_pdf_no_attachment")
+                ):
                     attachment = report_sudo.retrieve_attachment(record)
 
                     # Extract the stream from the attachment.
@@ -77,7 +83,7 @@ class IrActionsReport(models.Model):
                         stream = io.BytesIO(attachment.raw)
 
                         # Ensure the stream can be saved in Image.
-                        if attachment.mimetype.startswith('image'):
+                        if attachment.mimetype.startswith("image"):
                             img = Image.open(stream)
                             new_stream = io.BytesIO()
                             img.convert("RGB").save(new_stream, format="pdf")
@@ -85,17 +91,16 @@ class IrActionsReport(models.Model):
                             stream = new_stream
 
                 collected_streams[res_id] = {
-                    'stream': stream,
-                    'attachment': attachment,
+                    "stream": stream,
+                    "attachment": attachment,
                 }
 
         # Call 'onlyoffice' to generate the missing streams.
-        res_ids_wo_stream = [res_id for res_id, stream_data in collected_streams.items() if not stream_data['stream']]
+        res_ids_wo_stream = [res_id for res_id, stream_data in collected_streams.items() if not stream_data["stream"]]
         all_res_ids_wo_stream = res_ids if has_duplicated_ids else res_ids_wo_stream
         is_onlyoffice_needed = not res_ids or res_ids_wo_stream
 
         if is_onlyoffice_needed:
-
             internal_jwt_secret = config_utils.get_internal_jwt_secret(self.env)
             oo_security_token = jwt_utils.encode_payload(self.env, {"id": self.env.user.id}, internal_jwt_secret)
 
@@ -127,21 +132,20 @@ class IrActionsReport(models.Model):
             data = {}
         if isinstance(res_ids, int):
             res_ids = [res_ids]
-        data.setdefault('report_type', 'onlyoffice-pdf')
+        data.setdefault("report_type", "onlyoffice-pdf")
 
         self = self.with_context(webp_as_jpg=True)
-        return self._render_onlyoffice_pdf_prepare_streams(report_ref, data, res_ids=res_ids), 'onlyoffice-pdf'
-        
+        return self._render_onlyoffice_pdf_prepare_streams(report_ref, data, res_ids=res_ids), "onlyoffice-pdf"
 
     def _render_onlyoffice_pdf(self, report_ref, res_ids=None, data=None):
         if not data:
             data = {}
         if isinstance(res_ids, int):
             res_ids = [res_ids]
-        data.setdefault('report_type', 'onlyoffice-pdf')
+        data.setdefault("report_type", "onlyoffice-pdf")
 
         collected_streams, report_type = self._pre_render_onlyoffice_pdf(report_ref, res_ids=res_ids, data=data)
-        if report_type != 'onlyoffice-pdf':
+        if report_type != "onlyoffice-pdf":
             return collected_streams, report_type
 
         has_duplicated_ids = res_ids and len(res_ids) != len(set(res_ids))
@@ -153,18 +157,22 @@ class IrActionsReport(models.Model):
         if not has_duplicated_ids and report_sudo.attachment and not self._context.get("report_pdf_no_attachment"):
             attachment_vals_list = self._prepare_pdf_report_attachment_vals_list(report_sudo, collected_streams)
             if attachment_vals_list:
-                attachment_names = ', '.join(x['name'] for x in attachment_vals_list)
+                attachment_names = ", ".join(x["name"] for x in attachment_vals_list)
                 try:
-                    self.env['ir.attachment'].create(attachment_vals_list)
+                    self.env["ir.attachment"].create(attachment_vals_list)
                 except AccessError:
-                    _logger.info("Cannot save PDF report %r attachments for user %r", attachment_names, self.env.user.display_name)
+                    _logger.info(
+                        "Cannot save PDF report %r attachments for user %r",
+                        attachment_names,
+                        self.env.user.display_name,
+                    )
                 else:
                     _logger.info("The PDF documents %r are now saved in the database", attachment_names)
 
         def custom_handle_merge_pdfs_error(error, error_stream):
             error_record_ids.append(stream_to_ids[error_stream])
 
-        stream_to_ids = {v['stream']: k for k, v in collected_streams.items() if v['stream']}
+        stream_to_ids = {v["stream"]: k for k, v in collected_streams.items() if v["stream"]}
         # Merge all streams together for a single record.
         streams_to_merge = list(stream_to_ids.keys())
         error_record_ids = []
@@ -177,31 +185,38 @@ class IrActionsReport(models.Model):
 
         if error_record_ids:
             action = {
-                'type': 'ir.actions.act_window',
-                'name': _('Problematic record(s)'),
-                'res_model': report_sudo.model,
-                'domain': [('id', 'in', error_record_ids)],
-                'views': [(False, 'list'), (False, 'form')],
+                "type": "ir.actions.act_window",
+                "name": _("Problematic record(s)"),
+                "res_model": report_sudo.model,
+                "domain": [("id", "in", error_record_ids)],
+                "views": [(False, "list"), (False, "form")],
             }
             num_errors = len(error_record_ids)
             if num_errors == 1:
-                action.update({
-                    'views': [(False, 'form')],
-                    'res_id': error_record_ids[0],
-                })
+                action.update(
+                    {
+                        "views": [(False, "form")],
+                        "res_id": error_record_ids[0],
+                    }
+                )
             raise RedirectWarning(
-                message=_('Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)', num_errors=num_errors),
+                message=_(
+                    "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)",
+                    num_errors=num_errors,
+                ),
                 action=action,
-                button_text=_('View Problematic Record(s)'),
+                button_text=_("View Problematic Record(s)"),
             )
 
         for stream in streams_to_merge:
             stream.close()
 
         if res_ids:
-            _logger.info("The PDF report has been generated for model: %s, records %s.", report_sudo.model, str(res_ids))
+            _logger.info(
+                "The PDF report has been generated for model: %s, records %s.", report_sudo.model, str(res_ids)
+            )
 
-        return pdf_content, 'onlyoffice-pdf'
+        return pdf_content, "onlyoffice-pdf"
 
     def fill_template(self, oo_security_token, record_ids, template_id):
         _logger.info("fill_template - template: %s, records: %s", template_id, record_ids)

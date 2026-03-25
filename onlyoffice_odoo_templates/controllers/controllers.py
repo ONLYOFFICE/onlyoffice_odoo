@@ -12,9 +12,8 @@ from datetime import datetime
 from urllib.parse import quote
 
 from odoo import http
-from odoo.tools import misc
 from odoo.http import request
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, file_open, get_lang
+from odoo.tools import file_open, misc
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
@@ -438,7 +437,9 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 result[field] = str(data)
                             elif field_type == "float":
                                 lang = request.env["res.lang"].sudo().search([("code", "=", user.lang)], limit=1)
-                                result[field] = lang.format(percent=f"%.{record._fields[field].get_digits(request.env)[1]}f", value=data)
+                                result[field] = lang.format(
+                                    percent=f"%.{record._fields[field].get_digits(request.env)[1]}f", value=data
+                                )
                             elif field_type == "integer":
                                 lang = request.env["res.lang"].sudo().search([("code", "=", user.lang)], limit=1)
                                 result[field] = lang.format(percent="%d", value=data)
@@ -447,11 +448,15 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 currency_field_name = record._fields[field].currency_field or "currency_id"
                                 if currency_field_name:
                                     currency = getattr(record, currency_field_name)
-                                result[field] = misc.format_amount(env=request.env, amount=data, currency=currency, lang_code=user.lang)
+                                result[field] = misc.format_amount(
+                                    env=request.env, amount=data, currency=currency, lang_code=user.lang
+                                )
                             elif field_type == "date":
                                 result[field] = misc.format_date(request.env, data, user.lang)
                             elif field_type == "datetime":
-                                result[field] = misc.format_datetime(env=request.env, value=data, tz=user.tz or "GMT", lang_code=user.lang)
+                                result[field] = misc.format_datetime(
+                                    env=request.env, value=data, tz=user.tz or "GMT", lang_code=user.lang
+                                )
                             elif field_type == "selection":
                                 selection = record._fields[field].selection
                                 if isinstance(selection, list):
