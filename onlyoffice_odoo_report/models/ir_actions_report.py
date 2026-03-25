@@ -6,7 +6,10 @@ import logging
 from collections import OrderedDict
 from urllib.parse import quote
 
-from odoo import api, fields, models
+from PIL import Image
+
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError, RedirectWarning
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
