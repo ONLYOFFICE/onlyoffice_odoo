@@ -36,9 +36,15 @@ if (isDesktopEditor) {
       const dropdownMenus = document.querySelectorAll(".dropdown-menu")
       dropdownMenus.forEach((menu) => {
         const isInModal = menu.closest(".modal, .o_dialog, .o_technical_modal, .o-overlay-item")
-        if (!isInModal) {
+        const isActionMenu = menu.closest(".btn-group")
+        if (!isInModal && !isActionMenu) {
           menu.style.display = "none"
         }
+      })
+
+      const actionSections = document.querySelectorAll(".o_inspector_section_rules")
+      actionSections.forEach((section) => {
+        section.style.display = "none"
       })
     })
 
