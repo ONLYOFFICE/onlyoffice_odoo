@@ -3,7 +3,7 @@
     "version": "19.0.1.0.0",
     "category": "Productivity",
     "author": "Data Dance s.r.o.",
-    "website": "https://www.datadance.eu",
+    "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "description": """
         Adds support to render reports using ONLYOFFICE Docs backend.
     """,

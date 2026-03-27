@@ -35,9 +35,7 @@ class ReportController(ReportController):
             if data.get("context"):
                 data["context"] = json.loads(data["context"])
                 context.update(data["context"])
-            pdf = report.with_context(**context)._render_onlyoffice_pdf(
-                reportname, docids, data=data
-            )[0]
+            pdf = report.with_context(**context)._render_onlyoffice_pdf(reportname, docids, data=data)[0]
             pdfhttpheaders = [
                 (
                     "Content-Type",
@@ -65,36 +63,26 @@ class ReportController(ReportController):
                     )
                 else:
                     # Particular report:
-                    data = dict(
-                        url_decode(url.split("?")[1]).items()
-                    )  # decoding the args represented in JSON
+                    data = dict(url_decode(url.split("?")[1]).items())  # decoding the args represented in JSON
                     if "context" in data:
                         context, data_context = (
                             json.loads(context or "{}"),
                             json.loads(data.pop("context")),
                         )
                         context = json.dumps({**context, **data_context})
-                    response = self.report_routes(
-                        reportname, converter="onlyoffice-pdf", context=context, **data
-                    )
+                    response = self.report_routes(reportname, converter="onlyoffice-pdf", context=context, **data)
 
-                report = request.env["ir.actions.report"]._get_report_from_name(
-                    reportname
-                )
+                report = request.env["ir.actions.report"]._get_report_from_name(reportname)
                 filename = f"{report.name}.pdf"
 
                 if docids:
                     ids = [int(x) for x in docids.split(",")]
                     obj = request.env[report.model].browse(ids)
                     if report.print_report_name and not len(obj) > 1:
-                        report_name = safe_eval(
-                            report.print_report_name, {"object": obj, "time": time}
-                        )
+                        report_name = safe_eval(report.print_report_name, {"object": obj, "time": time})
                         filename = f"{report_name}.pdf"
                 if not response.headers.get("Content-Disposition"):
-                    response.headers.add(
-                        "Content-Disposition", content_disposition(filename)
-                    )
+                    response.headers.add("Content-Disposition", content_disposition(filename))
                 return response
             except Exception as e:
                 _logger.exception("Error while generating report %s", reportname)
@@ -102,6 +90,4 @@ class ReportController(ReportController):
                 error = {"code": 200, "message": "Odoo Server Error", "data": se}
                 return request.make_response(html_escape(json.dumps(error)))
         else:
-            return super().report_download(
-                data, context, token=token, readonly=readonly
-            )
+            return super().report_download(data, context, token=token, readonly=readonly)

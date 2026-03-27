@@ -10,32 +10,37 @@
     <field name="priority" eval="10" />
     <field name="inherit_id" ref="onlyoffice_odoo_templates.view_onlyoffice_form" />
     <field name="arch" type="xml">
-        <xpath expr="//sheet/group" position="before">
-            <div class="oe_button_box" name="button_box" groups="base.group_system">
-                <button name="associated_report" type="object"
-                        invisible="not report_id" icon='fa-code'
-                        class="oe_stat_button">
-                        <div class="o_field_widget o_stat_info">
-                            <span class="o_stat_text">Report</span>
-                        </div>
-                </button>
-                <button name="create_action" type="object"
-                        invisible="report_id" icon="fa-plus-square"
-                        class="oe_stat_button">
-                        <div class="o_field_widget o_stat_info">
-                            <span class="o_stat_text">Create associated report</span>
-                        </div>
-                </button>
-                <button name="unlink_action" type="object"
-                        invisible="not report_id" icon="fa-minus-square"
-                        class="oe_stat_button">
-                        <div class="o_field_widget o_stat_info">
-                            <span class="o_stat_text">Remove associated report</span>
-                        </div>
-                </button>
+      <xpath expr="//sheet/group" position="before">
+        <div class="oe_button_box" name="button_box" groups="base.group_system">
+          <button
+            name="associated_report"
+            type="object"
+            invisible="not report_id"
+            icon='fa-code'
+            class="oe_stat_button"
+          >
+            <div class="o_field_widget o_stat_info">
+              <span class="o_stat_text">Report</span>
             </div>
-        </xpath>            
+          </button>
+          <button name="create_action" type="object" invisible="report_id" icon="fa-plus-square" class="oe_stat_button">
+            <div class="o_field_widget o_stat_info">
+              <span class="o_stat_text">Create associated report</span>
+            </div>
+          </button>
+          <button
+            name="unlink_action"
+            type="object"
+            invisible="not report_id"
+            icon="fa-minus-square"
+            class="oe_stat_button"
+          >
+            <div class="o_field_widget o_stat_info">
+              <span class="o_stat_text">Remove associated report</span>
+            </div>
+          </button>
+        </div>
+      </xpath>
     </field>
   </record>
-
 </odoo>
