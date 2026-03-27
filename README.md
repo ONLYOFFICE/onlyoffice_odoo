@@ -50,17 +50,17 @@ To use the integration, you need a running instance of ONLYOFFICE Docs (Document
 
 ### 🖥️ Self-hosted
 
-**Community Edition (Free)** – install via [Docker](https://github.com/onlyoffice/Docker-DocumentServer) (recommended) or follow [manual installation instructions](https://helpcenter.onlyoffice.com/installation/docs-community-install-ubuntu.aspx) for Debian/Ubuntu.
+**Community Edition (Free)** - install via [Docker](https://github.com/onlyoffice/Docker-DocumentServer) (recommended) or follow [manual installation instructions](https://helpcenter.onlyoffice.com/installation/docs-community-install-ubuntu.aspx) for Debian/Ubuntu.
 
-**Enterprise Edition** – scalable and professionally supported. [Installation Guide →](https://helpcenter.onlyoffice.com/docs/installation/enterprise)
+**Enterprise Edition** - scalable and professionally supported. [Installation Guide →](https://helpcenter.onlyoffice.com/docs/installation/enterprise)
 
 Community Edition vs Enterprise Edition comparison can be found [here](#onlyoffice-docs-editions).
 
 ### ☁️ Cloud
 
-If you prefer not to host and maintain your own server, use **ONLYOFFICE Docs Cloud**, which requires no installation or configuration.  
- 
- 👉 [Get started here](https://www.onlyoffice.com/docs-registration)
+If you prefer not to host and maintain your own server, use **ONLYOFFICE Docs Cloud**, which requires no installation or configuration.
+
+👉 [Get started here](https://www.onlyoffice.com/docs-registration)
 
 ## Installing ONLYOFFICE app for Odoo
 
@@ -68,7 +68,7 @@ If you prefer not to host and maintain your own server, use **ONLYOFFICE Docs Cl
 
 * [Log into](https://www.odoo.com/web/login) your exisiting Odoo account or [sign up](https://www.odoo.com/web/signup) for a new account.
 * Go to the Odoo administration panel and click **Apps** on the top menu bar.
-* Search for ONLYOFFICE in the Apps catalog. 
+* Search for ONLYOFFICE in the Apps catalog.
 * Click the 'Install' button.
 
 **Manual installation**
@@ -90,7 +90,7 @@ Then, install the package:
 Once ready, switch your Odoo to the developer mode and click **Apps -> Update Apps List** OR just restart your Odoo instance.
 
 **Please note (refers to the ONLYOFFICE Templates app)**: ONLYOFFICE demo templates will only be added to the Odoo modules that are already installed. That's why we strongly recommend installing ONLYOFFICE Templates after installing other Odoo modules such as CRM, Sales, Calendar, etc.
- 
+
 ## Configuring ONLYOFFICE app for Odoo
 
 To configure the app, go to `Settings`. Find `ONLYOFFICE` on the left sidebar and press it. Specify the URL of the installed ONLYOFFICE Docs.
