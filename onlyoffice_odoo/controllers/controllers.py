@@ -565,22 +565,30 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
 
         categories = []
         for item in response.get("data", []):
-            attrs = item.get("attributes", {})
-            localized_name = next(
-                (
-                    loc["attributes"]["name"]
-                    for loc in attrs.get("localizations", {}).get("data", [])
-                    if loc["attributes"]["locale"] == locale
-                ),
-                None,
-            ) or attrs.get("name", "")
+            if "attributes" in item:
+                attrs = item.get("attributes", {})
+                localizations = attrs.get("localizations", {}).get("data", [])
+                localized_name = next(
+                    (loc["attributes"]["name"] for loc in localizations if loc["attributes"]["locale"] == locale),
+                    None,
+                ) or attrs.get("name", "")
+                category_id = attrs.get("categoryId")
+                category_title = attrs.get("categoryTitle")
+            else:
+                localizations = item.get("localizations", [])
+                localized_name = next(
+                    (loc["name"] for loc in localizations if loc.get("locale") == locale),
+                    None,
+                ) or item.get("name", "")
+                category_id = item.get("categoryId")
+                category_title = item.get("categoryTitle")
 
             categories.append(
                 {
                     "id": item["id"],
-                    "categoryId": attrs.get("categoryId"),
+                    "categoryId": category_id,
                     "name": localized_name,
-                    "type": attrs.get("categoryTitle"),
+                    "type": category_title,
                 }
             )
 
@@ -600,15 +608,23 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
 
         subcategories = []
         for item in response.get("data", []):
-            attrs = item.get("attributes", {})
-            localized_name = next(
-                (
-                    loc["attributes"][category_type]
-                    for loc in attrs.get("localizations", {}).get("data", [])
-                    if loc["attributes"]["locale"] == locale
-                ),
-                None,
-            ) or attrs.get(category_type, "")
+            if "attributes" in item:
+                attrs = item.get("attributes", {})
+                localizations = attrs.get("localizations", {}).get("data", [])
+                localized_name = next(
+                    (
+                        loc["attributes"][category_type]
+                        for loc in localizations
+                        if loc["attributes"]["locale"] == locale
+                    ),
+                    None,
+                ) or attrs.get(category_type, "")
+            else:
+                localizations = item.get("localizations", [])
+                localized_name = next(
+                    (loc.get(category_type) for loc in localizations if loc.get("locale") == locale),
+                    None,
+                ) or item.get(category_type, "")
 
             subcategories.append(
                 {
