@@ -137,16 +137,16 @@
     <field name="name">onlyoffice.odoo.templates.list</field>
     <field name="model">onlyoffice.odoo.templates</field>
     <field name="arch" type="xml">
-      <list editable="bottom" open_form_view="True">
+      <list create="true">
         <field name="name" />
         <field name="template_model_id" />
-        <field name="template_model_related_name" />
+        <field name="template_model_related_name" column_invisible="1" />
         <field name="template_model_model" />
-        <field name="mimetype" />
+        <field name="mimetype" column_invisible="1" />
         <field name="attachment_id" />
         <field name="create_uid" />
         <field name="create_date" />
-        <button type="action" name="%(onlyoffice_odoo_templates.action_onlyoffice_template_editor)d" string="Edit" />
+        <button name="open_template_editor" type="object" string="Edit Template" icon="fa-edit" class="btn-primary" />
       </list>
     </field>
   </record>
