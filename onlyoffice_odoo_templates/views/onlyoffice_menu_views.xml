@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- Copyright (C) 2026 Ascensio System SIA -->
+<!--
+    Copyright (C) 2026 Ascensio System SIA
+    Copyright (C) 2026 Data Dance s.r.o.
+    License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
+-->
 <odoo>
   <record id="view_onlyoffice_form" model="ir.ui.view">
     <field name="name">onlyoffice.odoo.templates.form</field>
@@ -7,6 +11,41 @@
     <field name="arch" type="xml">
       <form string="Create template">
         <sheet>
+          <div class="oe_button_box" name="button_box" groups="base.group_system">
+            <button
+              name="associated_report"
+              type="object"
+              invisible="not report_id"
+              icon='fa-code'
+              class="oe_stat_button"
+            >
+              <div class="o_field_widget o_stat_info">
+                <span class="o_stat_text">Report</span>
+              </div>
+            </button>
+            <button
+              name="create_action"
+              type="object"
+              invisible="report_id"
+              icon="fa-plus-square"
+              class="oe_stat_button"
+            >
+              <div class="o_field_widget o_stat_info">
+                <span class="o_stat_text">Create associated report</span>
+              </div>
+            </button>
+            <button
+              name="unlink_action"
+              type="object"
+              invisible="not report_id"
+              icon="fa-minus-square"
+              class="oe_stat_button"
+            >
+              <div class="o_field_widget o_stat_info">
+                <span class="o_stat_text">Remove associated report</span>
+              </div>
+            </button>
+          </div>
           <group string="Template creation">
             <div class="text-muted" colspan="2"> Use this form to create a new fillable PDF template
               for your Odoo modules. Start by entering a <span class="fw-bolder">name </span> for
