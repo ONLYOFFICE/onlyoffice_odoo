@@ -401,7 +401,15 @@ class Onlyoffice_Connector(http.Controller):
                     else:
                         role = access.internal_users
                 else:
-                    role = "view"  # default role for internal users
+                    user_permission = document.user_permission
+                    if user_permission == "none":
+                        raise AccessError(_("User has no read access rights to open this document"))
+                    elif user_permission == "edit" and can_write:
+                        role = "edit"
+                    elif user_permission == "view":
+                        role = "view"
+                    else:
+                        role = "view"  # default role for internal users
 
         if not role:
             raise AccessError(_("User has no read access rights to open this document"))
