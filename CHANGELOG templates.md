@@ -9,6 +9,7 @@
 ## Fixed
 
 - convert PDF to PDF form
+- field value localization for report generation (date/monetary fields)
 
 ## Changed
 
