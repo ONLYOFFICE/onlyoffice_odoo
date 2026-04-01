@@ -323,6 +323,22 @@ class OnlyOfficeTemplate(models.Model):
 
         return records
 
+    def open_template_editor(self):
+        """
+        Open ONLYOFFICE template editor for this record
+        """
+        self.ensure_one()
+        return {
+            "type": "ir.actions.client",
+            "tag": "onlyoffice_template_editor",
+            "target": "current",
+            "params": {
+                "attachment_id": self.attachment_id.id,
+                "id": self.id,
+                "template_model_model": self.template_model_model,
+            },
+        }
+
     @api.model
     def update_relationship(self, template_model_id, model):
         """

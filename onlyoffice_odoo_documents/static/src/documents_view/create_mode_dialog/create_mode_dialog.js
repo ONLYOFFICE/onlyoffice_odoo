@@ -74,6 +74,7 @@ export class CreateModeDialog extends Component {
         })
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
         if (same_tab) {
+          this.data.close()
           const action = {
             params: { attachment_id: result.file_id },
             tag: "onlyoffice_editor",
