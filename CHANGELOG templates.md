@@ -2,6 +2,10 @@
 
 ##
 
+## Added
+
+- list view for templates
+
 ## Fixed
 
 - convert PDF to PDF form
