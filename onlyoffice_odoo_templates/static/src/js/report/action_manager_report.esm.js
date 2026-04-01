@@ -1,6 +1,8 @@
+/** @odoo-module **/
+
 import { download } from "@web/core/network/download"
 import { registry } from "@web/core/registry"
-import { user } from "@web/core/user"
+import { session } from "@web/session"
 
 registry.category("ir.actions.report handlers").add("onlyoffice-pdf_handler", async function (action, options, env) {
   if (action.report_type === "onlyoffice-pdf") {
@@ -18,7 +20,7 @@ registry.category("ir.actions.report handlers").add("onlyoffice-pdf_handler", as
         url += `/${actionContext.active_ids.join(",")}`
       }
       if (type === "onlyoffice-pdf") {
-        const context = encodeURIComponent(JSON.stringify(user.context))
+        const context = encodeURIComponent(JSON.stringify(session.user_context))
         url += `?context=${context}`
       }
     }
@@ -28,7 +30,7 @@ registry.category("ir.actions.report handlers").add("onlyoffice-pdf_handler", as
         url: "/report/download",
         data: {
           data: JSON.stringify([url, action.report_type]),
-          context: JSON.stringify(user.context),
+          context: JSON.stringify(session.user_context),
         },
       })
     } finally {

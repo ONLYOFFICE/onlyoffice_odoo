@@ -63,6 +63,7 @@
             <field name="template_model_related_name" invisible="1" />
             <field name="template_model_model" invisible="1" />
             <field name="hide_file_field" invisible="1" />
+            <field name="report_id" invisible="1" />
           </group>
           <group string="Template uploading" invisible="hide_file_field">
             <div class="text-muted" colspan="2"> If you already have a <span class="fw-bolder">prepared
