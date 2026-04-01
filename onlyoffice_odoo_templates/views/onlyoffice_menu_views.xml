@@ -134,20 +134,20 @@
   </record>
 
   <record id="view_onlyoffice_list" model="ir.ui.view">
-    <field name="name">onlyoffice.odoo.templates.list</field>
+    <field name="name">onlyoffice.odoo.templates.tree</field>
     <field name="model">onlyoffice.odoo.templates</field>
     <field name="arch" type="xml">
-      <list create="true">
+      <tree create="true">
         <field name="name" />
         <field name="template_model_id" />
         <field name="template_model_related_name" column_invisible="1" />
-        <field name="template_model_model" />
+        <field name="template_model_model" string="Technical Name" />
         <field name="mimetype" column_invisible="1" />
         <field name="attachment_id" />
         <field name="create_uid" />
         <field name="create_date" />
         <button name="open_template_editor" type="object" string="Edit Template" icon="fa-edit" class="btn-primary" />
-      </list>
+      </tree>
     </field>
   </record>
 
