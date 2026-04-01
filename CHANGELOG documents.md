@@ -9,6 +9,7 @@
 - create and upload documents to system folders (my, company, etc.)
 - upload documents
 - move a document between directories
+- user permission check in the documents module
 
 ## 5.2.1
 
