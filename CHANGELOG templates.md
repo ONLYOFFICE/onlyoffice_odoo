@@ -1,8 +1,15 @@
 # Change Log
 
+##
+
+## Added
+
+- list view for templates
+
 ## Fixed
 
 - convert PDF to PDF form
+- field value localization for report generation (date/monetary fields)
 
 ## 4.3.2
 
