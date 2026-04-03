@@ -1,3 +1,5 @@
+# Copyright (C) 2026 Ascensio System SIA
+
 from odoo import Command, _, api, fields, models
 from odoo.exceptions import ValidationError
 

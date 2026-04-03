@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- -->
-<!-- (c) Copyright Ascensio System SIA 2024 -->
-<!-- -->
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <template id="onlyoffice_layout" name="ONLYOFFICE Editor">
     <html>

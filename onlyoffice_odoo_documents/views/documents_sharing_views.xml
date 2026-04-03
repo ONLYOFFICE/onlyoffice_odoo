@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <record id="documents_sharing_view_form_inherit_onlyoffice" model="ir.ui.view">
     <field name="name">documents.sharing.view.form.inherit.onlyoffice</field>

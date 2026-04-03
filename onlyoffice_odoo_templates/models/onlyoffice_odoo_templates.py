@@ -1,3 +1,5 @@
+# Copyright (C) 2026 Ascensio System SIA
+
 import base64
 import json
 import logging

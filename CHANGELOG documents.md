@@ -10,6 +10,7 @@
 - upload documents
 - move a document between directories
 - user permission check in the documents module
+- opening folders for external users
 
 ## 6.2.1
 
