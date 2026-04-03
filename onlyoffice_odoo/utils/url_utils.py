@@ -1,3 +1,5 @@
+# Copyright (C) 2026 Ascensio System SIA
+
 import logging
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils

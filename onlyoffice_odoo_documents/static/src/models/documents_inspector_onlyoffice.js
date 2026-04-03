@@ -1,10 +1,5 @@
 /** @odoo-module **/
-
-/*
- *
- * (c) Copyright Ascensio System SIA 2024
- *
- */
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsInspector } from "@documents/views/inspector/documents_inspector"
 import { useService } from "@web/core/utils/hooks"

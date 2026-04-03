@@ -1,4 +1,6 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
+
 /* eslint-disable @stylistic/implicit-arrow-linebreak */
 /* eslint-disable @stylistic/function-paren-newline */
 /* eslint-disable @stylistic/indent */

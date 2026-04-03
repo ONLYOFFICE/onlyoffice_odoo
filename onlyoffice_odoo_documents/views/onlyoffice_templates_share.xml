@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <template id="onlyoffice_odoo_documents.share_files_page" inherit_id="documents.share_files_page">
     <xpath expr="//div[hasclass('mt16') and hasclass('mb8')]/a" position="inside">
