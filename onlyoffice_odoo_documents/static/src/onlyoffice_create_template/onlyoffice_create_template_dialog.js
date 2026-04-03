@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsPermissionPanel } from "@documents/components/documents_permission_panel/documents_permission_panel"
 import { Dialog } from "@web/core/dialog/dialog"

@@ -1,10 +1,5 @@
 /** @odoo-module **/
-
-/*
- *
- * (c) Copyright Ascensio System SIA 2024
- *
- */
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsControlPanel } from "@documents/views/search/documents_control_panel"
 

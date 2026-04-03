@@ -1,6 +1,4 @@
-#
-# (c) Copyright Ascensio System SIA 2024
-#
+# Copyright (C) 2026 Ascensio System SIA
 
 import base64
 import json

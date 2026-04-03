@@ -1,4 +1,6 @@
 /** @odoo-module */
+// Copyright (C) 2026 Ascensio System SIA
+
 import { FormGallery } from "@onlyoffice_odoo/views/form_gallery/form_gallery"
 import { useService } from "@web/core/utils/hooks"
 import { KanbanController } from "@web/views/kanban/kanban_controller"

@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { useService } from "@web/core/utils/hooks"
 import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"

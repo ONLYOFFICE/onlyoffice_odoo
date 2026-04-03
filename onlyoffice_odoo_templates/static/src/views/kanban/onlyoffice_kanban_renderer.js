@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { KanbanRenderer } from "@web/views/kanban/kanban_renderer"
 import { OnlyofficeKanbanRecord } from "./onlyoffice_kanban_record"

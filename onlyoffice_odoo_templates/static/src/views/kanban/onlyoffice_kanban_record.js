@@ -1,4 +1,6 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
+
 import { useService } from "@web/core/utils/hooks"
 import { KanbanRecord } from "@web/views/kanban/kanban_record"
 

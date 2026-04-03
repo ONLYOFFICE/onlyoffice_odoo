@@ -1,4 +1,6 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
+
 import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"

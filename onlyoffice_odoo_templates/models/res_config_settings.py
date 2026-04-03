@@ -1,3 +1,5 @@
+# Copyright (C) 2026 Ascensio System SIA
+
 from odoo import fields, models
 
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils
