@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { Component, onMounted, onWillUnmount } from "@odoo/owl"
 
