@@ -295,7 +295,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         document_sudo = self._from_access_token(access_token)
 
         if not request.env.user._is_public() or not hasattr(response, "qcontext"):
-            return
+            return response
 
         qcontext = response.qcontext
 
