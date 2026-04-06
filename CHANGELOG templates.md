@@ -5,6 +5,7 @@
 ## Added
 
 - list view for templates
+- new type of reports "onlyoffice-pdf"
 
 ## Fixed
 

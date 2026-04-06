@@ -16,6 +16,7 @@
         "security/ir.model.access.csv",
         "views/onlyoffice_menu_views.xml",
         "views/res_config_settings_views.xml",
+        "views/ir_actions_report_views.xml",
     ],
     "demo": ["data/templates_data.xml"],
     "license": "LGPL-3",
@@ -33,6 +34,7 @@
         "web.assets_backend": [
             "onlyoffice_odoo_templates/static/src/css/*",
             "onlyoffice_odoo_templates/static/src/views/**/*",
+            "onlyoffice_odoo_templates/static/src/js/report/action_manager_report.esm.js",
         ],
     },
 }
