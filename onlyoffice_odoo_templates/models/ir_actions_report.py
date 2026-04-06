@@ -157,7 +157,11 @@ class IrActionsReport(models.Model):
         if not has_duplicated_ids and report_sudo.attachment and not self._context.get("report_pdf_no_attachment"):
             attachment_vals_list = self._prepare_pdf_report_attachment_vals_list(report_sudo, collected_streams)
             if attachment_vals_list:
-                attachment_names = ", ".join(x["name"] for x in attachment_vals_list)
+                for vals in attachment_vals_list:
+                    if "name" in vals and isinstance(vals["name"], set | list | tuple):
+                        vals["name"] = ", ".join(str(n) for n in vals["name"]) if vals["name"] else ""
+
+                attachment_names = ", ".join(str(x["name"]) for x in attachment_vals_list)
                 try:
                     self.env["ir.attachment"].create(attachment_vals_list)
                 except AccessError:
