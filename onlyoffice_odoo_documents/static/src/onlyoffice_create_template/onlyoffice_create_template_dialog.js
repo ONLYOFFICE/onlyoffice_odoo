@@ -77,14 +77,14 @@ export class CreateDialog extends Component {
         this.data.close()
         if (same_tab && !isDesktopEditor) {
           const action = {
-            params: { attachment_id: result.file_id },
+            params: { document_id: result.document_id },
             tag: "onlyoffice_editor",
             target: "current",
             type: "ir.actions.client",
           }
           return this.actionService.doAction(action)
         }
-        return window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+        return window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
       }
     }
   }
