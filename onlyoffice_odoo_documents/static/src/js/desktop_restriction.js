@@ -37,7 +37,8 @@ if (isDesktopEditor) {
       dropdownMenus.forEach((menu) => {
         const isInModal = menu.closest(".modal, .o_dialog, .o_technical_modal, .o-overlay-item")
         const isActionMenu = menu.closest(".btn-group")
-        if (!isInModal && !isActionMenu) {
+        const isAutocomplete = menu.classList.contains("o-autocomplete--dropdown-menu")
+        if (!isInModal && !isActionMenu && !isAutocomplete) {
           menu.style.display = "none"
         }
       })
@@ -71,6 +72,7 @@ if (isDesktopEditor) {
           ".o_documents_inspector_preview",
           ".o_document_preview",
           ".o_documents_single_preview",
+          ".dropdown-item-studio",
         ].join(", ")
         const target = e.target.closest(blockedSelectors)
         if (target && !e.target.closest(".o_field_boolean_favorite")) {

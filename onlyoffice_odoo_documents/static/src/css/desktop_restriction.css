@@ -177,3 +177,9 @@ body.desktop-editor-mode .o_home_menu .o_app {
 body.desktop-editor-mode .o_home_menu {
   display: none !important;
 }
+
+/* Hide Add Custom Field button in Studio */
+body.desktop-editor-mode .dropdown-item-studio {
+  display: none !important;
+  pointer-events: none !important;
+}
