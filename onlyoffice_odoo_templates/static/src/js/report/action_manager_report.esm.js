@@ -1,3 +1,5 @@
+/** @odoo-module **/
+
 import { download } from "@web/core/network/download"
 import { registry } from "@web/core/registry"
 import { user } from "@web/core/user"

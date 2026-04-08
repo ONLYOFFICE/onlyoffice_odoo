@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 // eslint-disable-next-line @stylistic/max-len
 import { DocumentsManageVersions } from "@documents/components/documents_manage_versions_panel/documents_manage_versions_panel"

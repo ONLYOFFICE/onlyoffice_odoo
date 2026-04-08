@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsListController } from "@documents/views/list/documents_list_controller"
 import { patch } from "@web/core/utils/patch"

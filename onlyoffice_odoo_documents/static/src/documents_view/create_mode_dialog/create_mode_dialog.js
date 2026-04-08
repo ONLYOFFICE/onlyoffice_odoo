@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { FormGallery } from "@onlyoffice_odoo/views/form_gallery/form_gallery"
 import { CreateDialog } from "@onlyoffice_odoo_documents/onlyoffice_create_template/onlyoffice_create_template_dialog"
@@ -74,6 +75,7 @@ export class CreateModeDialog extends Component {
         })
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
         if (same_tab) {
+          this.data.close()
           const action = {
             params: { attachment_id: result.file_id },
             tag: "onlyoffice_editor",

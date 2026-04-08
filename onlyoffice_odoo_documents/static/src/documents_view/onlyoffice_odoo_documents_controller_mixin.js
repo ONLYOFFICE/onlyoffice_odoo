@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { onWillStart } from "@odoo/owl"
 import { _t } from "@web/core/l10n/translation"

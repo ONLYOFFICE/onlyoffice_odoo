@@ -1,4 +1,6 @@
 /** @odoo-module */
+// Copyright (C) 2026 Ascensio System SIA
+
 import { registry } from "@web/core/registry"
 import { kanbanView } from "@web/views/kanban/kanban_view"
 import { OnlyofficeKanbanController } from "./onlyoffice_kanban_controller"

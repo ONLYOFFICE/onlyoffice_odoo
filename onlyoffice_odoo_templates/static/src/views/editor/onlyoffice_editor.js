@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { cookie } from "@web/core/browser/cookie"
 import { router } from "@web/core/browser/router"

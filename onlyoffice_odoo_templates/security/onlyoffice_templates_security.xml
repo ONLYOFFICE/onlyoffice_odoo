@@ -1,4 +1,5 @@
 <?xml version="1.0" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <data noupdate="0">
     <record id="module_category_onlyoffice_odoo_templates" model="ir.module.category">
