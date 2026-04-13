@@ -5,7 +5,6 @@ import base64
 import json
 import logging
 import re
-from mimetypes import guess_type
 
 import markupsafe
 from werkzeug.exceptions import Forbidden
@@ -66,8 +65,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
 
         try:
             dms_file.check_access("read")
-        except AccessError:
-            raise Forbidden()
+        except AccessError as err:
+            raise Forbidden() from err
 
         if not file_utils.can_view(dms_file.name):
             return request.not_found()
@@ -89,9 +88,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         auth="public",
         methods=["GET"],
     )
-    def get_dms_file_content(
-        self, file_id, oo_security_token=None, access_token=None, **kwargs
-    ):
+    def get_dms_file_content(self, file_id, oo_security_token=None, access_token=None, **kwargs):
         """Serve raw file bytes to the ONLYOFFICE Docs server."""
         user = self.get_user_from_token(oo_security_token)
         dms_file = request.env["dms.file"].with_user(user).browse(file_id)
@@ -108,11 +105,9 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             return request.not_found()
 
         if jwt_utils.is_jwt_enabled(request.env):
-            token = request.httprequest.headers.get(
-                config_utils.get_jwt_header(request.env), ""
-            )
+            token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env), "")
             if token.startswith("Bearer "):
-                token = token[len("Bearer "):]
+                token = token[len("Bearer ") :]
             if not token:
                 _logger.warning("DMS content: JWT expected but missing for file %s", file_id)
                 raise Exception("Expected JWT from ONLYOFFICE Docs server")
@@ -143,9 +138,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         type="http",
         csrf=False,
     )
-    def dms_editor_callback(
-        self, file_id, oo_security_token=None, access_token=None, **kwargs
-    ):
+    def dms_editor_callback(self, file_id, oo_security_token=None, access_token=None, **kwargs):
         """Receive the edited file from ONLYOFFICE Docs and write it back to DMS."""
         response_json = {"error": 0}
 
@@ -155,21 +148,19 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             dms_file = request.env["dms.file"].with_user(user).browse(file_id)
 
             if not dms_file.exists():
-                raise Exception("DMS file not found: %s" % file_id)
+                raise Exception(f"DMS file not found: {file_id}")
 
             if access_token and not dms_file.check_access_token(access_token):
-                raise Exception("Invalid access token for DMS file %s" % file_id)
+                raise Exception(f"Invalid access token for DMS file {file_id}")
 
             dms_file.check_access("write")
 
             if jwt_utils.is_jwt_enabled(request.env):
                 token = body.get("token") or ""
                 if not token:
-                    token = request.httprequest.headers.get(
-                        config_utils.get_jwt_header(request.env), ""
-                    )
+                    token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env), "")
                     if token.startswith("Bearer "):
-                        token = token[len("Bearer "):]
+                        token = token[len("Bearer ") :]
                 if not token:
                     raise Exception("Expected JWT from ONLYOFFICE Docs server")
                 body = jwt_utils.decode_token(request.env, token)
@@ -180,9 +171,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             _logger.info("DMS callback file=%s status=%s", file_id, status)
 
             if status in (2, 3):  # 2=MustSave, 3=Corrupted (force-save)
-                file_url = url_utils.replace_public_url_to_internal(
-                    request.env, body.get("url")
-                )
+                file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 new_bytes = onlyoffice_urlopen(file_url).read()
                 dms_file.with_user(user).write(
                     {
@@ -190,12 +179,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
                         "oo_version": dms_file.oo_version + 1,
                     }
                 )
-                dms_file.sudo().message_post(
-                    body=_("File edited by %(user)s", user=user.name)
-                )
-                _logger.info(
-                    "DMS file %s saved (oo_version=%s)", file_id, dms_file.oo_version
-                )
+                dms_file.sudo().message_post(body=_("File edited by %(user)s", user=user.name))
+                _logger.info("DMS file %s saved (oo_version=%s)", file_id, dms_file.oo_version)
 
         except Exception as ex:
             _logger.error("DMS callback error file=%s: %s", file_id, ex)
@@ -218,9 +203,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         methods=["POST"],
         type="json",
     )
-    def post_dms_file_create(
-        self, directory_id, supported_format, title, url=None
-    ):
+    def post_dms_file_create(self, directory_id, supported_format, title, url=None):
         """
         Create a blank ONLYOFFICE document inside a DMS directory.
 
@@ -231,13 +214,12 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         try:
             if url:
                 import requests as _req
+
                 resp = _req.get(url, stream=True, timeout=30)
                 resp.raise_for_status()
                 file_data = resp.content
             else:
-                file_data = file_utils.get_default_file_template(
-                    request.env.user.lang, supported_format
-                )
+                file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
             dms_file = request.env["dms.file"].create(
                 {
@@ -293,9 +275,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         if not file_utils.can_view(dms_file.name):
             return request.not_found()
 
-        values = self._prepare_dms_shared_editor_values(
-            dms_file, access_token, link_access
-        )
+        values = self._prepare_dms_shared_editor_values(dms_file, access_token, link_access)
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     # ----------------------------------------------------------
@@ -318,19 +298,17 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
 
             dms_file = request.env["dms.file"].sudo().browse(file_id)
             if not dms_file.exists():
-                raise Exception("DMS file not found: %s" % file_id)
+                raise Exception(f"DMS file not found: {file_id}")
 
             if dms_file.get_oo_effective_link_access() in ("none", "view"):
-                raise Exception("No write access via share link for file %s" % file_id)
+                raise Exception(f"No write access via share link for file {file_id}")
 
             if jwt_utils.is_jwt_enabled(request.env):
                 token = body.get("token") or ""
                 if not token:
-                    token = request.httprequest.headers.get(
-                        config_utils.get_jwt_header(request.env), ""
-                    )
+                    token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env), "")
                     if token.startswith("Bearer "):
-                        token = token[len("Bearer "):]
+                        token = token[len("Bearer ") :]
                 if not token:
                     raise Exception("Expected JWT from ONLYOFFICE Docs server")
                 body = jwt_utils.decode_token(request.env, token)
@@ -339,9 +317,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
 
             status = body["status"]
             if status in (2, 3):
-                file_url = url_utils.replace_public_url_to_internal(
-                    request.env, body.get("url")
-                )
+                file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 new_bytes = onlyoffice_urlopen(file_url).read()
                 dms_file.with_user(user).sudo().write(
                     {
@@ -349,9 +325,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
                         "oo_version": dms_file.oo_version + 1,
                     }
                 )
-                dms_file.sudo().message_post(
-                    body=_("File edited by %(user)s", user=user.name)
-                )
+                dms_file.sudo().message_post(body=_("File edited by %(user)s", user=user.name))
 
         except Exception as ex:
             _logger.error("DMS share callback error file=%s: %s", file_id, ex)
@@ -385,11 +359,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         if isinstance(security_token, bytes):
             security_token = security_token.decode("utf-8")
 
-        path_part = (
-            f"{dms_file.id}"
-            f"?oo_security_token={security_token}"
-            f"&shardkey={key}"
-        )
+        path_part = f"{dms_file.id}" f"?oo_security_token={security_token}" f"&shardkey={key}"
 
         document_type = file_utils.get_file_type(filename)
         is_mobile = bool(
@@ -427,20 +397,14 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
 
         # Only provide a callbackUrl for roles that produce edits
         if effective_role in ("edit", "commenter", "reviewer", "form_filling", "custom_filter"):
-            root_config["editorConfig"]["callbackUrl"] = (
-                odoo_url + "onlyoffice/dms/editor/callback/" + path_part
-            )
+            root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/dms/editor/callback/" + path_part
 
         if jwt_utils.is_jwt_enabled(request.env):
-            root_config["token"] = jwt_utils.encode_payload(
-                request.env, root_config
-            )
+            root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
         return {
             "docTitle": filename,
-            "docIcon": (
-                f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico"
-            ),
+            "docIcon": (f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico"),
             "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }
@@ -501,20 +465,15 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             if isinstance(security_token, bytes):
                 security_token = security_token.decode("utf-8")
             root_config["editorConfig"]["callbackUrl"] = (
-                odoo_url
-                + f"onlyoffice/dms/share/callback/{dms_file.id}/{security_token}"
+                odoo_url + f"onlyoffice/dms/share/callback/{dms_file.id}/{security_token}"
             )
 
         if jwt_utils.is_jwt_enabled(request.env):
-            root_config["token"] = jwt_utils.encode_payload(
-                request.env, root_config
-            )
+            root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
         return {
             "docTitle": filename,
-            "docIcon": (
-                f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico"
-            ),
+            "docIcon": (f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico"),
             "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
             "editorConfig": markupsafe.Markup(json.dumps(root_config)),
         }

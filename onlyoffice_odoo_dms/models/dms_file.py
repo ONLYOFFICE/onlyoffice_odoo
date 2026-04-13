@@ -6,7 +6,7 @@ import logging
 from odoo import api, fields, models
 from odoo.exceptions import AccessError
 
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils
+from odoo.addons.onlyoffice_odoo.utils import file_utils
 
 _logger = logging.getLogger(__name__)
 
@@ -41,10 +41,7 @@ class DmsFile(models.Model):
         string="ONLYOFFICE Version",
         default=0,
         copy=False,
-        help=(
-            "Incremented each time a file is saved back from ONLYOFFICE. "
-            "Used as part of the document cache key."
-        ),
+        help=("Incremented each time a file is saved back from ONLYOFFICE. " "Used as part of the document cache key."),
     )
     oo_user_access_ids = fields.One2many(
         "onlyoffice.dms.file.access.user",
@@ -96,6 +93,7 @@ class DmsFile(models.Model):
     def oo_role_dynamic_values(self):
         """Proxy so the widget can call this from the dms.file form view."""
         from .onlyoffice_dms_access import _ROLES_ALL, _ROLES_READONLY
+
         level = self.env.context.get("depending_on")
         if level == "write":
             return _ROLES_ALL
@@ -168,8 +166,8 @@ class DmsFile(models.Model):
         try:
             dms_file_as_user.check_access("write")
             return "edit"
-        except (AccessError, Exception):
-            pass
+        except (AccessError, Exception) as err:
+            _logger.debug("No DMS write access for user %s on file %s: %s", user.id, self.id, err)
         try:
             dms_file_as_user.check_access("read")
             return "view"
@@ -188,9 +186,12 @@ class DmsFile(models.Model):
             return "none"
 
         priority = {
-            "none": 0, "view": 1,
-            "custom_filter": 2, "form_filling": 3,
-            "commenter": 4, "reviewer": 5,
+            "none": 0,
+            "view": 1,
+            "custom_filter": 2,
+            "form_filling": 3,
+            "commenter": 4,
+            "reviewer": 5,
             "edit": 6,
         }
         best = max(user_groups.mapped("oo_role"), key=lambda r: priority.get(r or "none", 0))

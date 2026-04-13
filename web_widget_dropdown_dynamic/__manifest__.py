@@ -8,7 +8,7 @@
     "version": "18.0.2.0.0",
     "license": "LGPL-3",
     "author": "CorporateHub, Odoo Community Association (OCA)",
-    "website": "https://github.com/OCA/web",
+    "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "depends": ["web"],
     "installable": True,
     "assets": {

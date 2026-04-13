@@ -26,11 +26,17 @@
             "onlyoffice_odoo_dms/static/src/js/dms_editor_action.js",
             "onlyoffice_odoo_dms/static/src/xml/dms_editor_action.xml",
             # JS must load after DMS views register their button templates
-            ("after", "dms/static/src/js/views/file_list_view.esm.js",
-             "onlyoffice_odoo_dms/static/src/js/dms_file_onlyoffice.js"),
+            (
+                "after",
+                "dms/static/src/js/views/file_list_view.esm.js",
+                "onlyoffice_odoo_dms/static/src/js/dms_file_onlyoffice.js",
+            ),
             # XML must load after DMS button templates are defined
-            ("after", "dms/static/src/js/views/file_kanban_renderer.xml",
-             "onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml"),
+            (
+                "after",
+                "dms/static/src/js/views/file_kanban_renderer.xml",
+                "onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml",
+            ),
         ],
     },
     "installable": True,

@@ -4,40 +4,40 @@
     License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
 -->
 <odoo>
-    <!-- Extend dms.access.group form: add ONLYOFFICE role next to DMS permissions -->
-    <record id="view_dms_access_group_form_onlyoffice" model="ir.ui.view">
-        <field name="name">dms_access_group.form.onlyoffice</field>
-        <field name="model">dms.access.group</field>
-        <field name="inherit_id" ref="dms.view_dms_access_groups_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='perm_unlink']" position="after">
-                <field
-                    name="oo_role"
-                    widget="dynamic_dropdown"
-                    options="{'values': 'oo_role_dynamic_values'}"
-                    context="{'depending_on': perm_write}"
-                    required="1"
-                    help="Default ONLYOFFICE role granted to users in this group. Overridden by per-file or per-user settings."
-                />
-            </xpath>
-        </field>
-    </record>
+  <!-- Extend dms.access.group form: add ONLYOFFICE role next to DMS permissions -->
+  <record id="view_dms_access_group_form_onlyoffice" model="ir.ui.view">
+    <field name="name">dms_access_group.form.onlyoffice</field>
+    <field name="model">dms.access.group</field>
+    <field name="inherit_id" ref="dms.view_dms_access_groups_form" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='perm_unlink']" position="after">
+        <field
+          name="oo_role"
+          widget="dynamic_dropdown"
+          options="{'values': 'oo_role_dynamic_values'}"
+          context="{'depending_on': perm_write}"
+          required="1"
+          help="Default ONLYOFFICE role granted to users in this group. Overridden by per-file or per-user settings."
+        />
+      </xpath>
+    </field>
+  </record>
 
-    <!-- Extend dms.access.group list: add ONLYOFFICE role column -->
-    <record id="view_dms_access_group_list_onlyoffice" model="ir.ui.view">
-        <field name="name">dms_access_group.list.onlyoffice</field>
-        <field name="model">dms.access.group</field>
-        <field name="inherit_id" ref="dms.view_dms_access_groups_tree"/>
-        <field name="arch" type="xml">
-            <xpath expr="//field[@name='perm_unlink']" position="after">
-                <field
-                    name="oo_role"
-                    widget="dynamic_dropdown"
-                    options="{'values': 'oo_role_dynamic_values'}"
-                    context="{'depending_on': perm_write}"
-                    required="1"
-                />
-            </xpath>
-        </field>
-    </record>
+  <!-- Extend dms.access.group list: add ONLYOFFICE role column -->
+  <record id="view_dms_access_group_list_onlyoffice" model="ir.ui.view">
+    <field name="name">dms_access_group.list.onlyoffice</field>
+    <field name="model">dms.access.group</field>
+    <field name="inherit_id" ref="dms.view_dms_access_groups_tree" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='perm_unlink']" position="after">
+        <field
+          name="oo_role"
+          widget="dynamic_dropdown"
+          options="{'values': 'oo_role_dynamic_values'}"
+          context="{'depending_on': perm_write}"
+          required="1"
+        />
+      </xpath>
+    </field>
+  </record>
 </odoo>

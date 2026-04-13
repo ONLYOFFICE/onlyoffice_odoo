@@ -168,4 +168,3 @@ class OnlyofficeDmsFileAccessUser(models.Model):
         if level == "read":
             return _ROLES_READONLY
         return [("none", "None")]
-
