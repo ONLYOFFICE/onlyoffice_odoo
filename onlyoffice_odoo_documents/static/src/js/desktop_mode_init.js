@@ -5,6 +5,27 @@ import { registry } from "@web/core/registry"
 const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
 
 if (isDesktopEditor) {
+  const syncDesktopTheme = () => {
+    if (window?.RendererProcessVariable?.theme) {
+      const desktopTheme = window.RendererProcessVariable.theme.system
+      if (desktopTheme === 'dark' || desktopTheme === 'light') {
+        const currentTheme = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('color_scheme='))
+          ?.split('=')[1]
+
+        if (currentTheme !== desktopTheme) {
+          document.cookie = `color_scheme=${desktopTheme}; path=/`
+          document.cookie = `configured_color_scheme=${desktopTheme}; path=/`
+
+          window.location.reload()
+        }
+      }
+    }
+  }
+
+  syncDesktopTheme()
+
   const addBodyClass = () => {
     if (document.body) {
       document.body.classList.add("desktop-editor-mode")
