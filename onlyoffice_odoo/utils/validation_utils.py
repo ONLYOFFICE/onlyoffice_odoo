@@ -23,7 +23,9 @@ def valid_url(url):
 
 
 def settings_validation(self):
-    base_url = self.doc_server_odoo_url
+    from odoo.addons.onlyoffice_odoo.utils import config_utils
+
+    base_url = self.doc_server_odoo_url or config_utils.get_base_or_odoo_url(self.env)
     public_url = self.doc_server_public_url
     inner_url = self.doc_server_inner_url
     jwt_secret = self.doc_server_jwt_secret
@@ -35,14 +37,16 @@ def settings_validation(self):
     if inner_url and inner_url != public_url:
         url = inner_url
 
-    check_mixed_content(base_url, url, demo)
+    if base_url and url:
+        check_mixed_content(base_url, url, demo)
     check_doc_serv_url(url, demo, disable_certificate)
     check_doc_serv_command_service(self.env, url, jwt_secret, jwt_header, disable_certificate, demo)
-    check_doc_serv_convert_service(self.env, url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
+    if base_url:
+        check_doc_serv_convert_service(self.env, url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
 
 
 def check_mixed_content(base_url, url, demo):
-    if base_url.startswith("https") and not url.startswith("https"):
+    if str(base_url).startswith("https") and not str(url).startswith("https"):
         get_message_error("Mixed Active Content is not allowed. HTTPS address for Document Server is required.", demo)
 
 
