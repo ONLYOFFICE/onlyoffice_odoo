@@ -15,7 +15,7 @@ def valid_url(url):
     if not url:
         return True
     # pylint: disable=anomalous-backslash-in-string
-    pattern = "^(https?:\/\/)?[\w-]{1,32}(\.[\w-]{1,32})*[\/\w-]*(:[\d]{1,5}\/?)?$"
+      pattern = r"^(https?://)?[\w-]{1,32}(\.[\w-]{1,32})*[/\w-]*(:[\d]{1,5}/?)?$"
     # pylint: enable=anomalous-backslash-in-string
     if re.findall(pattern, url):
         return True
