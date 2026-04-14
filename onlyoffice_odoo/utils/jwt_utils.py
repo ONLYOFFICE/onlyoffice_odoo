@@ -14,7 +14,7 @@ def is_jwt_enabled(env):
 def encode_payload(env, payload, secret=None):
     if secret is None:
         secret = config_utils.get_jwt_secret(env)
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     exp = now + datetime.timedelta(hours=24)
     payload["iat"] = int(now.timestamp())
     payload["exp"] = int(exp.timestamp())
