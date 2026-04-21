@@ -88,7 +88,7 @@ def onlyoffice_request(url, method, opts=None):
 
 
 class Onlyoffice_Connector(http.Controller):
-    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
+    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         _logger.info("POST /onlyoffice/editor/get_config - document: %s, attachment: %s", document_id, attachment_id)
         document = None
@@ -536,7 +536,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             _logger.error(f"API request failed to {url}: {str(e)}")
             raise UserError(f"Failed to connect to Forms API: {str(e)}") from e
 
-    @http.route("/onlyoffice/oforms/locales", type="json", auth="user")
+    @http.route("/onlyoffice/oforms/locales", type="jsonrpc", auth="user")
     def get_oform_locales(self):
         url = self.OFORMS_URL
         endpoint = "i18n/locales"
@@ -552,7 +552,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             ]
         }
 
-    @http.route("/onlyoffice/oforms/category-types", type="json", auth="user")
+    @http.route("/onlyoffice/oforms/category-types", type="jsonrpc", auth="user")
     def get_category_types(self, locale="en"):
         url = self.OFORMS_URL
         endpoint = "menu-translations"
@@ -582,7 +582,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
 
         return {"data": categories}
 
-    @http.route("/onlyoffice/oforms/subcategories", type="json", auth="user")
+    @http.route("/onlyoffice/oforms/subcategories", type="jsonrpc", auth="user")
     def get_subcategories(self, category_type, locale="en"):
         url = self.OFORMS_URL
         endpoint_map = {"categorie": "categories", "type": "types", "compilation": "compilations"}
@@ -616,7 +616,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
 
         return {"data": subcategories}
 
-    @http.route("/onlyoffice/oforms", type="json", auth="user")
+    @http.route("/onlyoffice/oforms", type="jsonrpc", auth="user")
     def get_oforms(self, params=None, **kwargs):
         url = self.CMSOFORMS_URL
         if params is None:
