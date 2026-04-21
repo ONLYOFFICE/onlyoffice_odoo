@@ -4,7 +4,7 @@
 
 ## Added
 
-- shardKey param to url for requests to Docs
+- shardkey param to url for requests to Docs
 
 ## Changed
 
