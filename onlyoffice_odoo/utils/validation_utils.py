@@ -16,7 +16,7 @@ from odoo.addons.onlyoffice_odoo.utils import jwt_utils
 def valid_url(url):
     if not url:
         return True
-    pattern = r"^(https?:\/\/)?[\w-]{1,32}(\.[\w-]{1,32})*[\/\w-]*(:[\d]{1,5}\/?)?$"
+    pattern = r"^(https?://)?[\w-]{1,32}(\.[\w-]{1,32})*[/\w-]*(:[\d]{1,5}/?)?$"
     if re.findall(pattern, url):
         return True
     return False
