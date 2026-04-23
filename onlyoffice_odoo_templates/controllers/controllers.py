@@ -38,7 +38,7 @@ class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
         except Exception as e:
             return request.not_found(f"Error: {str(e)}")
 
-    @http.route("/onlyoffice/template/editor", auth="user", methods=["POST"], type="json", csrf=False)
+    @http.route("/onlyoffice/template/editor", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def override_render_editor(self, attachment_id, access_token=None):
         attachment = self.get_attachment(attachment_id)
         if not attachment:
