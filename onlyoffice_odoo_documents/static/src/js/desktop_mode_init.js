@@ -7,7 +7,7 @@ const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
 if (isDesktopEditor) {
   const syncDesktopTheme = () => {
     if (window?.RendererProcessVariable?.theme) {
-      const desktopTheme = window.RendererProcessVariable.theme.system
+      const desktopTheme = window.RendererProcessVariable.theme.type
       if (desktopTheme === 'dark' || desktopTheme === 'light') {
         const currentTheme = document.cookie
           .split('; ')
