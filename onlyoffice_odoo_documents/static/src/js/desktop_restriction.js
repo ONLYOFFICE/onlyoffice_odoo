@@ -28,7 +28,8 @@ if (isDesktopEditor) {
       const popovers = document.querySelectorAll(".o_popover, .o_mail_activity")
       popovers.forEach((popover) => {
         const isInModal = popover.closest(".modal, .o_dialog, .o_technical_modal, .o-overlay-item")
-        if (!isInModal) {
+        const isFolderSettings = popover.classList.contains("o_search_panel_item_settings_popover")
+        if (!isInModal && !isFolderSettings) {
           popover.style.display = "none"
         }
       })
