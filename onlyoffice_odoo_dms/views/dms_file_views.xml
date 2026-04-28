@@ -57,9 +57,9 @@
                 <field
                   name="role"
                   string="ONLYOFFICE Role Override"
-                  widget="dynamic_dropdown"
+                  widget="oo_role_select"
                   options="{'values': 'oo_role_dynamic_values'}"
-                  context="{'depending_on': dms_access_level}"
+                  context="{'depending_on': dms_access_level, 'file_name': parent.name}"
                   required="1"
                 />
               </list>

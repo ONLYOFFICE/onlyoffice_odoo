@@ -12,7 +12,7 @@
     "category": "Document Management",
     "version": "18.0.1.0.0",
     "license": "LGPL-3",
-    "depends": ["onlyoffice_odoo", "dms", "web_widget_dropdown_dynamic"],
+    "depends": ["onlyoffice_odoo", "dms"],
     "data": [
         "security/ir.model.access.csv",
         "views/onlyoffice_dms_access_views.xml",
@@ -22,7 +22,7 @@
     "assets": {
         "web.assets_backend": [
             "onlyoffice_odoo_dms/static/src/css/dms_editor_action.css",
-            # "onlyoffice_odoo_dms/static/src/js/patch_dynamic_dropdown.js",  # disabled; fix submitted upstream
+            "onlyoffice_odoo_dms/static/src/js/oo_role_select.js",
             "onlyoffice_odoo_dms/static/src/js/dms_editor_action.js",
             "onlyoffice_odoo_dms/static/src/xml/dms_editor_action.xml",
             # JS must load after DMS views register their button templates

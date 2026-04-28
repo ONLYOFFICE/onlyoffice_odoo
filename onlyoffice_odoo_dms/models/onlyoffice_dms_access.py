@@ -21,6 +21,30 @@ _ROLES_READONLY = [
     ("reviewer", "Reviewer"),
 ]
 
+_ROLE_TO_ACTION = {
+    "commenter": "comment",
+    "reviewer": "review",
+    "form_filling": "fill",
+    "custom_filter": "customfilter",
+}
+
+
+def _filter_roles_by_file(roles, file_name):
+    """Remove roles whose required action is not supported by the file format."""
+    if not file_name:
+        return roles
+    from odoo.addons.onlyoffice_odoo.utils import file_utils, format_utils
+
+    ext = file_utils.get_file_ext(file_name)
+    actions = set()
+    for fmt in format_utils.get_supported_formats():
+        if fmt.name == ext:
+            actions = set(fmt.actions)
+            break
+    if not actions:
+        return roles
+    return [(key, label) for key, label in roles if key not in _ROLE_TO_ACTION or _ROLE_TO_ACTION[key] in actions]
+
 
 class DmsAccessGroup(models.Model):
     _inherit = "dms.access.group"
@@ -161,10 +185,12 @@ class OnlyofficeDmsFileAccessUser(models.Model):
 
     @api.model
     def oo_role_dynamic_values(self):
-        """Return available ONLYOFFICE roles based on the user's DMS access level."""
+        """Return available ONLYOFFICE roles based on the user's DMS access level and file type."""
         level = self.env.context.get("depending_on")
         if level == "write":
-            return _ROLES_ALL
-        if level == "read":
-            return _ROLES_READONLY
-        return [("none", "None")]
+            roles = _ROLES_ALL
+        elif level == "read":
+            roles = _ROLES_READONLY
+        else:
+            return [("none", "None")]
+        return _filter_roles_by_file(roles, self.env.context.get("file_name"))

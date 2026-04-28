@@ -92,14 +92,16 @@ class DmsFile(models.Model):
     @api.model
     def oo_role_dynamic_values(self):
         """Proxy so the widget can call this from the dms.file form view."""
-        from .onlyoffice_dms_access import _ROLES_ALL, _ROLES_READONLY
+        from .onlyoffice_dms_access import _ROLES_ALL, _ROLES_READONLY, _filter_roles_by_file
 
         level = self.env.context.get("depending_on")
         if level == "write":
-            return _ROLES_ALL
-        if level == "read":
-            return _ROLES_READONLY
-        return [("none", "None")]
+            roles = _ROLES_ALL
+        elif level == "read":
+            roles = _ROLES_READONLY
+        else:
+            return [("none", "None")]
+        return _filter_roles_by_file(roles, self.env.context.get("file_name"))
 
     # ----------------------------------------------------------
     # Actions

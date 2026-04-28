@@ -13,7 +13,7 @@
       <xpath expr="//field[@name='perm_unlink']" position="after">
         <field
           name="oo_role"
-          widget="dynamic_dropdown"
+          widget="oo_role_select"
           options="{'values': 'oo_role_dynamic_values'}"
           context="{'depending_on': perm_write}"
           required="1"
@@ -32,7 +32,7 @@
       <xpath expr="//field[@name='perm_unlink']" position="after">
         <field
           name="oo_role"
-          widget="dynamic_dropdown"
+          widget="oo_role_select"
           options="{'values': 'oo_role_dynamic_values'}"
           context="{'depending_on': perm_write}"
           required="1"
