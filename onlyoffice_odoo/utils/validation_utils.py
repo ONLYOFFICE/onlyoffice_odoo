@@ -37,16 +37,14 @@ def settings_validation(self):
     if inner_url and inner_url != public_url:
         url = inner_url
 
-    if base_url and url:
-        check_mixed_content(base_url, url, demo)
+    check_mixed_content(base_url, url, demo)
     check_doc_serv_url(url, demo, disable_certificate)
     check_doc_serv_command_service(self.env, url, jwt_secret, jwt_header, disable_certificate, demo)
-    if base_url:
-        check_doc_serv_convert_service(self.env, url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
+    check_doc_serv_convert_service(self.env, url, base_url, jwt_secret, jwt_header, disable_certificate, demo)
 
 
 def check_mixed_content(base_url, url, demo):
-    if str(base_url).startswith("https") and not str(url).startswith("https"):
+    if base_url.startswith("https") and not url.startswith("https"):
         get_message_error("Mixed Active Content is not allowed. HTTPS address for Document Server is required.", demo)
 
 
