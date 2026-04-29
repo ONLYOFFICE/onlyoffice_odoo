@@ -24,7 +24,7 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 
 
 class OnlyofficeDocuments_Connector(http.Controller):
-    @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="json")
+    @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="jsonrpc")
     def post_file_create(self, folder_id, supported_format, title, url=None):
         result = {"error": None, "file_id": None, "document_id": None}
 
