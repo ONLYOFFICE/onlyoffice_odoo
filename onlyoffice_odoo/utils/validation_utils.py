@@ -23,7 +23,9 @@ def valid_url(url):
 
 
 def settings_validation(self):
-    base_url = self.doc_server_odoo_url
+    from odoo.addons.onlyoffice_odoo.utils import config_utils
+
+    base_url = self.doc_server_odoo_url or config_utils.get_base_or_odoo_url(self.env)
     public_url = self.doc_server_public_url
     inner_url = self.doc_server_inner_url
     jwt_secret = self.doc_server_jwt_secret
