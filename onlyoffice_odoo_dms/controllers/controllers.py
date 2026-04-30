@@ -5,6 +5,7 @@ import base64
 import json
 import logging
 import re
+from urllib.parse import quote as url_quote
 
 import markupsafe
 from werkzeug.exceptions import Forbidden
@@ -122,7 +123,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             binary,
             headers=[
                 ("Content-Type", dms_file.mimetype or "application/octet-stream"),
-                ("Content-Disposition", f'attachment; filename="{dms_file.name}"'),
+                ("Content-Disposition", f"attachment; filename*=UTF-8''{url_quote(dms_file.name, safe='')}"),
                 ("Content-Length", len(binary)),
             ],
         )
