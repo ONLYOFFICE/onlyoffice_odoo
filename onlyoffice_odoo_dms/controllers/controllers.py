@@ -197,13 +197,15 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
     # Create a blank document in DMS
     # ----------------------------------------------------------
 
+    _ALLOWED_FORMATS = frozenset(("docx", "xlsx", "pptx", "pdf"))
+
     @http.route(
         "/onlyoffice/dms/file/create",
         auth="user",
         methods=["POST"],
         type="json",
     )
-    def post_dms_file_create(self, directory_id, supported_format, title, url=None):
+    def post_dms_file_create(self, directory_id, supported_format, title):
         """
         Create a blank ONLYOFFICE document inside a DMS directory.
 
@@ -212,14 +214,10 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         """
         result = {"error": None, "file_id": None}
         try:
-            if url:
-                import requests as _req
+            if supported_format not in self._ALLOWED_FORMATS:
+                raise ValueError(_("Unsupported format: %s", supported_format))
 
-                resp = _req.get(url, stream=True, timeout=30)
-                resp.raise_for_status()
-                file_data = resp.content
-            else:
-                file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
+            file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
             dms_file = request.env["dms.file"].create(
                 {
@@ -359,7 +357,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         if isinstance(security_token, bytes):
             security_token = security_token.decode("utf-8")
 
-        path_part = f"{dms_file.id}" f"?oo_security_token={security_token}" f"&shardkey={key}"
+        path_part = f"{dms_file.id}?oo_security_token={security_token}&shardkey={key}"
 
         document_type = file_utils.get_file_type(filename)
         is_mobile = bool(
