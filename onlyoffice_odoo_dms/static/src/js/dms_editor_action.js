@@ -45,13 +45,17 @@ export class OnlyofficeDmsEditorAction extends Component {
       const all = this.env.config.breadcrumbs || []
       const label = this._mode === "view" ? "Preview in ONLYOFFICE" : "Edit in ONLYOFFICE"
       // Replace the last entry (the editor action itself) with a descriptive label
-      this.bcState.items = all.length ? [
-        ...all.slice(0, -1),
-        {
-          jsId: all[all.length - 1].jsId,
-          name: label,
-        },
-      ] : []
+      if (all.length) {
+        this.bcState.items = [
+          ...all.slice(0, -1),
+          {
+            jsId: all[all.length - 1].jsId,
+            name: label,
+          },
+        ]
+      } else {
+        this.bcState.items = []
+      }
     })
 
     // Arrow function so `this` is always the component when called from template
