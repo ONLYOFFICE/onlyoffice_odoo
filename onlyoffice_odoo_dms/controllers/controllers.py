@@ -186,7 +186,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         except Exception as ex:
             _logger.error("DMS callback error file=%s: %s", file_id, ex)
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = str(ex)
 
         return request.make_response(
             data=json.dumps(response_json),
@@ -329,7 +329,7 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         except Exception as ex:
             _logger.error("DMS share callback error file=%s: %s", file_id, ex)
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = str(ex)
 
         return request.make_response(
             data=json.dumps(response_json),
