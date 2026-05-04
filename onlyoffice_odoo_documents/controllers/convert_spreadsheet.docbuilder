@@ -1,0 +1,245 @@
+// Convert Odoo Spreadsheet JSON to XLSX
+builder.CreateFile("xlsx");
+
+var spreadsheetData = SPREADSHEET_DATA_PLACEHOLDER;
+
+if (!spreadsheetData || !spreadsheetData.sheets) {
+    throw new Error("Invalid spreadsheet data: " + JSON.stringify(spreadsheetData));
+}
+
+
+// --- Pass 1: Create ALL sheets first so cross-sheet references work ---
+spreadsheetData.sheets.forEach(function(sheetData, sheetIndex) {
+    if (sheetIndex === 0) {
+        var firstSheet = Api.GetActiveSheet();
+        firstSheet.SetName(sheetData.name || "Sheet1");
+    } else {
+        Api.AddSheet(sheetData.name || "Sheet" + (sheetIndex + 1));
+    }
+});
+
+// --- Pass 2: Fill in data (columns, rows, cells, styles, merges) ---
+spreadsheetData.sheets.forEach(function(sheetData, sheetIndex) {
+    var oWorksheet = Api.GetSheet(sheetData.name || (sheetIndex === 0 ? "Sheet1" : "Sheet" + (sheetIndex + 1)));
+
+    // Set column widths
+    if (sheetData.cols) {
+        for (var colKey in sheetData.cols) {
+            var colIndex = parseInt(colKey);
+            var colData = sheetData.cols[colKey];
+            if (colData.size) {
+                // Convert pixels to characters (approximate)
+                var widthInChars = Math.round(colData.size / 7);
+                oWorksheet.SetColumnWidth(colIndex, widthInChars);
+            }
+        }
+    }
+
+    // Set row heights
+    if (sheetData.rows) {
+        for (var rowKey in sheetData.rows) {
+            var rowIndex = parseInt(rowKey);
+            var rowData = sheetData.rows[rowKey];
+            if (rowData.size) {
+                // Convert pixels to points
+                var heightInPoints = Math.round(rowData.size * 0.75);
+                oWorksheet.SetRowHeight(rowIndex, heightInPoints);
+            }
+        }
+    }
+
+    // Process cells
+    if (sheetData.cells) {
+        for (var cellAddress in sheetData.cells) {
+            var cellData = sheetData.cells[cellAddress];
+            var oRange = oWorksheet.GetRange(cellAddress);
+
+            // Set cell content (formula or value)
+            if (cellData.content) {
+                var content = cellData.content;
+
+                // Check if it's a formula (starts with =)
+                if (content.toString().startsWith("=")) {
+                    // Check if formula contains any ODOO.* function call
+                    // Handles: =ODOO.PIVOT(...), =-ODOO.PIVOT(...),
+                    // and nested: =ODOO.PIVOT(...,"1/"&ODOO.FILTER.VALUE("Year"))
+                    if (content.toString().indexOf("ODOO.") !== -1) {
+                        // Convert ALL ODOO.FUNC.NAME( to ODOO_FUNC_NAME( anywhere in the formula
+                        var convertedFormula = content.toString().replace(/ODOO\.([A-Z._]+)(\()/g, function(match, funcName, paren) {
+                            return "ODOO_" + funcName.replace(/\./g, "_") + paren;
+                        });
+
+                        // Insert the converted formula
+                        oRange.SetValue(convertedFormula);
+                    } else {
+                        // Regular formula (SUM, COUNT, etc.) - insert as is
+                        oRange.SetValue(content);
+                    }
+                } else {
+                    // Insert as value
+                    // Try to parse as number
+                    var numValue = parseFloat(content);
+                    if (!isNaN(numValue) && content.toString() === numValue.toString()) {
+                        oRange.SetValue(numValue);
+                    } else {
+                        oRange.SetValue(content);
+                    }
+                }
+            }
+
+            // Apply styles
+            if (cellData.style && spreadsheetData.styles && spreadsheetData.styles[cellData.style]) {
+                var styleData = spreadsheetData.styles[cellData.style];
+
+                // Bold
+                if (styleData.bold) {
+                    oRange.SetBold(true);
+                }
+
+                // Italic
+                if (styleData.italic) {
+                    oRange.SetItalic(true);
+                }
+
+                // Underline
+                if (styleData.underline) {
+                    oRange.SetUnderline("single");
+                }
+
+                // Strikethrough
+                if (styleData.strikethrough) {
+                    oRange.SetStrikeout(true);
+                }
+
+                // Font name
+                if (styleData.fontName) {
+                    oRange.SetFontName(styleData.fontName);
+                }
+
+                // Font size
+                if (styleData.fontSize) {
+                    oRange.SetFontSize(styleData.fontSize);
+                }
+
+                // Fill color
+                if (styleData.fillColor) {
+                    var fillColor = styleData.fillColor.replace("#", "");
+                    oRange.SetFillColor(Api.CreateColorFromRGB(
+                        parseInt(fillColor.substr(0, 2), 16),
+                        parseInt(fillColor.substr(2, 2), 16),
+                        parseInt(fillColor.substr(4, 2), 16)
+                    ));
+                }
+
+                // Text color
+                if (styleData.textColor) {
+                    var textColor = styleData.textColor.replace("#", "");
+                    oRange.SetFontColor(Api.CreateColorFromRGB(
+                        parseInt(textColor.substr(0, 2), 16),
+                        parseInt(textColor.substr(2, 2), 16),
+                        parseInt(textColor.substr(4, 2), 16)
+                    ));
+                }
+
+                // Horizontal alignment
+                if (styleData.align) {
+                    var halign = "left";
+                    if (styleData.align === "center") halign = "center";
+                    else if (styleData.align === "right") halign = "right";
+                    oRange.SetAlignHorizontal(halign);
+                }
+
+                // Vertical alignment
+                if (styleData.valign) {
+                    var valign = "bottom";
+                    if (styleData.valign === "middle") valign = "center";
+                    else if (styleData.valign === "top") valign = "top";
+                    oRange.SetAlignVertical(valign);
+                }
+            }
+
+            // Apply borders
+            if (cellData.border !== undefined && spreadsheetData.borders) {
+                var borderKey = cellData.border.toString();
+                var borderData = spreadsheetData.borders[borderKey];
+
+                if (borderData) {
+                    // Helper function to convert border style
+                    function getBorderStyle(style) {
+                        if (style === "thin") return "Thin";
+                        if (style === "medium") return "Medium";
+                        if (style === "thick") return "Thick";
+                        if (style === "dashed") return "Dashed";
+                        if (style === "dotted") return "Dotted";
+                        return "Thin";
+                    }
+
+                    // Helper function to convert color
+                    function getBorderColor(color) {
+                        if (!color) return Api.CreateColorFromRGB(0, 0, 0);
+                        var colorHex = color.replace("#", "");
+                        return Api.CreateColorFromRGB(
+                            parseInt(colorHex.substr(0, 2), 16),
+                            parseInt(colorHex.substr(2, 2), 16),
+                            parseInt(colorHex.substr(4, 2), 16)
+                        );
+                    }
+
+                    // Apply each border side
+                    if (borderData.top) {
+                        oRange.SetBorders("Top", getBorderStyle(borderData.top.style), getBorderColor(borderData.top.color));
+                    }
+                    if (borderData.bottom) {
+                        oRange.SetBorders("Bottom", getBorderStyle(borderData.bottom.style), getBorderColor(borderData.bottom.color));
+                    }
+                    if (borderData.left) {
+                        oRange.SetBorders("Left", getBorderStyle(borderData.left.style), getBorderColor(borderData.left.color));
+                    }
+                    if (borderData.right) {
+                        oRange.SetBorders("Right", getBorderStyle(borderData.right.style), getBorderColor(borderData.right.color));
+                    }
+                }
+            }
+
+            // Apply number format
+            if (cellData.format && spreadsheetData.formats && spreadsheetData.formats[cellData.format]) {
+                var formatData = spreadsheetData.formats[cellData.format];
+                oRange.SetNumberFormat(formatData);
+            }
+        }
+    }
+
+    // Process merges
+    if (sheetData.merges && sheetData.merges.length > 0) {
+        sheetData.merges.forEach(function(merge) {
+            try {
+                if (typeof merge === "string") {
+                    // Odoo format: "A1:C3" (standard A1 range notation)
+                    oWorksheet.GetRange(merge).Merge(false);
+                } else if (merge.top !== undefined && merge.left !== undefined && merge.bottom !== undefined && merge.right !== undefined) {
+                    // Object format: {top: 0, left: 0, bottom: 2, right: 2}
+                    var startCell = columnToLetter(merge.left) + (merge.top + 1);
+                    var endCell = columnToLetter(merge.right) + (merge.bottom + 1);
+                    oWorksheet.GetRange(startCell + ":" + endCell).Merge(false);
+                }
+            } catch (e) {
+                // Skip invalid merge ranges
+            }
+        });
+    }
+
+});
+
+// Helper function to convert column index to letter
+function columnToLetter(column) {
+    var temp, letter = '';
+    while (column >= 0) {
+        temp = column % 26;
+        letter = String.fromCharCode(temp + 65) + letter;
+        column = Math.floor(column / 26) - 1;
+    }
+    return letter;
+}
+
+builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER);
+builder.CloseFile();
