@@ -130,8 +130,13 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             _logger.debug("Current user has no write access")
             editor_values = self.prepare_editor_values(attachment, access_token, False)
 
-        # Add document_id to config for ODOO custom functions
+        # Add document_id and security token for ODOO custom functions
         editor_values["document_id"] = document_id
+        editor_values["jwt_token"] = jwt_utils.encode_payload(
+            request.env,
+            {"uid": request.env.user.id, "document_id": document_id},
+            config_utils.get_internal_jwt_secret(request.env),
+        )
 
         return editor_values
 
@@ -676,7 +681,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         csrf=False,
         cors="*",
     )
-    def evaluate_formulas_batch(self, document_id, formulas, access_token=None):
+    def evaluate_formulas_batch(self, document_id, formulas, jwt_token=None):
         """Evaluate multiple ODOO formulas in a single HTTP request.
 
         This dramatically reduces overhead compared to one request per formula:
@@ -686,13 +691,37 @@ class OnlyOfficeShareRoute(ShareRoute):
         Args:
             document_id: ID of the document
             formulas: List of formula strings
-            access_token: Optional access token
+            jwt_token: JWT security token (required)
 
         Returns:
             dict: {"values": {formula: result, ...}}
         """
         if request.httprequest.method == "OPTIONS":
             return {}
+
+        # Validate security token
+        if not jwt_token:
+            _logger.warning("evaluate_formulas_batch: no jwt_token provided for document %s", document_id)
+            return {"error": "Security token required"}
+        try:
+            payload = jwt_utils.decode_token(request.env, jwt_token, config_utils.get_internal_jwt_secret(request.env))
+            token_uid = payload.get("uid")
+            token_doc_id = payload.get("document_id")
+            if str(token_doc_id) != str(document_id):
+                _logger.warning(
+                    "evaluate_formulas_batch: token doc_id=%s != request doc_id=%s", token_doc_id, document_id
+                )
+                return {"error": "Token/document mismatch"}
+            # Verify user still has access to the document
+            user = request.env["res.users"].sudo().browse(token_uid)
+            document = request.env["documents.document"].with_user(user).browse(int(document_id))
+            document.check_access_rule("read")
+        except AccessError:
+            _logger.warning("evaluate_formulas_batch: access denied for uid=%s doc=%s", token_uid, document_id)
+            return {"error": "Access denied"}
+        except Exception as e:
+            _logger.warning("evaluate_formulas_batch: token validation failed for doc %s: %s", document_id, e)
+            return {"error": "Invalid security token"}
 
         _logger.info(
             "Batch evaluating %d formulas for document %s",

@@ -69,7 +69,7 @@
 
         // Pass document data to global scope for init script
         window.odooDocumentId = <t t-out="document_id or 'null'" />;
-        window.odooAccessToken = new URLSearchParams(window.location.search).get('access_token');
+        window.odooJwtToken = "<t t-out="jwt_token or ''" />";
 
         // Setup ODOO custom functions event handler BEFORE creating editor
         config.events = config.events || {};

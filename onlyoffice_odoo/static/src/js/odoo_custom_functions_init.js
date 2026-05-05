@@ -13,7 +13,7 @@
     try {
       // Check if we have a document_id (for spreadsheets with ODOO formulas)
       var documentId = window.odooDocumentId
-      var accessToken = window.odooAccessToken
+      var jwtToken = window.odooJwtToken
 
       if (!documentId) {
         console.log("No document_id found, skipping ODOO custom functions")
@@ -34,12 +34,12 @@
 
       // Pass data via Asc.scope
       Asc.scope.odooDocumentId = documentId
-      Asc.scope.odooAccessToken = accessToken
+      Asc.scope.odooJwtToken = jwtToken
       Asc.scope.odooServerUrl = window.location.origin
 
       connector.callCommand(() => {
         var documentId = Asc.scope.odooDocumentId
-        var accessToken = Asc.scope.odooAccessToken
+        var jwtToken = Asc.scope.odooJwtToken
         var serverUrl = Asc.scope.odooServerUrl
 
         // Batch queue: collects formulas and sends them in one HTTP request.
@@ -74,7 +74,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
@@ -122,7 +122,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
@@ -219,7 +219,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
@@ -314,7 +314,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
@@ -380,7 +380,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
@@ -427,7 +427,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
@@ -478,7 +478,7 @@
                       formulas: batch.map(function (b) {
                         return b.formula
                       }),
-                      access_token: accessToken,
+                      jwt_token: jwtToken,
                     },
                   }),
                 })
