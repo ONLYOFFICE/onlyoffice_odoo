@@ -541,6 +541,7 @@ class OnlyOfficeShareRoute(ShareRoute):
                 return request.make_response("Token not found or expired", status=404)
 
             spreadsheet_json = cache_data["spreadsheet_json"]
+            metadata_json = cache_data.get("metadata_json")
             output_filename = cache_data["output_filename"]
 
             # Read DocBuilder script template
@@ -549,6 +550,7 @@ class OnlyOfficeShareRoute(ShareRoute):
 
             # Replace placeholders in script
             docbuilder_script = docbuilder_script.replace("SPREADSHEET_DATA_PLACEHOLDER", spreadsheet_json)
+            docbuilder_script = docbuilder_script.replace("METADATA_PLACEHOLDER", metadata_json or "null")
             docbuilder_script = docbuilder_script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{output_filename}"')
 
             del _docbuilder_cache[oo_security_token]
@@ -648,6 +650,11 @@ class OnlyOfficeShareRoute(ShareRoute):
 
         Returns the snapshot dict (pivots, lists, etc.).
         Caches the result on the request object so repeated calls are free.
+
+        Lookup order:
+        1. onlyoffice_spreadsheet_metadata field on the record
+        2. onlyoffice_spreadsheet_source_id → load from source spreadsheet
+        3. Extract from _OdooMetadata hidden sheet inside the XLSX file
         """
         cache_key = f"_doc_snapshot_{document_id}"
         cached = getattr(request, cache_key, None)
@@ -656,6 +663,7 @@ class OnlyOfficeShareRoute(ShareRoute):
 
         document = request.env["documents.document"].sudo().browse(int(document_id))
 
+        # 1. Try metadata field on the record
         if document.onlyoffice_spreadsheet_metadata:
             try:
                 snapshot = json.loads(document.onlyoffice_spreadsheet_metadata)
@@ -664,14 +672,129 @@ class OnlyOfficeShareRoute(ShareRoute):
             except Exception:
                 pass
 
-        source_document = document
+        # 2. Try source document
         if document.onlyoffice_spreadsheet_source_id:
             source_document = document.onlyoffice_spreadsheet_source_id
+            session_data = source_document.join_spreadsheet_session()
+            snapshot = session_data.get("data", {})
+            setattr(request, cache_key, snapshot)
+            return snapshot
 
-        session_data = source_document.join_spreadsheet_session()
-        snapshot = session_data.get("data", {})
-        setattr(request, cache_key, snapshot)
-        return snapshot
+        # 3. Try extracting metadata from hidden _OdooMetadata sheet in XLSX
+        snapshot = self._extract_metadata_from_xlsx(document)
+        if snapshot:
+            # Persist to record for next time
+            document.sudo().write({"onlyoffice_spreadsheet_metadata": json.dumps(snapshot)})
+            setattr(request, cache_key, snapshot)
+            return snapshot
+
+        setattr(request, cache_key, {})
+        return {}
+
+    def _extract_metadata_from_xlsx(self, document):
+        """Try to extract metadata JSON from hidden _OdooMetadata sheet in XLSX.
+
+        Uses zipfile + XML parsing (no external dependencies).
+        Returns dict or None.
+        """
+        import xml.etree.ElementTree as ET
+        import zipfile
+        from io import BytesIO
+
+        NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+        NS_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+        NS_PKG = "http://schemas.openxmlformats.org/package/2006/relationships"
+
+        try:
+            attachment = document.attachment_id
+            if not attachment or not attachment.datas:
+                _logger.debug("No attachment data for document %s", document.id)
+                return None
+
+            xlsx_bytes = base64.b64decode(attachment.datas)
+            zf = zipfile.ZipFile(BytesIO(xlsx_bytes))
+
+            # Parse workbook.xml to find _OdooMetadata sheet rId
+            wb_xml = ET.fromstring(zf.read("xl/workbook.xml"))
+            sheet_rid = None
+            for sheet_el in wb_xml.iter(f"{{{NS}}}sheet"):
+                if sheet_el.get("name") == "_OdooMetadata":
+                    sheet_rid = sheet_el.get(f"{{{NS_R}}}id")
+                    break
+
+            if not sheet_rid:
+                _logger.debug("_OdooMetadata sheet not found in workbook.xml for document %s", document.id)
+                zf.close()
+                return None
+
+            # Resolve rId to file path via relationships
+            rels_xml = ET.fromstring(zf.read("xl/_rels/workbook.xml.rels"))
+            sheet_path = None
+            for rel in rels_xml.iter(f"{{{NS_PKG}}}Relationship"):
+                if rel.get("Id") == sheet_rid:
+                    target = rel.get("Target")
+                    # Target can be relative (worksheets/sheet3.xml) or absolute (/xl/worksheets/...)
+                    sheet_path = target if target.startswith("xl/") else "xl/" + target
+                    break
+
+            if not sheet_path or sheet_path not in zf.namelist():
+                _logger.debug("Sheet path %s not found in XLSX for document %s", sheet_path, document.id)
+                zf.close()
+                return None
+
+            # Parse shared strings (cell values may reference them)
+            shared_strings = []
+            if "xl/sharedStrings.xml" in zf.namelist():
+                ss_xml = ET.fromstring(zf.read("xl/sharedStrings.xml"))
+                for si in ss_xml.iter(f"{{{NS}}}si"):
+                    # Collect all <t> elements (handles both plain and rich text)
+                    texts = si.iter(f"{{{NS}}}t")
+                    shared_strings.append("".join(t.text or "" for t in texts))
+
+            # Parse the sheet XML and read column A values
+            sheet_xml = ET.fromstring(zf.read(sheet_path))
+            zf.close()
+
+            chunks = []
+            for cell in sheet_xml.iter(f"{{{NS}}}c"):
+                ref = cell.get("r", "")
+                # Only column A cells (A1, A2, ...) — exclude AA, AB, etc.
+                if not ref or not re.match(r"^A\d+$", ref):
+                    continue
+                cell_type = cell.get("t", "")
+
+                if cell_type == "s":
+                    # Shared string reference
+                    val_el = cell.find(f"{{{NS}}}v")
+                    if val_el is not None and val_el.text is not None:
+                        idx = int(val_el.text)
+                        if idx < len(shared_strings):
+                            chunks.append(shared_strings[idx])
+                elif cell_type == "inlineStr":
+                    # Inline string
+                    texts = cell.iter(f"{{{NS}}}t")
+                    chunks.append("".join(t.text or "" for t in texts))
+                else:
+                    # Number or raw value
+                    val_el = cell.find(f"{{{NS}}}v")
+                    if val_el is not None and val_el.text is not None:
+                        chunks.append(val_el.text)
+
+            if not chunks:
+                _logger.warning("_OdooMetadata sheet is empty for document %s", document.id)
+                return None
+
+            metadata_str = "".join(chunks)
+            result = json.loads(metadata_str)
+            _logger.info(
+                "Extracted metadata from XLSX _OdooMetadata sheet for document %s (keys: %s)",
+                document.id,
+                list(result.keys()),
+            )
+            return result
+        except Exception as e:
+            _logger.warning("Could not extract metadata from XLSX for document %s: %s", document.id, e)
+            return None
 
     @http.route(
         "/onlyoffice/documents/evaluate_formulas_batch",

@@ -241,5 +241,20 @@ function columnToLetter(column) {
     return letter;
 }
 
+// Embed metadata in a hidden sheet so it survives download/re-upload
+var _odooMetadata = METADATA_PLACEHOLDER;
+if (_odooMetadata) {
+    Api.AddSheet("_OdooMetadata");
+    var metaSheet = Api.GetSheet("_OdooMetadata");
+    var metaStr = JSON.stringify(_odooMetadata);
+    // Split into 30000-char chunks (XLSX cell limit is 32767)
+    var chunkSize = 30000;
+    for (var ci = 0; ci * chunkSize < metaStr.length; ci++) {
+        var chunk = metaStr.substring(ci * chunkSize, (ci + 1) * chunkSize);
+        metaSheet.GetRange("A" + (ci + 1)).SetValue(chunk);
+    }
+    metaSheet.SetVisible(false);
+}
+
 builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER);
 builder.CloseFile();
