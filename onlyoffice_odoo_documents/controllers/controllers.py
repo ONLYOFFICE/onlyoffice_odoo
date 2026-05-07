@@ -32,6 +32,67 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 _docbuilder_cache = {}
 
 
+def _compute_filter_values(metadata):
+    """Compute all globalFilter values from metadata dict.
+
+    Returns dict mapping filter label → resolved string value.
+    Used to make ODOO_FILTER_VALUE synchronous on the client side.
+    """
+    result = {}
+    if not metadata:
+        return result
+    for gf in metadata.get("globalFilters", []):
+        label = gf.get("label", "")
+        if not label:
+            continue
+        value = gf.get("currentValue") or gf.get("defaultValue")
+        if not value:
+            result[label] = ""
+            continue
+        if isinstance(value, str):
+            shortcuts = {
+                "this_year": {"yearOffset": 0},
+                "last_year": {"yearOffset": -1},
+            }
+            if value in shortcuts:
+                value = shortcuts[value]
+            elif value == "this_month":
+                value = {"yearOffset": 0, "period": f"{datetime.now().month:02d}"}
+            elif value == "this_quarter":
+                q = (datetime.now().month - 1) // 3 + 1
+                value = {"yearOffset": 0, "period": f"q{q}"}
+            else:
+                result[label] = str(value)
+                continue
+        if isinstance(value, dict):
+            if "yearOffset" in value:
+                result[label] = str(datetime.now().year + int(value.get("yearOffset", 0)))
+            elif "value" in value:
+                result[label] = str(value["value"])
+            else:
+                result[label] = ""
+        else:
+            result[label] = str(value)
+    return result
+
+
+def _load_metadata_for_document(document):
+    """Load spreadsheet metadata for a document (without request caching).
+
+    Returns dict or empty dict.
+    """
+    if document.onlyoffice_spreadsheet_metadata:
+        try:
+            return json.loads(document.onlyoffice_spreadsheet_metadata)
+        except Exception:
+            pass
+    if document.onlyoffice_spreadsheet_source_id:
+        source = document.onlyoffice_spreadsheet_source_id
+        session_data = source.join_spreadsheet_session()
+        return session_data.get("data", {})
+    return {}
+
+
 class OnlyofficeDocuments_Connector(http.Controller):
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="json")
     def post_file_create(self, folder_id, supported_format, title, url=None):
@@ -137,6 +198,17 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             {"uid": request.env.user.id, "document_id": document_id},
             config_utils.get_internal_jwt_secret(request.env),
         )
+
+        # Pre-compute filter values so ODOO_FILTER_VALUE is synchronous on the client.
+        # This avoids the async dependency issue where ODOO_PIVOT gets incomplete args.
+        if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
+            # Flag: document has ODOO custom formulas (pivots, lists, or filters in metadata)
+            editor_values["has_odoo_formulas"] = True
+            try:
+                metadata = _load_metadata_for_document(document)
+                editor_values["filter_values_json"] = markupsafe.Markup(json.dumps(_compute_filter_values(metadata)))
+            except Exception:
+                editor_values["filter_values_json"] = markupsafe.Markup("{}")
 
         return editor_values
 

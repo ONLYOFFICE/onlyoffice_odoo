@@ -14,6 +14,7 @@
       // Check if we have a document_id (for spreadsheets with ODOO formulas)
       var documentId = window.odooDocumentId
       var jwtToken = window.odooJwtToken
+      var filterValues = window.odooFilterValues || {}
 
       if (!documentId) {
         console.log("No document_id found, skipping ODOO custom functions")
@@ -36,11 +37,13 @@
       Asc.scope.odooDocumentId = documentId
       Asc.scope.odooJwtToken = jwtToken
       Asc.scope.odooServerUrl = window.location.origin
+      Asc.scope.odooFilterValues = filterValues
 
       connector.callCommand(() => {
         var documentId = Asc.scope.odooDocumentId
         var jwtToken = Asc.scope.odooJwtToken
         var serverUrl = Asc.scope.odooServerUrl
+        var filterValues = Asc.scope.odooFilterValues || {}
 
         // Batch queue: collects formulas and sends them in one HTTP request.
         // Each function must inline its own fetch logic (OnlyOffice requirement).
@@ -404,11 +407,18 @@
 
         /**
          * Get the current value of an Odoo spreadsheet filter.
+         * Synchronous — uses pre-computed filter values passed from the server.
+         * This ensures that concatenation like "01/"&ODOO_FILTER_VALUE("Year")
+         * resolves immediately before being passed to ODOO_PIVOT.
          * @customfunction
          * @param {string} filterName The label of the filter.
          * @returns {string} The current filter value.
          */
         async function ODOO_FILTER_VALUE(filterName) {
+          var val = filterValues[filterName]
+          if (val) {
+            return val
+          }
           var formula = '=ODOO_FILTER_VALUE("' + filterName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({ formula: formula, resolve: resolve })
@@ -511,19 +521,82 @@
         Api.AddCustomFunction(ODOO_CURRENCY_RATE)
       })
 
-      // Force recalculation after a delay so that cells which evaluated
-      // before the custom functions were registered (#NAME? errors) get
-      // re-evaluated with the now-available functions.
-      setTimeout(function () {
-        try {
-          connector.callCommand(function () {
-            // Empty command — with default isNoCalc=false this triggers
-            // a full recalculation of all formulas in the spreadsheet.
-          })
-        } catch (e) {
-          console.warn("ODOO recalculation trigger failed:", e)
-        }
-      }, 3000)
+      // Poll sheets: wait until no #BUSY! cells remain, then check for #NAME?.
+      // Returns "busy" / "name_error" / "ok".
+      window._odooRetryCount = window._odooRetryCount || 0
+      window._odooPollCount = window._odooPollCount || 0
+
+      console.log("[ODOO-CHECK] Starting odooCheckSheets, retryCount=" + window._odooRetryCount + ", pollCount=" + window._odooPollCount)
+
+      function odooCheckSheets() {
+        console.log("[ODOO-CHECK] odooCheckSheets() called")
+        connector.callCommand(
+          function () {
+            var sheets = Api.GetSheets()
+            var activeSheet = Api.GetActiveSheet()
+            var activeName = activeSheet.GetName()
+            var hasBusy = false
+            var hasName = false
+            for (var i = 0; i < sheets.length; i++) {
+              var sheetName = sheets[i].GetName()
+              sheets[i].SetActive()
+              var range = sheets[i].GetUsedRange()
+              var rangeAddr = range.GetAddress()
+
+              if (!hasBusy) {
+                var busyMatch = range.Find({ What: "#BUSY!", LookIn: "xlValues", LookAt: "xlWhole" })
+                if (busyMatch) {
+                  var busyAddr = busyMatch.GetAddress()
+                  var busyFormula = busyMatch.GetFormula()
+                  if (busyFormula && busyFormula.toUpperCase().indexOf("ODOO") !== -1) {
+                    hasBusy = true
+                  }
+                }
+              }
+              if (!hasName) {
+                var nameMatch = range.Find({ What: "#NAME?", LookIn: "xlValues", LookAt: "xlWhole" })
+                if (nameMatch) {
+                  var firstAddr = nameMatch.GetAddress()
+                  do {
+                    var f = nameMatch.GetFormula()
+                    if (f && f.toUpperCase().indexOf("ODOO") !== -1) {
+                      hasName = true
+                      break
+                    }
+                    nameMatch = range.FindNext(nameMatch)
+                  } while (nameMatch && nameMatch.GetAddress() !== firstAddr)
+                }
+              }
+              if (hasBusy) break
+            }
+            // Restore original active sheet
+            for (var j = 0; j < sheets.length; j++) {
+              if (sheets[j].GetName() === activeName) {
+                sheets[j].SetActive()
+                break
+              }
+            }
+            var result = hasBusy ? "busy" : (hasName ? "name_error" : "ok")
+            return result
+          },
+          function (status) {
+            console.log("[ODOO-CHECK] callback fired, status=" + JSON.stringify(status) + ", type=" + typeof status)
+            if (status === "busy" && window._odooPollCount < 10) {
+              window._odooPollCount++
+              console.log("[ODOO-CHECK] #BUSY! detected, polling... (" + window._odooPollCount + "/10)")
+              setTimeout(odooCheckSheets, 2000)
+            } else if (status === "name_error" && window._odooRetryCount < 3) {
+              window._odooRetryCount++
+              window._odooPollCount = 0
+              console.log("[ODOO-CHECK] #NAME? errors detected, retrying registration (attempt " + window._odooRetryCount + "/3)")
+              window.initializeOdooCustomFunctions()
+            } else {
+              console.log("[ODOO-CHECK] Done. status=" + JSON.stringify(status) + " retryCount=" + window._odooRetryCount + " pollCount=" + window._odooPollCount)
+            }
+          }
+        )
+      }
+      odooCheckSheets()
     } catch (error) {
       console.warn("ODOO custom functions not available:", error.message)
     }

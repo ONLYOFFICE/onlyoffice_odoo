@@ -70,8 +70,11 @@
         // Pass document data to global scope for init script
         window.odooDocumentId = <t t-out="document_id or 'null'" />;
         window.odooJwtToken = "<t t-out="jwt_token or ''" />";
+        window.odooFilterValues = <t t-out="filter_values_json or '{}'" />;
+        window.hasOdooFormulas = <t t-out="'true' if has_odoo_formulas else 'false'" />;
 
         // Setup ODOO custom functions event handler BEFORE creating editor
+        window._odooEditorReady = false;
         config.events = config.events || {};
         var originalOnReady = config.events.onDocumentReady;
         config.events.onDocumentReady = function() {
@@ -79,7 +82,7 @@
             originalOnReady();
           }
           // Call init function from external script
-          if (window.initializeOdooCustomFunctions) {
+          if (window.initializeOdooCustomFunctions) if (window.hasOdooFormulas) {
             window.initializeOdooCustomFunctions();
           }
         };
