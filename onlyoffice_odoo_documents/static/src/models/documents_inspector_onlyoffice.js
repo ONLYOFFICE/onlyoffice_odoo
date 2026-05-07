@@ -24,6 +24,7 @@ patch(DocumentsInspector.prototype, {
     super.setup(...arguments)
     this.notification = useService("notification")
     this.actionService = useService("action")
+    this.ui = useService("ui")
     this.onlyofficeEditorUrl = this.onlyofficeEditorUrl.bind(this)
   },
   // eslint-disable-next-line sort-keys
@@ -58,6 +59,7 @@ patch(DocumentsInspector.prototype, {
 
     // If it's an Odoo spreadsheet, convert to xlsx first
     if (isSpreadsheet) {
+      this.ui.block({ message: _t("Converting spreadsheet to XLSX...") })
       try {
         // Load spreadsheet bundle
         await loadBundle("spreadsheet.o_spreadsheet")
@@ -158,6 +160,8 @@ patch(DocumentsInspector.prototype, {
           type: "danger",
         })
         return
+      } finally {
+        this.ui.unblock()
       }
     }
 
@@ -188,11 +192,8 @@ patch(DocumentsInspector.prototype, {
     return records.length === 1 && records[0].data.handler === "spreadsheet"
   },
   async convertSpreadsheetViaDocBuilder(id) {
+    this.ui.block({ message: _t("Converting spreadsheet to XLSX via DocBuilder...") })
     try {
-      // Show loading notification
-      this.notification.add(_t("Converting spreadsheet to XLSX via DocBuilder. This may take a few moments..."), {
-        type: "info",
-      })
 
       // Call server method to convert via DocBuilder
       const result = await this.env.services.rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", {
@@ -236,6 +237,8 @@ patch(DocumentsInspector.prototype, {
       this.notification.add(_t("Conversion failed: ") + error.message, {
         type: "danger",
       })
+    } finally {
+      this.ui.unblock()
     }
   },
 })
