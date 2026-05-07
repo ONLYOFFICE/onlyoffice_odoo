@@ -8,11 +8,11 @@ if (isDesktopEditor) {
   const syncDesktopTheme = () => {
     if (window?.RendererProcessVariable?.theme) {
       const desktopTheme = window.RendererProcessVariable.theme.type
-      if (desktopTheme === 'dark' || desktopTheme === 'light') {
+      if (desktopTheme === "dark" || desktopTheme === "light") {
         const currentTheme = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('color_scheme='))
-          ?.split('=')[1]
+          .split("; ")
+          .find((row) => row.startsWith("color_scheme="))
+          ?.split("=")[1]
 
         if (currentTheme !== desktopTheme) {
           document.cookie = `color_scheme=${desktopTheme}; path=/`
