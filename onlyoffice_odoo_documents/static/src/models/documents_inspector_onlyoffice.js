@@ -147,6 +147,11 @@ patch(DocumentsInspector.prototype, {
         this.notification.add(_t("Spreadsheet converted to XLSX for editing in ONLYOFFICE"), {
           type: "success",
         })
+
+        // Refresh the documents folder so the new file appears
+        const docModel = this.props.documents[0].model
+        await docModel.load()
+        docModel.notify()
       } catch (error) {
         console.error("Failed to convert spreadsheet:", error)
         this.notification.add(_t("Failed to convert spreadsheet: ") + error.message, {
@@ -205,6 +210,11 @@ patch(DocumentsInspector.prototype, {
         this.notification.add(_t("Spreadsheet successfully converted to XLSX with formulas!"), {
           type: "success",
         })
+
+        // Refresh the documents folder so the new file appears
+        const docModel = this.props.documents[0].model
+        await docModel.load()
+        docModel.notify()
 
         // Open the converted XLSX in ONLYOFFICE
         const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
