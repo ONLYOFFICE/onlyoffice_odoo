@@ -9,9 +9,11 @@
         "per-file and per-user role control on top of DMS permissions."
     ),
     "author": "Data Dance s.r.o., ONLYOFFICE, Odoo Community Association (OCA)",
+    "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Document Management",
-    "version": "18.0.1.0.0",
+    "version": "1.0.0",
     "license": "LGPL-3",
+    "support": "support@onlyoffice.com",
     "depends": ["onlyoffice_odoo", "dms"],
     "data": [
         "security/ir.model.access.csv",
