@@ -8,9 +8,10 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "2.3.2",
+    "license": "LGPL-3",
+    "support": "support@onlyoffice.com",
     "depends": ["base", "onlyoffice_odoo", "web"],
     "external_dependencies": {"python": ["pyjwt"]},
-    # always loaded
     "data": [
         "security/onlyoffice_templates_security.xml",
         "security/ir.model.access.csv",
@@ -19,8 +20,6 @@
         "views/ir_actions_report_views.xml",
     ],
     "demo": ["data/templates_data.xml"],
-    "license": "LGPL-3",
-    "support": "support@onlyoffice.com",
     "images": [
         "static/description/main_screenshot.png",
         "static/description/create_templates.png",

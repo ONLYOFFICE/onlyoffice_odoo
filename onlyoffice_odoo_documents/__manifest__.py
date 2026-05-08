@@ -8,14 +8,13 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "4.2.1",
+    "license": "LGPL-3",
+    "support": "support@onlyoffice.com",
     "depends": ["onlyoffice_odoo", "documents"],
-    # always loaded
     "data": [
         "security/ir.model.access.csv",
         "views/onlyoffice_templates_share.xml",
     ],
-    "license": "LGPL-3",
-    "support": "support@onlyoffice.com",
     "images": [
         "static/description/main_screenshot.png",
         "static/description/editors.png",

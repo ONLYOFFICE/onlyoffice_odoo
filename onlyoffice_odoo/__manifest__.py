@@ -8,16 +8,15 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "4.3.0",
+    "license": "LGPL-3",
+    "support": "support@onlyoffice.com",
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},
-    # always loaded
     "data": [
         "security/ir.model.access.csv",
         "views/templates.xml",
         "views/res_config_settings_views.xml",
     ],
-    "license": "LGPL-3",
-    "support": "support@onlyoffice.com",
     "images": [
         "static/description/main_screenshot.png",
         "static/description/document.png",
