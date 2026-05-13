@@ -8,14 +8,13 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "5.2.1",
+    "license": "LGPL-3",
+    "support": "support@onlyoffice.com",
     "depends": ["onlyoffice_odoo", "documents"],
-    # always loaded
     "data": [
         "security/ir.model.access.csv",
         "views/onlyoffice_templates_share.xml",
     ],
-    "license": "LGPL-3",
-    "support": "support@onlyoffice.com",
     "images": [
         "static/description/main_screenshot.png",
         "static/description/editors.png",
@@ -26,11 +25,15 @@
     "application": True,
     "assets": {
         "web.assets_backend": [
+            "onlyoffice_odoo_documents/static/src/js/desktop_mode_init.js",
+            "onlyoffice_odoo_documents/static/src/js/desktop_restriction.js",
+            "onlyoffice_odoo_documents/static/src/js/desktop_auth.js",
             "onlyoffice_odoo_documents/static/src/models/*.js",
             "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
-            "onlyoffice_odoo_documents/static/src/css/*",
+            "onlyoffice_odoo_documents/static/src/css/desktop_restriction.css",
+            "onlyoffice_odoo_documents/static/src/css/*.css",
         ],
     },
 }

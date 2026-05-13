@@ -2,6 +2,10 @@
 
 ##
 
+## Added
+
+- desktop editor support
+
 ## Fixed
 
 - opening a PDF from preview mode
