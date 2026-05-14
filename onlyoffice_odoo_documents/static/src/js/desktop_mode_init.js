@@ -38,7 +38,7 @@ if (isDesktopEditor) {
     document.addEventListener("DOMContentLoaded", addBodyClass)
   }
 
-  const DOCUMENTS_URL = "/web#action=documents.document_action&menu_id=documents.menu_root"
+  const DOCUMENTS_URL = "/odoo/action-documents.document_action"
 
   const shouldRedirect = () => {
     const currentPath = window.location.pathname + window.location.hash + window.location.search
@@ -51,7 +51,7 @@ if (isDesktopEditor) {
       return false
     }
 
-    if (currentPath.includes("action=documents.document_action") || currentPath.includes("/odoo/documents")) {
+    if (currentPath.includes("action-documents.document_action") || currentPath.includes("/odoo/documents")) {
       return false
     }
 
@@ -64,11 +64,11 @@ if (isDesktopEditor) {
     }
   }
 
-  performRedirect()
-
   const desktopRestrictionService = {
-    start() {
-      performRedirect()
+    start(env) {
+      env.bus.addEventListener("WEB_CLIENT_READY", () => {
+        performRedirect()
+      })
 
       window.addEventListener("hashchange", performRedirect)
       window.addEventListener("popstate", performRedirect)

@@ -313,4 +313,4 @@ class OnlyOfficeShareRoute(ShareRoute):
 
     @http.route(["/Products/Files/", "/Products/Files"], auth="user", methods=["GET"], type="http")
     def desktop_editor_redirect(self, **kwargs):
-        return request.redirect("/web#action=documents.document_action&menu_id=documents.menu_root")
+        return request.redirect("/odoo/action-documents.document_action")

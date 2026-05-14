@@ -29,11 +29,6 @@ body.desktop-editor-mode .o_documents_action_dropdown a:not(.o_onlyoffice_open) 
   display: none !important;
 }
 
-/* Hide share button */
-body.desktop-editor-mode .o_documents_share_button {
-  display: none !important;
-}
-
 /* Adjust layout without header */
 body.desktop-editor-mode .o_action_manager {
   top: 0 !important;
@@ -110,9 +105,8 @@ body.desktop-editor-mode .o_control_panel_navigation > button.o_switch_view.o_ka
   display: none !important;
 }
 
-/* Hide Action dropdown, Share button, and Freeze and share button */
+/* Hide Action dropdown and Freeze and share button */
 body.desktop-editor-mode .o_documents_action_dropdown .dropdown,
-body.desktop-editor-mode .o_documents_share_button,
 body.desktop-editor-mode .o_control_panel_actions button[data-hotkey="s"] {
   display: none !important;
 }

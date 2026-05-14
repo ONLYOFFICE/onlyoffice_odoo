@@ -1,27 +1,23 @@
 /** @odoo-module **/
 
 import { registry } from "@web/core/registry"
-import { session } from "@web/session"
+import { user } from "@web/core/user"
 
 const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
 
 if (isDesktopEditor && window.AscDesktopEditor) {
   const desktopAuthService = {
-    sendLoginCommand() {
-      const params = {
-        displayName: session.partner_display_name || session.name || "User",
-        domain: window.location.origin,
-        email: session.username || "",
-        provider: "odoo",
-        userId: String(session.uid),
-      }
+    start(env) {
+      if (user.userId) {
+        const params = {
+          displayName: user.name || "User",
+          domain: window.location.origin,
+          email: user.login || "",
+          provider: "odoo",
+          userId: String(user.userId),
+        }
 
-      window.AscDesktopEditor.execCommand("portal:login", JSON.stringify(params))
-    },
-
-    start() {
-      if (session.uid && session.uid !== false) {
-        this.sendLoginCommand()
+        window.AscDesktopEditor.execCommand("portal:login", JSON.stringify(params))
       }
     },
   }
