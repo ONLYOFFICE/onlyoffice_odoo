@@ -310,3 +310,7 @@ class OnlyOfficeShareRoute(ShareRoute):
             qcontext["onlyoffice_supported"] = data
 
         return response
+
+    @http.route(["/Products/Files/", "/Products/Files"], auth="user", methods=["GET"], type="http")
+    def desktop_editor_redirect(self, **kwargs):
+        return request.redirect("/odoo/action-documents.document_action")

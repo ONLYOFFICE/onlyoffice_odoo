@@ -80,8 +80,9 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
         }
       }
     }
+    const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
     const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-    if (same_tab) {
+    if (same_tab && !isDesktopEditor) {
       const action = {
         params: { document_id: doc.data.id },
         tag: "onlyoffice_editor",
