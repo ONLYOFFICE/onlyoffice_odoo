@@ -17,18 +17,6 @@ body.desktop-editor-mode .o_navbar_systray {
   display: none !important;
 }
 
-/* Hide breadcrumbs */
-body.desktop-editor-mode .o_control_panel .breadcrumb,
-body.desktop-editor-mode .o_breadcrumb {
-  display: none !important;
-}
-
-/* Hide all action dropdown buttons except ONLYOFFICE */
-body.desktop-editor-mode .o_documents_action_dropdown button:not(.o_onlyoffice_open),
-body.desktop-editor-mode .o_documents_action_dropdown a:not(.o_onlyoffice_open) {
-  display: none !important;
-}
-
 /* Adjust layout without header */
 body.desktop-editor-mode .o_action_manager {
   top: 0 !important;
@@ -51,17 +39,6 @@ body.desktop-editor-mode .o_navbar_apps_menu {
   display: none !important;
 }
 
-/* Hide chatter panel on the right */
-body.desktop-editor-mode .o_document_chatter_container,
-body.desktop-editor-mode .o-mail-ChatterContainer {
-  display: none !important;
-}
-
-/* Hide "Create a Candidate" and similar action buttons in control panel actions */
-body.desktop-editor-mode .o_control_panel_actions > .btn-group > .btn-group {
-  display: none !important;
-}
-
 /* Show only New button in main control panel */
 body.desktop-editor-mode .o_control_panel_main_buttons .o_cp_buttons {
   display: flex !important;
@@ -78,8 +55,6 @@ body.desktop-editor-mode .o_documents_main_buttons.dropdown-menu.show {
 }
 
 /* Hide menu items in New dropdown except Upload, Folder, Create with ONLYOFFICE, and Share */
-body.desktop-editor-mode .o_documents_kanban_request,
-body.desktop-editor-mode .o_documents_kanban_url,
 body.desktop-editor-mode .o_documents_kanban_spreadsheet {
   display: none !important;
   height: 0 !important;
@@ -97,17 +72,6 @@ body.desktop-editor-mode .o_documents_main_buttons .dropdown-divider {
 
 /* Hide Activity view button */
 body.desktop-editor-mode .o_switch_view.o_activity {
-  display: none !important;
-}
-
-/* Hide Info & tags button (standalone kanban button with info icon) */
-body.desktop-editor-mode .o_control_panel_navigation > button.o_switch_view.o_kanban {
-  display: none !important;
-}
-
-/* Hide Action dropdown and Freeze and share button */
-body.desktop-editor-mode .o_documents_action_dropdown .dropdown,
-body.desktop-editor-mode .o_control_panel_actions button[data-hotkey="s"] {
   display: none !important;
 }
 
@@ -131,9 +95,6 @@ body.desktop-editor-mode .o_activity_view {
   display: none !important;
 }
 
-/* Note: Popover and dropdown menus are controlled by JavaScript MutationObserver
-   to allow them in modals while hiding them in the main kanban view */
-
 /* Disable preview functionality - make it non-clickable */
 body.desktop-editor-mode .oe_kanban_previewer,
 body.desktop-editor-mode .o_kanban_previewer,
@@ -150,11 +111,6 @@ body.desktop-editor-mode .o_documents_single_preview {
 /* Re-enable pointer events for favorite button inside preview */
 body.desktop-editor-mode .o_kanban_image_wrapper .o_field_boolean_favorite {
   pointer-events: auto !important;
-}
-
-/* Hide Open chatter button in inspector */
-body.desktop-editor-mode .o_inspector_open_chatter {
-  display: none !important;
 }
 
 /* Hide Split button in inspector */
@@ -176,4 +132,14 @@ body.desktop-editor-mode .o_home_menu {
 body.desktop-editor-mode .dropdown-item-studio {
   display: none !important;
   pointer-events: none !important;
+}
+
+/* Hide "Add Custom Action" in Actions on Select submenu */
+body.desktop-editor-mode .o-dropdown--menu-submenu .o-dropdown-item:last-child {
+  display: none !important;
+}
+
+/* Hide "Automations" in breadcrumb gear menu */
+body.desktop-editor-mode .o_popover .o-dropdown-item:has(i.fa-cog) {
+  display: none !important;
 }
