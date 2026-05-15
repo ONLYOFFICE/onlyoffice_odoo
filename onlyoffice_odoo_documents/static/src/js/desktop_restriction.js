@@ -15,35 +15,6 @@ if (isDesktopEditor) {
 
   document.addEventListener("DOMContentLoaded", () => {
     const observer = new MutationObserver(() => {
-      const dropdown = document.querySelector(".o_documents_action_dropdown")
-      if (dropdown) {
-        const buttons = dropdown.querySelectorAll("button, a")
-        buttons.forEach((btn) => {
-          if (!btn.classList.contains("o_onlyoffice_open")) {
-            btn.style.display = "none"
-          }
-        })
-      }
-
-      const popovers = document.querySelectorAll(".o_popover, .o_mail_activity")
-      popovers.forEach((popover) => {
-        const isInModal = popover.closest(".modal, .o_dialog, .o_technical_modal, .o-overlay-item")
-        const isFolderSettings = popover.classList.contains("o_search_panel_item_settings_popover")
-        if (!isInModal && !isFolderSettings) {
-          popover.style.display = "none"
-        }
-      })
-
-      const dropdownMenus = document.querySelectorAll(".dropdown-menu")
-      dropdownMenus.forEach((menu) => {
-        const isInModal = menu.closest(".modal, .o_dialog, .o_technical_modal, .o-overlay-item")
-        const isActionMenu = menu.closest(".btn-group")
-        const isAutocomplete = menu.classList.contains("o-autocomplete--dropdown-menu")
-        if (!isInModal && !isActionMenu && !isAutocomplete) {
-          menu.style.display = "none"
-        }
-      })
-
       const actionSections = document.querySelectorAll(".o_inspector_section_rules")
       actionSections.forEach((section) => {
         section.style.display = "none"
