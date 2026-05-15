@@ -13,6 +13,7 @@
     "depends": ["onlyoffice_odoo", "documents"],
     "data": [
         "security/ir.model.access.csv",
+        "views/polyfills.xml",
         "views/onlyoffice_templates_share.xml",
         "views/documents_sharing_views.xml",
     ],
@@ -26,6 +27,7 @@
     "application": True,
     "assets": {
         "web.assets_backend": [
+            "onlyoffice_odoo_documents/static/src/css/desktop_restriction.css",
             "onlyoffice_odoo_documents/static/src/js/desktop_mode_init.js",
             "onlyoffice_odoo_documents/static/src/js/desktop_restriction.js",
             "onlyoffice_odoo_documents/static/src/js/desktop_auth.js",

@@ -48,6 +48,18 @@ if (isDesktopEditor) {
       actionSections.forEach((section) => {
         section.style.display = "none"
       })
+
+      const spreadsheetBtn = document.querySelector(".o_documents_kanban_spreadsheet")
+      if (spreadsheetBtn) {
+        spreadsheetBtn.style.display = "none"
+      }
+
+      document.querySelectorAll(".o_menu_item").forEach((item) => {
+        const text = item.textContent.trim()
+        if (text === "Export" || text === "Insert in spreadsheet") {
+          item.style.display = "none"
+        }
+      })
     })
 
     observer.observe(document.body, {

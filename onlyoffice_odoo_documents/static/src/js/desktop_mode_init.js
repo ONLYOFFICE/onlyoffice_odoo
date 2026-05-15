@@ -1,30 +1,21 @@
 /** @odoo-module **/
 
+import { cookie } from "@web/core/browser/cookie"
 import { registry } from "@web/core/registry"
+import { user } from "@web/core/user"
 
 const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
 
 if (isDesktopEditor) {
-  const syncDesktopTheme = () => {
+  const getDesktopTheme = () => {
     if (window?.RendererProcessVariable?.theme) {
-      const desktopTheme = window.RendererProcessVariable.theme.type
-      if (desktopTheme === "dark" || desktopTheme === "light") {
-        const currentTheme = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("color_scheme="))
-          ?.split("=")[1]
-
-        if (currentTheme !== desktopTheme) {
-          document.cookie = `color_scheme=${desktopTheme}; path=/`
-          document.cookie = `configured_color_scheme=${desktopTheme}; path=/`
-
-          window.location.reload()
-        }
+      const type = window.RendererProcessVariable.theme.type
+      if (type === "dark" || type === "light") {
+        return type
       }
     }
+    return null
   }
-
-  syncDesktopTheme()
 
   const addBodyClass = () => {
     if (document.body) {
@@ -64,9 +55,23 @@ if (isDesktopEditor) {
     }
   }
 
+  const syncDesktopTheme = async () => {
+    const desktopTheme = getDesktopTheme()
+    if (!desktopTheme) {
+      return
+    }
+    const currentSetting = user.settings.color_scheme
+    if (currentSetting !== desktopTheme) {
+      await user.setUserSettings("color_scheme", desktopTheme)
+      cookie.set("color_scheme", desktopTheme)
+      window.location.reload()
+    }
+  }
+
   const desktopRestrictionService = {
     start(env) {
       env.bus.addEventListener("WEB_CLIENT_READY", () => {
+        syncDesktopTheme()
         performRedirect()
       })
 

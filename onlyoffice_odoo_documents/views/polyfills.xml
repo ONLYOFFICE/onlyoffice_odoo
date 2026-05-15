@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+  <template id="polyfills" inherit_id="web.layout" name="ONLYOFFICE Polyfills">
+    <xpath expr="//script[@id='web.layout.odooscript']" position="after">
+      <script type="text/javascript">
+                // Early desktop editor mode detection
+                if (navigator.userAgent.indexOf("AscDesktopEditor") !== -1) {
+                    document.addEventListener("DOMContentLoaded", function () {
+                        document.body.classList.add("desktop-editor-mode");
+                    });
+                }
+
+                // Promise.withResolvers polyfill (ES2024)
+                if (typeof Promise.withResolvers !== "function") {
+                    Promise.withResolvers = function () {
+                        var resolve, reject;
+                        var promise = new Promise(function (res, rej) { resolve = res; reject = rej; });
+                        return { promise: promise, resolve: resolve, reject: reject };
+                    };
+                }
+
+                // Set methods polyfills (ES2025)
+                if (!Set.prototype.difference) {
+                    Set.prototype.difference = function (other) {
+                        var result = new Set(this);
+                        other.forEach(function (v) { result.delete(v); });
+                        return result;
+                    };
+                }
+                if (!Set.prototype.intersection) {
+                    Set.prototype.intersection = function (other) {
+                        var result = new Set();
+                        var self = this;
+                        self.forEach(function (v) { if (other.has(v)) result.add(v); });
+                        return result;
+                    };
+                }
+                if (!Set.prototype.union) {
+                    Set.prototype.union = function (other) {
+                        var result = new Set(this);
+                        other.forEach(function (v) { result.add(v); });
+                        return result;
+                    };
+                }
+                if (!Set.prototype.symmetricDifference) {
+                    Set.prototype.symmetricDifference = function (other) {
+                        var result = new Set(this);
+                        other.forEach(function (v) {
+                            if (result.has(v)) { result.delete(v); } else { result.add(v); }
+                        });
+                        return result;
+                    };
+                }
+                if (!Set.prototype.isSubsetOf) {
+                    Set.prototype.isSubsetOf = function (other) {
+                        var self = this;
+                        var result = true;
+                        self.forEach(function (v) { if (!other.has(v)) result = false; });
+                        return result;
+                    };
+                }
+                if (!Set.prototype.isSupersetOf) {
+                    Set.prototype.isSupersetOf = function (other) {
+                        var self = this;
+                        var result = true;
+                        other.forEach(function (v) { if (!self.has(v)) result = false; });
+                        return result;
+                    };
+                }
+                if (!Set.prototype.isDisjointFrom) {
+                    Set.prototype.isDisjointFrom = function (other) {
+                        var self = this;
+                        var result = true;
+                        self.forEach(function (v) { if (other.has(v)) result = false; });
+                        return result;
+                    };
+                }
+
+                // Object.groupBy polyfill (ES2024)
+                if (typeof Object.groupBy !== "function") {
+                    Object.groupBy = function (items, callbackFn) {
+                        var result = Object.create(null);
+                        var index = 0;
+                        for (var item of items) {
+                            var key = callbackFn(item, index++);
+                            if (!(key in result)) { result[key] = []; }
+                            result[key].push(item);
+                        }
+                        return result;
+                    };
+                }
+
+                // Array non-mutating methods polyfills (ES2023)
+                // Must be non-enumerable to avoid breaking for...in loops
+                if (!Array.prototype.toReversed) {
+                    Object.defineProperty(Array.prototype, "toReversed", {
+                        value: function () { return this.slice().reverse(); },
+                        writable: true, configurable: true, enumerable: false
+                    });
+                }
+                if (!Array.prototype.toSorted) {
+                    Object.defineProperty(Array.prototype, "toSorted", {
+                        value: function (compareFn) { return this.slice().sort(compareFn); },
+                        writable: true, configurable: true, enumerable: false
+                    });
+                }
+                if (!Array.prototype.toSpliced) {
+                    Object.defineProperty(Array.prototype, "toSpliced", {
+                        value: function () {
+                            var copy = this.slice();
+                            copy.splice.apply(copy, arguments);
+                            return copy;
+                        },
+                        writable: true, configurable: true, enumerable: false
+                    });
+                }
+                if (!Array.prototype["with"]) {
+                    Object.defineProperty(Array.prototype, "with", {
+                        value: function (index, value) {
+                            var copy = this.slice();
+                            if (index &lt; 0) index = copy.length + index;
+                            copy[index] = value;
+                            return copy;
+                        },
+                        writable: true, configurable: true, enumerable: false
+                    });
+                }
+
+                // Map.groupBy polyfill (ES2024)
+                if (typeof Map.groupBy !== "function") {
+                    Map.groupBy = function (items, callbackFn) {
+                        var result = new Map();
+                        var index = 0;
+                        for (var item of items) {
+                            var key = callbackFn(item, index++);
+                            if (!result.has(key)) { result.set(key, []); }
+                            result.get(key).push(item);
+                        }
+                        return result;
+                    };
+                }
+            </script>
+    </xpath>
+  </template>
+</odoo>
