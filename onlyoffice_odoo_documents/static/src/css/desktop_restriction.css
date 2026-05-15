@@ -55,8 +55,6 @@ body.desktop-editor-mode .o_documents_main_buttons.dropdown-menu.show {
 }
 
 /* Hide menu items in New dropdown except Upload, Folder, Create with ONLYOFFICE, and Share */
-body.desktop-editor-mode .o_documents_kanban_request,
-body.desktop-editor-mode .o_documents_kanban_url,
 body.desktop-editor-mode .o_documents_kanban_spreadsheet {
   display: none !important;
   height: 0 !important;
