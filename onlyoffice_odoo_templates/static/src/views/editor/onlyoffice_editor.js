@@ -26,6 +26,7 @@ class TemplateEditor extends Component {
     this.hasLicense = false
     this.script = null
     this.unchangedModels = {}
+    this.lastFormKey = null
 
     useBus(this.env.bus, "onlyoffice-template-create-form", (field) => this.createForm(field.detail))
 
@@ -50,6 +51,20 @@ class TemplateEditor extends Component {
               window.connector = docEditor.createConnector()
               window.connector.executeMethod("GetVersion", [], () => {
                 this.hasLicense = true
+              })
+              window.connector.attachEvent("onClick", () => {
+                window.connector.executeMethod("GetCurrentContentControlPr", [], (obj) => {
+                  const formKey = obj && obj.FormKey ? obj.FormKey : null
+                  if (formKey !== this.lastFormKey) {
+                    this.lastFormKey = formKey
+                    if (formKey) {
+                      const fieldId = formKey.replaceAll(" ", "/")
+                      this.env.bus.trigger("onlyoffice-template-highlight-field", fieldId)
+                    } else {
+                      this.env.bus.trigger("onlyoffice-template-highlight-field", null)
+                    }
+                  }
+                })
               })
             }
             // Render fields

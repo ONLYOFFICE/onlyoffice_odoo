@@ -6,6 +6,7 @@
 
 - list view for templates
 - new type of reports "onlyoffice-pdf"
+- scroll to field when clicked
 
 ## Fixed
 
