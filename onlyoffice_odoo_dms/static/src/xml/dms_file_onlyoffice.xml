@@ -8,9 +8,9 @@
     <!-- ── Create-in-ONLYOFFICE dialog ──────────────────────────────────── -->
 
     <t t-name="onlyoffice_odoo_dms.DmsCreateOnlyofficeDialog">
-    <Dialog title="'New ONLYOFFICE Document'" size="'md'">
+    <Dialog title="'New ONLYOFFICE Document'" size="'lg'">
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="oo_dms_title">File name</label>
+        <label class="form-label fw-semibold" for="oo_dms_title">Document name</label>
         <input
           id="oo_dms_title"
           type="text"
@@ -28,7 +28,7 @@
             style="min-width: 100px; flex: 1 1 100px;"
             t-on-click="() => state.format = fmt.ext"
           >
-            <i t-att-class="'fa fa-2x mb-2 d-block ' + fmt.icon" />
+            <img t-att-src="`/onlyoffice_odoo_dms/static/svg/formats/${fmt.icon}`" t-att-title="fmt.label" />
             <span t-esc="fmt.label" />
           </div>
         </t>

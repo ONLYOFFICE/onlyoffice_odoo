@@ -19,22 +19,22 @@ import { ListController } from "@web/views/list/list_controller"
 const FORMATS = [
   {
     ext: "docx",
-    icon: "fa-file-word-o",
+    icon: "docx.svg",
     label: "Document",
   },
   {
     ext: "xlsx",
-    icon: "fa-file-excel-o",
+    icon: "xlsx.svg",
     label: "Spreadsheet",
   },
   {
     ext: "pptx",
-    icon: "fa-file-powerpoint-o",
+    icon: "pptx.svg",
     label: "Presentation",
   },
   {
     ext: "pdf",
-    icon: "fa-file-pdf-o",
+    icon: "pdf.svg",
     label: "PDF Form",
   },
 ]
@@ -61,7 +61,7 @@ export class DmsCreateOnlyofficeDialog extends Component {
     this.state = useState({
       format: "docx",
       loading: false,
-      title: "",
+      title: "New Document",
     })
   }
 
@@ -71,7 +71,7 @@ export class DmsCreateOnlyofficeDialog extends Component {
 
   async onCreate() {
     if (!this.state.title.trim()) {
-      this.notification.add(_t("Please enter a file name."), { type: "warning" })
+      this.notification.add(_t("Please enter a Document name."), { type: "warning" })
       return
     }
     this.state.loading = true
@@ -91,7 +91,7 @@ export class DmsCreateOnlyofficeDialog extends Component {
         this.props.close()
       }
     } catch {
-      this.notification.add(_t("An unexpected error occurred while creating the file."), { type: "danger" })
+      this.notification.add(_t("An unexpected error occurred while creating the document."), { type: "danger" })
     } finally {
       this.state.loading = false
     }
