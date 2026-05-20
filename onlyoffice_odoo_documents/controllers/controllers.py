@@ -83,9 +83,9 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             if not document or not document.exists():
                 raise request.not_found()
 
-            return request.render(
-                "onlyoffice_odoo.onlyoffice_editor", self.prepare_share_editor(document, access_token, share_id)
-            )
+            values = self.prepare_share_editor(document, access_token, share_id)
+            values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+            return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
         except Exception:
             _logger.error("Ffailed to open shared document")
@@ -94,9 +94,10 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
-        return request.render(
-            "onlyoffice_odoo.onlyoffice_editor", self.prepare_document_editor(document_id, access_token)
-        )
+        values = self.prepare_document_editor(document_id, access_token)
+        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     def prepare_document_editor(self, document_id, access_token):
         document = request.env["documents.document"].browse(int(document_id))
@@ -211,7 +212,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
-            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            "editorConfig": root_config,
         }
 
     @http.route(

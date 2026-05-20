@@ -43,7 +43,7 @@ class TemplateEditor extends Component {
         await this.orm.call("onlyoffice.odoo.templates", "update_relationship", [id, template_model_model])
 
         const response = await this.rpc("/onlyoffice/template/editor", { attachment_id: attachment_id })
-        const config = JSON.parse(response.editorConfig)
+        const config = response.editorConfig
         config.events = {
           onDocumentReady: () => {
             if (window.docEditor && "createConnector" in window.docEditor) {
