@@ -11,7 +11,7 @@ class Document(models.Model):
         for record in self:
             if record.mimetype == "application/pdf":
                 record.thumbnail = False
-                record.thumbnail_status = False
+                record.thumbnail_status = "client_generated"
         return
 
     def _is_custom_role(self, role):
