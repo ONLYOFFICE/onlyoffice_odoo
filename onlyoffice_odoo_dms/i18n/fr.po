@@ -7,14 +7,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-18 11:40+0000\n"
-"PO-Revision-Date: 2026-05-18 11:40+0000\n"
+"PO-Revision-Date: 2026-05-19 14:39+0300\n"
 "Last-Translator: \n"
 "Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.9\n"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
@@ -37,7 +38,7 @@ msgstr ""
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.constraint,message:onlyoffice_odoo_dms.constraint_onlyoffice_dms_file_access_user_unique_user_file
 msgid "A user can only have one ONLYOFFICE role per DMS file."
-msgstr "Un utilisateur ne peut avoir qu'un seul rôle ONLYOFFICE par fichier DMS."
+msgstr "Un utilisateur ne peut avoir qu'un seul rôle ONLYOFFICE pour un fichier DMS."
 
 #. module: onlyoffice_odoo_dms
 #. odoo-javascript
@@ -99,29 +100,29 @@ msgstr "Niveau d'accès DMS"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_directory__oo_link_access
 msgid ""
-"Default ONLYOFFICE role for portal/public token access to files in this "
-"directory. 'None' inherits from the parent directory."
+"Default ONLYOFFICE role for portal/public token access to files in this directory. 'None' "
+"inherits from the parent directory."
 msgstr ""
-"Rôle ONLYOFFICE par défaut pour l'accès portail/public aux fichiers de ce "
-"répertoire. « Aucun » hérite du répertoire parent."
+"Rôle ONLYOFFICE par défaut pour l'accès aux fichiers de ce répertoire via le portail ou "
+"un token public. La valeur « Aucun » hérite du répertoire parent."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_access_group__oo_role
 msgid ""
-"Default ONLYOFFICE role granted to users in this access group. 'None' means "
-"fall back to the next resolution level."
+"Default ONLYOFFICE role granted to users in this access group. 'None' means fall back to "
+"the next resolution level."
 msgstr ""
-"Rôle ONLYOFFICE par défaut accordé aux utilisateurs de ce groupe d'accès. "
-"« Aucun » signifie passer au niveau de résolution suivant."
+"Rôle ONLYOFFICE par défaut attribué aux utilisateurs de ce groupe d'accès. La valeur "
+"« Aucun » renvoie au niveau de résolution suivant."
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_access_group_form_onlyoffice
 msgid ""
-"Default ONLYOFFICE role granted to users in this group. Overridden by per-"
-"file or per-user settings."
+"Default ONLYOFFICE role granted to users in this group. Overridden by per-file or per-"
+"user settings."
 msgstr ""
-"Rôle ONLYOFFICE par défaut accordé aux utilisateurs de ce groupe. Remplacé "
-"par les paramètres par fichier ou par utilisateur."
+"Rôle ONLYOFFICE par défaut attribué aux utilisateurs de ce groupe. Peut être remplacé par "
+"des paramètres par fichier ou par utilisateur."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
@@ -187,10 +188,9 @@ msgstr "Rôle ONLYOFFICE effectif de l'utilisateur actuel sur ce fichier."
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
 msgid ""
-"Effective ONLYOFFICE role from directory/group configuration (without per-"
-"user override)."
+"Effective ONLYOFFICE role from directory/group configuration (without per-user override)."
 msgstr ""
-"Rôle ONLYOFFICE effectif depuis la configuration du répertoire/groupe (sans "
+"Rôle ONLYOFFICE effectif à partir de la configuration du répertoire/groupe (sans "
 "remplacement par utilisateur)."
 
 #. module: onlyoffice_odoo_dms
@@ -228,11 +228,11 @@ msgstr "ID"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_version
 msgid ""
-"Incremented each time a file is saved back from ONLYOFFICE. Used as part of "
-"the document cache key."
+"Incremented each time a file is saved back from ONLYOFFICE. Used as part of the document "
+"cache key."
 msgstr ""
-"Incrémenté à chaque enregistrement du fichier depuis ONLYOFFICE. Utilisé "
-"comme partie de la clé de cache du document."
+"Incrémenté à chaque enregistrement du fichier à partir d'ONLYOFFICE. Utilisé comme "
+"fragment de la clé de cache du document."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_uid
@@ -258,7 +258,7 @@ msgstr "Aucun"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_directory_form_onlyoffice_groups
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid "ONLYOFFICE Access"
-msgstr "Accès ONLYOFFICE"
+msgstr "Accès à ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model,name:onlyoffice_odoo_dms.model_onlyoffice_dms_file_access_user
@@ -325,13 +325,16 @@ msgstr "Groupes d'accès aux enregistrements"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid ""
 "Resolution order: per-user override → access group role (inherited via\n"
-"                        DMS group cascade) → directory Internal Users (nearest ancestor) →\n"
+"                        DMS group cascade) → directory Internal Users (nearest ancestor) "
+"→\n"
 "                        DMS permissions fallback. Public Link and blanket defaults are\n"
 "                        configured on the directory."
 msgstr ""
 "Ordre de résolution : remplacement par utilisateur → rôle du groupe d'accès (hérité via\n"
-"                        cascade de groupes DMS) → répertoire Utilisateurs internes (ancêtre le plus proche) →\n"
-"                        repli sur les permissions DMS. Le lien public et les valeurs par défaut\n"
+"                        cascade de groupes DMS) → répertoire Utilisateurs internes "
+"(ancêtre le plus proche) →\n"
+"                        repli sur les permissions DMS. Le lien public et les valeurs par "
+"défaut\n"
 "                        sont configurés au niveau du répertoire."
 
 #. module: onlyoffice_odoo_dms
@@ -368,22 +371,22 @@ msgstr "Utilisateur"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
 msgid "User has DMS delete access to this file."
-msgstr "L'utilisateur a le droit de suppression DMS sur ce fichier."
+msgstr "L'utilisateur dispose l'accès en suppression DMS sur ce fichier."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_read
 msgid "User has DMS read access to this file."
-msgstr "L'utilisateur a le droit de lecture DMS sur ce fichier."
+msgstr "L'utilisateur dispose de l'accès en lecture DMS sur ce fichier."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_write
 msgid "User has DMS write access to this file."
-msgstr "L'utilisateur a le droit d'écriture DMS sur ce fichier."
+msgstr "L'utilisateur dispose l'accès en écriture DMS sur ce fichier."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_is_viewable
 msgid "Viewable in ONLYOFFICE"
-msgstr "Visible dans ONLYOFFICE"
+msgstr "Consultable dans ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__view

@@ -7,14 +7,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-18 11:40+0000\n"
-"PO-Revision-Date: 2026-05-18 11:40+0000\n"
+"PO-Revision-Date: 2026-05-19 12:25+0300\n"
 "Last-Translator: \n"
 "Language-Team: Spanish\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
@@ -43,7 +44,7 @@ msgstr "Un usuario solo puede tener un rol de ONLYOFFICE por archivo DMS."
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_dms/static/src/js/dms_file_onlyoffice.js:0
 msgid "An unexpected error occurred while creating the document."
-msgstr "Se produjo un error inesperado al crear el documento."
+msgstr "Se ha producido un error inesperado al crear el documento."
 
 #. module: onlyoffice_odoo_dms
 #. odoo-javascript
@@ -58,7 +59,7 @@ msgstr "Cancelar"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__commenter
 msgid "Commenter"
-msgstr "Comentarista"
+msgstr "Comentador"
 
 #. module: onlyoffice_odoo_dms
 #. odoo-javascript
@@ -94,34 +95,34 @@ msgstr "Filtro personalizado"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_access_level
 msgid "DMS Access Level"
-msgstr "Nivel de acceso DMS"
+msgstr "Nivel de acceso a DMS"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_directory__oo_link_access
 msgid ""
-"Default ONLYOFFICE role for portal/public token access to files in this "
-"directory. 'None' inherits from the parent directory."
+"Default ONLYOFFICE role for portal/public token access to files in this directory. 'None' "
+"inherits from the parent directory."
 msgstr ""
-"Rol de ONLYOFFICE predeterminado para el acceso portal/público a archivos en "
-"este directorio. «Ninguno» hereda del directorio padre."
+"Rol de ONLYOFFICE predeterminado para el acceso portal/público a archivos en este directorio. "
+"«Ninguno» hereda del directorio padre."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_access_group__oo_role
 msgid ""
-"Default ONLYOFFICE role granted to users in this access group. 'None' means "
-"fall back to the next resolution level."
+"Default ONLYOFFICE role granted to users in this access group. 'None' means fall back to the "
+"next resolution level."
 msgstr ""
-"Rol de ONLYOFFICE predeterminado para los usuarios de este grupo de acceso. "
-"«Ninguno» significa pasar al siguiente nivel de resolución."
+"Rol de ONLYOFFICE predeterminado para los usuarios de este grupo de acceso. «Ninguno» significa "
+"pasar al siguiente nivel de resolución."
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_access_group_form_onlyoffice
 msgid ""
-"Default ONLYOFFICE role granted to users in this group. Overridden by per-"
-"file or per-user settings."
+"Default ONLYOFFICE role granted to users in this group. Overridden by per-file or per-user "
+"settings."
 msgstr ""
-"Rol de ONLYOFFICE predeterminado para los usuarios de este grupo. Se "
-"reemplaza por la configuración por archivo o por usuario."
+"Rol de ONLYOFFICE predeterminado para los usuarios de este grupo. Se reemplaza por la "
+"configuración por archivo o por usuario."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
@@ -136,7 +137,7 @@ msgstr "Directorio"
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid "Directory ONLYOFFICE Role"
-msgstr "Rol ONLYOFFICE del directorio"
+msgstr "Rol del directorio de ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
@@ -177,7 +178,8 @@ msgstr "Editor"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_access_level
 msgid "Effective DMS access level, used to limit available ONLYOFFICE roles."
-msgstr "Nivel de acceso DMS efectivo, utilizado para limitar los roles de ONLYOFFICE disponibles."
+msgstr ""
+"Nivel de acceso a DMS efectivo, utilizado para limitar los roles de ONLYOFFICE disponibles."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_effective_role
@@ -186,18 +188,15 @@ msgstr "Rol de ONLYOFFICE efectivo del usuario actual en este archivo."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
-msgid ""
-"Effective ONLYOFFICE role from directory/group configuration (without per-"
-"user override)."
+msgid "Effective ONLYOFFICE role from directory/group configuration (without per-user override)."
 msgstr ""
-"Rol de ONLYOFFICE efectivo de la configuración del directorio/grupo (sin "
-"anulación por usuario)."
+"Rol de ONLYOFFICE efectivo de la configuración del directorio/grupo (sin anulación por usuario)."
 
 #. module: onlyoffice_odoo_dms
 #. odoo-python
 #: code:addons/onlyoffice_odoo_dms/controllers/controllers.py:0
 msgid "Failed to create file"
-msgstr "No se pudo crear el archivo"
+msgstr "No se ha podido crear el archivo"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model,name:onlyoffice_odoo_dms.model_dms_file
@@ -228,11 +227,11 @@ msgstr "ID"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_version
 msgid ""
-"Incremented each time a file is saved back from ONLYOFFICE. Used as part of "
-"the document cache key."
+"Incremented each time a file is saved back from ONLYOFFICE. Used as part of the document cache "
+"key."
 msgstr ""
-"Se incrementa cada vez que un archivo se guarda desde ONLYOFFICE. Se utiliza "
-"como parte de la clave de caché del documento."
+"Se incrementa cada vez que un archivo se guarda desde ONLYOFFICE. Se utiliza como parte de la "
+"clave de caché del documento."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_uid
@@ -258,12 +257,12 @@ msgstr "Ninguno"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_directory_form_onlyoffice_groups
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid "ONLYOFFICE Access"
-msgstr "Acceso ONLYOFFICE"
+msgstr "Acceso a ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model,name:onlyoffice_odoo_dms.model_onlyoffice_dms_file_access_user
 msgid "ONLYOFFICE DMS Per-User File Access"
-msgstr "Acceso a archivos ONLYOFFICE DMS por usuario"
+msgstr "Acceso a archivos por usuario en ONLYOFFICE DMS"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_access_group__oo_role
@@ -271,22 +270,22 @@ msgstr "Acceso a archivos ONLYOFFICE DMS por usuario"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__role
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_directory_form_onlyoffice_groups
 msgid "ONLYOFFICE Role"
-msgstr "Rol ONLYOFFICE"
+msgstr "Rol de ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid "ONLYOFFICE Role Override"
-msgstr "Anulación de rol ONLYOFFICE"
+msgstr "Anulación del rol de ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_user_access_ids
 msgid "ONLYOFFICE User Roles"
-msgstr "Roles de usuario ONLYOFFICE"
+msgstr "Roles de usuario de ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_version
 msgid "ONLYOFFICE Version"
-msgstr "Versión ONLYOFFICE"
+msgstr "Versión de ONLYOFFICE"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
@@ -314,7 +313,7 @@ msgstr "Enlace público"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_read
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__dms_access_level__read
 msgid "Read"
-msgstr "Lectura"
+msgstr "Leer"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model,name:onlyoffice_odoo_dms.model_dms_access_group
@@ -330,8 +329,10 @@ msgid ""
 "                        configured on the directory."
 msgstr ""
 "Orden de resolución: anulación por usuario → rol del grupo de acceso (heredado mediante\n"
-"                        cascada de grupos DMS) → directorio Usuarios internos (ancestro más cercano) →\n"
-"                        respaldo de permisos DMS. El enlace público y los valores predeterminados\n"
+"                        cascada de grupos DMS) → directorio Usuarios internos (ancestro más "
+"cercano) →\n"
+"                        respaldo de permisos DMS. El enlace público y los valores "
+"predeterminados\n"
 "                        se configuran en el directorio."
 
 #. module: onlyoffice_odoo_dms
@@ -368,17 +369,17 @@ msgstr "Usuario"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
 msgid "User has DMS delete access to this file."
-msgstr "El usuario tiene permiso de eliminación DMS en este archivo."
+msgstr "El usuario tiene acceso de eliminación de DMS para este archivo."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_read
 msgid "User has DMS read access to this file."
-msgstr "El usuario tiene permiso de lectura DMS en este archivo."
+msgstr "El usuario tiene permiso de lectura de DMS para este archivo."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_write
 msgid "User has DMS write access to this file."
-msgstr "El usuario tiene permiso de escritura DMS en este archivo."
+msgstr "El usuario tiene acceso de escritura de DMS para este archivo."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_is_viewable
@@ -392,10 +393,10 @@ msgstr "Visible en ONLYOFFICE"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__view
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__view
 msgid "Viewer"
-msgstr "Lector"
+msgstr "Espectador"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_write
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__dms_access_level__write
 msgid "Write"
-msgstr "Escritura"
+msgstr "Escribir"

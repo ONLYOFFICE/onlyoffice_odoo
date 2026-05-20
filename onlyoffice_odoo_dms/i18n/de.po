@@ -7,14 +7,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-18 11:40+0000\n"
-"PO-Revision-Date: 2026-05-18 11:40+0000\n"
+"PO-Revision-Date: 2026-05-19 16:54+0300\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
@@ -99,29 +100,29 @@ msgstr "DMS-Zugriffsebene"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_directory__oo_link_access
 msgid ""
-"Default ONLYOFFICE role for portal/public token access to files in this "
-"directory. 'None' inherits from the parent directory."
+"Default ONLYOFFICE role for portal/public token access to files in this directory. 'None' "
+"inherits from the parent directory."
 msgstr ""
-"Standard-ONLYOFFICE-Rolle für Portal-/öffentlichen Zugriff auf Dateien in "
-"diesem Verzeichnis. \"Keine\" erbt vom übergeordneten Verzeichnis."
+"Standard-ONLYOFFICE-Rolle für Portal-/öffentlichen Zugriff auf Dateien in diesem Verzeichnis. "
+"\"Keine\" erbt vom übergeordneten Verzeichnis."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_access_group__oo_role
 msgid ""
-"Default ONLYOFFICE role granted to users in this access group. 'None' means "
-"fall back to the next resolution level."
+"Default ONLYOFFICE role granted to users in this access group. 'None' means fall back to the "
+"next resolution level."
 msgstr ""
-"Standard-ONLYOFFICE-Rolle für Benutzer in dieser Zugriffsgruppe. \"Keine\" "
-"bedeutet Rückfall auf die nächste Auflösungsebene."
+"Standard-ONLYOFFICE-Rolle für Benutzer in dieser Zugriffsgruppe. \"Keine\" bedeutet Rückfall "
+"auf die nächste Auflösungsebene."
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_access_group_form_onlyoffice
 msgid ""
-"Default ONLYOFFICE role granted to users in this group. Overridden by per-"
-"file or per-user settings."
+"Default ONLYOFFICE role granted to users in this group. Overridden by per-file or per-user "
+"settings."
 msgstr ""
-"Standard-ONLYOFFICE-Rolle für Benutzer in dieser Gruppe. Wird durch datei- "
-"oder benutzerspezifische Einstellungen überschrieben."
+"Standard-ONLYOFFICE-Rolle für Benutzer in dieser Gruppe. Wird durch datei- oder "
+"benutzerspezifische Einstellungen überschrieben."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
@@ -136,7 +137,7 @@ msgstr "Verzeichnis"
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid "Directory ONLYOFFICE Role"
-msgstr "ONLYOFFICE-Rolle des Verzeichnisses"
+msgstr "ONLYOFFICE-Verzeichnisrolle"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
@@ -186,12 +187,10 @@ msgstr "Effektive ONLYOFFICE-Rolle des aktuellen Benutzers für diese Datei."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
-msgid ""
-"Effective ONLYOFFICE role from directory/group configuration (without per-"
-"user override)."
+msgid "Effective ONLYOFFICE role from directory/group configuration (without per-user override)."
 msgstr ""
-"Effektive ONLYOFFICE-Rolle aus der Verzeichnis-/Gruppenkonfiguration (ohne "
-"benutzerspezifische Überschreibung)."
+"Effektive ONLYOFFICE-Rolle aus der Verzeichnis-/Gruppenkonfiguration (ohne benutzerspezifische "
+"Überschreibung)."
 
 #. module: onlyoffice_odoo_dms
 #. odoo-python
@@ -228,11 +227,11 @@ msgstr "ID"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_version
 msgid ""
-"Incremented each time a file is saved back from ONLYOFFICE. Used as part of "
-"the document cache key."
+"Incremented each time a file is saved back from ONLYOFFICE. Used as part of the document cache "
+"key."
 msgstr ""
-"Wird bei jedem Speichern einer Datei aus ONLYOFFICE erhöht. Wird als Teil "
-"des Dokument-Cache-Schlüssels verwendet."
+"Wird bei jedem Speichern einer Datei aus ONLYOFFICE erhöht. Wird als Teil des Dokument-Cache-"
+"Schlüssels verwendet."
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_uid
@@ -330,7 +329,8 @@ msgid ""
 "                        configured on the directory."
 msgstr ""
 "Auflösungsreihenfolge: Benutzerspezifische Überschreibung → Zugriffsgruppen-Rolle (geerbt über\n"
-"                        DMS-Gruppenkaskade) → Verzeichnis Interne Benutzer (nächster Vorfahre) →\n"
+"                        DMS-Gruppenkaskade) → Verzeichnis Interne Benutzer (nächster Vorfahre) "
+"→\n"
 "                        Rückfall auf DMS-Berechtigungen. Öffentlicher Link und Standardwerte\n"
 "                        werden auf Verzeichnisebene konfiguriert."
 

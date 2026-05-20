@@ -7,14 +7,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-18 11:40+0000\n"
-"PO-Revision-Date: 2026-05-18 11:40+0000\n"
+"PO-Revision-Date: 2026-05-19 15:33+0200\n"
 "Last-Translator: \n"
 "Language-Team: Chinese (Simplified)\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.9\n"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
@@ -58,7 +59,7 @@ msgstr "取消"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__commenter
 msgid "Commenter"
-msgstr "评论者"
+msgstr "可批注"
 
 #. module: onlyoffice_odoo_dms
 #. odoo-javascript
@@ -102,8 +103,7 @@ msgid ""
 "Default ONLYOFFICE role for portal/public token access to files in this "
 "directory. 'None' inherits from the parent directory."
 msgstr ""
-"此目录中文件的门户/公共令牌访问的默认ONLYOFFICE角色。"
-"\"无\"从父目录继承。"
+"此目录中文件的门户/公共令牌访问的默认ONLYOFFICE角色。\"无\"从父目录继承。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_access_group__oo_role
@@ -111,16 +111,14 @@ msgid ""
 "Default ONLYOFFICE role granted to users in this access group. 'None' means "
 "fall back to the next resolution level."
 msgstr ""
-"授予此访问组中用户的默认ONLYOFFICE角色。\"无\"表示"
-"回退到下一个解析级别。"
+"授予此访问组中用户的默认ONLYOFFICE角色。\"无\"表示回退到下一个解析级别。"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_access_group_form_onlyoffice
 msgid ""
 "Default ONLYOFFICE role granted to users in this group. Overridden by per-"
 "file or per-user settings."
-msgstr ""
-"授予此组中用户的默认ONLYOFFICE角色。可被文件级或用户级设置覆盖。"
+msgstr "授予此组中用户的默认ONLYOFFICE角色。可被文件级或用户级设置覆盖。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
@@ -171,7 +169,7 @@ msgstr "可在ONLYOFFICE中编辑"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__edit
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__edit
 msgid "Editor"
-msgstr "编辑者"
+msgstr "可编辑"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_access_level
@@ -227,7 +225,8 @@ msgstr "ID"
 msgid ""
 "Incremented each time a file is saved back from ONLYOFFICE. Used as part of "
 "the document cache key."
-msgstr "每次从ONLYOFFICE保存文件时递增。用作文档缓存键的一部分。"
+msgstr ""
+"每次从 ONLYOFFICE 保存文件时，该值都会递增，并作为文档缓存键的一部分。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_uid
@@ -320,8 +319,10 @@ msgstr "记录访问组"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid ""
 "Resolution order: per-user override → access group role (inherited via\n"
-"                        DMS group cascade) → directory Internal Users (nearest ancestor) →\n"
-"                        DMS permissions fallback. Public Link and blanket defaults are\n"
+"                        DMS group cascade) → directory Internal Users "
+"(nearest ancestor) →\n"
+"                        DMS permissions fallback. Public Link and blanket "
+"defaults are\n"
 "                        configured on the directory."
 msgstr ""
 "解析顺序：用户级覆盖 → 访问组角色（通过DMS组级联继承）→\n"
@@ -334,7 +335,7 @@ msgstr ""
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__reviewer
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__reviewer
 msgid "Reviewer"
-msgstr "审阅者"
+msgstr "可审阅"
 
 #. module: onlyoffice_odoo_dms
 #. odoo-javascript
@@ -386,7 +387,7 @@ msgstr "可在ONLYOFFICE中查看"
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__view
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__view
 msgid "Viewer"
-msgstr "查看者"
+msgstr "可查看"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_write
