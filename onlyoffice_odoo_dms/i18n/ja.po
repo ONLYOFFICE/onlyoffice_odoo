@@ -7,14 +7,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-05-18 11:40+0000\n"
-"PO-Revision-Date: 2026-05-18 11:40+0000\n"
+"PO-Revision-Date: 2026-05-20 17:47+0900\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.9\n"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
@@ -37,7 +38,8 @@ msgstr ""
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.constraint,message:onlyoffice_odoo_dms.constraint_onlyoffice_dms_file_access_user_unique_user_file
 msgid "A user can only have one ONLYOFFICE role per DMS file."
-msgstr "ユーザーはDMSファイルごとに1つのONLYOFFICEロールしか持てません。"
+msgstr ""
+"ユーザーにはDMSファイルごとに1つのみのONLYOFFICEロールを割り当てられます。"
 
 #. module: onlyoffice_odoo_dms
 #. odoo-javascript
@@ -102,8 +104,8 @@ msgid ""
 "Default ONLYOFFICE role for portal/public token access to files in this "
 "directory. 'None' inherits from the parent directory."
 msgstr ""
-"このディレクトリ内のファイルへのポータル/公開トークンアクセスのデフォルトONLYOFFICEロール。"
-"「なし」は親ディレクトリから継承します。"
+"このディレクトリ内のファイルへのポータル/公開トークンアクセスのデフォルト"
+"ONLYOFFICEロール。「なし」は親ディレクトリから継承します。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_access_group__oo_role
@@ -111,8 +113,8 @@ msgid ""
 "Default ONLYOFFICE role granted to users in this access group. 'None' means "
 "fall back to the next resolution level."
 msgstr ""
-"このアクセスグループのユーザーに付与されるデフォルトのONLYOFFICEロール。「なし」は"
-"次の解決レベルにフォールバックすることを意味します。"
+"このアクセスグループのユーザーに付与されるデフォルトのONLYOFFICEロール。「な"
+"し」は次の解決レベルにフォールバックすることを意味します。"
 
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_access_group_form_onlyoffice
@@ -120,8 +122,8 @@ msgid ""
 "Default ONLYOFFICE role granted to users in this group. Overridden by per-"
 "file or per-user settings."
 msgstr ""
-"このグループのユーザーに付与されるデフォルトのONLYOFFICEロール。ファイルごとまたは"
-"ユーザーごとの設定で上書きされます。"
+"このグループのユーザーにデフォルトのONLYOFFICEロールが付与されました。ファイ"
+"ルごとまたはユーザーごとの設定で上書きされています。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
@@ -136,12 +138,12 @@ msgstr "ディレクトリ"
 #. module: onlyoffice_odoo_dms
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid "Directory ONLYOFFICE Role"
-msgstr "ディレクトリONLYOFFICEロール"
+msgstr "ONLYOFFICEロールのディレクトリ"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
 msgid "Directory Role"
-msgstr "ディレクトリロール"
+msgstr "ロールのディレクトリ"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__display_name
@@ -177,7 +179,8 @@ msgstr "編集者"
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_access_level
 msgid "Effective DMS access level, used to limit available ONLYOFFICE roles."
-msgstr "有効なDMSアクセスレベル。利用可能なONLYOFFICEロールの制限に使用されます。"
+msgstr ""
+"有効なDMSアクセスレベル。利用可能なONLYOFFICEロールの制限に使用されます。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_effective_role
@@ -190,8 +193,8 @@ msgid ""
 "Effective ONLYOFFICE role from directory/group configuration (without per-"
 "user override)."
 msgstr ""
-"ディレクトリ/グループ設定からの有効なONLYOFFICEロール（ユーザーごとの"
-"上書きなし）。"
+"ディレクトリ/グループ設定からの有効なONLYOFFICEロール（ユーザーごとの上書き"
+"なし）。"
 
 #. module: onlyoffice_odoo_dms
 #. odoo-python
@@ -231,8 +234,8 @@ msgid ""
 "Incremented each time a file is saved back from ONLYOFFICE. Used as part of "
 "the document cache key."
 msgstr ""
-"ONLYOFFICEからファイルが保存されるたびに増加します。ドキュメントキャッシュキーの"
-"一部として使用されます。"
+"ONLYOFFICEからファイルが保存されるたびに増加します。ドキュメントキャッシュ"
+"キーの一部として使用されます。"
 
 #. module: onlyoffice_odoo_dms
 #: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_uid
@@ -325,13 +328,17 @@ msgstr "レコードアクセスグループ"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
 msgid ""
 "Resolution order: per-user override → access group role (inherited via\n"
-"                        DMS group cascade) → directory Internal Users (nearest ancestor) →\n"
-"                        DMS permissions fallback. Public Link and blanket defaults are\n"
+"                        DMS group cascade) → directory Internal Users "
+"(nearest ancestor) →\n"
+"                        DMS permissions fallback. Public Link and blanket "
+"defaults are\n"
 "                        configured on the directory."
 msgstr ""
-"解決順序: ユーザー別上書き → アクセスグループロール（DMSグループカスケードから\n"
+"解決順序: ユーザー別上書き → アクセスグループロール（DMSグループカスケードか"
+"ら\n"
 "                        継承）→ ディレクトリ内部ユーザー（最も近い祖先）→\n"
-"                        DMS権限フォールバック。公開リンクとデフォルト設定は\n"
+"                        DMS権限フォールバック。公開リンクとデフォルト設定"
+"は\n"
 "                        ディレクトリで設定されます。"
 
 #. module: onlyoffice_odoo_dms
