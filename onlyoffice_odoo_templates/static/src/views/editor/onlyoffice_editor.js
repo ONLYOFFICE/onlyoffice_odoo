@@ -19,7 +19,8 @@ class TemplateEditor extends Component {
     this.router = useService("router")
 
     this.state = useState({
-      resModel: "", hasLicense: false,
+      resModel: "",
+      hasLicense: false,
     })
 
     this.config = null
