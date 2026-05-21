@@ -136,7 +136,10 @@ export class ExportData extends Component {
     setTimeout(() => {
       const el = document.querySelector(`[data-field_id="${CSS.escape(fieldId)}"]`)
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" })
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        })
       }
     }, 100)
   }
