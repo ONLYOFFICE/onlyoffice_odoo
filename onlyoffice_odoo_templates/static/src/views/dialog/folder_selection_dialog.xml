@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
+<templates xml:space="preserve">
+    <t t-name="onlyoffice_odoo_templates.FolderSelectionDialog" owl="1">
+    <div>
+      <Dialog title="'Add to documents'" contentClass="'o-onlyoffice-folder-dialog'" footer="true">
+        <div t-if="state.isLoading" class="text-center p-4">
+          <i class="fa fa-spinner fa-spin fa-2x" />
+        </div>
+        <div t-elif="!state.folders.length" class="text-center p-4 text-muted">
+          No available folders found.
+        </div>
+        <div t-else="" class="o-onlyoffice-folder-list">
+          <t t-foreach="state.folders" t-as="folder" t-key="folder.id">
+            <div
+              class="o-onlyoffice-folder-item d-flex align-items-center p-2 border-bottom cursor-pointer"
+              t-att-class="isSelected(folder.id) ? 'o-onlyoffice-folder-selected' : ''"
+              t-on-click="() => this.selectFolder(folder.id)"
+              t-on-dblclick="onConfirm"
+            >
+              <i class="fa fa-folder-o me-2 text-warning" />
+              <span t-esc="folder.display_name" />
+            </div>
+          </t>
+        </div>
+        <t t-set-slot="footer">
+          <button class="btn btn-primary" t-att-disabled="isConfirmDisabled()" t-on-click="onConfirm">
+            Save
+          </button>
+          <button class="btn btn-secondary" t-on-click="data.close">
+            Cancel
+          </button>
+        </t>
+      </Dialog>
+    </div>
+  </t>
+</templates>
