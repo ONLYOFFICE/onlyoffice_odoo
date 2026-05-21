@@ -532,7 +532,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             if not folder.exists() or not folder.has_write_access:
                 raise Exception("Access denied to the selected folder")
         except KeyError:
-            raise Exception("Documents module is not installed")
+            raise Exception("Documents module is not installed")  # noqa: B904
 
         internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
         oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
