@@ -20,10 +20,7 @@
               >
                 <i class="fa fa-arrow-right" /> Learn more </a>
               <br />
-              <a
-                href="https://community.onlyoffice.com/c/suggestions/integrations/56"
-                target="_blank"
-              >
+              <a href="https://community.onlyoffice.com/c/suggestions/integrations/56" target="_blank">
                 <i class="fa fa-arrow-right" /> Suggest a feature </a>
             </setting>
           </block>
