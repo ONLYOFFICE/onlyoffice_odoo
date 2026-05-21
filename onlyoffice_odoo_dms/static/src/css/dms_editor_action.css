@@ -1,0 +1,32 @@
+/* Wrapper: fill the client-action area using flex column */
+.o_onlyoffice_dms_action {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Breadcrumb bar: flex item, height determined by Odoo Bootstrap classes */
+.o_onlyoffice_dms_action > .o_control_panel {
+  flex: 0 0 auto;
+}
+
+/* Restore link color overridden by .o_control_panel .o_breadcrumb a { color: inherit } */
+.o_onlyoffice_dms_action .o_breadcrumb a {
+  color: rgba(var(--link-color-rgb), 1);
+}
+
+/* Make the ONLYOFFICE editor iframe fill the remaining height */
+.o_onlyoffice_dms_editor {
+  display: block;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 0;
+  border: none;
+}
+
+/* The client action container must stretch to full height */
+.o_action:has(.o_onlyoffice_dms_editor) {
+  height: 100%;
+  padding: 0;
+}
