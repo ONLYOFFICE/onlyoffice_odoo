@@ -18,7 +18,9 @@ class TemplateEditor extends Component {
     this.notificationService = useService("notification")
     this.router = useService("router")
 
-    this.state = useState({ resModel: "", hasLicense: false })
+    this.state = useState({
+      resModel: "", hasLicense: false,
+    })
 
     this.config = null
     this.docApiJS = null
@@ -113,7 +115,9 @@ class TemplateEditor extends Component {
     if (!this.state.hasLicense && !this.noLicenseNotified) {
       this.noLicenseNotified = true
       this.notificationService.add(
-        _t("Note: The ONLYOFFICE Automation API is not activated in your instance, so automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor isn't available. You can manually create the field and paste the key from your clipboard."),
+        _t(
+          "Note: The ONLYOFFICE Automation API is not activated in your instance, so automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor isn't available. You can manually create the field and paste the key from your clipboard.",
+        ),
         {
           type: "warning",
           sticky: true,
