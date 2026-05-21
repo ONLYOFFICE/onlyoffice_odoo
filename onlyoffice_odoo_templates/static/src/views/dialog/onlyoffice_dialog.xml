@@ -66,6 +66,15 @@
           <button class="btn btn-primary o-template-fill" t-att-disabled="isButtonDisabled()" t-on-click="fillTemplate">
             <t>Print</t>
           </button>
+          <button
+            t-if="state.documentsAvailable"
+            class="btn btn-primary"
+            t-att-disabled="isButtonDisabled()"
+            t-on-click="addToDocuments"
+          >
+            <i class="fa fa-folder-o me-1" />
+            <t>Add to Documents</t>
+          </button>
           <button class="btn btn-secondary" t-att-disabled="isButtonDisabled()" t-on-click="previewTemplate">
             <t>Preview</t>
           </button>

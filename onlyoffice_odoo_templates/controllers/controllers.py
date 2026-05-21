@@ -496,6 +496,76 @@ class OnlyofficeTemplate_Connector(http.Controller):
         logger.info("get_user_from_token - user: %s", user.name)
         return user
 
+    @http.route("/onlyoffice/template/documents/check", auth="user", type="json")
+    def check_documents_module(self):
+        """Check if the documents module is installed."""
+        return bool(
+            request.env["ir.module.module"].sudo().search([("name", "=", "documents"), ("state", "=", "installed")])
+        )
+
+    @http.route("/onlyoffice/template/documents/folders", auth="user", type="json")
+    def get_documents_folders(self):
+        """Get folders available to the current user from the Documents module."""
+        try:
+            Folder = request.env["documents.folder"]
+        except KeyError:
+            return []
+
+        folders = Folder.search_read([], ["id", "display_name", "has_write_access"], order="sequence, name")
+        return [{"id": f["id"], "display_name": f["display_name"]} for f in folders if f.get("has_write_access")]
+
+    @http.route("/onlyoffice/template/documents/save", auth="user", type="json")
+    def save_to_documents(self, template_id, record_ids, folder_id):
+        """Fill template and save the result to the specified Documents folder."""
+        logger.info(
+            "save_to_documents - template: %s, records: %s, folder: %s",
+            template_id,
+            record_ids,
+            folder_id,
+        )
+        try:
+            folder = request.env["documents.folder"].browse(int(folder_id))
+            if not folder.exists() or not folder.has_write_access:
+                raise Exception("Access denied to the selected folder")
+        except KeyError:
+            raise Exception("Documents module is not installed")  # noqa: B904
+
+        internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
+        oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
+
+        if isinstance(record_ids, list):
+            record_ids = ",".join(str(r) for r in record_ids)
+        else:
+            record_ids = str(record_ids)
+
+        templates = self.fill_template(oo_security_token, record_ids, template_id)
+        saved_documents = []
+
+        for filename, url in templates.items():
+            response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
+            if response.status_code == 200:
+                attachment = request.env["ir.attachment"].create(
+                    {
+                        "name": filename,
+                        "datas": base64.b64encode(response.content),
+                        "mimetype": "application/pdf",
+                    }
+                )
+                document = request.env["documents.document"].create(
+                    {
+                        "name": filename,
+                        "folder_id": int(folder_id),
+                        "attachment_id": attachment.id,
+                    }
+                )
+                saved_documents.append(document.id)
+                logger.info("save_to_documents - saved document %s to folder %s", document.id, folder_id)
+            else:
+                logger.warning("save_to_documents - failed to download file: %s", response.status_code)
+                raise Exception(f"Failed to download generated file, status={response.status_code}")
+
+        return {"success": True, "document_ids": saved_documents}
+
     def get_docbuilder_error(self, error_code):
         docbuilder_messages = {
             -1: "Unknown error.",

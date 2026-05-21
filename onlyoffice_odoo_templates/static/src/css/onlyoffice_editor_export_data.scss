@@ -135,4 +135,14 @@
   .o-onlyoffice-list-field_children {
     padding-left: 18px !important;
   }
+
+  .o-onlyoffice-field-highlighted > .o-onlyoffice-field {
+    background-color: var(--o-color-accent, #017e84) !important;
+    color: #fff !important;
+    transition: background-color 0.3s ease;
+
+    .o-onlyoffice-field-title {
+      color: #fff !important;
+    }
+  }
 }
