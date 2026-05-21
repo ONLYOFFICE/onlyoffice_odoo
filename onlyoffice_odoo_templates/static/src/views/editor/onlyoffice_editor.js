@@ -20,14 +20,18 @@ class TemplateEditor extends Component {
     this.notificationService = useService("notification")
     this.router = router
 
-    this.state = useState({ resModel: "" })
+    this.state = useState({
+      resModel: "",
+      hasLicense: false,
+    })
 
     this.config = null
     this.docApiJS = null
     this.documentReady = false
-    this.hasLicense = false
+    this.noLicenseNotified = false
     this.script = null
     this.unchangedModels = {}
+    this.lastFormKey = null
 
     useBus(this.env.bus, "onlyoffice-template-create-form", (field) => this.createForm(field.detail))
 
@@ -51,12 +55,27 @@ class TemplateEditor extends Component {
             if (window.docEditor && "createConnector" in window.docEditor) {
               window.connector = docEditor.createConnector()
               window.connector.executeMethod("GetVersion", [], () => {
-                this.hasLicense = true
+                this.state.hasLicense = true
+              })
+              window.connector.attachEvent("onClick", () => {
+                window.connector.executeMethod("GetCurrentContentControlPr", [], (obj) => {
+                  const formKey = obj && obj.FormKey ? obj.FormKey : null
+                  if (formKey !== this.lastFormKey) {
+                    this.lastFormKey = formKey
+                    if (formKey) {
+                      const fieldId = formKey.replaceAll(" ", "/")
+                      this.env.bus.trigger("onlyoffice-template-highlight-field", fieldId)
+                    } else {
+                      this.env.bus.trigger("onlyoffice-template-highlight-field", null)
+                    }
+                  }
+                })
               })
             }
             // Render fields
             this.state.resModel = template_model_model
             this.documentReady = true
+            setTimeout(() => this.showNoLicenseNotification(), 1500)
           },
         }
         const theme = cookie.get("color_scheme")
@@ -110,10 +129,27 @@ class TemplateEditor extends Component {
     })
   }
 
+  showNoLicenseNotification() {
+    if (!this.state.hasLicense && !this.noLicenseNotified) {
+      this.noLicenseNotified = true
+      this.notificationService.add(
+        _t(
+          "Note: The ONLYOFFICE Automation API is not activated in your instance, so automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor isn't available. You can manually create the field and paste the key from your clipboard.",
+        ),
+        {
+          type: "warning",
+          sticky: true,
+        },
+      )
+    }
+  }
+
   createForm(field) {
     if (this.documentReady) {
-      if (!this.hasLicense) {
-        this.notificationService.add(_t("Couldn't insert the field. Please check Automation API."), { type: "danger" })
+      if (!this.state.hasLicense) {
+        const key = field.id.replaceAll("/", " ")
+        navigator.clipboard.writeText(key)
+        this.notificationService.add(_t("Key copied to clipboard: %s", key), { type: "success" })
         return
       }
       Asc.scope.data = field

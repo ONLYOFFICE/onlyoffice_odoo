@@ -2,6 +2,8 @@ name: Lint
 
 on:
   workflow_dispatch:
+  push:
+    branches: [develop, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
   pull_request:
 
 jobs:

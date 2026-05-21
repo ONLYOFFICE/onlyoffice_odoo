@@ -19,7 +19,7 @@
           </div>
           <hr class="o-onlyoffice-template-separator" />
           <t t-if="state.resModel">
-            <ExportData resModel="state.resModel" />
+            <ExportData resModel="state.resModel" hasLicense="state.hasLicense" />
           </t>
         </div>
         <div class="o-onlyoffice-template-editor">
