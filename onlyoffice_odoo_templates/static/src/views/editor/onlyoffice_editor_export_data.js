@@ -283,5 +283,8 @@ ExportData.components = {
   CheckBox,
   ExportDataItem,
 }
-ExportData.props = { resModel: String }
+ExportData.props = {
+  hasLicense: Boolean,
+  resModel: String,
+}
 ExportData.template = "onlyoffice_odoo_templates.ExportData"
