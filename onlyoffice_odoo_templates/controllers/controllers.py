@@ -507,12 +507,26 @@ class OnlyofficeTemplate_Connector(http.Controller):
     def get_documents_folders(self):
         """Get folders available to the current user from the Documents module."""
         try:
-            Folder = request.env["documents.folder"]
+            Document = request.env["documents.document"]
         except KeyError:
             return []
 
-        folders = Folder.search_read([], ["id", "display_name", "has_write_access"], order="sequence, name")
-        return [{"id": f["id"], "display_name": f["display_name"]} for f in folders if f.get("has_write_access")]
+        folders = Document.search([("type", "=", "folder")])
+        result = []
+        for folder in folders:
+            if folder.access_internal != "edit":
+                continue
+
+            parts = []
+            current = folder
+            while current and current.type == "folder":
+                parts.append(current.name)
+                current = current.folder_id
+            full_path = "/".join(reversed(parts))
+            result.append({"id": folder.id, "display_name": full_path})
+
+        result.sort(key=lambda f: f["display_name"])
+        return result
 
     @http.route("/onlyoffice/template/documents/save", auth="user", type="json")
     def save_to_documents(self, template_id, record_ids, folder_id):
@@ -524,8 +538,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
             folder_id,
         )
         try:
-            folder = request.env["documents.folder"].browse(int(folder_id))
-            if not folder.exists() or not folder.has_write_access:
+            folder = request.env["documents.document"].browse(int(folder_id))
+            if not folder.exists() or folder.type != "folder":
                 raise Exception("Access denied to the selected folder")
         except KeyError:
             raise Exception("Documents module is not installed")  # noqa: B904
