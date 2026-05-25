@@ -191,9 +191,10 @@ class Onlyoffice_Connector(http.Controller):
             raise Exception("cant read")
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
-        return request.render(
-            "onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token, can_write)
-        )
+        values = self.prepare_editor_values(attachment, access_token, can_write)
+        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
         "/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False
@@ -346,12 +347,13 @@ class Onlyoffice_Connector(http.Controller):
             _logger.error("Failed to get frontend session info: %s", str(e))
             session_info = {}
         _logger.info("prepare_editor_values - success: %s", attachment.id)
+
         return {
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
-            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
-            "session_info": markupsafe.Markup(json.dumps(session_info)),
+            "editorConfig": root_config,
+            "session_info": session_info,
         }
 
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
