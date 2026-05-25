@@ -65,7 +65,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             raise Forbidden()
 
         try:
-            dms_file.check_access("read")
+            dms_file.check_access_rights("read")
+            dms_file.check_access_rule("read")
         except AccessError as err:
             raise Forbidden() from err
 
@@ -101,7 +102,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             return request.not_found()
 
         try:
-            dms_file.check_access("read")
+            dms_file.check_access_rights("read")
+            dms_file.check_access_rule("read")
         except AccessError:
             return request.not_found()
 
@@ -154,7 +156,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             if access_token and not dms_file.check_access_token(access_token):
                 raise Exception(f"Invalid access token for DMS file {file_id}")
 
-            dms_file.check_access("write")
+            dms_file.check_access_rights("write")
+            dms_file.check_access_rule("write")
 
             if jwt_utils.is_jwt_enabled(request.env):
                 token = body.get("token") or ""

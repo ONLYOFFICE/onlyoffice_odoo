@@ -162,17 +162,20 @@ class OnlyofficeDmsFileAccessUser(models.Model):
                 continue
             file_as_user = record.file_id.with_user(record.user_id)
             try:
-                file_as_user.check_access("read")
+                file_as_user.check_access_rights("read")
+                file_as_user.check_access_rule("read")
                 record.dms_perm_read = True
             except (AccessError, Exception):
                 record.dms_perm_read = False
             try:
-                file_as_user.check_access("write")
+                file_as_user.check_access_rights("write")
+                file_as_user.check_access_rule("write")
                 record.dms_perm_write = True
             except (AccessError, Exception):
                 record.dms_perm_write = False
             try:
-                file_as_user.check_access("unlink")
+                file_as_user.check_access_rights("unlink")
+                file_as_user.check_access_rule("unlink")
                 record.dms_perm_unlink = True
             except (AccessError, Exception):
                 record.dms_perm_unlink = False

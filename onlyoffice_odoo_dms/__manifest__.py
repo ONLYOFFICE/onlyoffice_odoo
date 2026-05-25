@@ -36,7 +36,7 @@
             # XML must load after DMS button templates are defined
             (
                 "after",
-                "dms/static/src/js/views/file_kanban_renderer.xml",
+                "dms/static/src/js/views/file_list_renderer.xml",
                 "onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml",
             ),
         ],

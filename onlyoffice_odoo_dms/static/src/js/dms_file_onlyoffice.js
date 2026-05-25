@@ -9,7 +9,6 @@ import { FileListView } from "@dms/js/views/file_list_view.esm"
 import { Component, useState, useEffect } from "@odoo/owl"
 import { Dialog } from "@web/core/dialog/dialog"
 import { _t } from "@web/core/l10n/translation"
-import { rpc } from "@web/core/network/rpc"
 import { registry } from "@web/core/registry"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
@@ -57,6 +56,7 @@ export class DmsCreateOnlyofficeDialog extends Component {
   }
 
   setup() {
+    this.rpc = useService("rpc")
     this.notification = useService("notification")
     this.state = useState({
       format: "docx",
@@ -76,7 +76,7 @@ export class DmsCreateOnlyofficeDialog extends Component {
     }
     this.state.loading = true
     try {
-      const raw = await rpc("/onlyoffice/dms/file/create", {
+      const raw = await this.rpc("/onlyoffice/dms/file/create", {
         directory_id: this.props.directoryId,
         supported_format: this.state.format,
         title: this.state.title.trim(),

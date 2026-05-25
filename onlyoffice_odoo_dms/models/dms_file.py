@@ -41,7 +41,7 @@ class DmsFile(models.Model):
         string="ONLYOFFICE Version",
         default=0,
         copy=False,
-        help=("Incremented each time a file is saved back from ONLYOFFICE. " "Used as part of the document cache key."),
+        help=("Incremented each time a file is saved back from ONLYOFFICE. Used as part of the document cache key."),
     )
     oo_user_access_ids = fields.One2many(
         "onlyoffice.dms.file.access.user",
@@ -166,12 +166,14 @@ class DmsFile(models.Model):
             return group_role
         dms_file_as_user = self.with_user(user)
         try:
-            dms_file_as_user.check_access("write")
+            dms_file_as_user.check_access_rights("write")
+            dms_file_as_user.check_access_rule("write")
             return "edit"
         except (AccessError, Exception) as err:
             _logger.debug("No DMS write access for user %s on file %s: %s", user.id, self.id, err)
         try:
-            dms_file_as_user.check_access("read")
+            dms_file_as_user.check_access_rights("read")
+            dms_file_as_user.check_access_rule("read")
             return "view"
         except (AccessError, Exception):
             return "none"

@@ -63,7 +63,7 @@
     <!-- ── Extend DMS kanban-view buttons: add "Create in ONLYOFFICE" ──────── -->
 
     <t t-name="onlyoffice_odoo_dms.KanbanButtonsExtension" t-inherit="dms.KanbanButtons">
-    <xpath expr="//div[hasclass('o_cp_buttons')]" position="inside">
+    <xpath expr="//div" position="inside">
       <button
         t-if="ooState.canCreate"
         type="button"
