@@ -85,6 +85,11 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
             values = self.prepare_share_editor(document, access_token, share_id)
             values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+            try:
+                session_info = request.env["ir.http"].get_frontend_session_info()
+            except Exception:
+                session_info = {}
+            values["session_info"] = markupsafe.Markup(json.dumps(session_info))
             return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
         except Exception:
