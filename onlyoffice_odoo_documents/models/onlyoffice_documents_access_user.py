@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ascensio System SIA
 
 from odoo import fields, models
-from odoo.tools.translate import _lt
 
 
 class OnlyofficeDocumentsAccessUser(models.Model):
@@ -12,13 +11,13 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     user_id = fields.Many2one("res.partner", required=True, string="User")
     role = fields.Selection(
         [
-            ("none", _lt("None")),
-            ("view", _lt("Viewer")),
-            ("commenter", _lt("Commenter")),
-            ("reviewer", _lt("Reviewer")),
-            ("edit", _lt("Editor")),
-            ("form_filling", _lt("Form Filling")),
-            ("custom_filter", _lt("Custom Filter")),
+            ("none", "None"),
+            ("viewer", "Viewer"),
+            ("commenter", "Commenter"),
+            ("reviewer", "Reviewer"),
+            ("editor", "Editor"),
+            ("form_filling", "Form Filling"),
+            ("custom_filter", "Custom Filter"),
         ],
         required=True,
         string="Access Level",
