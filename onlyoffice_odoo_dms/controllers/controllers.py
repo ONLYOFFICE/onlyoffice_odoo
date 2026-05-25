@@ -79,6 +79,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
 
         force_view = mode == "view"
         values = self._prepare_dms_editor_values(dms_file, oo_role, force_view=force_view)
+        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     # ----------------------------------------------------------
@@ -278,6 +280,8 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
             return request.not_found()
 
         values = self._prepare_dms_shared_editor_values(dms_file, access_token, link_access)
+        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     # ----------------------------------------------------------
@@ -404,11 +408,18 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
+        try:
+            session_info = request.env["ir.http"].get_frontend_session_info()
+        except Exception as e:
+            _logger.error("Failed to get frontend session info: %s", str(e))
+            session_info = {}
+
         return {
             "docTitle": filename,
             "docIcon": (f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico"),
             "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
-            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            "editorConfig": root_config,
+            "session_info": session_info,
         }
 
     def _prepare_dms_shared_editor_values(self, dms_file, access_token, role):
@@ -473,11 +484,18 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
+        try:
+            session_info = request.env["ir.http"].get_frontend_session_info()
+        except Exception as e:
+            _logger.error("Failed to get frontend session info: %s", str(e))
+            session_info = {}
+
         return {
             "docTitle": filename,
             "docIcon": (f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico"),
             "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
-            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            "editorConfig": root_config,
+            "session_info": session_info,
         }
 
     @staticmethod
