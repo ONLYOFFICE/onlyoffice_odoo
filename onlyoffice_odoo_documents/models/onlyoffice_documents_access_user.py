@@ -12,10 +12,10 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     role = fields.Selection(
         [
             ("none", "None"),
-            ("viewer", "Viewer"),
+            ("view", "Viewer"),
             ("commenter", "Commenter"),
             ("reviewer", "Reviewer"),
-            ("editor", "Editor"),
+            ("edit", "Editor"),
             ("form_filling", "Form Filling"),
             ("custom_filter", "Custom Filter"),
         ],

@@ -11,10 +11,10 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     internal_users = fields.Selection(
         [
             ("none", "None"),
-            ("viewer", "Viewer"),
+            ("view", "Viewer"),
             ("commenter", "Commenter"),
             ("reviewer", "Reviewer"),
-            ("editor", "Editor"),
+            ("edit", "Editor"),
             ("form_filling", "Form Filling"),
             ("custom_filter", "Custom Filter"),
         ],
@@ -24,10 +24,10 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     link_access = fields.Selection(
         [
             ("none", "None"),
-            ("viewer", "Viewer"),
+            ("view", "Viewer"),
             ("commenter", "Commenter"),
             ("reviewer", "Reviewer"),
-            ("editor", "Editor"),
+            ("edit", "Editor"),
             ("form_filling", "Form Filling"),
             ("custom_filter", "Custom Filter"),
         ],
