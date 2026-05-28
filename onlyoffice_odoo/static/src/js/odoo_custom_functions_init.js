@@ -6,7 +6,7 @@
  */
 
 ;(function () {
-  "use strict"
+  "use strict" // eslint-disable-line strict
 
   // Wait for document ready event from ONLYOFFICE
   window.initializeOdooCustomFunctions = async function () {
@@ -61,7 +61,10 @@
         async function ODOO_LIST(listId, index, fieldName) {
           var formula = "=ODOO_LIST(" + listId + "," + index + ',"' + fieldName + '")'
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -92,7 +95,9 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
@@ -109,7 +114,10 @@
         async function ODOO_LIST_HEADER(listId, fieldName) {
           var formula = "=ODOO_LIST_HEADER(" + listId + ',"' + fieldName + '")'
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -140,7 +148,9 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
@@ -200,13 +210,18 @@
         ) {
           var parts = [pivotId, '"' + measure + '"']
           for (var i = 2; i < arguments.length; i++) {
-            if (arguments[i] === undefined || arguments[i] === null) break
+            if (arguments[i] === undefined || arguments[i] === null) {
+              break
+            }
             var a = arguments[i]
             parts.push(typeof a === "string" ? '"' + a + '"' : a)
           }
           var formula = "=ODOO_PIVOT(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -237,7 +252,9 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
@@ -295,13 +312,18 @@
         ) {
           var parts = [pivotId]
           for (var i = 1; i < arguments.length; i++) {
-            if (arguments[i] === undefined || arguments[i] === null) break
+            if (arguments[i] === undefined || arguments[i] === null) {
+              break
+            }
             var a = arguments[i]
             parts.push(typeof a === "string" ? '"' + a + '"' : a)
           }
           var formula = "=ODOO_PIVOT_HEADER(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -332,7 +354,9 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
@@ -362,12 +386,21 @@
          */
         async function ODOO_PIVOT_TABLE(pivotId, rowCount, includeTotal, includeColumnTitles) {
           var parts = [pivotId]
-          if (rowCount !== undefined && rowCount !== null) parts.push(rowCount)
-          if (includeTotal !== undefined && includeTotal !== null) parts.push(includeTotal)
-          if (includeColumnTitles !== undefined && includeColumnTitles !== null) parts.push(includeColumnTitles)
+          if (rowCount !== undefined && rowCount !== null) {
+            parts.push(rowCount)
+          }
+          if (includeTotal !== undefined && includeTotal !== null) {
+            parts.push(includeTotal)
+          }
+          if (includeColumnTitles !== undefined && includeColumnTitles !== null) {
+            parts.push(includeColumnTitles)
+          }
           var formula = "=ODOO_PIVOT_TABLE(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -398,7 +431,9 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
@@ -415,13 +450,15 @@
          * @returns {string} The current filter value.
          */
         async function ODOO_FILTER_VALUE(filterName) {
-          var val = filterValues[filterName]
-          if (val) {
-            return val
+          if (filterName in filterValues) {
+            return filterValues[filterName]
           }
           var formula = '=ODOO_FILTER_VALUE("' + filterName + '")'
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -452,7 +489,9 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
@@ -469,10 +508,15 @@
          */
         async function ODOO_CURRENCY_RATE(currencyFrom, currencyTo, date) {
           var parts = ['"' + currencyFrom + '"', '"' + currencyTo + '"']
-          if (date !== undefined && date !== null) parts.push('"' + date + '"')
+          if (date !== undefined && date !== null) {
+            parts.push('"' + date + '"')
+          }
           var formula = "=ODOO_CURRENCY_RATE(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
-            _pendingFormulas.push({ formula: formula, resolve: resolve })
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
             if (_flushTimer === null) {
               _flushTimer = setTimeout(function () {
                 var batch = _pendingFormulas.splice(0)
@@ -503,14 +547,15 @@
                     }
                   })
                   .catch(function (e) {
-                    for (var i = 0; i < batch.length; i++) batch[i].resolve("#ERROR: " + e.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
                   })
               }, 50)
             }
           })
         }
 
-        // Register all functions with ONLYOFFICE API
         Api.AddCustomFunction(ODOO_LIST)
         Api.AddCustomFunction(ODOO_LIST_HEADER)
         Api.AddCustomFunction(ODOO_PIVOT)
@@ -526,7 +571,12 @@
       window._odooRetryCount = window._odooRetryCount || 0
       window._odooPollCount = window._odooPollCount || 0
 
-      console.log("[ODOO-CHECK] Starting odooCheckSheets, retryCount=" + window._odooRetryCount + ", pollCount=" + window._odooPollCount)
+      console.log(
+        "[ODOO-CHECK] Starting odooCheckSheets, retryCount=" +
+          window._odooRetryCount +
+          ", pollCount=" +
+          window._odooPollCount,
+      )
 
       function odooCheckSheets() {
         console.log("[ODOO-CHECK] odooCheckSheets() called")
@@ -544,7 +594,11 @@
               var rangeAddr = range.GetAddress()
 
               if (!hasBusy) {
-                var busyMatch = range.Find({ What: "#BUSY!", LookIn: "xlValues", LookAt: "xlWhole" })
+                var busyMatch = range.Find({
+                  What: "#BUSY!",
+                  LookIn: "xlValues",
+                  LookAt: "xlWhole",
+                })
                 if (busyMatch) {
                   var busyAddr = busyMatch.GetAddress()
                   var busyFormula = busyMatch.GetFormula()
@@ -554,7 +608,11 @@
                 }
               }
               if (!hasName) {
-                var nameMatch = range.Find({ What: "#NAME?", LookIn: "xlValues", LookAt: "xlWhole" })
+                var nameMatch = range.Find({
+                  What: "#NAME?",
+                  LookIn: "xlValues",
+                  LookAt: "xlWhole",
+                })
                 if (nameMatch) {
                   var firstAddr = nameMatch.GetAddress()
                   do {
@@ -567,7 +625,9 @@
                   } while (nameMatch && nameMatch.GetAddress() !== firstAddr)
                 }
               }
-              if (hasBusy) break
+              if (hasBusy) {
+                break
+              }
             }
             // Restore original active sheet
             for (var j = 0; j < sheets.length; j++) {
@@ -576,7 +636,7 @@
                 break
               }
             }
-            var result = hasBusy ? "busy" : (hasName ? "name_error" : "ok")
+            var result = hasBusy ? "busy" : hasName ? "name_error" : "ok"
             return result
           },
           function (status) {
@@ -588,12 +648,21 @@
             } else if (status === "name_error" && window._odooRetryCount < 3) {
               window._odooRetryCount++
               window._odooPollCount = 0
-              console.log("[ODOO-CHECK] #NAME? errors detected, retrying registration (attempt " + window._odooRetryCount + "/3)")
+              console.log(
+                "[ODOO-CHECK] #NAME? errors detected, retrying registration (attempt " + window._odooRetryCount + "/3)",
+              )
               window.initializeOdooCustomFunctions()
             } else {
-              console.log("[ODOO-CHECK] Done. status=" + JSON.stringify(status) + " retryCount=" + window._odooRetryCount + " pollCount=" + window._odooPollCount)
+              console.log(
+                "[ODOO-CHECK] Done. status=" +
+                  JSON.stringify(status) +
+                  " retryCount=" +
+                  window._odooRetryCount +
+                  " pollCount=" +
+                  window._odooPollCount,
+              )
             }
-          }
+          },
         )
       }
       odooCheckSheets()

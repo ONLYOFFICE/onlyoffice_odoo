@@ -2,10 +2,10 @@
 // Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsInspector } from "@documents/views/inspector/documents_inspector"
+import { loadBundle } from "@web/core/assets"
+import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
-import { _t } from "@web/core/l10n/translation"
-import { loadBundle } from "@web/core/assets"
 
 let formats = []
 const loadFormats = async () => {
@@ -92,9 +92,7 @@ patch(DocumentsInspector.prototype, {
 
         const response = await fetch("/spreadsheet/xlsx", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData,
         })
 
@@ -123,7 +121,7 @@ patch(DocumentsInspector.prototype, {
           { limit: 1 },
         )
 
-        let xlsxId
+        let xlsxId = null
         if (existingXlsx.length > 0) {
           // Update existing XLSX copy
           await this.env.services.orm.write("documents.document", [existingXlsx[0].id], { datas: xlsxBase64 })
@@ -146,36 +144,19 @@ patch(DocumentsInspector.prototype, {
 
         // Use the XLSX document
         id = xlsxId
-        this.notification.add(_t("Spreadsheet converted to XLSX for editing in ONLYOFFICE"), {
-          type: "success",
-        })
+        this.notification.add(_t("Spreadsheet converted to XLSX for editing in ONLYOFFICE"), { type: "success" })
 
-        // Refresh the documents folder so the new file appears
-        const docModel = this.props.documents[0].model
-        await docModel.load()
-        docModel.notify()
+        await this._refreshDocumentsFolder()
       } catch (error) {
         console.error("Failed to convert spreadsheet:", error)
-        this.notification.add(_t("Failed to convert spreadsheet: ") + error.message, {
-          type: "danger",
-        })
+        this.notification.add(_t("Failed to convert spreadsheet: ") + error.message, { type: "danger" })
         return
       } finally {
         this.ui.unblock()
       }
     }
 
-    const { same_tab } = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_same_tab"))
-    if (same_tab) {
-      const action = {
-        params: { document_id: id },
-        tag: "onlyoffice_editor",
-        target: "current",
-        type: "ir.actions.client",
-      }
-      return this.actionService.doAction(action)
-    }
-    window.open(`/onlyoffice/editor/document/${id}`, "_blank")
+    await this._openDocumentInOnlyoffice(id)
   },
   showOnlyofficeButton(records) {
     if (records.length !== 1) {
@@ -191,52 +172,42 @@ patch(DocumentsInspector.prototype, {
   isOdooSpreadsheet(records) {
     return records.length === 1 && records[0].data.handler === "spreadsheet"
   },
+  async _refreshDocumentsFolder() {
+    const docModel = this.props.documents[0].model
+    await docModel.load()
+    docModel.notify()
+  },
+  async _openDocumentInOnlyoffice(documentId) {
+    const { same_tab } = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_same_tab"))
+    if (same_tab) {
+      const action = {
+        params: { document_id: documentId },
+        tag: "onlyoffice_editor",
+        target: "current",
+        type: "ir.actions.client",
+      }
+      return this.actionService.doAction(action)
+    }
+    window.open(`/onlyoffice/editor/document/${documentId}`, "_blank")
+  },
   async convertSpreadsheetViaDocBuilder(id) {
     this.ui.block({ message: _t("Converting spreadsheet to XLSX via DocBuilder...") })
     try {
-
-      // Call server method to convert via DocBuilder
-      const result = await this.env.services.rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", {
-        document_id: id,
-      })
+      const result = await this.env.services.rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", { document_id: id })
 
       if (result.error) {
-        this.notification.add(_t("Conversion failed: ") + result.error, {
-          type: "danger",
-        })
+        this.notification.add(_t("Conversion failed: ") + result.error, { type: "danger" })
         return
       }
 
       if (result.xlsx_id) {
-        this.notification.add(_t("Spreadsheet successfully converted to XLSX with formulas!"), {
-          type: "success",
-        })
-
-        // Refresh the documents folder so the new file appears
-        const docModel = this.props.documents[0].model
-        await docModel.load()
-        docModel.notify()
-
-        // Open the converted XLSX in ONLYOFFICE
-        const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
-        const { same_tab } = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_same_tab"))
-
-        if (same_tab && !isDesktopEditor) {
-          const action = {
-            params: { document_id: result.xlsx_id },
-            tag: "onlyoffice_editor",
-            target: "current",
-            type: "ir.actions.client",
-          }
-          return this.actionService.doAction(action)
-        }
-        window.open(`/onlyoffice/editor/document/${result.xlsx_id}`, "_blank")
+        this.notification.add(_t("Spreadsheet successfully converted to XLSX with formulas!"), { type: "success" })
+        await this._refreshDocumentsFolder()
+        await this._openDocumentInOnlyoffice(result.xlsx_id)
       }
     } catch (error) {
       console.error("Failed to convert spreadsheet via DocBuilder:", error)
-      this.notification.add(_t("Conversion failed: ") + error.message, {
-        type: "danger",
-      })
+      this.notification.add(_t("Conversion failed: ") + error.message, { type: "danger" })
     } finally {
       this.ui.unblock()
     }
