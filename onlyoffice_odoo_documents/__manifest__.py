@@ -5,7 +5,7 @@
     "summary": "Edit and collaborate on office files within Odoo Documents.",
     "description": "The ONLYOFFICE app allows users to edit and collaborate on office files within Odoo Documents using ONLYOFFICE Docs. You can work with text documents, spreadsheets, and presentations, co-author documents in real time using two co-editing modes (Fast and Strict), Track Changes, comments, and built-in chat.",  # noqa: E501
     "author": "ONLYOFFICE",
-    "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
+    "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
     "version": "4.2.1",
     "license": "LGPL-3",
