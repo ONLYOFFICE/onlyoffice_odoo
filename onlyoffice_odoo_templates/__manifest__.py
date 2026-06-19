@@ -5,7 +5,7 @@
     "summary": "Automate form creation with inserting fields from Odoo in templates.",
     "description": "Work with fillable templates in Odoo using ONLYOFFICE. Create templates based on the data and fields available in Odoo, fill them out and print with several clicks.",  # noqa: E501
     "author": "ONLYOFFICE, Data Dance s.r.o.",
-    "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
+    "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
     "version": "4.3.2",
     "license": "LGPL-3",
