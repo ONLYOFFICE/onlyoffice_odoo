@@ -225,7 +225,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             with file_open("onlyoffice_odoo_templates/controllers/fill_template.docbuilder", "r") as f:
                 docbuilder_script_content = f.read()
 
-            keys = self.get_keys(attachment_id, oo_security_token)
+            keys = self._get_cached_keys(template, oo_security_token)
             logger.info(
                 "GET /onlyoffice/template/callback/docbuilder/fill_template - got %s keys", len(keys) if keys else 0
             )
@@ -267,6 +267,31 @@ class OnlyofficeTemplate_Connector(http.Controller):
         except Exception as e:
             logger.warning(e)
             return request.not_found()
+
+    def _get_cached_keys(self, template, oo_security_token):
+        """Return the template's OFORM field keys, using the value cached on the
+        template when it is still valid.
+
+        The keys are derived solely from the template PDF, so we key the cache on
+        the attachment checksum: when the PDF changes (re-upload, conversion,
+        editor save) the checksum changes and the keys are recomputed. Reusing the
+        cache avoids the synchronous docbuilder round-trip in ``get_keys`` that
+        would otherwise pin an additional HTTP worker for the whole fill.
+        """
+        checksum = template.attachment_id.checksum
+        if template.field_keys:
+            try:
+                cached = json.loads(template.field_keys)
+            except (ValueError, TypeError):
+                cached = None
+            if cached and cached.get("checksum") == checksum:
+                logger.info("_get_cached_keys - cache hit for template %s", template.id)
+                return cached.get("keys")
+
+        keys = self.get_keys(template.attachment_id.id, oo_security_token)
+        template.sudo().write({"field_keys": json.dumps({"checksum": checksum, "keys": keys})})
+        logger.info("_get_cached_keys - cache refreshed for template %s", template.id)
+        return keys
 
     def get_keys(self, attachment_id, oo_security_token):
         logger.info("get_keys - attachment: %s", attachment_id)
