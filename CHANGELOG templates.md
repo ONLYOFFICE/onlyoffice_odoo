@@ -13,6 +13,7 @@
 
 - convert PDF to PDF form
 - field value localization for report generation (date/monetary fields)
+- cache template form field keys to avoid an extra docbuilder round-trip on every fill
 
 ## 4.3.2
 
