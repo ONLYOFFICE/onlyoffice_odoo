@@ -235,6 +235,7 @@ class SpreadsheetFormulaEvaluator:
 
         list_data = snapshot.get("lists", {}).get(list_id)
         if not list_data:
+            _logger.warning("LIST %s not found. Available lists: %s", list_id, list(snapshot.get("lists", {}).keys()))
             raise ValueError(f"List '{list_id}' not found")
 
         model = request.env[list_data["model"]].sudo()

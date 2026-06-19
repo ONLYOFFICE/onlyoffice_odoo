@@ -1,0 +1,72 @@
+// Open existing XLSX and insert an Odoo list sheet
+builder.OpenFile(FILE_URL_PLACEHOLDER)
+
+var listId = LIST_ID_PLACEHOLDER
+var sheetName = SHEET_NAME_PLACEHOLDER
+var columns = COLUMNS_PLACEHOLDER
+var threshold = THRESHOLD_PLACEHOLDER
+var metadata = METADATA_PLACEHOLDER
+
+function colLetter(col) {
+  var result = ""
+  var c = col
+  while (c >= 0) {
+    result = String.fromCharCode(65 + (c % 26)) + result
+    c = Math.floor(c / 26) - 1
+  }
+  return result
+}
+
+// --- Add new sheet with ODOO_LIST formulas ---
+Api.AddSheet(sheetName)
+var ws = Api.GetSheet(sheetName)
+
+// Header row: ODOO_LIST_HEADER formulas
+var ci
+for (ci = 0; ci < columns.length; ci++) {
+  var fn = columns[ci].name || columns[ci]
+  ws.GetRange(colLetter(ci) + "1").SetValue("=ODOO_LIST_HEADER(" + listId + ',"' + fn + '")')
+}
+
+// Data rows: ODOO_LIST formulas
+var ri, cj
+for (ri = 1; ri <= threshold; ri++) {
+  for (cj = 0; cj < columns.length; cj++) {
+    var fn2 = columns[cj].name || columns[cj]
+    ws.GetRange(colLetter(cj) + String(ri + 1)).SetValue("=ODOO_LIST(" + listId + "," + ri + ',"' + fn2 + '")')
+  }
+}
+
+// --- Update _OdooMetadata hidden sheet ---
+var metaSheet
+try {
+  metaSheet = Api.GetSheet("_OdooMetadata")
+} catch (e) {
+  metaSheet = null
+}
+if (!metaSheet) {
+  Api.AddSheet("_OdooMetadata")
+  metaSheet = Api.GetSheet("_OdooMetadata")
+}
+
+// Write metadata JSON in chunks (clear by overwriting)
+var metaStr = JSON.stringify(metadata)
+var chunkSize = 30000
+var numChunks = Math.ceil(metaStr.length / chunkSize)
+var mi
+for (mi = 0; mi < numChunks; mi++) {
+  var chunk = metaStr.substring(mi * chunkSize, (mi + 1) * chunkSize)
+  metaSheet.GetRange("A" + String(mi + 1)).SetValue(chunk)
+}
+// Clear any remaining old cells (up to 20 extra)
+for (mi = numChunks; mi < numChunks + 20; mi++) {
+  metaSheet.GetRange("A" + String(mi + 1)).SetValue("")
+}
+metaSheet.SetVisible(false)
+
+// Activate the new list sheet so it opens there
+var listSheet = Api.GetSheet(sheetName)
+listSheet.SetActive()
+
+builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER)
+builder.CloseFile()

@@ -8,7 +8,7 @@
     "website": "https://github.com/ONLYOFFICE/onlyoffice_odoo",
     "category": "Productivity",
     "version": "4.2.1",
-    "depends": ["onlyoffice_odoo", "documents"],
+    "depends": ["onlyoffice_odoo", "documents", "documents_spreadsheet"],
     # always loaded
     "data": [
         "security/ir.model.access.csv",
@@ -30,6 +30,7 @@
             "onlyoffice_odoo_documents/static/src/components/*/*.xml",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
+            "onlyoffice_odoo_documents/static/src/spreadsheet_selector/**/*",
             "onlyoffice_odoo_documents/static/src/css/*",
         ],
     },

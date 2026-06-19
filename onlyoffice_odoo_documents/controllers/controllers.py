@@ -1,13 +1,16 @@
 # Copyright (C) 2026 Ascensio System SIA
 import base64
+import io
 import json
 import logging
 import re
 import secrets
 import uuid
+import zipfile
 from datetime import date, datetime
 from mimetypes import guess_type
 from urllib.request import urlopen
+from xml.etree import ElementTree as ET
 
 import markupsafe
 import requests
@@ -97,6 +100,37 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
+    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
+    def get_config(self, document_id=None, attachment_id=None, access_token=None):
+        """Override to add ODOO custom formula support when a document with metadata is present."""
+        config = super().get_config(document_id=document_id, attachment_id=attachment_id, access_token=access_token)
+
+        # Resolve document from document_id or attachment
+        document = None
+        if document_id:
+            document = request.env["documents.document"].browse(int(document_id))
+        elif attachment_id:
+            attachment = request.env["ir.attachment"].browse(int(attachment_id))
+            if attachment.exists() and attachment.res_model == "documents.document":
+                document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        if document and document.exists():
+            config["document_id"] = document.id
+            config["jwt_token"] = jwt_utils.encode_payload(
+                request.env,
+                {"uid": request.env.user.id, "document_id": document.id},
+                config_utils.get_internal_jwt_secret(request.env),
+            )
+            if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
+                config["has_odoo_formulas"] = True
+                try:
+                    metadata = load_metadata_for_document(document)
+                    config["filter_values_json"] = json.dumps(compute_filter_values(metadata))
+                except Exception:
+                    config["filter_values_json"] = "{}"
+
+        return config
+
     @http.route(
         ["/onlyoffice/documents/share/<int:share_id>/<access_token>/<int:document_id>"], type="http", auth="public"
     )
@@ -525,32 +559,33 @@ class OnlyOfficeShareRoute(ShareRoute):
     def docbuilder_callback(self, oo_security_token):
         """
         Callback endpoint for DocBuilder to get the conversion script.
+        Supports two modes: 'convert_spreadsheet' (default) and 'insert_list'.
         """
         try:
-            # Get data from cache
             cache_data = _docbuilder_cache.get(oo_security_token)
 
             if not cache_data:
                 _logger.error("DocBuilder callback: token not found: %s", oo_security_token)
                 return request.make_response("Token not found or expired", status=404)
 
-            spreadsheet_json = cache_data["spreadsheet_json"]
-            metadata_json = cache_data.get("metadata_json")
+            mode = cache_data.get("mode", "convert_spreadsheet")
             output_filename = cache_data["output_filename"]
 
-            # Read DocBuilder script template
-            with file_open("onlyoffice_odoo_documents/controllers/convert_spreadsheet.docbuilder", "r") as f:
-                docbuilder_script = f.read()
-
-            # Replace placeholders in script
-            docbuilder_script = docbuilder_script.replace("SPREADSHEET_DATA_PLACEHOLDER", spreadsheet_json)
-            docbuilder_script = docbuilder_script.replace("METADATA_PLACEHOLDER", metadata_json or "null")
-            docbuilder_script = docbuilder_script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{output_filename}"')
-
-            del _docbuilder_cache[oo_security_token]
+            if mode == "insert_list":
+                docbuilder_script = self._build_insert_list_script(cache_data, oo_security_token)
+            else:
+                # Default: convert_spreadsheet mode
+                spreadsheet_json = cache_data["spreadsheet_json"]
+                metadata_json = cache_data.get("metadata_json")
+                with file_open("onlyoffice_odoo_documents/controllers/convert_spreadsheet.docbuilder", "r") as f:
+                    docbuilder_script = f.read()
+                docbuilder_script = docbuilder_script.replace("SPREADSHEET_DATA_PLACEHOLDER", spreadsheet_json)
+                docbuilder_script = docbuilder_script.replace("METADATA_PLACEHOLDER", metadata_json or "null")
+                docbuilder_script = docbuilder_script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{output_filename}"')
+                del _docbuilder_cache[oo_security_token]
 
             headers = {
-                "Content-Disposition": "attachment; filename='convert_spreadsheet.docbuilder'",
+                "Content-Disposition": "attachment; filename='docbuilder_script.docbuilder'",
                 "Content-Type": "text/plain; charset=utf-8",
             }
             return request.make_response(docbuilder_script.encode("utf-8"), headers)
@@ -558,6 +593,44 @@ class OnlyOfficeShareRoute(ShareRoute):
         except Exception as e:
             _logger.exception("DocBuilder callback error: %s", e)
             return request.make_response(str(e), status=500)
+
+    def _build_insert_list_script(self, cache_data, oo_security_token):
+        """Build a DocBuilder script that opens an existing XLSX and inserts a list sheet."""
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
+        file_url = f"{odoo_url}onlyoffice/documents/docbuilder_file/{oo_security_token}"
+
+        with file_open("onlyoffice_odoo_documents/controllers/insert_list.docbuilder", "r") as f:
+            script = f.read()
+
+        script = script.replace("FILE_URL_PLACEHOLDER", f'"{file_url}"')
+        script = script.replace("LIST_ID_PLACEHOLDER", cache_data["list_id"])
+        script = script.replace("SHEET_NAME_PLACEHOLDER", json.dumps(cache_data["sheet_name"]))
+        script = script.replace("COLUMNS_PLACEHOLDER", cache_data["columns_json"])
+        script = script.replace("THRESHOLD_PLACEHOLDER", str(cache_data["threshold"]))
+        script = script.replace("METADATA_PLACEHOLDER", cache_data["metadata_json"])
+        script = script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{cache_data["output_filename"]}"')
+
+        # Don't delete cache yet — the file-serving route needs it
+        # It will be cleaned up after the file is served
+        return script
+
+    @http.route("/onlyoffice/documents/docbuilder_file/<string:oo_security_token>", auth="public", methods=["GET"])
+    def docbuilder_file(self, oo_security_token):
+        """Serve the existing XLSX file for DocBuilder to open via builder.OpenFile()."""
+        cache_data = _docbuilder_cache.get(oo_security_token)
+        if not cache_data or cache_data.get("mode") != "insert_list":
+            return request.make_response("Not found", status=404)
+
+        xlsx_data = base64.b64decode(cache_data["xlsx_base64"])
+
+        # Clean up cache now that both callback and file have been served
+        del _docbuilder_cache[oo_security_token]
+
+        headers = {
+            "Content-Disposition": "attachment; filename='source.xlsx'",
+            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }
+        return request.make_response(xlsx_data, headers)
 
     @http.route(
         "/onlyoffice/documents/evaluate_formulas_batch",
@@ -599,6 +672,9 @@ class OnlyOfficeShareRoute(ShareRoute):
             _logger.warning("evaluate_formulas_batch: token validation failed for doc %s: %s", document_id, e)
             return {"error": "Invalid security token"}
 
+        # Switch request env to authenticated user so domain resolution uses correct uid
+        request.update_env(user=token_uid)
+
         # Load snapshot once for the whole batch
         snapshot = _formula_evaluator.load_document_snapshot(document_id)
 
@@ -614,3 +690,115 @@ class OnlyOfficeShareRoute(ShareRoute):
                 values[formula] = f"#ERROR: {e}"
 
         return {"values": values}
+
+    @http.route(
+        "/onlyoffice/documents/insert_list_in_xlsx",
+        auth="user",
+        methods=["POST"],
+        type="json",
+        csrf=False,
+    )
+    def insert_list_in_xlsx(self, document_id, list_data, threshold=10, name="List"):
+        """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
+
+        Rebuilds the XLSX via DocBuilder: opens the existing file, adds a new
+        sheet with formulas, and updates the _OdooMetadata hidden sheet.
+
+        Args:
+            document_id: target XLSX document ID
+            list_data: dict with model, domain, orderBy, columns, context
+            threshold: number of rows to insert
+            name: name for the new sheet and list
+        """
+        try:
+            document = request.env["documents.document"].browse(int(document_id))
+            document.check_access_rule("write")
+        except AccessError:
+            return {"error": "Access denied"}
+
+        if not document.exists() or not document.attachment_id:
+            return {"error": "Document not found or has no attachment"}
+
+        columns = list_data.get("columns", [])
+        if not columns:
+            return {"error": "No columns provided"}
+
+        # Determine list_id from existing metadata
+        existing_metadata = {}
+        if document.onlyoffice_spreadsheet_metadata:
+            try:
+                existing_metadata = json.loads(document.onlyoffice_spreadsheet_metadata)
+            except Exception:
+                pass
+
+        existing_lists = existing_metadata.get("lists", {})
+        existing_pivots = existing_metadata.get("pivots", {})
+        # Use a shared ID space: pick the next ID after the max of both lists and pivots
+        all_ids = [int(k) for k in existing_lists.keys()] + [int(k) for k in existing_pivots.keys()]
+        list_id = str(max(all_ids, default=0) + 1)
+
+        # Add the new list definition to metadata
+        existing_lists[list_id] = {
+            "model": list_data.get("model", ""),
+            "domain": list_data.get("domain", "[]"),
+            "orderBy": list_data.get("orderBy", []),
+            "columns": columns,
+            "name": name,
+        }
+        existing_metadata["lists"] = existing_lists
+
+        # Determine a unique sheet name by inspecting the existing XLSX
+        sheet_name = name
+        try:
+            xlsx_data = base64.b64decode(document.attachment_id.datas)
+            with zipfile.ZipFile(io.BytesIO(xlsx_data), "r") as zf:
+                wb_xml = ET.fromstring(zf.read("xl/workbook.xml"))
+                ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+                sheets_el = wb_xml.find(f"{{{ns}}}sheets")
+                existing_names = [s.get("name") for s in sheets_el.findall(f"{{{ns}}}sheet")]
+                if sheet_name in existing_names:
+                    i = 2
+                    while f"{sheet_name} ({i})" in existing_names:
+                        i += 1
+                    sheet_name = f"{sheet_name} ({i})"
+        except Exception:
+            pass  # If parsing fails, DocBuilder will try the original name
+
+        # Store data in cache for DocBuilder callback
+        oo_security_token = secrets.token_urlsafe(32)
+        output_filename = f"insert_list_{uuid.uuid4().hex[:8]}.xlsx"
+        _docbuilder_cache[oo_security_token] = {
+            "mode": "insert_list",
+            "document_id": document_id,
+            "xlsx_base64": document.attachment_id.datas,
+            "list_id": list_id,
+            "sheet_name": sheet_name,
+            "columns_json": json.dumps(columns, cls=_DateTimeEncoder),
+            "threshold": int(threshold),
+            "metadata_json": json.dumps(existing_metadata, cls=_DateTimeEncoder),
+            "output_filename": output_filename,
+        }
+
+        # Call DocBuilder
+        xlsx_content, error = self._call_docbuilder(oo_security_token, document_id)
+        if error:
+            return {"error": f"DocBuilder error: {error}"}
+
+        # Update the document's attachment with the rebuilt XLSX
+        document.attachment_id.write({"datas": base64.b64encode(xlsx_content)})
+
+        # Update metadata in DB
+        document.write(
+            {
+                "onlyoffice_spreadsheet_metadata": json.dumps(existing_metadata, cls=_DateTimeEncoder),
+            }
+        )
+
+        _logger.info("Inserted list '%s' (id=%s) into document %s via DocBuilder", name, list_id, document_id)
+
+        return {
+            "success": True,
+            "document_id": document.id,
+            "list_id": list_id,
+            "sheet_name": sheet_name,
+        }

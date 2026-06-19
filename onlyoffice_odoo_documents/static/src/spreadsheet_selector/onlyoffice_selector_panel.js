@@ -1,0 +1,70 @@
+/** @odoo-module */
+
+import { SpreadsheetSelectorDialog } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_dialog"
+import { SpreadsheetSelectorPanel } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_panel"
+import { _t } from "@web/core/l10n/translation"
+import { patch } from "@web/core/utils/patch"
+
+export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
+  constructor() {
+    super(...arguments)
+    this.notificationMessage = _t("List inserted in ONLYOFFICE spreadsheet")
+  }
+
+  /**
+   * @override
+   */
+  async _fetchSpreadsheets() {
+    const domain = []
+    if (this.currentSearch !== "") {
+      domain.push(["name", "ilike", this.currentSearch])
+    }
+    const { offset, limit } = this.state.pagerProps
+    this.state.spreadsheets = await this.keepLast.add(
+      this.orm.call("documents.document", "get_onlyoffice_spreadsheets_to_display", [domain], {
+        offset,
+        limit,
+      }),
+    )
+    if (this.state.spreadsheets.length) {
+      this._selectItem(this.state.spreadsheets[0].id)
+    }
+  }
+
+  /**
+   * @override
+   */
+  async _fetchPagerTotal() {
+    return this.orm.call("documents.document", "get_onlyoffice_spreadsheets_count", [[]])
+  }
+
+  /**
+   * Opens the selected XLSX in OnlyOffice editor.
+   * The list insertion is done server-side via insert_list_in_xlsx before opening.
+   * @override
+   */
+  _getOpenSpreadsheetAction() {
+    return {
+      type: "ir.actions.client",
+      tag: "onlyoffice_editor",
+      params: {
+        document_id: this.state.selectedSpreadsheetId,
+        onlyoffice_insert_list: true,
+      },
+    }
+  }
+
+  /**
+   * @override
+   */
+  async _getCreateAndOpenSpreadsheetAction() {
+    return this._getOpenSpreadsheetAction()
+  }
+}
+
+patch(SpreadsheetSelectorDialog, {
+  components: {
+    ...SpreadsheetSelectorDialog.components,
+    OnlyofficeSelectorPanel,
+  },
+})
