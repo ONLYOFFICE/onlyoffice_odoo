@@ -11,6 +11,7 @@
     "external_dependencies": {"python": ["pyjwt"]},
     # always loaded
     "data": [
+        "security/ir.model.access.csv",
         "views/templates.xml",
         "views/res_config_settings_views.xml",
     ],
