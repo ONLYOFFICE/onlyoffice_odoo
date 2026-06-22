@@ -163,8 +163,10 @@ class DmsFile(models.Model):
         """Role resolution excluding step 1 (per-user override)."""
         self.ensure_one()
         group_role = self._get_oo_role_from_access_groups(user)
-        if group_role and group_role != "none":
+        if group_role is not None and group_role != "none":
             return group_role
+        if group_role == "none":
+            return "none"
         dms_file_as_user = self.with_user(user)
         try:
             dms_file_as_user.check_access_rights("write")
@@ -188,7 +190,7 @@ class DmsFile(models.Model):
         applicable_groups = self.directory_id.sudo().complete_group_ids
         user_groups = applicable_groups.filtered(lambda g: user in g.users)
         if not user_groups:
-            return "none"
+            return None
 
         priority = {
             "none": 0,
