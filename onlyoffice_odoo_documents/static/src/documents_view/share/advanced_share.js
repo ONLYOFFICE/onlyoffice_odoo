@@ -208,6 +208,7 @@ export class ShareDialog extends Component {
     this.state.hasChanges =
       hasRoleChanges ||
       hasUserChanges ||
+      this.state.users.length > 0 ||
       this.state.internalAccess !== this.state.initialInternalAccess ||
       this.state.linkAccess !== this.state.initialLinkAccess
   }
