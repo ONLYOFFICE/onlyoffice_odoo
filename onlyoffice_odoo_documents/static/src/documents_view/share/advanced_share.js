@@ -194,15 +194,16 @@ export class ShareDialog extends Component {
   }
 
   checkForChanges = () => {
-    if (!this.state.usersAccessBackup.length) {
-      return
+    let hasRoleChanges = false
+    let hasUserChanges = false
+
+    if (this.state.usersAccessBackup.length) {
+      const currentRoles = new Map(this.state.usersAccess.map((user) => [user.user.id, user.role.role]))
+      const backupRoles = new Map(this.state.usersAccessBackup.map((user) => [user.user.id, user.role.role]))
+
+      hasRoleChanges = [...currentRoles].some(([id, role]) => backupRoles.get(id) !== role)
+      hasUserChanges = [...backupRoles.keys()].some((id) => !currentRoles.has(id))
     }
-
-    const currentRoles = new Map(this.state.usersAccess.map((user) => [user.user.id, user.role.role]))
-    const backupRoles = new Map(this.state.usersAccessBackup.map((user) => [user.user.id, user.role.role]))
-
-    const hasRoleChanges = [...currentRoles].some(([id, role]) => backupRoles.get(id) !== role)
-    const hasUserChanges = [...backupRoles.keys()].some((id) => !currentRoles.has(id))
 
     this.state.hasChanges =
       hasRoleChanges ||
