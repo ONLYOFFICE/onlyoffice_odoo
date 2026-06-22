@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import fields, models
 
 
 class OnlyofficeDocumentsAccessUser(models.Model):
@@ -9,13 +9,13 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     user_id = fields.Many2one("res.partner", required=True, string="User")
     role = fields.Selection(
         [
-            ("none", _("None")),
-            ("view", _("Viewer")),
-            ("commenter", _("Commenter")),
-            ("reviewer", _("Reviewer")),
-            ("edit", _("Editor")),
-            ("form_filling", _("Form Filling")),
-            ("custom_filter", _("Custom Filter")),
+            ("none", "None"),
+            ("view", "Viewer"),
+            ("commenter", "Commenter"),
+            ("reviewer", "Reviewer"),
+            ("edit", "Editor"),
+            ("form_filling", "Form Filling"),
+            ("custom_filter", "Custom Filter"),
         ],
         required=True,
         string="Access Level",
