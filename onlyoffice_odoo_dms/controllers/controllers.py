@@ -77,7 +77,14 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
         if oo_role == "none":
             raise Forbidden()
 
-        force_view = mode == "view"
+        has_write = True
+        try:
+            dms_file.check_access_rights("write")
+            dms_file.check_access_rule("write")
+        except AccessError:
+            has_write = False
+
+        force_view = mode == "view" or not has_write
         values = self._prepare_dms_editor_values(dms_file, oo_role, force_view=force_view)
         values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
         values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))

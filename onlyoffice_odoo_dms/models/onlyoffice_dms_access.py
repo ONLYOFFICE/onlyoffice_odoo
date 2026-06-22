@@ -17,8 +17,6 @@ _ROLES_ALL = [
 _ROLES_READONLY = [
     ("none", "None"),
     ("view", "Viewer"),
-    ("commenter", "Commenter"),
-    ("reviewer", "Reviewer"),
 ]
 
 _ROLE_TO_ACTION = {
@@ -70,7 +68,7 @@ class DmsAccessGroup(models.Model):
     @api.onchange("perm_write")
     def _onchange_perm_write_oo_role(self):
         """Reset oo_role to a read-compatible value when write access is removed."""
-        write_only_roles = {"edit", "form_filling", "custom_filter"}
+        write_only_roles = {"edit", "form_filling", "custom_filter", "commenter", "reviewer"}
         for record in self:
             if not record.perm_write and record.oo_role in write_only_roles:
                 record.oo_role = "none"

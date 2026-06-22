@@ -92,8 +92,8 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             values["session_info"] = markupsafe.Markup(json.dumps(session_info))
             return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
-        except Exception:
-            _logger.error("Ffailed to open shared document")
+        except Exception as ex:
+            _logger.error("Failed to open shared document: %s", ex)
 
         return request.not_found()
 
@@ -128,13 +128,15 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             return self.prepare_editor_values(attachment, access_token, False)
 
     def prepare_share_editor(self, document, access_token, share_id):
-        role = None
+        role = "viewer"
         access = (
             request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
         )
         if access:
             if access.link_access != "none":
                 role = access.link_access
+            else:
+                role = None
 
         public_user = request.env.ref("base.public_user")
         current_user = request.env.user
