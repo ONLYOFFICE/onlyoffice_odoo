@@ -24,6 +24,7 @@ _LINK_ROLE_SELECTION = [
     ("none", "None"),
     ("view", "Viewer"),
     ("commenter", "Commenter"),
+    ("reviewer", "Reviewer"),
     ("edit", "Editor"),
     ("form_filling", "Form Filling"),
     ("custom_filter", "Custom Filter"),
