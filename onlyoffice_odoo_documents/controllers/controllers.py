@@ -135,7 +135,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             return self.prepare_editor_values(attachment, access_token, False)
 
     def prepare_share_editor(self, document, access_token):
-        role = "viewer"
+        role = "view"
         access = (
             request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
         )
