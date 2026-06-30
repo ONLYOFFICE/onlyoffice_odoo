@@ -11,7 +11,7 @@ import markupsafe
 from werkzeug.exceptions import Forbidden
 
 from odoo import _, http
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.http import request
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import (
@@ -228,24 +228,28 @@ class OnlyofficeDms_Connector(Onlyoffice_Connector):
 
             file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
-            dms_file = request.env["dms.file"].create(
-                {
-                    "name": f"{title}.{supported_format}",
-                    "directory_id": int(directory_id),
-                    "content": base64.encodebytes(file_data),
-                }
-            )
+            with request.env.cr.savepoint():
+                dms_file = request.env["dms.file"].create(
+                    {
+                        "name": f"{title}.{supported_format}",
+                        "directory_id": int(directory_id),
+                        "content": base64.encodebytes(file_data),
+                    }
+                )
 
-            # Bootstrap ONLYOFFICE access: creator gets edit, everyone else none
-            request.env["onlyoffice.dms.file.access.user"].create(
-                {
-                    "file_id": dms_file.id,
-                    "user_id": request.env.user.id,
-                    "role": "edit",
-                }
-            )
+                # Bootstrap ONLYOFFICE access: creator gets edit, everyone else none
+                request.env["onlyoffice.dms.file.access.user"].create(
+                    {
+                        "file_id": dms_file.id,
+                        "user_id": request.env.user.id,
+                        "role": "edit",
+                    }
+                )
             result["file_id"] = dms_file.id
 
+        except ValidationError as ex:
+            _logger.warning("Failed to create DMS file (validation): %s", ex)
+            result["error"] = ex.args[0]
         except Exception as ex:
             _logger.exception("Failed to create DMS file: %s", ex)
             result["error"] = _("Failed to create file")
