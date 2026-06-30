@@ -23,9 +23,19 @@ _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
 
-def onlyoffice_urlopen(url, timeout=120, context=None):
-    url = url_utils.replace_public_url_to_internal(request.env, url)
-    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+def _resolve_env(env):
+    # Allow callers outside of an HTTP request (shell, cron, server actions) to
+    # pass their own ``env``. Fall back to the bound request when not provided so
+    # existing controller call sites keep working unchanged.
+    if env is not None:
+        return env
+    return request.env
+
+
+def onlyoffice_urlopen(url, timeout=120, context=None, env=None):
+    env = _resolve_env(env)
+    url = url_utils.replace_public_url_to_internal(env, url)
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(env)
 
     if cert_verify_disabled and url.startswith("https://"):
         import ssl
@@ -35,10 +45,11 @@ def onlyoffice_urlopen(url, timeout=120, context=None):
     return urlopen(url, timeout=timeout, context=context)
 
 
-def onlyoffice_request(url, method, opts=None):
+def onlyoffice_request(url, method, opts=None, env=None):
+    env = _resolve_env(env)
     _logger.info("External request: %s %s", method.upper(), url)
-    url = url_utils.replace_public_url_to_internal(request.env, url)
-    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+    url = url_utils.replace_public_url_to_internal(env, url)
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(env)
     if opts is None:
         opts = {}
 
