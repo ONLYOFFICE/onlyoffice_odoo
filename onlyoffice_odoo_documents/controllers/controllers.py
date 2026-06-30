@@ -83,14 +83,14 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
-    def render_shared_document_editor(self, access_token=None):
+    def render_shared_document_editor(self, access_token=None, folder_token=None):
         try:
             document = ShareRoute._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
 
-            values = self.prepare_share_editor(document, access_token)
+            values = self.prepare_share_editor(document, access_token, folder_token=folder_token)
             values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
             try:
                 session_info = request.env["ir.http"].get_frontend_session_info()
@@ -134,16 +134,44 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             _logger.debug("Current user has no write access")
             return self.prepare_editor_values(attachment, access_token, False)
 
-    def prepare_share_editor(self, document, access_token):
-        role = "view"
+    def _get_folder_link_role(self, folder_token, document):
+        """Resolve folder_token, verify document is a direct child, return the folder's link role.
+
+        Returns None if the token is invalid, the document is not a direct child of that folder,
+        or the folder itself grants no link access.
+        """
+        folder = ShareRoute._from_access_token(folder_token, skip_log=True)
+        if not folder or not folder.exists() or folder.type != "folder":
+            return None
+        if document.folder_id.id != folder.id:
+            return None
+        folder_access = (
+            request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", folder.id)], limit=1)
+        )
+        if folder_access and folder_access.link_access != "none":
+            return folder_access.link_access
+        if folder.access_via_link and folder.access_via_link != "none":
+            return folder.access_via_link
+        return None
+
+    def _get_document_link_role(self, document):
+        """Return the ONLYOFFICE link access role for a document, or None if explicitly blocked."""
         access = (
             request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
         )
-        if access:
-            if access.link_access != "none":
-                role = access.link_access
-            else:
-                role = None
+        if not access:
+            return "view"
+        return access.link_access if access.link_access != "none" else None
+
+    def prepare_share_editor(self, document, access_token, folder_token=None):
+        effective_folder_token = None
+
+        if folder_token:
+            role = self._get_folder_link_role(folder_token, document)
+            if role is not None:
+                effective_folder_token = folder_token
+        else:
+            role = self._get_document_link_role(document)
 
         public_user = request.env.ref("base.public_user")
         current_user = request.env.user
@@ -219,9 +247,10 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
                 request.env, {"id": token_user.id}, config_utils.get_internal_jwt_secret(request.env)
             )
             security_token = security_token.decode("utf-8") if isinstance(security_token, bytes) else security_token
-            root_config["editorConfig"]["callbackUrl"] = (
-                odoo_url + "onlyoffice/documents/share/callback/" + access_token + "/" + security_token
-            )
+            callback_url = odoo_url + "onlyoffice/documents/share/callback/" + access_token + "/" + security_token
+            if effective_folder_token:
+                callback_url += "?folder_token=" + effective_folder_token
+            root_config["editorConfig"]["callbackUrl"] = callback_url
 
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
@@ -240,7 +269,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         type="http",
         csrf=False,
     )
-    def share_callback(self, access_token, oo_security_token):
+    def share_callback(self, access_token, oo_security_token, folder_token=None):
         response_json = {"error": 0}
 
         try:
@@ -251,14 +280,20 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             if not document or not document.exists():
                 raise request.not_found()
 
-            access = (
-                request.env["onlyoffice.odoo.documents.access"]
-                .sudo()
-                .search([("document_id", "=", document.id)], limit=1)
-            )
+            _callback_roles = ("edit", "custom_filter", "commenter", "reviewer")
+
             can_write = False
-            if access:
-                if access.link_access in ("edit", "custom_filter"):
+            if folder_token:
+                folder_role = self._get_folder_link_role(folder_token, document)
+                if folder_role in _callback_roles:
+                    can_write = True
+            else:
+                access = (
+                    request.env["onlyoffice.odoo.documents.access"]
+                    .sudo()
+                    .search([("document_id", "=", document.id)], limit=1)
+                )
+                if access and access.link_access in _callback_roles:
                     can_write = True
 
             if not can_write and user:
@@ -267,7 +302,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
                     .sudo()
                     .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
                 )
-                if access_user and access_user.role in ("edit", "custom_filter"):
+                if access_user and access_user.role in _callback_roles:
                     can_write = True
 
             if not can_write:
