@@ -33,7 +33,7 @@
       <t t-if="is_supported">
         <div class="o_card_right d-flex flex-column flex-nowrap justify-content-end text-end me-1">
           <a
-            t-att-href="'/onlyoffice/documents/share/' + document.access_token"
+            t-att-href="'/onlyoffice/documents/share/' + document.access_token + '?folder_token=' + folder.access_token"
             title="Open in ONLYOFFICE"
             target="_blank"
           >
