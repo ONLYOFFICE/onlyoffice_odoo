@@ -16,7 +16,7 @@
         "views/onlyoffice_templates_share.xml",
     ],
     "images": [
-        "static/description/main_screenshot.png",
+        "static/description/banner.gif",
         "static/description/editors.png",
         "static/description/edit_files.png",
         "static/description/create_files.png",

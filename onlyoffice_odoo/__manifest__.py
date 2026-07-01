@@ -18,7 +18,7 @@
         "views/res_config_settings_views.xml",
     ],
     "images": [
-        "static/description/main_screenshot.png",
+        "static/description/banner.gif",
         "static/description/document.png",
         "static/description/sales_section.png",
         "static/description/discuss_section.png",

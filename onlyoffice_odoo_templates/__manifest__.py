@@ -21,7 +21,7 @@
     ],
     "demo": ["data/templates_data.xml"],
     "images": [
-        "static/description/main_screenshot.png",
+        "static/description/banner.gif",
         "static/description/create_templates.png",
         "static/description/edit_templates.png",
         "static/description/access_rights.png",
