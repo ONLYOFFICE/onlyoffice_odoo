@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { ShareDialog } from "@onlyoffice_odoo_documents/documents_view/share/advanced_share"
 import { useService } from "@web/core/utils/hooks"

@@ -1,0 +1,408 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* onlyoffice_odoo_dms
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0+e-20260217\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-05-18 11:40+0000\n"
+"PO-Revision-Date: 2026-05-20 17:47+0900\n"
+"Last-Translator: \n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.9\n"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
+msgid ""
+"<i class=\"fa fa-eye me-1\"/>\n"
+"                        Preview in ONLYOFFICE"
+msgstr ""
+"<i class=\"fa fa-eye me-1\"/>\n"
+"                        ONLYOFFICEでプレビュー"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_kanban_onlyoffice
+msgid ""
+"<i class=\"fa fa-pencil me-1\"/>\n"
+"                        Edit in ONLYOFFICE"
+msgstr ""
+"<i class=\"fa fa-pencil me-1\"/>\n"
+"                        ONLYOFFICEで編集"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.constraint,message:onlyoffice_odoo_dms.constraint_onlyoffice_dms_file_access_user_unique_user_file
+msgid "A user can only have one ONLYOFFICE role per DMS file."
+msgstr ""
+"ユーザーにはDMSファイルごとに1つのみのONLYOFFICEロールを割り当てられます。"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/js/dms_file_onlyoffice.js:0
+msgid "An unexpected error occurred while creating the document."
+msgstr "ドキュメントの作成中に予期しないエラーが発生しました。"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml:0
+msgid "Cancel"
+msgstr "キャンセル"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__commenter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_directory__oo_link_access__commenter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__commenter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__commenter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__commenter
+msgid "Commenter"
+msgstr "コメンター"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml:0
+msgid "Create"
+msgstr "作成"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml:0
+msgid "Create in ONLYOFFICE"
+msgstr "ONLYOFFICEで作成"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__create_uid
+msgid "Created by"
+msgstr "作成者"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__create_date
+msgid "Created on"
+msgstr "作成日"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__custom_filter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_directory__oo_link_access__custom_filter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__custom_filter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__custom_filter
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__custom_filter
+msgid "Custom Filter"
+msgstr "カスタムフィルター"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_access_level
+msgid "DMS Access Level"
+msgstr "DMSアクセスレベル"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_directory__oo_link_access
+msgid ""
+"Default ONLYOFFICE role for portal/public token access to files in this "
+"directory. 'None' inherits from the parent directory."
+msgstr ""
+"このディレクトリ内のファイルへのポータル/公開トークンアクセスのデフォルト"
+"ONLYOFFICEロール。「なし」は親ディレクトリから継承します。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_access_group__oo_role
+msgid ""
+"Default ONLYOFFICE role granted to users in this access group. 'None' means "
+"fall back to the next resolution level."
+msgstr ""
+"このアクセスグループのユーザーに付与されるデフォルトのONLYOFFICEロール。「な"
+"し」は次の解決レベルにフォールバックすることを意味します。"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_access_group_form_onlyoffice
+msgid ""
+"Default ONLYOFFICE role granted to users in this group. Overridden by per-"
+"file or per-user settings."
+msgstr ""
+"このグループのユーザーにデフォルトのONLYOFFICEロールが付与されました。ファイ"
+"ルごとまたはユーザーごとの設定で上書きされています。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
+msgid "Delete"
+msgstr "削除"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model,name:onlyoffice_odoo_dms.model_dms_directory
+msgid "Directory"
+msgstr "ディレクトリ"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+msgid "Directory ONLYOFFICE Role"
+msgstr "ONLYOFFICEロールのディレクトリ"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
+msgid "Directory Role"
+msgstr "ロールのディレクトリ"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__display_name
+msgid "Display Name"
+msgstr "表示名"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml:0
+msgid "Document name"
+msgstr "ドキュメント名"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_list_onlyoffice
+msgid "Edit in ONLYOFFICE"
+msgstr "ONLYOFFICEで編集"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_is_editable
+msgid "Editable in ONLYOFFICE"
+msgstr "ONLYOFFICEで編集可能"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__edit
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_directory__oo_link_access__edit
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__edit
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__edit
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__edit
+msgid "Editor"
+msgstr "編集者"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_access_level
+msgid "Effective DMS access level, used to limit available ONLYOFFICE roles."
+msgstr ""
+"有効なDMSアクセスレベル。利用可能なONLYOFFICEロールの制限に使用されます。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_effective_role
+msgid "Effective ONLYOFFICE role for the current user on this file."
+msgstr "このファイルに対する現在のユーザーの有効なONLYOFFICEロール。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__oo_dir_role
+msgid ""
+"Effective ONLYOFFICE role from directory/group configuration (without per-"
+"user override)."
+msgstr ""
+"ディレクトリ/グループ設定からの有効なONLYOFFICEロール（ユーザーごとの上書き"
+"なし）。"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-python
+#: code:addons/onlyoffice_odoo_dms/controllers/controllers.py:0
+msgid "Failed to create file"
+msgstr "ファイルの作成に失敗しました"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model,name:onlyoffice_odoo_dms.model_dms_file
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__file_id
+msgid "File"
+msgstr "ファイル"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-python
+#: code:addons/onlyoffice_odoo_dms/controllers/controllers.py:0
+msgid "File edited by %(user)s"
+msgstr "%(user)sによって編集されたファイル"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__form_filling
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_directory__oo_link_access__form_filling
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__form_filling
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__form_filling
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__form_filling
+msgid "Form Filling"
+msgstr "フォーム入力"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__id
+msgid "ID"
+msgstr "ID"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_dms_file__oo_version
+msgid ""
+"Incremented each time a file is saved back from ONLYOFFICE. Used as part of "
+"the document cache key."
+msgstr ""
+"ONLYOFFICEからファイルが保存されるたびに増加します。ドキュメントキャッシュ"
+"キーの一部として使用されます。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_uid
+msgid "Last Updated by"
+msgstr "最終更新者"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__write_date
+msgid "Last Updated on"
+msgstr "最終更新日"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_directory__oo_link_access__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__dms_access_level__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__none
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__none
+msgid "None"
+msgstr "なし"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_directory_form_onlyoffice_groups
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+msgid "ONLYOFFICE Access"
+msgstr "ONLYOFFICEアクセス"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model,name:onlyoffice_odoo_dms.model_onlyoffice_dms_file_access_user
+msgid "ONLYOFFICE DMS Per-User File Access"
+msgstr "ONLYOFFICE DMSユーザー別ファイルアクセス"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_access_group__oo_role
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_effective_role
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__role
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_directory_form_onlyoffice_groups
+msgid "ONLYOFFICE Role"
+msgstr "ONLYOFFICEロール"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+msgid "ONLYOFFICE Role Override"
+msgstr "ONLYOFFICEロール上書き"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_user_access_ids
+msgid "ONLYOFFICE User Roles"
+msgstr "ONLYOFFICEユーザーロール"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_version
+msgid "ONLYOFFICE Version"
+msgstr "ONLYOFFICEバージョン"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+msgid "Per-User Overrides"
+msgstr "ユーザー別上書き"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/js/dms_file_onlyoffice.js:0
+msgid "Please enter a Document name."
+msgstr "ドキュメント名を入力してください。"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_list_onlyoffice
+msgid "Preview in ONLYOFFICE"
+msgstr "ONLYOFFICEでプレビュー"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_directory__oo_link_access
+msgid "Public Link"
+msgstr "公開リンク"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_read
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__dms_access_level__read
+msgid "Read"
+msgstr "読み取り"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model,name:onlyoffice_odoo_dms.model_dms_access_group
+msgid "Record Access Groups"
+msgstr "レコードアクセスグループ"
+
+#. module: onlyoffice_odoo_dms
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_dms.view_dms_file_form_onlyoffice
+msgid ""
+"Resolution order: per-user override → access group role (inherited via\n"
+"                        DMS group cascade) → directory Internal Users "
+"(nearest ancestor) →\n"
+"                        DMS permissions fallback. Public Link and blanket "
+"defaults are\n"
+"                        configured on the directory."
+msgstr ""
+"解決順序: ユーザー別上書き → アクセスグループロール（DMSグループカスケードか"
+"ら\n"
+"                        継承）→ ディレクトリ内部ユーザー（最も近い祖先）→\n"
+"                        DMS権限フォールバック。公開リンクとデフォルト設定"
+"は\n"
+"                        ディレクトリで設定されます。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__reviewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__reviewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__reviewer
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__reviewer
+msgid "Reviewer"
+msgstr "レビュアー"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/js/oo_role_select.js:0
+msgid "Role Select"
+msgstr "ロール選択"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-python
+#: code:addons/onlyoffice_odoo_dms/controllers/controllers.py:0
+msgid "Unsupported format: %s"
+msgstr "サポートされていない形式: %s"
+
+#. module: onlyoffice_odoo_dms
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_dms/static/src/xml/dms_file_onlyoffice.xml:0
+msgid "Untitled"
+msgstr "無題"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__user_id
+msgid "User"
+msgstr "ユーザー"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_unlink
+msgid "User has DMS delete access to this file."
+msgstr "ユーザーはこのファイルに対するDMS削除アクセス権を持っています。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_read
+msgid "User has DMS read access to this file."
+msgstr "ユーザーはこのファイルに対するDMS読み取りアクセス権を持っています。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,help:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_write
+msgid "User has DMS write access to this file."
+msgstr "ユーザーはこのファイルに対するDMS書き込みアクセス権を持っています。"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_dms_file__oo_is_viewable
+msgid "Viewable in ONLYOFFICE"
+msgstr "ONLYOFFICEで表示可能"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_access_group__oo_role__view
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_directory__oo_link_access__view
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__dms_file__oo_effective_role__view
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__oo_dir_role__view
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__role__view
+msgid "Viewer"
+msgstr "閲覧者"
+
+#. module: onlyoffice_odoo_dms
+#: model:ir.model.fields,field_description:onlyoffice_odoo_dms.field_onlyoffice_dms_file_access_user__dms_perm_write
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_dms.selection__onlyoffice_dms_file_access_user__dms_access_level__write
+msgid "Write"
+msgstr "書き込み"

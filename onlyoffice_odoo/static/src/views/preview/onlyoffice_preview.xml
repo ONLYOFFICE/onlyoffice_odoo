@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
   <t t-name="onlyoffice_odoo.OnlyofficePreview" owl="1">
     <div class="o-onlyoffice-preview w-100 h-100 bg-black-75" t-on-click="(ev) => this.onClickOutside(ev)">

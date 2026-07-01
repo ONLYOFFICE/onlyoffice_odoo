@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright (C) 2026 Data Dance s.r.o.
+    License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
+-->
+<templates xml:space="preserve">
+
+    <!-- ── Create-in-ONLYOFFICE dialog ──────────────────────────────────── -->
+
+    <t t-name="onlyoffice_odoo_dms.DmsCreateOnlyofficeDialog">
+    <Dialog title="'New ONLYOFFICE Document'" size="'lg'">
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="oo_dms_title">Document name</label>
+        <input
+          id="oo_dms_title"
+          type="text"
+          class="form-control"
+          t-model="state.title"
+          placeholder="Untitled"
+          t-on-keydown="(ev) => ev.key === 'Enter' &amp;&amp; onCreate()"
+          autofocus="autofocus"
+        />
+      </div>
+      <div class="d-flex gap-3 flex-wrap">
+        <t t-foreach="formats" t-as="fmt" t-key="fmt.ext">
+          <div
+            t-att-class="'p-3 border rounded text-center cursor-pointer user-select-none ' + (state.format === fmt.ext ? 'border-primary bg-primary-subtle' : 'border-secondary-subtle')"
+            style="min-width: 100px; flex: 1 1 100px;"
+            t-on-click="() => state.format = fmt.ext"
+          >
+            <img t-att-src="`/onlyoffice_odoo_dms/static/svg/formats/${fmt.icon}`" t-att-title="fmt.label" />
+            <span t-esc="fmt.label" />
+          </div>
+        </t>
+      </div>
+      <t t-set-slot="footer">
+        <button class="btn btn-primary" t-on-click="onCreate" t-att-disabled="state.loading || undefined">
+                    <i t-if="state.loading" class="fa fa-spinner fa-spin me-1" />
+                    Create
+                </button>
+        <button class="btn btn-secondary ms-2" t-on-click="props.close">
+                    Cancel
+                </button>
+      </t>
+    </Dialog>
+  </t>
+
+    <!-- ── Extend DMS list-view buttons: add "Create in ONLYOFFICE" ──────── -->
+
+    <t t-name="onlyoffice_odoo_dms.ListButtonsExtension" t-inherit="dms.ListButtons">
+    <xpath expr="//div[hasclass('o_list_buttons')]" position="inside">
+      <button
+        t-if="ooState.canCreate"
+        type="button"
+        class="btn btn-secondary mx-1"
+        t-on-click.prevent="openCreateOnlyofficeDialog"
+      >
+                Create in ONLYOFFICE
+            </button>
+    </xpath>
+  </t>
+
+    <!-- ── Extend DMS kanban-view buttons: add "Create in ONLYOFFICE" ──────── -->
+
+    <t t-name="onlyoffice_odoo_dms.KanbanButtonsExtension" t-inherit="dms.KanbanButtons">
+    <xpath expr="//div" position="inside">
+      <button
+        t-if="ooState.canCreate"
+        type="button"
+        class="btn btn-secondary mx-1"
+        t-on-click.prevent="openCreateOnlyofficeDialog"
+      >
+                Create in ONLYOFFICE
+            </button>
+    </xpath>
+  </t>
+
+</templates>

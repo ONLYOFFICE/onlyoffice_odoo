@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright (C) 2026 Data Dance s.r.o.
+    Copyright (C) 2026 Ascensio System SIA
+    License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
+-->
+<odoo>
+  <!-- ============================================================
+         Form view: ONLYOFFICE buttons in header + Access tab
+    ============================================================ -->
+  <record id="view_dms_file_form_onlyoffice" model="ir.ui.view">
+    <field name="name">dms_file.form.onlyoffice</field>
+    <field name="model">dms.file</field>
+    <field name="inherit_id" ref="dms.view_dms_file_form" />
+    <field name="arch" type="xml">
+      <!-- Invisible fields needed by button visibility expressions -->
+      <xpath expr="//sheet/div[@class='oe_button_box']" position="before">
+        <field name="oo_is_viewable" invisible="1" />
+        <field name="oo_is_editable" invisible="1" />
+      </xpath>
+
+      <!-- Buttons inserted before the Lock button -->
+      <xpath expr="//header/button[@name='lock']" position="before">
+        <button
+          name="action_open_oo_editor"
+          type="object"
+          string="Edit in ONLYOFFICE"
+          class="oe_highlight"
+          invisible="not oo_is_editable or is_locked"
+        />
+        <button
+          name="action_open_oo_preview"
+          type="object"
+          string="Preview in ONLYOFFICE"
+          invisible="not oo_is_viewable"
+        />
+      </xpath>
+
+      <!-- Extend the existing Access Information tab with OO effective role -->
+      <xpath expr="//notebook/page[@name='page_access']/group" position="after">
+        <group invisible="not oo_is_viewable">
+          <field name="oo_effective_role" readonly="1" />
+        </group>
+      </xpath>
+
+      <!-- ONLYOFFICE Access tab added after the existing Access Information tab -->
+      <xpath expr="//notebook/page[@name='page_access']" position="after">
+        <page name="page_onlyoffice" string="ONLYOFFICE Access" invisible="not oo_is_viewable">
+          <separator string="Per-User Overrides" />
+          <field name="oo_user_access_ids" nolabel="1">
+            <tree editable="bottom">
+              <field name="user_id" />
+              <field name="dms_perm_read" readonly="1" />
+              <field name="dms_perm_write" readonly="1" />
+              <field name="dms_perm_unlink" readonly="1" />
+              <field name="oo_dir_role" readonly="1" string="Directory ONLYOFFICE Role" />
+              <field name="dms_access_level" column_invisible="1" />
+              <field
+                name="role"
+                string="ONLYOFFICE Role Override"
+                widget="oo_role_select"
+                options="{'values': 'oo_role_dynamic_values'}"
+                context="{'depending_on': dms_access_level, 'file_name': parent.name}"
+                required="1"
+              />
+            </tree>
+          </field>
+          <p class="text-muted fst-italic" style="margin-top: 8px; font-size: 0.9em;">
+                        Resolution order: per-user override → access group role (inherited via
+                        DMS group cascade) → directory Internal Users (nearest ancestor) →
+                        DMS permissions fallback. Public Link and blanket defaults are
+                        configured on the directory.
+                    </p>
+        </page>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- ============================================================
+         Kanban view: ONLYOFFICE options in the card action menu
+    ============================================================ -->
+  <record id="view_dms_file_kanban_onlyoffice" model="ir.ui.view">
+    <field name="name">dms_file.kanban.onlyoffice</field>
+    <field name="model">dms.file</field>
+    <field name="inherit_id" ref="dms.view_dms_file_kanban" />
+    <field name="arch" type="xml">
+      <!-- Load computed fields into the kanban card -->
+      <xpath expr="//kanban/field[@name='id']" position="after">
+        <field name="oo_is_viewable" />
+        <field name="oo_is_editable" />
+      </xpath>
+
+      <!-- Add to the Operations column in the dropdown menu -->
+      <xpath expr="//div[hasclass('o_kanban_manage_view')]" position="inside">
+        <div role="menuitem" t-if="record.oo_is_editable.raw_value and !record.is_locked.raw_value">
+          <a name="action_open_oo_editor" type="object">
+                        <i class="fa fa-pencil me-1" />
+                        Edit in ONLYOFFICE
+                    </a>
+        </div>
+        <div role="menuitem" t-if="record.oo_is_viewable.raw_value">
+          <a name="action_open_oo_preview" type="object">
+                        <i class="fa fa-eye me-1" />
+                        Preview in ONLYOFFICE
+                    </a>
+        </div>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- ============================================================
+         List view: inline ONLYOFFICE action buttons
+    ============================================================ -->
+  <record id="view_dms_file_list_onlyoffice" model="ir.ui.view">
+    <field name="name">dms_file.list.onlyoffice</field>
+    <field name="model">dms.file</field>
+    <field name="inherit_id" ref="dms.view_dms_file_tree" />
+    <field name="arch" type="xml">
+      <xpath expr="//tree/field[@name='name']" position="before">
+        <field name="oo_is_viewable" column_invisible="1" />
+        <field name="oo_is_editable" column_invisible="1" />
+      </xpath>
+      <xpath expr="//tree" position="inside">
+        <button
+          name="action_open_oo_editor"
+          type="object"
+          icon="fa-pencil"
+          title="Edit in ONLYOFFICE"
+          invisible="not oo_is_editable"
+        />
+        <button
+          name="action_open_oo_preview"
+          type="object"
+          icon="fa-eye"
+          title="Preview in ONLYOFFICE"
+          invisible="not oo_is_viewable"
+        />
+      </xpath>
+    </field>
+  </record>
+</odoo>

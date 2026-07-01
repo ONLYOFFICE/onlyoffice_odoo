@@ -1,10 +1,5 @@
 /** @odoo-module **/
-
-/*
- *
- * (c) Copyright Ascensio System SIA 2024
- *
- */
+// Copyright (C) 2026 Ascensio System SIA
 
 import { AttachmentList } from "@mail/core/common/attachment_list"
 import { _t } from "@web/core/l10n/translation"

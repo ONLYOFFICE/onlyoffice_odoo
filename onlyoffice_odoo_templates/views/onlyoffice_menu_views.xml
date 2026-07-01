@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright (C) 2026 Ascensio System SIA
+    Copyright (C) 2026 Data Dance s.r.o.
+    License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
+-->
 <odoo>
   <record id="view_onlyoffice_form" model="ir.ui.view">
     <field name="name">onlyoffice.odoo.templates.form</field>
@@ -6,6 +11,41 @@
     <field name="arch" type="xml">
       <form string="Create template">
         <sheet>
+          <div class="oe_button_box" name="button_box" groups="base.group_system">
+            <button
+              name="associated_report"
+              type="object"
+              invisible="not report_id"
+              icon='fa-code'
+              class="oe_stat_button"
+            >
+              <div class="o_field_widget o_stat_info">
+                <span class="o_stat_text">Report</span>
+              </div>
+            </button>
+            <button
+              name="create_action"
+              type="object"
+              invisible="report_id"
+              icon="fa-plus-square"
+              class="oe_stat_button"
+            >
+              <div class="o_field_widget o_stat_info">
+                <span class="o_stat_text">Create associated report</span>
+              </div>
+            </button>
+            <button
+              name="unlink_action"
+              type="object"
+              invisible="not report_id"
+              icon="fa-minus-square"
+              class="oe_stat_button"
+            >
+              <div class="o_field_widget o_stat_info">
+                <span class="o_stat_text">Remove associated report</span>
+              </div>
+            </button>
+          </div>
           <group string="Template creation">
             <div class="text-muted" colspan="2"> Use this form to create a new fillable PDF template
               for your Odoo modules. Start by entering a <span class="fw-bolder">name </span> for
@@ -23,6 +63,7 @@
             <field name="template_model_related_name" invisible="1" />
             <field name="template_model_model" invisible="1" />
             <field name="hide_file_field" invisible="1" />
+            <field name="report_id" invisible="1" />
           </group>
           <group string="Template uploading" invisible="hide_file_field">
             <div class="text-muted" colspan="2"> If you already have a <span class="fw-bolder">prepared
@@ -128,10 +169,34 @@
     </field>
   </record>
 
+  <record id="action_onlyoffice_template_editor" model="ir.actions.client">
+    <field name="name">Template Editor Action</field>
+    <field name="tag">onlyoffice_template_editor</field>
+  </record>
+
+  <record id="view_onlyoffice_list" model="ir.ui.view">
+    <field name="name">onlyoffice.odoo.templates.tree</field>
+    <field name="model">onlyoffice.odoo.templates</field>
+    <field name="arch" type="xml">
+      <tree create="true">
+        <field name="name" />
+        <field name="template_model_id" />
+        <field name="template_model_related_name" column_invisible="1" />
+        <field name="template_model_model" string="Technical Name" />
+        <field name="mimetype" column_invisible="1" />
+        <field name="attachment_id" />
+        <field name="create_uid" />
+        <field name="create_date" />
+        <button name="open_template_editor" type="object" string="Edit Template" icon="fa-edit" class="btn-primary" />
+      </tree>
+    </field>
+  </record>
+
   <record model="ir.actions.act_window" id="action_onlyoffice_odoo_templates">
     <field name="name">ONLYOFFICE Templates</field>
     <field name="res_model">onlyoffice.odoo.templates</field>
-    <field name="view_mode">kanban,form</field>
+    <field name="view_mode">kanban,list,form</field>
+    <field name="search_view_id" ref="view_onlyoffice_kanban_search" />
   </record>
 
   <menuitem

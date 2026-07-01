@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { Component, useState, onWillStart } from "@odoo/owl"
 import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"

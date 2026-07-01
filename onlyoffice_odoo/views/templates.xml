@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- -->
-<!-- (c) Copyright Ascensio System SIA 2024 -->
-<!-- -->
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <template id="onlyoffice_layout" name="ONLYOFFICE Editor">
     <html>
@@ -21,7 +19,7 @@
             csrf_token: "<t t-nocache="The csrf token must always be up to date." t-esc="request.csrf_token(None)" />",
             debug: "<t t-esc="debug" />",
           };
-          odoo.__session_info__ = <t t-out="json.dumps(request.env['ir.http'].get_frontend_session_info())" />;
+          odoo.__session_info__ = <t t-out="session_info" />;
           if (!/(^|;\s)tz=/.test(document.cookie)) {
             const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
             document.cookie = `tz=${userTZ}; path=/`;
@@ -57,7 +55,7 @@
           return null;
         }
         const color_scheme = getCookie('color_scheme');
-        var config = JSON.parse('<t t-out="editorConfig" />');
+        var config = <t t-out="editorConfig" />;
         config.editorConfig.customization.uiTheme = color_scheme ? `default-${color_scheme}` : "default-light";
         if (window?.opener?.location?.href) {
           if (window.opener.location.origin === window.origin) {

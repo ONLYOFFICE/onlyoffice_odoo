@@ -1,4 +1,6 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
+
 import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
@@ -10,6 +12,7 @@ import { KeepLast } from "@web/core/utils/concurrency"
 import { useService } from "@web/core/utils/hooks"
 import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
+import { FolderSelectionDialog } from "./folder_selection_dialog"
 
 const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
 
@@ -28,6 +31,7 @@ export class TemplateDialog extends Component {
     this.limit = 8
     this.state = useState({
       currentOffset: 0,
+      documentsAvailable: false,
       isOpen: true,
       isProcessing: false,
       selectedTemplateId: null,
@@ -65,7 +69,16 @@ export class TemplateDialog extends Component {
         searchViewId: views.views.search.id,
       })
       await this.fetchTemplates()
+      await this.checkDocumentsModule()
     })
+  }
+
+  async checkDocumentsModule() {
+    try {
+      this.state.documentsAvailable = await this.rpc("/onlyoffice/template/documents/check", {})
+    } catch {
+      this.state.documentsAvailable = false
+    }
   }
 
   async createTemplate() {
@@ -123,6 +136,40 @@ export class TemplateDialog extends Component {
     }
     this.env.services.ui.unblock()
     this.data.close()
+  }
+
+  addToDocuments() {
+    if (this.state.isProcessing || this.state.selectedTemplateId === null) {
+      return
+    }
+
+    const templateId = this.state.selectedTemplateId
+    const { resId } = this.props
+
+    this.env.services.dialog.add(FolderSelectionDialog, {
+      onFolderSelected: async (folderId) => {
+        this.state.isProcessing = true
+        this.env.services.ui.block()
+        try {
+          const result = await this.rpc("/onlyoffice/template/documents/save", {
+            template_id: templateId,
+            record_ids: resId,
+            folder_id: folderId,
+          })
+          if (result.success) {
+            this.notificationService.add(_t("Document saved to Documents successfully."), { type: "success" })
+            this.data.close()
+          } else {
+            this.notificationService.add(_t("Failed to save document."), { type: "danger" })
+          }
+        } catch (e) {
+          this.notificationService.add(_t("Error saving document to Documents."), { type: "danger" })
+        } finally {
+          this.state.isProcessing = false
+          this.env.services.ui.unblock()
+        }
+      },
+    })
   }
 
   selectTemplate(templateId) {

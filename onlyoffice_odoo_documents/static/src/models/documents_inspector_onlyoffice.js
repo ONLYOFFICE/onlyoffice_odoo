@@ -1,10 +1,5 @@
 /** @odoo-module **/
-
-/*
- *
- * (c) Copyright Ascensio System SIA 2024
- *
- */
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsInspector } from "@documents/views/inspector/documents_inspector"
 import { useService } from "@web/core/utils/hooks"
@@ -58,8 +53,9 @@ patch(DocumentsInspector.prototype, {
         }
       }
     }
+    const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
     const { same_tab } = JSON.parse(await this.env.services.orm.call("onlyoffice.odoo", "get_same_tab"))
-    if (same_tab) {
+    if (same_tab && !isDesktopEditor) {
       const action = {
         params: { document_id: id },
         tag: "onlyoffice_editor",

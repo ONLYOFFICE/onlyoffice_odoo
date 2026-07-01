@@ -1,3 +1,5 @@
+# Copyright (C) 2026 Ascensio System SIA
+
 import json
 
 from odoo import api, models

@@ -1,5 +1,16 @@
 # Change Log
 
+## 4.3.1
+
+## Added
+
+- desktop editor support
+
+## Fixed
+
+- opening a PDF from preview mode
+- create a document from Form Template
+
 ## 4.2.1
 
 ## Added
