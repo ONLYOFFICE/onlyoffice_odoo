@@ -21,6 +21,16 @@
         "views/dms_directory_views.xml",
         "views/dms_file_views.xml",
     ],
+    "images": [
+        "static/description/main_screenshot.png",
+        "static/description/01_creating_files.png",
+        "static/description/02_new_onlyoffice_document.png",
+        "static/description/03_file_editing.png",
+        "static/description/04_edit_in_onlyoffice.png",
+        "static/description/05_preview_in_onlyoffice.png",
+        "static/description/06_onlyoffice_access.png",
+        "static/description/07_directory_level_access.png",
+    ],
     "assets": {
         "web.assets_backend": [
             "onlyoffice_odoo_dms/static/src/css/dms_editor_action.css",
