@@ -1,6 +1,4 @@
-#
-# (c) Copyright Ascensio System SIA 2024
-#
+# Copyright (C) 2026 Ascensio System SIA
 
 import base64
 import json
@@ -90,7 +88,7 @@ def onlyoffice_request(url, method, opts=None):
 
 
 class Onlyoffice_Connector(http.Controller):
-    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
+    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         _logger.info("POST /onlyoffice/editor/get_config - document: %s, attachment: %s", document_id, attachment_id)
         document = None
@@ -192,9 +190,10 @@ class Onlyoffice_Connector(http.Controller):
             raise Exception("cant read")
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
-        return request.render(
-            "onlyoffice_odoo.onlyoffice_editor", self.prepare_editor_values(attachment, access_token, can_write)
-        )
+        values = self.prepare_editor_values(attachment, access_token, can_write)
+        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
         "/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False
@@ -323,12 +322,19 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
+        try:
+            session_info = request.env["ir.http"].get_frontend_session_info()
+        except Exception as e:
+            _logger.error("Failed to get frontend session info: %s", str(e))
+            session_info = {}
         _logger.info("prepare_editor_values - success: %s", attachment.id)
+
         return {
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
-            "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
-            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
+            "editorConfig": root_config,
+            "session_info": session_info,
         }
 
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
@@ -376,7 +382,15 @@ class Onlyoffice_Connector(http.Controller):
                     else:
                         role = access.internal_users
                 else:
-                    role = "view"  # default role for internal users
+                    user_permission = document.user_permission
+                    if user_permission == "none":
+                        raise AccessError(_("User has no read access rights to open this document"))
+                    elif user_permission == "edit" and can_write:
+                        role = "edit"
+                    elif user_permission == "view":
+                        role = "view"
+                    else:
+                        role = "view"  # default role for internal users
 
         if not role:
             raise AccessError(_("User has no read access rights to open this document"))
@@ -438,12 +452,12 @@ class Onlyoffice_Connector(http.Controller):
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:
-            document.check_access_rule("read")
+            document.check_access("read")
         except AccessError as e:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden() from e
 
-    @http.route("/onlyoffice/preview", type="http", auth="user")
+    @http.route("/onlyoffice/preview", type="http", auth="user", website=True)
     def preview(self, url, title):
         _logger.info("GET /onlyoffice/preview - url: %s, title: %s", url, title)
         docserver_url = config_utils.get_doc_server_public_url(request.env)
@@ -485,14 +499,20 @@ class Onlyoffice_Connector(http.Controller):
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
+        try:
+            session_info = request.env["ir.http"].get_frontend_session_info()
+        except Exception as e:
+            _logger.error("Failed to get frontend session info: %s", str(e))
+            session_info = {}
         _logger.info("GET /onlyoffice/preview - success")
         return request.render(
             "onlyoffice_odoo.onlyoffice_editor",
             {
                 "docTitle": title,
                 "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
-                "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
+                "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
                 "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+                "session_info": markupsafe.Markup(json.dumps(session_info)),
             },
         )
 
@@ -518,7 +538,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             _logger.error(f"API request failed to {url}: {str(e)}")
             raise UserError(f"Failed to connect to Forms API: {str(e)}") from e
 
-    @http.route("/onlyoffice/oforms/locales", type="json", auth="user")
+    @http.route("/onlyoffice/oforms/locales", type="jsonrpc", auth="user")
     def get_oform_locales(self):
         url = self.OFORMS_URL
         endpoint = "i18n/locales"
@@ -534,7 +554,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             ]
         }
 
-    @http.route("/onlyoffice/oforms/category-types", type="json", auth="user")
+    @http.route("/onlyoffice/oforms/category-types", type="jsonrpc", auth="user")
     def get_category_types(self, locale="en"):
         url = self.OFORMS_URL
         endpoint = "menu-translations"
@@ -564,7 +584,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
 
         return {"data": categories}
 
-    @http.route("/onlyoffice/oforms/subcategories", type="json", auth="user")
+    @http.route("/onlyoffice/oforms/subcategories", type="jsonrpc", auth="user")
     def get_subcategories(self, category_type, locale="en"):
         url = self.OFORMS_URL
         endpoint_map = {"categorie": "categories", "type": "types", "compilation": "compilations"}
@@ -598,7 +618,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
 
         return {"data": subcategories}
 
-    @http.route("/onlyoffice/oforms", type="json", auth="user")
+    @http.route("/onlyoffice/oforms", type="jsonrpc", auth="user")
     def get_oforms(self, params=None, **kwargs):
         url = self.CMSOFORMS_URL
         if params is None:

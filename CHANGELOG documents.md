@@ -1,5 +1,21 @@
 # Change Log
 
+## 6.3.1
+
+## Added
+
+- desktop editor support
+
+## Fixed
+
+- opening a PDF from preview mode
+- create a document from Form Template
+- create and upload documents to system folders (my, company, etc.)
+- upload documents
+- move a document between directories
+- user permission check in the documents module
+- opening folders for external users
+
 ## 6.2.1
 
 ## Added

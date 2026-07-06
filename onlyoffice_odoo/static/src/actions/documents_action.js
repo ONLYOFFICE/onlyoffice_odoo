@@ -1,4 +1,6 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
+
 import { cookie } from "@web/core/browser/cookie"
 import { router } from "@web/core/browser/router"
 import { rpc } from "@web/core/network/rpc"
@@ -28,7 +30,7 @@ export class DocumentsAction extends Component {
           this.router.pushState({ attachment_id: attachment_id })
         }
         const response = await this.rpc("/onlyoffice/editor/get_config", args)
-        const config = JSON.parse(response.editorConfig)
+        const config = response.editorConfig
         const theme = cookie.get("color_scheme")
         config.editorConfig.customization = {
           ...config.editorConfig.customization,

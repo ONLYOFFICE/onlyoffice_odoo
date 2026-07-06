@@ -1,6 +1,4 @@
-#
-# (c) Copyright Ascensio System SIA 2024
-#
+# Copyright (C) 2026 Ascensio System SIA
 
 from odoo import api, fields, models
 
@@ -30,13 +28,13 @@ class ResConfigSettings(models.TransientModel):
     def save_config_values(self):
         if validation_utils.valid_url(self.doc_server_public_url):
             config_utils.set_doc_server_public_url(self.env, self.doc_server_public_url)
-        if validation_utils.valid_url(self.doc_server_odoo_url):
-            config_utils.set_doc_server_odoo_url(self.env, self.doc_server_odoo_url)
         if validation_utils.valid_url(self.doc_server_inner_url):
             config_utils.set_doc_server_inner_url(self.env, self.doc_server_inner_url)
         config_utils.set_jwt_secret(self.env, self.doc_server_jwt_secret)
         config_utils.set_jwt_header(self.env, self.doc_server_jwt_header)
         config_utils.set_demo(self.env, self.doc_server_demo)
+        if self.doc_server_odoo_url and validation_utils.valid_url(self.doc_server_odoo_url):
+            config_utils.set_doc_server_odoo_url(self.env, self.doc_server_odoo_url)
         config_utils.set_certificate_verify_disabled(self.env, self.doc_server_disable_certificate)
         config_utils.set_same_tab(self.env, self.same_tab)
 

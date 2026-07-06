@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Copyright (C) 2026 Data Dance s.r.o.
+    License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
+-->
+<odoo>
+  <record id="act_report_xml_view_onlyoffice" model="ir.ui.view">
+    <field name="name">ir.actions.report</field>
+    <field name="model">ir.actions.report</field>
+    <field name="inherit_id" ref="base.act_report_xml_view" />
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='report_name']" position="attributes">
+        <attribute name="invisible">report_type in ["onlyoffice-pdf"]</attribute>
+      </xpath>
+      <xpath expr="//field[@name='model']" position="attributes">
+        <attribute name="readonly">report_type in ["onlyoffice-pdf"]</attribute>
+        <attribute name="force_save">1</attribute>
+      </xpath>
+      <xpath expr="//field[@name='report_name']" position="after">
+        <field
+          name="onlyoffice_template_id"
+          domain=""
+          invisible="report_type not in ['onlyoffice-pdf']"
+          required="report_type in ['onlyoffice-pdf']"
+        />
+      </xpath>
+    </field>
+  </record>
+</odoo>

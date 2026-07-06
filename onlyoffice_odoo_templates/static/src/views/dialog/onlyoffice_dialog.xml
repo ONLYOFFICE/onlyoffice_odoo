@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
     <t t-name="onlyoffice_odoo_templates.TemplateDialog" owl="1">
     <div>
@@ -64,6 +65,15 @@
         <t t-set-slot="footer">
           <button class="btn btn-primary o-template-fill" t-att-disabled="isButtonDisabled()" t-on-click="fillTemplate">
             <t>Print</t>
+          </button>
+          <button
+            t-if="state.documentsAvailable"
+            class="btn btn-primary"
+            t-att-disabled="isButtonDisabled()"
+            t-on-click="addToDocuments"
+          >
+            <i class="fa fa-folder-o me-1" />
+            <t>Add to Documents</t>
           </button>
           <button class="btn btn-secondary" t-att-disabled="isButtonDisabled()" t-on-click="previewTemplate">
             <t>Preview</t>

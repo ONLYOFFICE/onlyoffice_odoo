@@ -1,3 +1,7 @@
+# Copyright (C) 2026 Ascensio System SIA
+# Copyright (C) 2026 Data Dance s.r.o.
+# License LGPL-3.0 or later (https://www.gnuorg/licenses/agpl.html).
+
 import base64
 import json
 import logging
@@ -30,6 +34,7 @@ class OnlyOfficeTemplate(models.Model):
     hide_file_field = fields.Boolean(string="Hide File Field", default=False)
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
+    report_id = fields.Many2one("ir.actions.report", string="Related Report", copy=False)
 
     @api.onchange("name")
     def _onchange_name(self):
@@ -223,11 +228,12 @@ class OnlyOfficeTemplate(models.Model):
             oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
         )
 
-        conversion_url = os.path.join(docserver_url, "ConvertService.ashx")
+        key = int(time.time())
+        conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={key}")
 
         payload = {
             "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",
-            "key": int(time.time()),
+            "key": key,
             "filetype": "pdf",
             "outputtype": "pdf",
             "pdf": {
@@ -249,7 +255,7 @@ class OnlyOfficeTemplate(models.Model):
         try:
             response = onlyoffice_request(
                 url=conversion_url,
-                method="get",
+                method="post",
                 opts={
                     "data": json.dumps(payload),
                     "headers": headers,
@@ -331,6 +337,22 @@ class OnlyOfficeTemplate(models.Model):
 
         return records
 
+    def open_template_editor(self):
+        """
+        Open ONLYOFFICE template editor for this record
+        """
+        self.ensure_one()
+        return {
+            "type": "ir.actions.client",
+            "tag": "onlyoffice_template_editor",
+            "target": "current",
+            "params": {
+                "attachment_id": self.attachment_id.id,
+                "id": self.id,
+                "template_model_model": self.template_model_model,
+            },
+        }
+
     @api.model
     def update_relationship(self, template_model_id, model):
         """
@@ -351,3 +373,41 @@ class OnlyOfficeTemplate(models.Model):
         if record.template_model_id != model_id:
             record.template_model_id = model_id
         return
+
+    def create_action(self):
+        """Create associated report action for this template"""
+        for template in self:
+            if not template.report_id:
+                report = self.env["ir.actions.report"].create(
+                    {
+                        "name": f"{template.name} Print (ONLYOFFICE)",
+                        "report_type": "onlyoffice-pdf",
+                        "report_name": template.name,
+                        "onlyoffice_template_id": template.id,
+                        "model": template.template_model_id.model,
+                        "binding_model_id": template.template_model_id.id,
+                    }
+                )
+                template.report_id = report.id
+
+    def unlink_action(self):
+        """Remove associated report action"""
+        for template in self:
+            if template.report_id:
+                template.report_id.unlink()
+
+    def associated_report(self):
+        """Open associated report form"""
+        self.ensure_one()
+        if self.report_id:
+            return {
+                "name": "Associated Report",
+                "type": "ir.actions.act_window",
+                "res_model": "ir.actions.report",
+                "res_id": self.report_id.id,
+                "view_mode": "form",
+            }
+        else:
+            return {
+                "type": "ir.actions.act_window_close",
+            }

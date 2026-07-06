@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- -->
-<!-- (c) Copyright Ascensio System SIA 2024 -->
-<!-- -->
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <record id="res_config_settings_view_form" model="ir.ui.view">
     <field name="name">res.config.settings.view.form.inherit.onlyoffice_odoo</field>
@@ -22,10 +20,7 @@
               >
                 <i class="fa fa-arrow-right" /> Learn more </a>
               <br />
-              <a
-                href="https://feedback.onlyoffice.com/forums/966080-your-voice-matters?category_id=519288"
-                target="_blank"
-              >
+              <a href="https://community.onlyoffice.com/c/suggestions/integrations/56" target="_blank">
                 <i class="fa fa-arrow-right" /> Suggest a feature </a>
             </setting>
           </block>

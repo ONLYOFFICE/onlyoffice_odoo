@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <template id="onlyoffice_odoo_documents.share_file" inherit_id="documents.share_file">
     <xpath expr="//div[hasclass('mt16') and hasclass('mb8')]/a" position="inside">
@@ -32,7 +33,7 @@
       <t t-if="is_supported">
         <div class="o_card_right d-flex flex-column flex-nowrap justify-content-end text-end me-1">
           <a
-            t-att-href="'/onlyoffice/documents/share/' + document.access_token"
+            t-att-href="'/onlyoffice/documents/share/' + document.access_token + '?folder_token=' + folder.access_token"
             title="Open in ONLYOFFICE"
             target="_blank"
           >

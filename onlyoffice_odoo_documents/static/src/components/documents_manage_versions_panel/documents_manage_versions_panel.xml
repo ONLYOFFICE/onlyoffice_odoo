@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates>
   <t t-name="documents.ManageVersions" t-inherit="documents.ManageVersions" t-inherit-mode="extension">
     <xpath expr="//button[@t-on-click='() => this.onDownload(version.id)']" position="before">

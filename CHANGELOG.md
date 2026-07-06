@@ -1,5 +1,22 @@
 # Change Log
 
+## 6.4.0
+
+## Added
+
+- shardkey param to url for requests to Docs
+
+## Changed
+
+- support tsv
+
+## Fixed
+
+- receiving session info error
+- change odoo url with demo mode enabled
+- warnings message in log about missing access rules and anomalous backslash in the URL validator
+- replace the deprecated check_access method
+
 ## 6.3.0
 
 ## Added
