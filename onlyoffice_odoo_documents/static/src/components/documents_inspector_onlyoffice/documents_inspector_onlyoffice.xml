@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- -->
-<!-- (c) Copyright Ascensio System SIA 2024 -->
-<!-- -->
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates>
   <t t-name="onlyoffice.documents.ControlPanel" t-inherit="documents.ControlPanel" t-inherit-mode="extension">
     <xpath expr="//*[hasclass('o_documents_share_button')]" position="after">

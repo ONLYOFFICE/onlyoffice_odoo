@@ -1,10 +1,5 @@
 /** @odoo-module **/
-
-/*
- *
- * (c) Copyright Ascensio System SIA 2024
- *
- */
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsControlPanel } from "@documents/views/search/documents_control_panel"
 
@@ -41,7 +36,10 @@ patch(DocumentsControlPanel.prototype, {
     return format && format.actions && (format.actions.includes("view") || format.actions.includes("edit"))
   },
   async onlyofficeEditorUrl() {
-    const doc = this.env.model.root.selection[0]
+    const doc = this.targetRecords[0]
+    if (!doc) {
+      return
+    }
     const demo = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_demo"))
     if (demo && demo.mode && demo.date) {
       const isValidDate = (d) => d instanceof Date && !isNaN(d)
@@ -61,8 +59,9 @@ patch(DocumentsControlPanel.prototype, {
         }
       }
     }
+    const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
     const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-    if (same_tab) {
+    if (same_tab && !isDesktopEditor) {
       const action = {
         params: { document_id: doc.data.id },
         tag: "onlyoffice_editor",

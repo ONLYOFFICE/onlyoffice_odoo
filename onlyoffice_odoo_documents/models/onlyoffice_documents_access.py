@@ -1,4 +1,6 @@
-from odoo import _, fields, models
+# Copyright (C) 2026 Ascensio System SIA
+
+from odoo import fields, models
 
 
 class OnlyofficeDocumentsAccessUser(models.Model):
@@ -8,26 +10,26 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     document_id = fields.Many2one("documents.document", required=True, ondelete="cascade")
     internal_users = fields.Selection(
         [
-            ("none", _("None")),
-            ("view", _("Viewer")),
-            ("commenter", _("Commenter")),
-            ("reviewer", _("Reviewer")),
-            ("edit", _("Editor")),
-            ("form_filling", _("Form Filling")),
-            ("custom_filter", _("Custom Filter")),
+            ("none", "None"),
+            ("view", "Viewer"),
+            ("commenter", "Commenter"),
+            ("reviewer", "Reviewer"),
+            ("edit", "Editor"),
+            ("form_filling", "Form Filling"),
+            ("custom_filter", "Custom Filter"),
         ],
         default="none",
         string="Internal Users Access",
     )
     link_access = fields.Selection(
         [
-            ("none", _("None")),
-            ("view", _("Viewer")),
-            ("commenter", _("Commenter")),
-            ("reviewer", _("Reviewer")),
-            ("edit", _("Editor")),
-            ("form_filling", _("Form Filling")),
-            ("custom_filter", _("Custom Filter")),
+            ("none", "None"),
+            ("view", "Viewer"),
+            ("commenter", "Commenter"),
+            ("reviewer", "Reviewer"),
+            ("edit", "Editor"),
+            ("form_filling", "Form Filling"),
+            ("custom_filter", "Custom Filter"),
         ],
         default="view",
         string="Link Access",

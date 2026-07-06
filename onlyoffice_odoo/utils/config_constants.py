@@ -1,6 +1,4 @@
-#
-# (c) Copyright Ascensio System SIA 2024
-#
+# Copyright (C) 2026 Ascensio System SIA
 
 DOC_SERVER_PUBLIC_URL = "onlyoffice_connector.doc_server_public_url"
 DOC_SERVER_ODOO_URL = "onlyoffice_connector.doc_server_odoo_url"

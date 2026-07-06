@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { FormGallery } from "@onlyoffice_odoo/views/form_gallery/form_gallery"
 import { CreateDialog } from "@onlyoffice_odoo_documents/onlyoffice_create_template/onlyoffice_create_template_dialog"
@@ -24,6 +25,7 @@ export class CreateModeDialog extends Component {
     })
     this.dialogService = useService("dialog")
     this.notification = useService("notification")
+    this.actionService = useService("action")
   }
 
   async _choiceDialog() {
@@ -71,17 +73,20 @@ export class CreateModeDialog extends Component {
           sticky: false,
           type: "info",
         })
+        const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-        if (same_tab) {
+        if (same_tab && !isDesktopEditor) {
+          this.data.close()
           const action = {
-            params: { attachment_id: result.file_id },
+            params: { document_id: result.document_id },
             tag: "onlyoffice_editor",
             target: "current",
             type: "ir.actions.client",
           }
-          return this.action.doAction(action)
+          await this.actionService.doAction(action)
+        } else {
+          window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
         }
-        window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
       }
     }
     this.dialogService.add(

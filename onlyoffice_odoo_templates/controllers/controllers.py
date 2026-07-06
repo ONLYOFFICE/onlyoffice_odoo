@@ -1,6 +1,4 @@
-#
-# (c) Copyright Ascensio System SIA 2024
-#
+# Copyright (C) 2026 Ascensio System SIA
 import base64
 import codecs
 import io
@@ -13,7 +11,10 @@ from urllib.parse import quote
 
 from odoo import http
 from odoo.http import request
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT, file_open, get_lang
+from odoo.tools import (
+    file_open,
+    misc,
+)
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
@@ -432,44 +433,31 @@ class OnlyofficeTemplate_Connector(http.Controller):
                             img = re.search(r"'(.*?)'", str(data))
                             if img:
                                 result[field] = img.group(1)
-                        elif data:
-                            if field_type in ["float", "integer", "char", "text"]:
+                        elif data or field_type in ["integer", "float", "monetary"]:
+                            if field_type in ["char", "text"]:
                                 result[field] = str(data)
+                            elif field_type == "float":
+                                lang = request.env["res.lang"].sudo().search([("code", "=", user.lang)], limit=1)
+                                digits = record._fields[field].get_digits(request.env)
+                                precision = digits[1] if digits else 2
+                                result[field] = lang.format(percent=f"%.{precision}f", value=data)
+                            elif field_type == "integer":
+                                lang = request.env["res.lang"].sudo().search([("code", "=", user.lang)], limit=1)
+                                result[field] = lang.format(percent="%d", value=data)
                             elif field_type == "monetary":
-                                data = f"{float(data):,.2f}"
-                                currency_field_name = record._fields[field].currency_field
+                                currency = None
+                                currency_field_name = record._fields[field].currency_field or "currency_id"
                                 if currency_field_name:
-                                    currency = getattr(record, currency_field_name).name
-                                    result[field] = f"{data} {currency}" if currency else str(data)
-                                else:
-                                    result[field] = str(data)
+                                    currency = getattr(record, currency_field_name)
+                                result[field] = misc.format_amount(
+                                    env=request.env, amount=data, currency=currency, lang_code=user.lang
+                                )
                             elif field_type == "date":
-                                date_format = None
-                                lang = request.env["res.lang"].search([("code", "=", user.lang)], limit=1)
-                                user_date_format = lang.date_format
-                                if user_date_format:
-                                    date_format = user_date_format
-                                else:
-                                    date_format = get_lang(request.env).date_format
-                                format_to_use = date_format or DEFAULT_SERVER_DATE_FORMAT
-                                result[field] = str(data.strftime(format_to_use))
+                                result[field] = misc.format_date(request.env, data, user.lang)
                             elif field_type == "datetime":
-                                date_format = None
-                                time_format = None
-                                lang = request.env["res.lang"].search([("code", "=", user.lang)], limit=1)
-                                user_date_format = lang.date_format
-                                user_time_format = lang.time_format
-                                if user_date_format and user_time_format:
-                                    date_format = user_date_format
-                                    time_format = user_time_format
-                                else:
-                                    date_format = get_lang(request.env).date_format
-                                    time_format = get_lang(request.env).time_format
-                                if date_format and time_format:
-                                    format_to_use = f"{date_format} {time_format}"
-                                else:
-                                    format_to_use = DEFAULT_SERVER_DATETIME_FORMAT
-                                result[field] = str(data.strftime(format_to_use))
+                                result[field] = misc.format_datetime(
+                                    env=request.env, value=data, tz=user.tz or "GMT", lang_code=user.lang
+                                )
                             elif field_type == "selection":
                                 selection = record._fields[field].selection
                                 if isinstance(selection, list):
@@ -507,6 +495,90 @@ class OnlyofficeTemplate_Connector(http.Controller):
         user = request.env["res.users"].sudo().browse(user_id).exists().ensure_one()
         logger.info("get_user_from_token - user: %s", user.name)
         return user
+
+    @http.route("/onlyoffice/template/documents/check", auth="user", type="json")
+    def check_documents_module(self):
+        """Check if the documents module is installed."""
+        return bool(
+            request.env["ir.module.module"].sudo().search([("name", "=", "documents"), ("state", "=", "installed")])
+        )
+
+    @http.route("/onlyoffice/template/documents/folders", auth="user", type="json")
+    def get_documents_folders(self):
+        """Get folders available to the current user from the Documents module."""
+        try:
+            Document = request.env["documents.document"]
+        except KeyError:
+            return []
+
+        folders = Document.search([("type", "=", "folder")])
+        result = []
+        for folder in folders:
+            if folder.access_internal != "edit":
+                continue
+
+            parts = []
+            current = folder
+            while current and current.type == "folder":
+                parts.append(current.name)
+                current = current.folder_id
+            full_path = "/".join(reversed(parts))
+            result.append({"id": folder.id, "display_name": full_path})
+
+        result.sort(key=lambda f: f["display_name"])
+        return result
+
+    @http.route("/onlyoffice/template/documents/save", auth="user", type="json")
+    def save_to_documents(self, template_id, record_ids, folder_id):
+        """Fill template and save the result to the specified Documents folder."""
+        logger.info(
+            "save_to_documents - template: %s, records: %s, folder: %s",
+            template_id,
+            record_ids,
+            folder_id,
+        )
+        try:
+            folder = request.env["documents.document"].browse(int(folder_id))
+            if not folder.exists() or folder.type != "folder":
+                raise Exception("Access denied to the selected folder")
+        except KeyError:
+            raise Exception("Documents module is not installed")  # noqa: B904
+
+        internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
+        oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
+
+        if isinstance(record_ids, list):
+            record_ids = ",".join(str(r) for r in record_ids)
+        else:
+            record_ids = str(record_ids)
+
+        templates = self.fill_template(oo_security_token, record_ids, template_id)
+        saved_documents = []
+
+        for filename, url in templates.items():
+            response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
+            if response.status_code == 200:
+                attachment = request.env["ir.attachment"].create(
+                    {
+                        "name": filename,
+                        "datas": base64.b64encode(response.content),
+                        "mimetype": "application/pdf",
+                    }
+                )
+                document = request.env["documents.document"].create(
+                    {
+                        "name": filename,
+                        "folder_id": int(folder_id),
+                        "attachment_id": attachment.id,
+                    }
+                )
+                saved_documents.append(document.id)
+                logger.info("save_to_documents - saved document %s to folder %s", document.id, folder_id)
+            else:
+                logger.warning("save_to_documents - failed to download file: %s", response.status_code)
+                raise Exception(f"Failed to download generated file, status={response.status_code}")
+
+        return {"success": True, "document_ids": saved_documents}
 
     def get_docbuilder_error(self, error_code):
         docbuilder_messages = {

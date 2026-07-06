@@ -1,4 +1,5 @@
 /** @odoo-module **/
+// Copyright (C) 2026 Ascensio System SIA
 
 import { DocumentsPermissionPanel } from "@documents/components/documents_permission_panel/documents_permission_panel"
 import { Dialog } from "@web/core/dialog/dialog"
@@ -76,17 +77,18 @@ export class CreateDialog extends Component {
         const document = { id: result.document_id }
         this.dialogService.add(DocumentsPermissionPanel, { document })
       } else {
+        const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-        if (same_tab) {
+        this.data.close()
+        if (same_tab && !isDesktopEditor) {
           const action = {
-            params: { attachment_id: result.file_id },
+            params: { document_id: result.document_id },
             tag: "onlyoffice_editor",
             target: "current",
             type: "ir.actions.client",
           }
           return this.actionService.doAction(action)
         }
-        this.data.close()
         return window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
       }
     }

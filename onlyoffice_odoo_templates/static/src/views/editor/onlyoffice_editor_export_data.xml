@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
   <t t-name="onlyoffice_odoo_templates.ExportDataItem" owl="1">
     <div
@@ -38,7 +39,8 @@
   <t t-name="onlyoffice_odoo_templates.ExportData" owl="1">
     <div class="o-onlyoffice-fields-options">
       <div class="o-onlyoffice-options-help">
-        <span> Choose the field below to paste selected parameter to the cursor </span>
+        <span t-if="props.hasLicense"> Choose the field below to paste selected parameter to the cursor </span>
+        <span t-else=""> Select a field below to copy its parameter to your clipboard. </span>
       </div>
       <div class="o-onlyoffice-options-title">
         <span>Module/ section</span>

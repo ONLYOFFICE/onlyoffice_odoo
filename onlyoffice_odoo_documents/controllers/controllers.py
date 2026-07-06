@@ -1,6 +1,4 @@
-#
-# (c) Copyright Ascensio System SIA 2024
-#
+# Copyright (C) 2026 Ascensio System SIA
 import base64
 import json
 import logging
@@ -40,11 +38,22 @@ class OnlyofficeDocuments_Connector(http.Controller):
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
+            if folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
+                folder_id_value = False
+                if folder_id == "COMPANY":
+                    owner_id = request.env.ref("base.user_root").id
+                else:
+                    owner_id = request.env.user.id
+            else:
+                folder_id_value = int(folder_id)
+                owner_id = request.env.user.id
+
             data = {
                 "name": title + "." + supported_format,
                 "mimetype": file_utils.get_mime_by_ext(supported_format),
                 "raw": file_data,
-                "folder_id": int(folder_id),
+                "folder_id": folder_id_value,
+                "owner_id": owner_id,
             }
 
             document = request.env["documents.document"].create(data)
@@ -74,27 +83,33 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
-    def render_shared_document_editor(self, access_token=None):
+    def render_shared_document_editor(self, access_token=None, folder_token=None):
         try:
             document = ShareRoute._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
 
-            return request.render(
-                "onlyoffice_odoo.onlyoffice_editor", self.prepare_share_editor(document, access_token)
-            )
+            values = self.prepare_share_editor(document, access_token, folder_token=folder_token)
+            values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+            try:
+                session_info = request.env["ir.http"].get_frontend_session_info()
+            except Exception:
+                session_info = {}
+            values["session_info"] = markupsafe.Markup(json.dumps(session_info))
+            return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
-        except Exception:
-            _logger.error("Ffailed to open shared document")
+        except Exception as ex:
+            _logger.error("Failed to open shared document: %s", ex)
 
         return request.not_found()
 
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
-        return request.render(
-            "onlyoffice_odoo.onlyoffice_editor", self.prepare_document_editor(document_id, access_token)
-        )
+        values = self.prepare_document_editor(document_id, access_token)
+        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     def prepare_document_editor(self, document_id, access_token):
         document = request.env["documents.document"].browse(int(document_id))
@@ -102,7 +117,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             _logger.error("Document is locked by another user")
             raise Forbidden()
         try:
-            document.check_access_rule("read")
+            document.check_access("read")
         except AccessError:
             _logger.error("User has no read access rights to open this document")
             raise Forbidden()  # noqa: B904
@@ -113,22 +128,64 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             raise Forbidden()  # noqa: B904
 
         try:
-            document.check_access_rule("write")
+            document.check_access("write")
             return self.prepare_editor_values(attachment, access_token, True)
         except AccessError:
             _logger.debug("Current user has no write access")
             return self.prepare_editor_values(attachment, access_token, False)
 
-    def prepare_share_editor(self, document, access_token):
-        role = None
+    def _get_folder_link_role(self, folder_token, document):
+        """Resolve folder_token, verify document is a direct child, return the folder's link role.
+
+        Returns None if the token is invalid, the document is not a direct child of that folder,
+        or the folder itself grants no link access.
+        """
+        folder = ShareRoute._from_access_token(folder_token, skip_log=True)
+        if not folder or not folder.exists() or folder.type != "folder":
+            return None
+        if document.folder_id.id != folder.id:
+            return None
+        folder_access = (
+            request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", folder.id)], limit=1)
+        )
+        if folder_access and folder_access.link_access != "none":
+            return folder_access.link_access
+        if folder.access_via_link and folder.access_via_link != "none":
+            return folder.access_via_link
+        return None
+
+    def _get_document_link_role(self, document):
+        """Return the ONLYOFFICE link access role for a document, or None if explicitly blocked."""
         access = (
             request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
         )
-        if access:
-            if access.link_access == "none":
-                raise AccessError(_("User has no read access rights to open this document"))
-            else:
-                role = access.link_access
+        if not access:
+            return "view"
+        return access.link_access if access.link_access != "none" else None
+
+    def prepare_share_editor(self, document, access_token, folder_token=None):
+        effective_folder_token = None
+
+        if folder_token:
+            role = self._get_folder_link_role(folder_token, document)
+            if role is not None:
+                effective_folder_token = folder_token
+        else:
+            role = self._get_document_link_role(document)
+
+        public_user = request.env.ref("base.public_user")
+        current_user = request.env.user
+        if current_user and current_user.id != public_user.id:
+            access_user = (
+                request.env["onlyoffice.odoo.documents.access.user"]
+                .sudo()
+                .search([("document_id", "=", document.id), ("user_id", "=", current_user.id)], limit=1)
+            )
+            if access_user and access_user.role != "none":
+                role = access_user.role
+
+        if not role:
+            raise AccessError(_("User has no read access rights to open this document"))
 
         attachment = self.get_attachment(document.attachment_id.id)
         data = attachment.sudo().read(["id", "checksum", "public", "name", "access_token"])[0]
@@ -185,14 +242,15 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             root_config["document"]["permissions"]["modifyFilter"] = False
 
         if role and role != "view":
-            public_user = request.env.ref("base.public_user")
+            token_user = current_user if current_user and current_user.id != public_user.id else public_user
             security_token = jwt_utils.encode_payload(
-                request.env, {"id": public_user.id}, config_utils.get_internal_jwt_secret(request.env)
+                request.env, {"id": token_user.id}, config_utils.get_internal_jwt_secret(request.env)
             )
             security_token = security_token.decode("utf-8") if isinstance(security_token, bytes) else security_token
-            root_config["editorConfig"]["callbackUrl"] = (
-                odoo_url + "onlyoffice/documents/share/callback/" + access_token + "/" + security_token
-            )
+            callback_url = odoo_url + "onlyoffice/documents/share/callback/" + access_token + "/" + security_token
+            if effective_folder_token:
+                callback_url += "?folder_token=" + effective_folder_token
+            root_config["editorConfig"]["callbackUrl"] = callback_url
 
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
@@ -200,8 +258,8 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         return {
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
-            "docApiJS": docserver_url + "web-apps/apps/api/documents/api.js",
-            "editorConfig": markupsafe.Markup(json.dumps(root_config)),
+            "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
+            "editorConfig": root_config,
         }
 
     @http.route(
@@ -211,7 +269,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         type="http",
         csrf=False,
     )
-    def share_callback(self, access_token, oo_security_token):
+    def share_callback(self, access_token, oo_security_token, folder_token=None):
         response_json = {"error": 0}
 
         try:
@@ -222,15 +280,32 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
             if not document or not document.exists():
                 raise request.not_found()
 
-            access = (
-                request.env["onlyoffice.odoo.documents.access"]
-                .sudo()
-                .search([("document_id", "=", document.id)], limit=1)
-            )
-            if access:
-                if access.link_access == "view":
-                    raise Exception("No access rights to overwrite this document for access via share link")
+            _callback_roles = ("edit", "custom_filter", "commenter", "reviewer")
+
+            can_write = False
+            if folder_token:
+                folder_role = self._get_folder_link_role(folder_token, document)
+                if folder_role in _callback_roles:
+                    can_write = True
             else:
+                access = (
+                    request.env["onlyoffice.odoo.documents.access"]
+                    .sudo()
+                    .search([("document_id", "=", document.id)], limit=1)
+                )
+                if access and access.link_access in _callback_roles:
+                    can_write = True
+
+            if not can_write and user:
+                access_user = (
+                    request.env["onlyoffice.odoo.documents.access.user"]
+                    .sudo()
+                    .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
+                )
+                if access_user and access_user.role in _callback_roles:
+                    can_write = True
+
+            if not can_write:
                 raise Exception("No access rights to overwrite this document for access via share link")
 
             attachment = request.env["ir.attachment"].sudo().browse([document.attachment_id.id]).exists().ensure_one()
@@ -284,7 +359,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         document_sudo = self._from_access_token(access_token)
 
         if not request.env.user._is_public() or not hasattr(response, "qcontext"):
-            return
+            return response
 
         qcontext = response.qcontext
 
@@ -301,3 +376,7 @@ class OnlyOfficeShareRoute(ShareRoute):
             qcontext["onlyoffice_supported"] = data
 
         return response
+
+    @http.route(["/Products/Files/", "/Products/Files"], auth="user", methods=["GET"], type="http")
+    def desktop_editor_redirect(self, **kwargs):
+        return request.redirect("/odoo/action-documents.document_action")
