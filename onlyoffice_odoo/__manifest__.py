@@ -7,7 +7,7 @@
     "author": "ONLYOFFICE",
     "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
-    "version": "6.3.0",
+    "version": "6.4.0",
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
     "depends": ["base", "mail"],
