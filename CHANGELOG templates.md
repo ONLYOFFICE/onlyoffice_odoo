@@ -1,5 +1,11 @@
 # Change Log
 
+##
+
+## Fixed
+
+- cache template form field keys to avoid an extra docbuilder round-trip on every fill
+
 ## 3.4.2
 
 ## Added
