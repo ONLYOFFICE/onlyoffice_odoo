@@ -32,7 +32,7 @@ class OnlyOfficeTemplate(models.Model):
     hide_file_field = fields.Boolean(string="Hide File Field", default=False)
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
-    # Cached OFORM field keys for the template PDF. The keys depend only on the
+    # Cached PDF Form field keys for the template PDF. The keys depend only on the
     # attachment contents (not on the records being filled), so we cache them to
     # avoid an extra synchronous docbuilder round-trip on every fill. Stored as
     # JSON {"checksum": <attachment.checksum>, "keys": [...]} so the cache is

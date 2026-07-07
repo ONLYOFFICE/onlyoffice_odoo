@@ -269,7 +269,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             return request.not_found()
 
     def _get_cached_keys(self, template, oo_security_token):
-        """Return the template's OFORM field keys, using the value cached on the
+        """Return the template's PDF Form field keys, using the value cached on the
         template when it is still valid.
 
         The keys are derived solely from the template PDF, so we key the cache on
