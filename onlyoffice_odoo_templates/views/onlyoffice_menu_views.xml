@@ -67,10 +67,11 @@
           </group>
           <group string="Template uploading" invisible="hide_file_field">
             <div class="text-muted" colspan="2"> If you already have a <span class="fw-bolder">prepared
-              PDF file</span> with fillable fields, you can upload it here </div>
+              PDF form</span> or a <span class="fw-bolder">DOCX/XLSX/PPTX document</span>, you can upload it
+              here. Office documents are converted to a fillable PDF on save. </div>
             <field
               name="file"
-              options="{'accepted_file_extensions': '.pdf', 'attachment': False}"
+              options="{'accepted_file_extensions': '.pdf,.docx,.xlsx,.pptx', 'attachment': False}"
               help="Select an existing template. Leave the field blank to create a blank template."
             />
           </group>

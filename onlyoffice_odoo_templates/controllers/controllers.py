@@ -378,9 +378,10 @@ class OnlyofficeTemplate_Connector(http.Controller):
         attachment = self.get_record("ir.attachment", attachment_id, self.get_user_from_token(oo_security_token))
         if attachment:
             content = base64.b64decode(attachment.datas)
+            ext = file_utils.get_file_ext(attachment.name) or "pdf"
             headers = {
-                "Content-Type": "application/pdf",
-                "Content-Disposition": "attachment; filename=template.pdf",
+                "Content-Type": attachment.mimetype or "application/pdf",
+                "Content-Disposition": f"attachment; filename=template.{ext}",
             }
             logger.info("GET /onlyoffice/template/download - success")
             return request.make_response(content, headers)

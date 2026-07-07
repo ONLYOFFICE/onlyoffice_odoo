@@ -63,15 +63,32 @@ class OnlyOfficeTemplate(models.Model):
         if self.file and self.create_date:  # if file exist
             decode_file = base64.b64decode(self.file)
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
+            src_ext = "pdf"
+            if not is_pdf_form:
+                src_ext = pdf_utils.get_source_format(decode_file)
+                if not src_ext:
+                    self.file = False
+                    raise UserError(
+                        _("Unsupported file format. Upload a PDF form or a DOCX/XLSX/PPTX document.")
+                    )
             old_datas = self.attachment_id.datas
-            self.attachment_id.write({"datas": self.file})
+            old_name = self.attachment_id.name
+            old_mimetype = self.attachment_id.mimetype
+            # Hold the source bytes (with matching name/mimetype) while converting.
+            self.attachment_id.write(
+                {
+                    "datas": self.file,
+                    "name": self.name + "." + src_ext,
+                    "mimetype": file_utils.get_mime_by_ext(src_ext) or "application/pdf",
+                }
+            )
             self.file = False
 
             if not is_pdf_form:
                 self.env.cr.commit()
-                converted_result = self._convert_to_form(self.attachment_id)
+                converted_result = self._convert_to_form(self.attachment_id, filetype=src_ext)
                 if converted_result.get("error"):
-                    self.attachment_id.write({"datas": old_datas})
+                    self.attachment_id.write({"datas": old_datas, "name": old_name, "mimetype": old_mimetype})
                     self.env.cr.commit()
                     raise UserError(converted_result.get("message"))
                 if converted_result.get("fileUrl"):
@@ -81,11 +98,17 @@ class OnlyOfficeTemplate(models.Model):
                             method="get",
                         )
                         new_datas = base64.b64encode(response.content)
-                        self.attachment_id.write({"datas": new_datas})
+                        self.attachment_id.write(
+                            {
+                                "datas": new_datas,
+                                "name": self.name + ".pdf",
+                                "mimetype": file_utils.get_mime_by_ext("pdf"),
+                            }
+                        )
                         self.env.cr.commit()
                     except Exception as e:
                         logger.error("Failed to download and update PDF form: %s", str(e))
-                        self.attachment_id.write({"datas": old_datas})
+                        self.attachment_id.write({"datas": old_datas, "name": old_name, "mimetype": old_mimetype})
                         self.env.cr.commit()
                         raise UserError(_("Failed to download converted PDF form")) from e
 
@@ -148,12 +171,19 @@ class OnlyOfficeTemplate(models.Model):
                     raise UserError(_("Failed to download form")) from e
 
             is_pdf_form = None
+            src_ext = "pdf"
             if "file" in vals_copy and vals_copy["file"]:
                 try:
                     decode_file = base64.b64decode(vals_copy["file"])
                     is_pdf_form = pdf_utils.is_pdf_form(decode_file)
                 except Exception as e:
                     raise UserError(_("Invalid file format.")) from e
+                if not is_pdf_form:
+                    src_ext = pdf_utils.get_source_format(decode_file)
+                    if not src_ext:
+                        raise UserError(
+                            _("Unsupported file format. Upload a PDF form or a DOCX/XLSX/PPTX document.")
+                        )
             else:
                 vals_copy["file"] = base64.encodebytes(file_utils.get_default_file_template(self.env.user.lang, "pdf"))
                 is_pdf_form = True
@@ -177,11 +207,15 @@ class OnlyOfficeTemplate(models.Model):
                 }
             )
 
+            # While a conversion is pending the attachment must hold the *source* file
+            # (e.g. DOCX) so the document server downloads and converts the right bytes.
+            # On success it is overwritten with the resulting PDF form below.
+            src_mimetype = file_utils.get_mime_by_ext(src_ext) or "application/pdf"
             attachment = self.env["ir.attachment"].create(
                 {
-                    "name": vals_copy.get("name", record.name) + ".pdf",
+                    "name": vals_copy.get("name", record.name) + "." + src_ext,
                     "display_name": vals_copy.get("name", record.name),
-                    "mimetype": vals_copy.get("mimetype"),
+                    "mimetype": src_mimetype,
                     "datas": datas,
                     "res_model": self._name,
                     "res_id": record.id,
@@ -191,7 +225,7 @@ class OnlyOfficeTemplate(models.Model):
 
             if not is_pdf_form:
                 self.env.cr.commit()
-                converted_result = self._convert_to_form(attachment)
+                converted_result = self._convert_to_form(attachment, filetype=src_ext)
                 if converted_result.get("error"):
                     attachment.unlink()
                     record.unlink()
@@ -205,7 +239,13 @@ class OnlyOfficeTemplate(models.Model):
                             method="get",
                         )
                         new_datas = base64.b64encode(response.content)
-                        attachment.write({"datas": new_datas, "mimetype": vals_copy.get("mimetype")})
+                        attachment.write(
+                            {
+                                "datas": new_datas,
+                                "mimetype": vals_copy.get("mimetype"),
+                                "name": vals_copy.get("name", record.name) + ".pdf",
+                            }
+                        )
                         self.env.cr.commit()
                     except Exception as e:
                         logger.error("Failed to download and update PDF form: %s", str(e))
@@ -220,7 +260,7 @@ class OnlyOfficeTemplate(models.Model):
         return self.browse(results)
 
     @api.model
-    def _convert_to_form(self, attachment):
+    def _convert_to_form(self, attachment, filetype="pdf"):
         jwt_header = config_utils.get_jwt_header(self.env)
         jwt_secret = config_utils.get_jwt_secret(self.env)
         docserver_url = config_utils.get_doc_server_public_url(self.env)
@@ -240,7 +280,7 @@ class OnlyOfficeTemplate(models.Model):
         payload = {
             "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",
             "key": key,
-            "filetype": "pdf",
+            "filetype": filetype or "pdf",
             "outputtype": "pdf",
             "pdf": {
                 "form": True,

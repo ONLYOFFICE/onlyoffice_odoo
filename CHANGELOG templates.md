@@ -2,6 +2,10 @@
 
 ##
 
+## Added
+
+- import DOCX/XLSX/PPTX documents as templates (converted to a fillable PDF on save)
+
 ## Fixed
 
 - cache template form field keys to avoid an extra docbuilder round-trip on every fill
