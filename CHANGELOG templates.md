@@ -14,6 +14,7 @@
 - new type of reports "onlyoffice-pdf"
 - save filled template to documents
 - scroll to field when clicked
+- import DOCX/XLSX/PPTX documents as templates (converted to a fillable PDF on save)
 
 ## Fixed
 
