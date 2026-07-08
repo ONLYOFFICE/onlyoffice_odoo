@@ -1,6 +1,8 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+from unittest.mock import patch
+
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -94,15 +96,17 @@ class TestConfigUtils(TransactionCase):
     def test_get_internal_jwt_secret_generates_if_missing(self):
         """Internal JWT secret is auto-generated when not set."""
         self.env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, "")
-        secret = config_utils.get_internal_jwt_secret(self.env)
+        with patch.object(self.env.cr, "commit"):
+            secret = config_utils.get_internal_jwt_secret(self.env)
         self.assertTrue(secret)
         self.assertIsInstance(secret, str)
         self.assertTrue(len(secret) > 0)
 
     def test_get_internal_jwt_secret_stable(self):
         """Internal JWT secret remains the same across multiple calls."""
-        secret1 = config_utils.get_internal_jwt_secret(self.env)
-        secret2 = config_utils.get_internal_jwt_secret(self.env)
+        with patch.object(self.env.cr, "commit"):
+            secret1 = config_utils.get_internal_jwt_secret(self.env)
+            secret2 = config_utils.get_internal_jwt_secret(self.env)
         self.assertEqual(secret1, secret2)
 
     # -- Demo mode --

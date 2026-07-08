@@ -143,8 +143,8 @@ class TestOnlyofficeControllers(HttpCase):
             f"/onlyoffice/file/content/{self.test_attachment.id}",
             allow_redirects=False,
         )
-        # Without token get_user_from_token raises Exception → Odoo returns 500
-        self.assertEqual(response.status_code, 500)
+        # Without token get_user_from_token raises Exception → Odoo returns 403
+        self.assertEqual(response.status_code, 403)
 
     def test_file_content_test_txt(self):
         """The built-in /onlyoffice/file/content/test.txt endpoint is public and returns 'test'.
