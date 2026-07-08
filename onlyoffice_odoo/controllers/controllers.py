@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import ssl
 import string
 import time
 from mimetypes import guess_type
@@ -30,8 +31,6 @@ def onlyoffice_urlopen(url, timeout=120, context=None):
     cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
 
     if cert_verify_disabled and url.startswith("https://"):
-        import ssl
-
         context = context or ssl._create_unverified_context()
 
     return urlopen(url, timeout=timeout, context=context)

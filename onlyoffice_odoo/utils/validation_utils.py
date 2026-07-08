@@ -4,6 +4,7 @@
 import json
 import os
 import re
+import ssl
 import time
 from urllib.request import urlopen
 
@@ -55,8 +56,6 @@ def check_doc_serv_url(url, demo, disable_certificate):
 
         context = None
         if disable_certificate and url.startswith("https://"):
-            import ssl
-
             context = ssl._create_unverified_context()
 
         response = urlopen(url, timeout=30, context=context)
