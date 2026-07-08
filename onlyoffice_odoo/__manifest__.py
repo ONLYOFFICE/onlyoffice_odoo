@@ -9,6 +9,8 @@
     "category": "Productivity",
     "version": "17.0.4.4.0",
     "license": "LGPL-3",
+    "development_status": "Production/Stable",
+    "maintainers": ["ONLYOFFICE"],
     "support": "support@onlyoffice.com",
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},
