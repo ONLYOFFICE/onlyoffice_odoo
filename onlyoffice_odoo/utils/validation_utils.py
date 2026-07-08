@@ -167,8 +167,8 @@ def get_message_error(message, demo):
         raise ValidationError(message)
 
 
-def get_conversion_error_message(errorCode):
-    errorDictionary = {
+def get_conversion_error_message(error_code):
+    error_dictionary = {
         -1: "Unknown error",
         -2: "Conversion timeout error",
         -3: "Conversion error",
@@ -179,8 +179,4 @@ def get_conversion_error_message(errorCode):
         -8: "Invalid token",
     }
 
-    try:
-        return errorDictionary[errorCode]
-
-    except Exception:
-        return "Undefined error code"
+    return error_dictionary.get(error_code, "Undefined error code")
