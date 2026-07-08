@@ -117,7 +117,7 @@ class Onlyoffice_Connector(http.Controller):
 
         if not can_read:
             _logger.warning("POST /onlyoffice/editor/get_config - no read access: %s", attachment_id)
-            raise Exception("cant read")
+            raise AccessError(_("Cannot read attachment"))
 
         can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
 
@@ -155,7 +155,7 @@ class Onlyoffice_Connector(http.Controller):
 
             if not token:
                 _logger.warning("GET /onlyoffice/file/content/%s - JWT token missing", attachment_id)
-                raise Exception("expected JWT")
+                raise Forbidden(_("Expected JWT token"))
 
             jwt_utils.decode_token(request.env, token)
 
@@ -188,7 +188,7 @@ class Onlyoffice_Connector(http.Controller):
 
         if not can_read:
             _logger.warning("GET /onlyoffice/editor/%s - no read access", attachment_id)
-            raise Exception("cant read")
+            raise AccessError(_("Cannot read attachment"))
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
         values = self.prepare_editor_values(attachment, access_token, can_write)
@@ -209,7 +209,7 @@ class Onlyoffice_Connector(http.Controller):
             attachment = self.get_attachment(attachment_id, user)
             if not attachment:
                 _logger.warning("POST /onlyoffice/editor/callback/%s - attachment not found", attachment_id)
-                raise Exception("attachment not found")
+                raise ValueError(_("Attachment not found"))
 
             attachment.validate_access(access_token)
             attachment.check_access_rights("write")
@@ -224,7 +224,7 @@ class Onlyoffice_Connector(http.Controller):
 
                 if not token:
                     _logger.warning("POST /onlyoffice/editor/callback/%s - JWT token missing", attachment_id)
-                    raise Exception("expected JWT")
+                    raise Forbidden(_("Expected JWT token"))
 
                 body = jwt_utils.decode_token(request.env, token)
                 if body.get("payload"):
@@ -233,7 +233,7 @@ class Onlyoffice_Connector(http.Controller):
             status = body["status"]
             _logger.info("POST /onlyoffice/editor/callback/%s - status: %s", attachment_id, status)
 
-            if (status == 2) | (status == 3):  # mustsave, corrupted
+            if status in (2, 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 datas = onlyoffice_urlopen(file_url).read()
                 if attachment.res_model == "documents.document":
@@ -430,14 +430,14 @@ class Onlyoffice_Connector(http.Controller):
             attachment = IrAttachment.browse([attachment_id]).exists().ensure_one()
             _logger.debug("get_attachment - found: %s", attachment_id)
             return attachment
-        except Exception:
+        except (ValueError, AccessError):
             _logger.debug("get_attachment - not found: %s", attachment_id)
             return None
 
     def get_user_from_token(self, token):
         _logger.info("get_user_from_token")
         if not token:
-            raise Exception("missing security token")
+            raise Forbidden(_("Missing security token"))
 
         user_id = jwt_utils.decode_token(request.env, token, config_utils.get_internal_jwt_secret(request.env))["id"]
         user = request.env["res.users"].sudo().browse(user_id).exists().ensure_one()
@@ -537,7 +537,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            _logger.error(f"API request failed to {url}: {str(e)}")
+            _logger.error("API request failed to %s: %s", url, e)
             raise UserError(f"Failed to connect to Forms API: {str(e)}") from e
 
     @http.route("/onlyoffice/oforms/locales", type="json", auth="user")
