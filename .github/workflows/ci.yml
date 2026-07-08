@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: ["17.0", "develop"]
+  pull_request:
+    branches: ["17.0", "develop"]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+        ports:
+          - 5432:5432
+    env:
+      INCLUDE: "onlyoffice_odoo"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install addons and dependencies
+        run: oca_install_addons
+      - name: Initialize test db
+        run: oca_init_test_database
+      - name: Run tests
+        run: oca_run_tests
+      - name: Check coverage threshold
+        run: coverage report --fail-under=60
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linters
+        run: |
+          pip install ruff pylint pylint-odoo
+
+      - name: Run ruff
+        run: ruff check onlyoffice_odoo/
+
+      - name: Run pylint
+        run: pylint --rcfile=.pylintrc onlyoffice_odoo/ || true
