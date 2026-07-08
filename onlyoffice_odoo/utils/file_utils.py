@@ -117,7 +117,7 @@ def get_default_file_template(lang, ext):
         if locale is None:
             locale = locale_path.get("default")
 
-    file = open(
+    with open(
         os.path.join(
             os.path.abspath(os.path.dirname(__file__)),
             "..",
@@ -128,10 +128,5 @@ def get_default_file_template(lang, ext):
             "new." + ext,
         ),
         "rb",
-    )
-
-    try:
-        file_data = file.read()
-        return file_data
-    finally:
-        file.close()
+    ) as file:
+        return file.read()
