@@ -7,6 +7,7 @@ import json
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
 
+from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 
@@ -181,5 +182,48 @@ class TestOnlyofficeControllers(HttpCase):
         """Preview endpoint returns HTML page for an authenticated user."""
         self.authenticate("_oo_controller_test", "_oo_test_pass_123")
         response = self.url_open("/onlyoffice/preview?url=https://docs.example.com&title=Test")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers.get("Content-Type", ""))
+
+    # -- Onlyoffice_Connector.filter_xss (pure helper, no HTTP needed) --
+
+    def test_filter_xss_removes_html_and_script_characters(self):
+        """filter_xss strips characters that could be used for XSS (angle brackets, quotes, etc.)."""
+        connector = Onlyoffice_Connector()
+        result = connector.filter_xss("<script>alert('xss')</script>report.docx")
+        self.assertNotIn("<", result)
+        self.assertNotIn(">", result)
+        self.assertNotIn("'", result)
+        self.assertTrue(result.endswith(".docx"))
+
+    def test_filter_xss_preserves_valid_filename_characters(self):
+        """filter_xss keeps letters, digits, spaces, and common filename punctuation unchanged."""
+        connector = Onlyoffice_Connector()
+        name = "My Report 2024-Q1.docx"
+        self.assertEqual(connector.filter_xss(name), name)
+
+    # -- POST /onlyoffice/editor/callback/<id> (auth=public, no-csrf) --
+
+    def test_editor_callback_without_token_returns_error_json(self):
+        """Callback endpoint returns JSON with error=1 when no security token is provided.
+
+        The missing token causes get_user_from_token to raise Forbidden, which the
+        callback handler catches and converts to an error payload rather than a crash.
+        """
+        response = self.url_open(
+            f"/onlyoffice/editor/callback/{self.test_attachment.id}",
+            data=json.dumps({"status": 1}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        self.assertEqual(response.status_code, 500)
+        data = response.json()
+        self.assertEqual(data["error"], 1)
+
+    # -- GET /onlyoffice/editor/<id> authenticated --
+
+    def test_render_editor_authenticated_returns_html(self):
+        """Editor page returns an HTML response to an authenticated user who can read the attachment."""
+        self.authenticate("_oo_controller_test", "_oo_test_pass_123")
+        response = self.url_open(f"/onlyoffice/editor/{self.test_attachment.id}")
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers.get("Content-Type", ""))

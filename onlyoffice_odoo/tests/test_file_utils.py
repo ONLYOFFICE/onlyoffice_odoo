@@ -178,3 +178,12 @@ class TestFileUtils(TransactionCase):
         content = file_utils.get_default_file_template("xx_XX", "docx")
         self.assertIsInstance(content, bytes)
         self.assertTrue(len(content) > 0)
+
+    # -- format_utils.Format defaults --
+
+    def test_format_defaults_to_empty_lists_when_optional_args_omitted(self):
+        """Format can be constructed with only name and type; optional fields default to empty lists."""
+        fmt = format_utils.Format("test", "word")
+        self.assertEqual(fmt.actions, [])
+        self.assertEqual(fmt.convert, [])
+        self.assertEqual(fmt.mime, [])
