@@ -21,11 +21,10 @@ class ResConfigSettings(models.TransientModel):
     internal_jwt_secret = fields.Char("Internal JWT Secret")
 
     @api.onchange("doc_server_public_url")
-    def onchange_doc_server_public_url(self):
+    def _onchange_doc_server_public_url(self):
         if self.doc_server_public_url and not validation_utils.valid_url(self.doc_server_public_url):
             return {"warning": {"title": "Warning", "message": "Incorrect Document Server URL"}}
 
-    @api.model
     def save_config_values(self):
         if validation_utils.valid_url(self.doc_server_public_url):
             config_utils.set_doc_server_public_url(self.env, self.doc_server_public_url)
