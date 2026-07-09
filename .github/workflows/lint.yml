@@ -19,3 +19,23 @@ jobs:
           node-version: 18
       - run: npm i
       - uses: pre-commit/action@v3.0.0
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linters
+        run: |
+          pip install ruff pylint pylint-odoo
+
+      - name: Run ruff
+        run: ruff check onlyoffice_odoo/
+
+      - name: Run pylint
+        run: pylint --rcfile=.pylintrc onlyoffice_odoo/ || true

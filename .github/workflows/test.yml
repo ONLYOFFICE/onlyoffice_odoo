@@ -1,10 +1,10 @@
-name: CI
+name: test
 
 on:
+  workflow_dispatch:
   push:
-    branches: ["17.0", "develop"]
+    branches: [develop, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
   pull_request:
-    branches: ["17.0", "develop"]
 
 jobs:
   test:
@@ -39,23 +39,3 @@ jobs:
         run: oca_run_tests
       - name: Check coverage threshold
         run: coverage report --fail-under=60
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install linters
-        run: |
-          pip install ruff pylint pylint-odoo
-
-      - name: Run ruff
-        run: ruff check onlyoffice_odoo/
-
-      - name: Run pylint
-        run: pylint --rcfile=.pylintrc onlyoffice_odoo/ || true
