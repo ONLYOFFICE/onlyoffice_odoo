@@ -1,8 +1,10 @@
 # Copyright (C) 2026 Ascensio System SIA
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import json
 import os
 import re
+import ssl
 import time
 from urllib.request import urlopen
 
@@ -54,8 +56,6 @@ def check_doc_serv_url(url, demo, disable_certificate):
 
         context = None
         if disable_certificate and url.startswith("https://"):
-            import ssl
-
             context = ssl._create_unverified_context()
 
         response = urlopen(url, timeout=30, context=context)
@@ -167,8 +167,8 @@ def get_message_error(message, demo):
         raise ValidationError(message)
 
 
-def get_conversion_error_message(errorCode):
-    errorDictionary = {
+def get_conversion_error_message(error_code):
+    error_dictionary = {
         -1: "Unknown error",
         -2: "Conversion timeout error",
         -3: "Conversion error",
@@ -179,8 +179,4 @@ def get_conversion_error_message(errorCode):
         -8: "Invalid token",
     }
 
-    try:
-        return errorDictionary[errorCode]
-
-    except Exception:
-        return "Undefined error code"
+    return error_dictionary.get(error_code, "Undefined error code")

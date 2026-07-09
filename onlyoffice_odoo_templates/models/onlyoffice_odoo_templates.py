@@ -12,7 +12,7 @@ from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.modules import get_module_path
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
 
@@ -32,7 +32,7 @@ class OnlyOfficeTemplate(models.Model):
     hide_file_field = fields.Boolean(string="Hide File Field", default=False)
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
-    # Cached OFORM field keys for the template PDF. The keys depend only on the
+    # Cached PDF Form field keys for the template PDF. The keys depend only on the
     # attachment contents (not on the records being filled), so we cache them to
     # avoid an extra synchronous docbuilder round-trip on every fill. Stored as
     # JSON {"checksum": <attachment.checksum>, "keys": [...]} so the cache is

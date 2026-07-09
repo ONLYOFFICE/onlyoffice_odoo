@@ -1,4 +1,5 @@
 # Copyright (C) 2026 Ascensio System SIA
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 # pylint: disable=pointless-statement
 {
     "name": "ONLYOFFICE",
@@ -7,8 +8,10 @@
     "author": "ONLYOFFICE",
     "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
-    "version": "5.4.0",
+    "version": "18.0.5.4.0",
     "license": "LGPL-3",
+    "development_status": "Production/Stable",
+    "maintainers": ["ONLYOFFICE"],
     "support": "support@onlyoffice.com",
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},

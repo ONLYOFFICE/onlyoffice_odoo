@@ -9,7 +9,7 @@ from odoo.addons.onlyoffice_odoo_templates.controllers.controllers import Onlyof
 
 
 class TestFieldKeysCache(TransactionCase):
-    """The OFORM field keys depend only on the template PDF, so they are cached
+    """The PDF Form field keys depend only on the template PDF, so they are cached
     on the template (keyed by attachment checksum) to avoid an extra synchronous
     docbuilder round-trip on every fill. See ``_get_cached_keys``.
     """

@@ -1,0 +1,41 @@
+name: test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo18.0:latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+        ports:
+          - 5432:5432
+    env:
+      INCLUDE: "onlyoffice_odoo"
+      EXCLUDE: "onlyoffice_odoo_documents,onlyoffice_odoo_templates"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create stubs for unavailable addons
+        run: |
+          mkdir -p documents
+          printf "{'name': 'Documents', 'version': '18.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          touch documents/__init__.py
+      - name: Install addons and dependencies
+        run: oca_install_addons
+      - name: Initialize test db
+        run: oca_init_test_database
+      - name: Run tests
+        run: oca_run_tests
+      - name: Check coverage threshold
+        run: coverage report --fail-under=60
