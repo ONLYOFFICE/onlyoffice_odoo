@@ -102,7 +102,7 @@ class TestResConfigSettings(TransactionCase):
         """Setting a URL with spaces (invalid chars) triggers an onchange warning."""
         settings = self._get_settings()
         settings.doc_server_public_url = "https://bad url.com"
-        result = settings.onchange_doc_server_public_url()
+        result = settings._onchange_doc_server_public_url()
         self.assertIn("warning", result)
         self.assertIn("message", result["warning"])
 
@@ -110,12 +110,12 @@ class TestResConfigSettings(TransactionCase):
         """Setting a valid URL does not trigger a warning."""
         settings = self._get_settings()
         settings.doc_server_public_url = "https://docs.example.com"
-        result = settings.onchange_doc_server_public_url()
+        result = settings._onchange_doc_server_public_url()
         self.assertIsNone(result)
 
     def test_onchange_empty_url_no_warning(self):
         """Empty URL does not trigger a warning (allowed)."""
         settings = self._get_settings()
         settings.doc_server_public_url = ""
-        result = settings.onchange_doc_server_public_url()
+        result = settings._onchange_doc_server_public_url()
         self.assertIsNone(result)
