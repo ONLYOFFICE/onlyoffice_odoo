@@ -46,14 +46,13 @@ def onlyoffice_request(url, method, opts=None):
     if url.startswith("https://") and cert_verify_disabled and "verify" not in opts:
         opts["verify"] = False
 
-    if "timeout" not in opts and "timeout" not in url:
-        opts["timeout"] = 120
+    timeout = opts.pop("timeout", 120)
 
     try:
         if method.lower() == "post":
-            response = requests.post(url, **opts)
+            response = requests.post(url, timeout=timeout, **opts)
         else:
-            response = requests.get(url, **opts)
+            response = requests.get(url, timeout=timeout, **opts)
 
         _logger.info("External request completed: %s %s - status: %s", method.upper(), url, response.status_code)
         response.raise_for_status()

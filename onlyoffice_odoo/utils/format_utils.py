@@ -6,7 +6,7 @@ import os
 
 
 class Format:
-    def __init__(self, name, type, actions=None, convert=None, mime=None):
+    def __init__(self, name, fmt_type, actions=None, convert=None, mime=None):
         if actions is None:
             actions = []
         if convert is None:
@@ -14,7 +14,7 @@ class Format:
         if mime is None:
             mime = []
         self.name = name
-        self.type = type
+        self.type = fmt_type
         self.actions = actions
         self.convert = convert
         self.mime = mime

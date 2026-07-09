@@ -12,7 +12,7 @@ from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 from odoo.modules import get_module_path
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
 
@@ -29,7 +29,7 @@ class OnlyOfficeTemplate(models.Model):
     template_model_related_name = fields.Char("Model Description", related="template_model_id.name")
     template_model_model = fields.Char(string=" ", compute="_compute_template_model_fields", store=True)
     file = fields.Binary(string="Upload an existing template")
-    hide_file_field = fields.Boolean(string="Hide File Field", default=False)
+    hide_file_field = fields.Boolean(string="Hide File Field", default=False)  # pylint: disable=attribute-string-redundant
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
     # Cached PDF Form field keys for the template PDF. The keys depend only on the
@@ -66,11 +66,11 @@ class OnlyOfficeTemplate(models.Model):
             self.file = False
 
             if not is_pdf_form:
-                self.env.cr.commit()
+                self.env.cr.commit()  # pylint: disable=invalid-commit
                 converted_result = self._convert_to_form(self.attachment_id)
                 if converted_result.get("error"):
                     self.attachment_id.write({"datas": old_datas})
-                    self.env.cr.commit()
+                    self.env.cr.commit()  # pylint: disable=invalid-commit
                     raise UserError(converted_result.get("message"))
                 if converted_result.get("fileUrl"):
                     try:
@@ -80,11 +80,11 @@ class OnlyOfficeTemplate(models.Model):
                         )
                         new_datas = base64.b64encode(response.content)
                         self.attachment_id.write({"datas": new_datas})
-                        self.env.cr.commit()
+                        self.env.cr.commit()  # pylint: disable=invalid-commit
                     except Exception as e:
                         logger.error("Failed to download and update PDF form: %s", str(e))
                         self.attachment_id.write({"datas": old_datas})
-                        self.env.cr.commit()
+                        self.env.cr.commit()  # pylint: disable=invalid-commit
                         raise UserError(_("Failed to download converted PDF form")) from e
 
     @api.model
@@ -184,13 +184,13 @@ class OnlyOfficeTemplate(models.Model):
         record.attachment_id = attachment.id
 
         if not is_pdf_form:
-            self.env.cr.commit()
+            self.env.cr.commit()  # pylint: disable=invalid-commit
             converted_result = self._convert_to_form(attachment)
             if converted_result.get("error"):
                 attachment.unlink()
                 record.unlink()
                 super().unlink()
-                self.env.cr.commit()
+                self.env.cr.commit()  # pylint: disable=invalid-commit
                 raise UserError(converted_result.get("message"))
             if converted_result.get("fileUrl"):
                 try:
@@ -200,13 +200,13 @@ class OnlyOfficeTemplate(models.Model):
                     )
                     new_datas = base64.b64encode(response.content)
                     attachment.write({"datas": new_datas, "mimetype": vals.get("mimetype")})
-                    self.env.cr.commit()
+                    self.env.cr.commit()  # pylint: disable=invalid-commit
                 except Exception as e:
                     logger.error("Failed to download and update PDF form: %s", str(e))
                     attachment.unlink()
                     record.unlink()
                     super().unlink()
-                    self.env.cr.commit()
+                    self.env.cr.commit()  # pylint: disable=invalid-commit
                     raise UserError(_("Failed to download converted PDF form")) from e
         return record
 
