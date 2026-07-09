@@ -45,9 +45,7 @@ class IrActionsReport(models.Model):
             self.model = False
             self.report_name = False
 
-    """
-        This is inspired by _render_qweb_pdf_prepare_streams from odoo/addnos/base/model/ir_actions_report.py
-    """
+    # This is inspired by _render_qweb_pdf_prepare_streams from odoo/addons/base/models/ir_actions_report.py
 
     def _render_onlyoffice_pdf_prepare_streams(self, report_ref, data, res_ids=None):
         if not data:

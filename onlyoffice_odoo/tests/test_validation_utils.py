@@ -12,7 +12,7 @@ from odoo.addons.onlyoffice_odoo.utils import validation_utils
 
 @tagged("post_install", "-at_install")
 class TestValidationUtils(TransactionCase):
-    """Tests for validation_utils module тАФ URL validation and error messages."""
+    """Tests for validation_utils module — URL validation and error messages."""
 
     # -- valid_url --
 
@@ -84,7 +84,7 @@ class TestValidationUtils(TransactionCase):
         validation_utils.check_mixed_content("https://myodoo.com", "https://docserver/", False)
 
     def test_check_mixed_content_no_error_when_odoo_is_http(self):
-        """No error when Odoo itself is on HTTP тАФ the mixed-content rule only applies to HTTPS Odoo."""
+        """No error when Odoo itself is on HTTP — the mixed-content rule only applies to HTTPS Odoo."""
         validation_utils.check_mixed_content("http://myodoo.com", "http://docserver/", False)
 
     # -- get_message_error --
@@ -207,7 +207,7 @@ class TestValidationUtils(TransactionCase):
             )
 
     def test_command_service_passes_with_jwt_secret_and_error_zero(self):
-        """Command service check succeeds when a JWT secret is provided тАФ token is signed and sent."""
+        """Command service check succeeds when a JWT secret is provided — token is signed and sent."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"error": 0}
         with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp):

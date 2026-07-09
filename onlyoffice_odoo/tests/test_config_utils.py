@@ -11,7 +11,7 @@ from odoo.addons.onlyoffice_odoo.utils import config_constants, config_utils
 
 @tagged("post_install", "-at_install")
 class TestConfigUtils(TransactionCase):
-    """Tests for config_utils module тАФ reading and writing ONLYOFFICE config parameters."""
+    """Tests for config_utils module — reading and writing ONLYOFFICE config parameters."""
 
     # -- URL getters/setters --
 

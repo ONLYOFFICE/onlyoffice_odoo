@@ -9,7 +9,7 @@ from odoo.addons.onlyoffice_odoo.utils import file_utils, format_utils
 
 @tagged("post_install", "-at_install")
 class TestFileUtils(TransactionCase):
-    """Tests for file_utils module тАФ file type detection, view/edit permissions."""
+    """Tests for file_utils module — file type detection, view/edit permissions."""
 
     # -- Extension extraction --
 

@@ -17,7 +17,7 @@ class TestOnlyofficeControllers(HttpCase):
 
     These tests verify that the controller endpoints respond correctly
     to authenticated and unauthenticated requests. They do not require
-    a running ONLYOFFICE Document Server тАФ they test Odoo-side logic only.
+    a running ONLYOFFICE Document Server — they test Odoo-side logic only.
 
     Actual routes (from controllers.py):
       POST /onlyoffice/editor/get_config  auth=user  type=json
@@ -73,7 +73,7 @@ class TestOnlyofficeControllers(HttpCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        # Unauthenticated JSON-RPC тЖТ Odoo Session Expired error in body
+        # Unauthenticated JSON-RPC → Odoo Session Expired error in body
         self.assertIn("error", data)
 
     def test_editor_config_returns_json(self):
@@ -133,7 +133,7 @@ class TestOnlyofficeControllers(HttpCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        # Controller raises Exception("cant read"); JSON-RPC catches it тЖТ top-level "error"
+        # Controller raises Exception("cant read"); JSON-RPC catches it → top-level "error"
         self.assertIn("error", data)
 
     # -- GET /onlyoffice/file/content/<id> (auth=public, oo_security_token) --
@@ -144,7 +144,7 @@ class TestOnlyofficeControllers(HttpCase):
             f"/onlyoffice/file/content/{self.test_attachment.id}",
             allow_redirects=False,
         )
-        # Without token get_user_from_token raises Exception тЖТ Odoo returns 403
+        # Without token get_user_from_token raises Exception → Odoo returns 403
         self.assertEqual(response.status_code, 403)
 
     def test_file_content_test_txt(self):

@@ -11,7 +11,7 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
 @tagged("post_install", "-at_install")
 class TestJwtUtils(TransactionCase):
-    """Tests for jwt_utils module тАФ JWT token encoding and decoding."""
+    """Tests for jwt_utils module — JWT token encoding and decoding."""
 
     def setUp(self):
         super().setUp()

@@ -9,7 +9,7 @@ from odoo.addons.onlyoffice_odoo.utils import config_constants, config_utils, ur
 
 @tagged("post_install", "-at_install")
 class TestUrlUtils(TransactionCase):
-    """Tests for url_utils module тАФ replacing public URL with internal URL."""
+    """Tests for url_utils module — replacing public URL with internal URL."""
 
     def setUp(self):
         super().setUp()

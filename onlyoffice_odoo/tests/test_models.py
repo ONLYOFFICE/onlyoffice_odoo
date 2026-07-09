@@ -11,7 +11,7 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 @tagged("post_install", "-at_install")
 class TestOnlyofficeOdooModel(TransactionCase):
-    """Tests for onlyoffice.odoo model тАФ get_demo and get_same_tab methods."""
+    """Tests for onlyoffice.odoo model — get_demo and get_same_tab methods."""
 
     # -- get_demo --
 
@@ -51,7 +51,7 @@ class TestOnlyofficeOdooModel(TransactionCase):
 
 @tagged("post_install", "-at_install")
 class TestResConfigSettings(TransactionCase):
-    """Tests for res.config.settings ONLYOFFICE fields тАФ get/set values."""
+    """Tests for res.config.settings ONLYOFFICE fields — get/set values."""
 
     def _get_settings(self):
         """Helper: create a res.config.settings record."""

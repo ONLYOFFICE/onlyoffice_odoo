@@ -130,7 +130,7 @@ msgstr "URL pública do servidor de documentos"
 
 #. module: onlyoffice_odoo
 #. odoo-python
-#: code:addons/onlyoffice_odoo/controllers/controllers.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
 msgstr ""
 
@@ -351,7 +351,7 @@ msgstr "Tipo"
 
 #. module: onlyoffice_odoo
 #. odoo-python
-#: code:addons/onlyoffice_odoo/controllers/controllers.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "User has no read access rights to open this document"
 msgstr "O usuário não tem direitos de acesso de leitura para abrir este documento"
 
