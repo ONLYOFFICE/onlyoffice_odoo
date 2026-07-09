@@ -1,0 +1,17 @@
+[run]
+source = onlyoffice_odoo
+omit =
+    */tests/*
+    */__manifest__.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__
+show_missing = True
+fail_under = 60
+
+[html]
+directory = htmlcov

@@ -16,7 +16,7 @@ from odoo.tools import (
     misc,
 )
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import Onlyoffice_Connector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 

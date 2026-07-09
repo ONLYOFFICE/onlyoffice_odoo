@@ -16,7 +16,7 @@ from odoo.http import request
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
+from odoo.addons.onlyoffice_odoo.controllers.main import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
