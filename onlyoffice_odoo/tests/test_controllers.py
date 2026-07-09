@@ -39,7 +39,7 @@ class TestOnlyofficeControllers(HttpCase):
                     "name": "OO Controller Test User",
                     "login": "_oo_controller_test",
                     "password": "_oo_test_pass_123",
-                    "groups_id": [(6, 0, [self.env.ref("base.group_user").id, self.env.ref("base.group_system").id])],
+                    "group_ids": [(6, 0, [self.env.ref("base.group_user").id, self.env.ref("base.group_system").id])],
                 }
             )
         )
