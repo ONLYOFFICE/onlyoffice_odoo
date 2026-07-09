@@ -7,7 +7,7 @@ import json
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
+from odoo.addons.onlyoffice_odoo.controllers.main import Onlyoffice_Connector
 from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 
