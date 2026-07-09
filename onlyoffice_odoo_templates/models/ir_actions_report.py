@@ -11,7 +11,7 @@ from PIL import Image
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, RedirectWarning
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
@@ -45,9 +45,7 @@ class IrActionsReport(models.Model):
             self.model = False
             self.report_name = False
 
-    """
-        This is inspired by _render_qweb_pdf_prepare_streams from odoo/addnos/base/model/ir_actions_report.py
-    """
+    # This is inspired by _render_qweb_pdf_prepare_streams from odoo/addons/base/models/ir_actions_report.py
 
     def _render_onlyoffice_pdf_prepare_streams(self, report_ref, data, res_ids=None):
         if not data:
