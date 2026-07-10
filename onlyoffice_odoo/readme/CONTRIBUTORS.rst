@@ -1,0 +1,1 @@
+* ONLYOFFICE <integration@onlyoffice.com>
