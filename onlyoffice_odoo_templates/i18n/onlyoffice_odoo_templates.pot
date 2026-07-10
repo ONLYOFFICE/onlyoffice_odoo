@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 17.0+e-20260217\n"
+"Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 11:28+0000\n"
-"PO-Revision-Date: 2026-07-10 11:28+0000\n"
+"POT-Creation-Date: 2026-07-10 11:52+0000\n"
+"PO-Revision-Date: 2026-07-10 11:52+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid ""
 ", select the desired Odoo module, and create or upload a PDF template with "
 "fillable fields."
@@ -42,7 +41,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
-#, python-format
 msgid "Add to Documents"
 msgstr ""
 
@@ -76,7 +74,6 @@ msgstr ""
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
-#, python-format
 msgid "Cancel"
 msgstr ""
 
@@ -98,21 +95,18 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#, python-format
 msgid "Choose the field below to paste selected parameter to the cursor"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Choose the required template to fill in with Odoo data."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Click on the Action button."
 msgstr ""
 
@@ -124,7 +118,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Create or Upload"
 msgstr ""
 
@@ -164,7 +157,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
-#, python-format
 msgid "Document saved to Documents successfully."
 msgstr ""
 
@@ -186,7 +178,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
-#, python-format
 msgid "Error saving document to Documents."
 msgstr ""
 
@@ -203,29 +194,24 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
-#: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
-#, python-format
 msgid "Failed to download converted PDF form"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
-#, python-format
 msgid "Failed to download form"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
-#, python-format
 msgid "Failed to save document."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
-#, python-format
 msgid "Fields"
 msgstr ""
 
@@ -239,7 +225,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Go to the relevant Odoo module (e.g., Sales, Invoices)."
 msgstr ""
 
@@ -252,7 +237,6 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.js:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
-#, python-format
 msgid "Help"
 msgstr ""
 
@@ -277,14 +261,12 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py:0
-#, python-format
 msgid "Invalid file format."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
-#, python-format
 msgid "Key copied to clipboard: %s"
 msgstr ""
 
@@ -303,7 +285,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/widget/onlyoffice_templates_tree.xml:0
-#, python-format
 msgid "Loading templates..."
 msgstr ""
 
@@ -349,28 +330,24 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#, python-format
 msgid "Module/ section"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
-#, python-format
 msgid "No available folders found."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#, python-format
 msgid "No match found."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
-#, python-format
 msgid ""
 "Note: The ONLYOFFICE Automation API is not activated in your instance, so "
 "automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor "
@@ -399,21 +376,18 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "ONLYOFFICE Templates module"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
-#, python-format
 msgid "ONLYOFFICE cannot be reached. Please contact admin."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
-#, python-format
 msgid "ONLYOFFICE logo"
 msgstr ""
 
@@ -425,7 +399,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
-#, python-format
 msgid ""
 "Odoo is unable to merge the generated PDFs because of %(num_errors)s "
 "corrupted file(s)"
@@ -434,14 +407,12 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Ok"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid ""
 "On this page, you can create form templates for any Odoo module, such as "
 "Invoice, Receipt, Employee Leave Form, etc. Just click"
@@ -461,42 +432,36 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
-#, python-format
 msgid "Open Document templates"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Open a record."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Press the Print button."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
-#, python-format
 msgid "Preview"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
-#, python-format
 msgid "Print"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
-#, python-format
 msgid "Print from template"
 msgstr ""
 
@@ -504,14 +469,12 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/form/onlyoffice_form_view.js:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/list/onlyoffice_list_view.js:0
-#, python-format
 msgid "Print with ONLYOFFICE"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
-#, python-format
 msgid "Problematic record(s)"
 msgstr ""
 
@@ -533,7 +496,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
-#, python-format
 msgid "Save"
 msgstr ""
 
@@ -545,14 +507,12 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "Select Print with ONLYOFFICE."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#, python-format
 msgid "Select a field below to copy its parameter to your clipboard."
 msgstr ""
 
@@ -571,8 +531,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#, python-format
 msgid "Show sub-fields"
 msgstr ""
 
@@ -614,7 +572,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid ""
 "The ONLYOFFICE Templates module allows you to create, manage, and use "
 "fillable PDF"
@@ -632,7 +589,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid ""
 "This will generate a PDF document with your template, automatically filled "
 "with the corresponding record's data."
@@ -641,7 +597,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "To fill in a template with Odoo data:"
 msgstr ""
 
@@ -653,7 +608,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
-#, python-format
 msgid "Use a technical name"
 msgstr ""
 
@@ -673,14 +627,12 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
-#, python-format
 msgid "View Problematic Record(s)"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
-#, python-format
 msgid ""
 "You don't have any templates yet. Please go to the ONLYOFFICE Templates app "
 "to create a new template or ask your admin to create it."
@@ -689,7 +641,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid ""
 "for any installed Odoo module (e.g., Sales, Invoicing, CRM). These templates"
 " can then be filled in automatically with real-time data from your Odoo "
@@ -699,6 +650,5 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
-#, python-format
 msgid "templates"
 msgstr ""

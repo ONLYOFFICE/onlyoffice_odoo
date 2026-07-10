@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 17.0+e-20260217\n"
+"Project-Id-Version: Odoo Server 18.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 11:24+0000\n"
-"PO-Revision-Date: 2026-07-10 11:24+0000\n"
+"POT-Creation-Date: 2026-07-10 11:51+0000\n"
+"PO-Revision-Date: 2026-07-10 11:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -50,29 +50,24 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
-#, python-format
 msgid "Attachment not found"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Cancel"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
-#: code:addons/onlyoffice_odoo/controllers/main.py:0
-#, python-format
 msgid "Cannot read attachment"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Categories"
 msgstr ""
 
@@ -89,7 +84,6 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Create"
 msgstr ""
 
@@ -117,7 +111,6 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Document"
 msgstr ""
 
@@ -142,45 +135,44 @@ msgid "Document Server Public URL"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Document edited by %(user)s"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
-#, python-format
 msgid "Document templates"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
-#, python-format
 msgid "Error loading forms"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
-#: code:addons/onlyoffice_odoo/controllers/main.py:0
-#, python-format
 msgid "Expected JWT token"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
-#, python-format
 msgid "Failed to load categories"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
-#, python-format
 msgid "Failed to load forms"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Form"
 msgstr ""
 
@@ -212,7 +204,6 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Language"
 msgstr ""
 
@@ -229,21 +220,18 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Loading forms..."
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
-#, python-format
 msgid "Missing security token"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "No forms found"
 msgstr ""
 
@@ -271,7 +259,6 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/models/attachment_card_onlyoffice.js:0
-#, python-format
 msgid "ONLYOFFICE Docs server"
 msgstr ""
 
@@ -287,7 +274,6 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/actions/documents_action.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.onlyoffice_editor
-#, python-format
 msgid "ONLYOFFICE cannot be reached. Please contact admin."
 msgstr ""
 
@@ -295,7 +281,6 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/actions/documents_action.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.onlyoffice_editor
-#, python-format
 msgid "ONLYOFFICE logo"
 msgstr ""
 
@@ -313,7 +298,6 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/components/attachment_card_onlyoffice/attachment_card_onlyoffice.xml:0
-#, python-format
 msgid "Open in ONLYOFFICE"
 msgstr ""
 
@@ -325,23 +309,18 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Presentation"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Search..."
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Select document"
 msgstr ""
 
@@ -358,14 +337,12 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Spreadsheet"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/models/attachment_card_onlyoffice.js:0
-#, python-format
 msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
@@ -381,30 +358,24 @@ msgstr ""
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Try changing your search or filters"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Type"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
-#: code:addons/onlyoffice_odoo/controllers/main.py:0
-#: code:addons/onlyoffice_odoo/controllers/main.py:0
-#, python-format
 msgid "User has no read access rights to open this document"
 msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "View all templates"
 msgstr ""
 
