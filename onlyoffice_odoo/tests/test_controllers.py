@@ -7,7 +7,7 @@ import json
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
 
-from odoo.addons.onlyoffice_odoo.controllers.main import Onlyoffice_Connector
+from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector
 from odoo.addons.onlyoffice_odoo.utils import config_utils
 
 
@@ -185,11 +185,11 @@ class TestOnlyofficeControllers(HttpCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers.get("Content-Type", ""))
 
-    # -- Onlyoffice_Connector.filter_xss (pure helper, no HTTP needed) --
+    # -- OnlyofficeConnector.filter_xss (pure helper, no HTTP needed) --
 
     def test_filter_xss_removes_html_and_script_characters(self):
         """filter_xss strips characters that could be used for XSS (angle brackets, quotes, etc.)."""
-        connector = Onlyoffice_Connector()
+        connector = OnlyofficeConnector()
         result = connector.filter_xss("<script>alert('xss')</script>report.docx")
         self.assertNotIn("<", result)
         self.assertNotIn(">", result)
@@ -198,7 +198,7 @@ class TestOnlyofficeControllers(HttpCase):
 
     def test_filter_xss_preserves_valid_filename_characters(self):
         """filter_xss keeps letters, digits, spaces, and common filename punctuation unchanged."""
-        connector = Onlyoffice_Connector()
+        connector = OnlyofficeConnector()
         name = "My Report 2024-Q1.docx"
         self.assertEqual(connector.filter_xss(name), name)
 
