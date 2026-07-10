@@ -16,14 +16,14 @@ from odoo.tools import (
     misc,
 )
 
-from odoo.addons.onlyoffice_odoo.controllers.main import Onlyoffice_Connector, onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
 logger = logging.getLogger(__name__)
 
 
-class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
+class Onlyoffice_Inherited_Connector(OnlyofficeConnector):
     @http.route("/onlyoffice/template/template_content/<string:path>", auth="public")
     def get_template_content(self, path):
         try:

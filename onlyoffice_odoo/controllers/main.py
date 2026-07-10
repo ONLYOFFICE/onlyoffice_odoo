@@ -86,7 +86,7 @@ def onlyoffice_request(url, method, opts=None):
         ) from e
 
 
-class Onlyoffice_Connector(http.Controller):
+class OnlyofficeConnector(http.Controller):
     @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         _logger.info("POST /onlyoffice/editor/get_config - document: %s, attachment: %s", document_id, attachment_id)

@@ -12,7 +12,7 @@ import requests
 
 from odoo.exceptions import ValidationError
 
-from odoo.addons.onlyoffice_odoo.utils import jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
 
 def valid_url(url):
@@ -25,8 +25,6 @@ def valid_url(url):
 
 
 def settings_validation(self):
-    from odoo.addons.onlyoffice_odoo.utils import config_utils
-
     base_url = self.doc_server_odoo_url or config_utils.get_base_or_odoo_url(self.env)
     public_url = self.doc_server_public_url
     inner_url = self.doc_server_inner_url
