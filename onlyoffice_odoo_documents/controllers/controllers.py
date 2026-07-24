@@ -7,16 +7,17 @@ import re
 import secrets
 import uuid
 import zipfile
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from mimetypes import guess_type
 from urllib.request import urlopen
 from xml.etree import ElementTree as ET
 
 import markupsafe
+import pytz
 import requests
 from werkzeug.exceptions import Forbidden
 
-from odoo import http
+from odoo import fields, http
 from odoo.exceptions import AccessError
 from odoo.http import request
 from odoo.tools.misc import file_open
@@ -35,9 +36,6 @@ from .spreadsheet_formulas import (
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
-# Global cache for DocBuilder conversion data (token -> data)
-_docbuilder_cache = {}
-
 
 class _DateTimeEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime objects."""
@@ -46,6 +44,53 @@ class _DateTimeEncoder(json.JSONEncoder):
         if isinstance(o, datetime | date):
             return o.isoformat()
         return super().default(o)
+
+
+# ── DocBuilder data cache (DB-backed) ────────────────────────────────────────
+# The DocBuilder callback is a separate HTTP request that can be served by
+# another Odoo worker, so the payload must be stored in the database and not
+# in process memory.
+
+_DOCBUILDER_CACHE_PREFIX = "onlyoffice_docbuilder_cache_"
+_DOCBUILDER_CACHE_TTL_HOURS = 1
+
+# Explicit mimetype for rewritten XLSX attachments: when writing 'datas' Odoo
+# re-guesses the mimetype from content and may detect DocBuilder output as
+# 'application/zip', which breaks the documents thumbnail and mimetype filters.
+_XLSX_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def _store_docbuilder_data(token, data):
+    """Persist a DocBuilder payload so any worker can serve the callback."""
+    attachments = request.env["ir.attachment"].sudo()
+    # Drop stale entries left over from failed conversions
+    stale_before = datetime.now() - timedelta(hours=_DOCBUILDER_CACHE_TTL_HOURS)
+    attachments.search(
+        [
+            ("name", "like", _DOCBUILDER_CACHE_PREFIX + "%"),
+            ("create_date", "<", fields.Datetime.to_string(stale_before)),
+        ]
+    ).unlink()
+    attachments.create(
+        {
+            "name": _DOCBUILDER_CACHE_PREFIX + token,
+            "raw": json.dumps(data, cls=_DateTimeEncoder).encode(),
+        }
+    )
+    # Commit so the DocBuilder callback (served in a separate transaction,
+    # possibly by another worker) can see the data immediately.
+    request.env.cr.commit()
+
+
+def _load_docbuilder_data(token):
+    """Load a previously stored DocBuilder payload. Returns dict or None."""
+    attachment = request.env["ir.attachment"].sudo().search([("name", "=", _DOCBUILDER_CACHE_PREFIX + token)], limit=1)
+    return json.loads(attachment.raw) if attachment else None
+
+
+def _delete_docbuilder_data(token):
+    """Remove a stored DocBuilder payload (no-op when already deleted)."""
+    request.env["ir.attachment"].sudo().search([("name", "=", _DOCBUILDER_CACHE_PREFIX + token)]).unlink()
 
 
 # Shared formula evaluator instance
@@ -424,18 +469,22 @@ class OnlyOfficeShareRoute(ShareRoute):
             spreadsheet_json = json.dumps(snapshot, cls=_DateTimeEncoder)
             metadata_json = self._prepare_docbuilder_metadata(snapshot)
 
-            # Store data in global cache for callback
+            # Store data for the DocBuilder callback
             oo_security_token = secrets.token_urlsafe(32)
             output_filename = f"{document.name}_{uuid.uuid4().hex[:8]}.xlsx"
-            _docbuilder_cache[oo_security_token] = {
-                "document_id": document_id,
-                "spreadsheet_json": spreadsheet_json,
-                "metadata_json": metadata_json,
-                "output_filename": output_filename,
-            }
+            _store_docbuilder_data(
+                oo_security_token,
+                {
+                    "document_id": document_id,
+                    "spreadsheet_json": spreadsheet_json,
+                    "metadata_json": metadata_json,
+                    "output_filename": output_filename,
+                },
+            )
 
             # Call DocBuilder service
             xlsx_content, error = self._call_docbuilder(oo_security_token, document_id)
+            _delete_docbuilder_data(oo_security_token)
             if error:
                 result["error"] = error
                 return result
@@ -538,6 +587,7 @@ class OnlyOfficeShareRoute(ShareRoute):
             existing_xlsx.write(
                 {
                     "datas": base64.b64encode(xlsx_content),
+                    "mimetype": _XLSX_MIMETYPE,
                     "onlyoffice_spreadsheet_metadata": metadata_json,
                 }
             )
@@ -548,7 +598,7 @@ class OnlyOfficeShareRoute(ShareRoute):
                 "name": f"{document.name}_docbuilder.xlsx",
                 "folder_id": document.folder_id.id,
                 "datas": base64.b64encode(xlsx_content),
-                "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "mimetype": _XLSX_MIMETYPE,
                 "onlyoffice_spreadsheet_source_id": document_id,
                 "onlyoffice_spreadsheet_metadata": metadata_json,
             }
@@ -559,10 +609,10 @@ class OnlyOfficeShareRoute(ShareRoute):
     def docbuilder_callback(self, oo_security_token):
         """
         Callback endpoint for DocBuilder to get the conversion script.
-        Supports two modes: 'convert_spreadsheet' (default) and 'insert_list'.
+        Supports two modes: 'convert_spreadsheet' (default) and 'insert_sheet'.
         """
         try:
-            cache_data = _docbuilder_cache.get(oo_security_token)
+            cache_data = _load_docbuilder_data(oo_security_token)
 
             if not cache_data:
                 _logger.error("DocBuilder callback: token not found: %s", oo_security_token)
@@ -571,8 +621,8 @@ class OnlyOfficeShareRoute(ShareRoute):
             mode = cache_data.get("mode", "convert_spreadsheet")
             output_filename = cache_data["output_filename"]
 
-            if mode == "insert_list":
-                docbuilder_script = self._build_insert_list_script(cache_data, oo_security_token)
+            if mode == "insert_sheet":
+                docbuilder_script = self._build_insert_sheet_script(cache_data, oo_security_token)
             else:
                 # Default: convert_spreadsheet mode
                 spreadsheet_json = cache_data["spreadsheet_json"]
@@ -582,7 +632,6 @@ class OnlyOfficeShareRoute(ShareRoute):
                 docbuilder_script = docbuilder_script.replace("SPREADSHEET_DATA_PLACEHOLDER", spreadsheet_json)
                 docbuilder_script = docbuilder_script.replace("METADATA_PLACEHOLDER", metadata_json or "null")
                 docbuilder_script = docbuilder_script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{output_filename}"')
-                del _docbuilder_cache[oo_security_token]
 
             headers = {
                 "Content-Disposition": "attachment; filename='docbuilder_script.docbuilder'",
@@ -594,37 +643,34 @@ class OnlyOfficeShareRoute(ShareRoute):
             _logger.exception("DocBuilder callback error: %s", e)
             return request.make_response(str(e), status=500)
 
-    def _build_insert_list_script(self, cache_data, oo_security_token):
-        """Build a DocBuilder script that opens an existing XLSX and inserts a list sheet."""
+    def _build_insert_sheet_script(self, cache_data, oo_security_token):
+        """Build a DocBuilder script that opens an existing XLSX and adds a new sheet."""
         odoo_url = config_utils.get_base_or_odoo_url(request.env)
         file_url = f"{odoo_url}onlyoffice/documents/docbuilder_file/{oo_security_token}"
 
-        with file_open("onlyoffice_odoo_documents/controllers/insert_list.docbuilder", "r") as f:
+        with file_open("onlyoffice_odoo_documents/controllers/insert_sheet.docbuilder", "r") as f:
             script = f.read()
 
         script = script.replace("FILE_URL_PLACEHOLDER", f'"{file_url}"')
-        script = script.replace("LIST_ID_PLACEHOLDER", cache_data["list_id"])
         script = script.replace("SHEET_NAME_PLACEHOLDER", json.dumps(cache_data["sheet_name"]))
-        script = script.replace("COLUMNS_PLACEHOLDER", cache_data["columns_json"])
-        script = script.replace("THRESHOLD_PLACEHOLDER", str(cache_data["threshold"]))
+        script = script.replace("CELLS_PLACEHOLDER", cache_data["cells_json"])
         script = script.replace("METADATA_PLACEHOLDER", cache_data["metadata_json"])
         script = script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{cache_data["output_filename"]}"')
 
-        # Don't delete cache yet — the file-serving route needs it
-        # It will be cleaned up after the file is served
+        # Don't delete the cache entry yet — the file-serving route needs it
         return script
 
     @http.route("/onlyoffice/documents/docbuilder_file/<string:oo_security_token>", auth="public", methods=["GET"])
     def docbuilder_file(self, oo_security_token):
         """Serve the existing XLSX file for DocBuilder to open via builder.OpenFile()."""
-        cache_data = _docbuilder_cache.get(oo_security_token)
-        if not cache_data or cache_data.get("mode") != "insert_list":
+        cache_data = _load_docbuilder_data(oo_security_token)
+        if not cache_data or cache_data.get("mode") != "insert_sheet":
             return request.make_response("Not found", status=404)
 
         xlsx_data = base64.b64decode(cache_data["xlsx_base64"])
 
-        # Clean up cache now that both callback and file have been served
-        del _docbuilder_cache[oo_security_token]
+        # Clean up now that both the script and the file have been served
+        _delete_docbuilder_data(oo_security_token)
 
         headers = {
             "Content-Disposition": "attachment; filename='source.xlsx'",
@@ -710,45 +756,191 @@ class OnlyOfficeShareRoute(ShareRoute):
             threshold: number of rows to insert
             name: name for the new sheet and list
         """
-        try:
-            document = request.env["documents.document"].browse(int(document_id))
-            document.check_access_rule("write")
-        except AccessError:
-            return {"error": "Access denied"}
-
-        if not document.exists() or not document.attachment_id:
-            return {"error": "Document not found or has no attachment"}
+        document, error = self._get_writable_document(document_id)
+        if error:
+            return {"error": error}
 
         columns = list_data.get("columns", [])
         if not columns:
             return {"error": "No columns provided"}
 
-        # Determine list_id from existing metadata
-        existing_metadata = {}
-        if document.onlyoffice_spreadsheet_metadata:
-            try:
-                existing_metadata = json.loads(document.onlyoffice_spreadsheet_metadata)
-            except Exception:
-                pass
-
-        existing_lists = existing_metadata.get("lists", {})
-        existing_pivots = existing_metadata.get("pivots", {})
-        # Use a shared ID space: pick the next ID after the max of both lists and pivots
-        all_ids = [int(k) for k in existing_lists.keys()] + [int(k) for k in existing_pivots.keys()]
-        list_id = str(max(all_ids, default=0) + 1)
-
-        # Add the new list definition to metadata
-        existing_lists[list_id] = {
+        # Add the new list definition to metadata (lists and pivots share the ID space)
+        metadata, new_id = self._load_metadata_with_new_id(document)
+        metadata.setdefault("lists", {})[new_id] = {
             "model": list_data.get("model", ""),
             "domain": list_data.get("domain", "[]"),
             "orderBy": list_data.get("orderBy", []),
+            "context": list_data.get("context", {}),
             "columns": columns,
             "name": name,
         }
-        existing_metadata["lists"] = existing_lists
 
-        # Determine a unique sheet name by inspecting the existing XLSX
-        sheet_name = name
+        cells = self._build_list_cells(new_id, columns, int(threshold))
+        return self._insert_sheet_via_docbuilder(document, name, cells, metadata, new_id)
+
+    @http.route(
+        "/onlyoffice/documents/insert_pivot_in_xlsx",
+        auth="user",
+        methods=["POST"],
+        type="json",
+        csrf=False,
+    )
+    def insert_pivot_in_xlsx(self, document_id, pivot_data, name="Pivot"):
+        """Insert an Odoo pivot as ODOO_PIVOT formulas into an existing XLSX document.
+
+        Args:
+            document_id: target XLSX document ID
+            pivot_data: dict with model, domain, context, rowGroupBys, colGroupBys, measures
+            name: name for the new sheet and pivot
+        """
+        document, error = self._get_writable_document(document_id)
+        if error:
+            return {"error": error}
+
+        if not pivot_data.get("model"):
+            return {"error": "No model provided"}
+
+        measures = pivot_data.get("measures") or ["__count"]
+        row_group_bys = pivot_data.get("rowGroupBys") or []
+        col_group_bys = pivot_data.get("colGroupBys") or []
+
+        # Add the new pivot definition to metadata (lists and pivots share the ID space)
+        metadata, new_id = self._load_metadata_with_new_id(document)
+        metadata.setdefault("pivots", {})[new_id] = {
+            "model": pivot_data["model"],
+            "domain": pivot_data.get("domain", "[]"),
+            "context": pivot_data.get("context", {}),
+            "measures": measures,
+            "rowGroupBys": row_group_bys,
+            "colGroupBys": col_group_bys,
+            "name": name,
+        }
+
+        try:
+            cells = self._build_pivot_cells(new_id, pivot_data, measures, row_group_bys, col_group_bys)
+        except Exception as e:
+            _logger.exception("Failed to build pivot cells: %s", e)
+            return {"error": str(e)}
+
+        return self._insert_sheet_via_docbuilder(document, name, cells, metadata, new_id)
+
+    # ── Insert helpers ──────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _get_writable_document(document_id):
+        """Return (document, error) after checking write access and attachment."""
+        try:
+            document = request.env["documents.document"].browse(int(document_id))
+            document.check_access_rule("write")
+        except AccessError:
+            return None, "Access denied"
+        if not document.exists() or not document.attachment_id:
+            return None, "Document not found or has no attachment"
+        return document, None
+
+    @staticmethod
+    def _load_metadata_with_new_id(document):
+        """Load existing metadata and allocate the next free list/pivot ID.
+
+        Lists and pivots share the same ID space, like in documents_spreadsheet.
+        """
+        metadata = {}
+        if document.onlyoffice_spreadsheet_metadata:
+            try:
+                metadata = json.loads(document.onlyoffice_spreadsheet_metadata)
+            except Exception:
+                metadata = {}
+        used_ids = [int(k) for k in metadata.get("lists", {})] + [int(k) for k in metadata.get("pivots", {})]
+        return metadata, str(max(used_ids, default=0) + 1)
+
+    @staticmethod
+    def _build_list_cells(list_id, columns, threshold):
+        """Build the 2D cell grid (ODOO_LIST formulas) for a list sheet."""
+        field_names = [col.get("name") if isinstance(col, dict) else str(col) for col in columns]
+        header = [f'=ODOO_LIST_HEADER({list_id},"{fn}")' for fn in field_names]
+        rows = [[f'=ODOO_LIST({list_id},{index},"{fn}")' for fn in field_names] for index in range(1, threshold + 1)]
+        return [header] + rows
+
+    def _build_pivot_cells(self, pivot_id, pivot_data, measures, row_group_bys, col_group_bys):
+        """Build the 2D cell grid (ODOO_PIVOT formulas) replicating the Odoo pivot layout.
+
+        Layout: one header row per column group level, one row with measure
+        labels, then one row per row group path (parents before children,
+        like the Odoo pivot view) and a final Total row.
+        """
+        model = request.env[pivot_data["model"]].sudo()
+        domain = _formula_evaluator._parse_and_resolve_domain(pivot_data.get("domain", []))
+
+        col_paths = self._pivot_group_paths(model, domain, col_group_bys)
+        row_paths = _expand_group_paths(self._pivot_group_paths(model, domain, row_group_bys))
+
+        # Data columns: one block of measures per column path, plus a Total block
+        column_blocks = [list(path) for path in col_paths] + [[]]
+
+        def pairs_literal(pairs):
+            # Turn [(field_spec, value_literal), ...] into '"field",value,...'
+            return ",".join(f'"{spec}",{value}' for spec, value in pairs)
+
+        def header_formula(pairs, extra=""):
+            args = pairs_literal(pairs)
+            parts = [str(pivot_id)] + ([args] if args else []) + ([extra] if extra else [])
+            return "=ODOO_PIVOT_HEADER(" + ",".join(parts) + ")"
+
+        cells = []
+
+        # Column group header rows (one per level)
+        for level in range(len(col_group_bys)):
+            row = [""]
+            for block in column_blocks:
+                if len(block) > level:
+                    formula = header_formula(block[: level + 1])
+                elif not block and level == 0:
+                    formula = "Total"
+                else:
+                    formula = ""
+                row.extend([formula] + [""] * (len(measures) - 1))
+            cells.append(row)
+
+        # Measure labels row
+        measure_row = [""]
+        for block in column_blocks:
+            for measure in measures:
+                measure_row.append(header_formula(block, f'"measure","{measure}"'))
+        cells.append(measure_row)
+
+        # Data rows (group paths in tree order) and the final Total row
+        for path in [*row_paths, ()]:
+            pairs = list(path)
+            row = [header_formula(pairs) if pairs else "Total"]
+            for block in column_blocks:
+                for measure in measures:
+                    args = pairs_literal(pairs + block)
+                    parts = [str(pivot_id), f'"{measure}"'] + ([args] if args else [])
+                    row.append("=ODOO_PIVOT(" + ",".join(parts) + ")")
+            cells.append(row)
+
+        return cells
+
+    @staticmethod
+    def _pivot_group_paths(model, domain, group_bys):
+        """Return ordered unique group value paths as tuples of (field_spec, literal)."""
+        if not group_bys:
+            return []
+        groups = SpreadsheetFormulaEvaluator._safe_read_group(model, domain, [], group_bys)
+        paths = []
+        seen = set()
+        for group in groups or []:
+            path = tuple((spec, _group_value_literal(model, spec, group)) for spec in group_bys)
+            if path not in seen:
+                seen.add(path)
+                paths.append(path)
+        return paths
+
+    @staticmethod
+    def _unique_sheet_name(document, name):
+        """Pick a valid sheet name that does not clash with existing sheets in the XLSX."""
+        # XLSX sheet names are limited to 31 chars and cannot contain []:*?/\
+        sheet_name = re.sub(r"[\[\]:*?/\\]", " ", name or "Sheet").strip()[:31] or "Sheet"
         try:
             xlsx_data = base64.b64decode(document.attachment_id.datas)
             with zipfile.ZipFile(io.BytesIO(xlsx_data), "r") as zf:
@@ -758,47 +950,121 @@ class OnlyOfficeShareRoute(ShareRoute):
                 existing_names = [s.get("name") for s in sheets_el.findall(f"{{{ns}}}sheet")]
                 if sheet_name in existing_names:
                     i = 2
-                    while f"{sheet_name} ({i})" in existing_names:
+                    while True:
+                        suffix = f" ({i})"
+                        candidate = sheet_name[: 31 - len(suffix)] + suffix
+                        if candidate not in existing_names:
+                            sheet_name = candidate
+                            break
                         i += 1
-                    sheet_name = f"{sheet_name} ({i})"
         except Exception:
             pass  # If parsing fails, DocBuilder will try the original name
+        return sheet_name
 
-        # Store data in cache for DocBuilder callback
+    def _insert_sheet_via_docbuilder(self, document, name, cells, metadata, new_id):
+        """Rebuild the XLSX via DocBuilder adding a new sheet, then save the result."""
+        sheet_name = self._unique_sheet_name(document, name)
+        metadata_json = json.dumps(metadata, cls=_DateTimeEncoder)
+
         oo_security_token = secrets.token_urlsafe(32)
-        output_filename = f"insert_list_{uuid.uuid4().hex[:8]}.xlsx"
-        _docbuilder_cache[oo_security_token] = {
-            "mode": "insert_list",
-            "document_id": document_id,
-            "xlsx_base64": document.attachment_id.datas,
-            "list_id": list_id,
-            "sheet_name": sheet_name,
-            "columns_json": json.dumps(columns, cls=_DateTimeEncoder),
-            "threshold": int(threshold),
-            "metadata_json": json.dumps(existing_metadata, cls=_DateTimeEncoder),
-            "output_filename": output_filename,
-        }
+        _store_docbuilder_data(
+            oo_security_token,
+            {
+                "mode": "insert_sheet",
+                "document_id": document.id,
+                "xlsx_base64": document.attachment_id.datas.decode(),
+                "sheet_name": sheet_name,
+                "cells_json": json.dumps(cells, cls=_DateTimeEncoder),
+                "metadata_json": metadata_json,
+                "output_filename": f"insert_sheet_{uuid.uuid4().hex[:8]}.xlsx",
+            },
+        )
 
-        # Call DocBuilder
-        xlsx_content, error = self._call_docbuilder(oo_security_token, document_id)
+        xlsx_content, error = self._call_docbuilder(oo_security_token, document.id)
+        _delete_docbuilder_data(oo_security_token)
         if error:
             return {"error": f"DocBuilder error: {error}"}
 
-        # Update the document's attachment with the rebuilt XLSX
-        document.attachment_id.write({"datas": base64.b64encode(xlsx_content)})
+        # Update the document's attachment with the rebuilt XLSX and save metadata
+        document.attachment_id.write({"datas": base64.b64encode(xlsx_content), "mimetype": _XLSX_MIMETYPE})
+        document.write({"onlyoffice_spreadsheet_metadata": metadata_json})
 
-        # Update metadata in DB
-        document.write(
-            {
-                "onlyoffice_spreadsheet_metadata": json.dumps(existing_metadata, cls=_DateTimeEncoder),
-            }
-        )
-
-        _logger.info("Inserted list '%s' (id=%s) into document %s via DocBuilder", name, list_id, document_id)
+        _logger.info("Inserted sheet '%s' (id=%s) into document %s via DocBuilder", sheet_name, new_id, document.id)
 
         return {
             "success": True,
             "document_id": document.id,
-            "list_id": list_id,
+            "id": new_id,
             "sheet_name": sheet_name,
         }
+
+
+def _expand_group_paths(leaf_paths):
+    """Expand leaf group paths into tree order: every prefix appears once,
+    parents before their children (like the Odoo pivot row headers)."""
+    ordered = []
+    seen = set()
+    for path in leaf_paths:
+        for depth in range(1, len(path) + 1):
+            prefix = path[:depth]
+            if prefix not in seen:
+                seen.add(prefix)
+                ordered.append(prefix)
+    return ordered
+
+
+def _group_value_literal(model, field_spec, group):
+    """Convert a read_group value into an ODOO_PIVOT formula argument literal.
+
+    Numbers are emitted bare, everything else as a quoted string matching the
+    format that the server-side formula evaluator understands.
+    """
+    value = group.get(field_spec)
+    field_name = field_spec.split(":")[0]
+    granularity = field_spec.split(":")[1] if ":" in field_spec else None
+    field_obj = model._fields.get(field_name)
+
+    if value is None or value is False:
+        return '"false"'
+    if isinstance(value, list | tuple):  # many2one -> (id, display_name)
+        return str(int(value[0]))
+    if field_obj is not None and field_obj.type in ("date", "datetime"):
+        is_datetime = field_obj.type == "datetime"
+        return json.dumps(_format_date_group_value(group, field_spec, granularity or "month", is_datetime))
+    if isinstance(value, bool):
+        return '"true"'
+    if isinstance(value, int | float):
+        return str(value)
+    return json.dumps(str(value))
+
+
+def _format_date_group_value(group, field_spec, granularity, is_datetime=False):
+    """Convert a read_group date value into the pivot string format understood
+    by the formula evaluator (e.g. '2/2026' for February 2026)."""
+    range_info = (group.get("__range") or {}).get(field_spec) or {}
+    start = str(range_info.get("from") or "")
+    d = None
+    if start:
+        try:
+            if is_datetime and len(start) >= 19:
+                # Datetime ranges are returned in UTC while grouping is done in
+                # the user's timezone: convert so month/day boundaries match.
+                dt = pytz.utc.localize(datetime.strptime(start[:19], "%Y-%m-%d %H:%M:%S"))
+                tz = pytz.timezone(request.env.user.tz or "UTC")
+                d = dt.astimezone(tz).date()
+            else:
+                d = datetime.strptime(start[:10], "%Y-%m-%d").date()
+        except (ValueError, pytz.UnknownTimeZoneError):
+            d = None
+    if d:
+        if granularity == "year":
+            return str(d.year)
+        if granularity == "quarter":
+            return f"{(d.month - 1) // 3 + 1}/{d.year}"
+        if granularity == "week":
+            iso = d.isocalendar()
+            return f"{iso[1]}/{iso[0]}"
+        if granularity == "day":
+            return f"{d.month}/{d.day}/{d.year}"
+        return f"{d.month}/{d.year}"  # month (default)
+    return str(group.get(field_spec) or "")

@@ -1,10 +1,10 @@
-// Open existing XLSX and insert an Odoo list sheet
+// Open an existing XLSX and insert a new sheet with the given cells.
+// Used for both "insert list" and "insert pivot" flows.
+// The cell contents (ODOO_* formulas) are built server-side in Python.
 builder.OpenFile(FILE_URL_PLACEHOLDER)
 
-var listId = LIST_ID_PLACEHOLDER
 var sheetName = SHEET_NAME_PLACEHOLDER
-var columns = COLUMNS_PLACEHOLDER
-var threshold = THRESHOLD_PLACEHOLDER
+var cells = CELLS_PLACEHOLDER // 2D array of strings (formulas or plain values)
 var metadata = METADATA_PLACEHOLDER
 
 function colLetter(col) {
@@ -17,27 +17,21 @@ function colLetter(col) {
   return result
 }
 
-// --- Add new sheet with ODOO_LIST formulas ---
+// --- Add the new sheet and fill it with the prepared cells ---
 Api.AddSheet(sheetName)
 var ws = Api.GetSheet(sheetName)
 
-// Header row: ODOO_LIST_HEADER formulas
-var ci
-for (ci = 0; ci < columns.length; ci++) {
-  var fn = columns[ci].name || columns[ci]
-  ws.GetRange(colLetter(ci) + "1").SetValue("=ODOO_LIST_HEADER(" + listId + ',"' + fn + '")')
-}
-
-// Data rows: ODOO_LIST formulas
-var ri, cj
-for (ri = 1; ri <= threshold; ri++) {
-  for (cj = 0; cj < columns.length; cj++) {
-    var fn2 = columns[cj].name || columns[cj]
-    ws.GetRange(colLetter(cj) + String(ri + 1)).SetValue("=ODOO_LIST(" + listId + "," + ri + ',"' + fn2 + '")')
+var ri, ci
+for (ri = 0; ri < cells.length; ri++) {
+  var row = cells[ri]
+  for (ci = 0; ci < row.length; ci++) {
+    if (row[ci] !== null && row[ci] !== "") {
+      ws.GetRange(colLetter(ci) + String(ri + 1)).SetValue(String(row[ci]))
+    }
   }
 }
 
-// --- Update _OdooMetadata hidden sheet ---
+// --- Update the _OdooMetadata hidden sheet ---
 var metaSheet
 try {
   metaSheet = Api.GetSheet("_OdooMetadata")
@@ -49,7 +43,7 @@ if (!metaSheet) {
   metaSheet = Api.GetSheet("_OdooMetadata")
 }
 
-// Write metadata JSON in chunks (clear by overwriting)
+// Write metadata JSON in chunks (clear old cells by overwriting)
 var metaStr = JSON.stringify(metadata)
 var chunkSize = 30000
 var numChunks = Math.ceil(metaStr.length / chunkSize)
@@ -64,9 +58,9 @@ for (mi = numChunks; mi < numChunks + 20; mi++) {
 }
 metaSheet.SetVisible(false)
 
-// Activate the new list sheet so it opens there
-var listSheet = Api.GetSheet(sheetName)
-listSheet.SetActive()
+// Activate the new sheet so the document opens on it
+var newSheet = Api.GetSheet(sheetName)
+newSheet.SetActive()
 
 builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER)
 builder.CloseFile()

@@ -40,7 +40,7 @@ export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
 
   /**
    * Opens the selected XLSX in OnlyOffice editor.
-   * The list insertion is done server-side via insert_list_in_xlsx before opening.
+   * The list/pivot insertion is done server-side before opening.
    * @override
    */
   _getOpenSpreadsheetAction() {
@@ -49,7 +49,7 @@ export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
       tag: "onlyoffice_editor",
       params: {
         document_id: this.state.selectedSpreadsheetId,
-        onlyoffice_insert_list: true,
+        onlyoffice_insert: true,
       },
     }
   }
