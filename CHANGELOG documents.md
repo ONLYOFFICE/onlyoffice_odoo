@@ -1,6 +1,10 @@
 # Change Log
 
-##
+## 4.3.1
+
+## Added
+
+- desktop editor support
 
 ## Fixed
 

@@ -2,10 +2,18 @@
 
 ##
 
+## Fixed
+
+- cache template form field keys to avoid an extra docbuilder round-trip on every fill
+
+## 2.4.2
+
 ## Added
 
 - list view for templates
 - new type of reports "onlyoffice-pdf"
+- save filled template to documents
+- scroll to field when clicked
 
 ## Fixed
 

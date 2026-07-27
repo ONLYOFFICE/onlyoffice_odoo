@@ -73,18 +73,19 @@ export class CreateModeDialog extends Component {
           sticky: false,
           type: "info",
         })
+        const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
         const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
-        if (same_tab) {
+        if (same_tab && !isDesktopEditor) {
           this.data.close()
           const action = {
-            params: { attachment_id: result.file_id },
+            params: { document_id: result.document_id },
             tag: "onlyoffice_editor",
             target: "current",
             type: "ir.actions.client",
           }
           await this.actionService.doAction(action)
         } else {
-          window.open(`/onlyoffice/editor/${result.file_id}`, "_blank")
+          window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
         }
       }
     }

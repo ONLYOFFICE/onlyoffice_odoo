@@ -56,7 +56,7 @@
           return null;
         }
         const color_scheme = getCookie('color_scheme');
-        var config = JSON.parse('<t t-out="editorConfig" />');
+        var config = <t t-out="editorConfig" />;
         config.editorConfig.customization.uiTheme = color_scheme ? `default-${color_scheme}` : "default-light";
         if (window?.opener?.location?.href) {
           if (window.opener.location.origin === window.origin) {

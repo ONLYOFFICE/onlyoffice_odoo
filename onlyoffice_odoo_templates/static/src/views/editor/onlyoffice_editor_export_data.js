@@ -4,7 +4,7 @@
 import { Component, useRef, useState, onWillStart } from "@odoo/owl"
 import { CheckBox } from "@web/core/checkbox/checkbox"
 import { unique } from "@web/core/utils/arrays"
-import { useService } from "@web/core/utils/hooks"
+import { useBus, useService } from "@web/core/utils/hooks"
 import { fuzzyLookup } from "@web/core/utils/search"
 
 class ExportDataItem extends Component {
@@ -67,9 +67,95 @@ export class ExportData extends Component {
       search: [],
     })
 
+    this.highlightedFieldId = null
+
+    useBus(this.env.bus, "onlyoffice-template-highlight-field", (ev) => {
+      this.onHighlightField(ev.detail)
+    })
+
     onWillStart(async () => {
       await this.fetchFields()
     })
+  }
+
+  async onHighlightField(fieldId) {
+    this.clearHighlight()
+    if (!fieldId) {
+      this.highlightedFieldId = null
+      return
+    }
+    this.highlightedFieldId = fieldId
+    await this.expandToField(fieldId)
+    this.scrollToField(fieldId)
+    this.applyHighlight(fieldId)
+  }
+
+  async expandToField(fieldId) {
+    const parts = fieldId.split("/")
+    for (let i = 1; i < parts.length; i++) {
+      const parentId = parts.slice(0, i).join("/")
+      if (!this.knownFields[parentId]) {
+        continue
+      }
+      if (!this.isFieldExpandable(parentId)) {
+        continue
+      }
+      if (!this.expandedFields[parentId]) {
+        await this.loadFields(parentId)
+      }
+      const el = await this.waitForElement(`[data-field_id="${CSS.escape(parentId)}"]`)
+      if (el && !el.classList.contains("o-onlyoffice-list-field_expanded")) {
+        el.click()
+        await new Promise((r) => setTimeout(r, 100))
+      }
+    }
+  }
+
+  waitForElement(selector, timeout = 500) {
+    return new Promise((resolve) => {
+      const el = document.querySelector(selector)
+      if (el) {
+        resolve(el)
+        return
+      }
+      const interval = setInterval(() => {
+        const found = document.querySelector(selector)
+        if (found) {
+          clearInterval(interval)
+          resolve(found)
+        }
+      }, 30)
+      setTimeout(() => {
+        clearInterval(interval)
+        resolve(null)
+      }, timeout)
+    })
+  }
+
+  scrollToField(fieldId) {
+    setTimeout(() => {
+      const el = document.querySelector(`[data-field_id="${CSS.escape(fieldId)}"]`)
+      if (el) {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        })
+      }
+    }, 100)
+  }
+
+  applyHighlight(fieldId) {
+    setTimeout(() => {
+      const el = document.querySelector(`[data-field_id="${CSS.escape(fieldId)}"]`)
+      if (el) {
+        el.classList.add("o-onlyoffice-field-highlighted")
+      }
+    }, 100)
+  }
+
+  clearHighlight() {
+    const highlighted = document.querySelectorAll(".o-onlyoffice-field-highlighted")
+    highlighted.forEach((el) => el.classList.remove("o-onlyoffice-field-highlighted"))
   }
 
   get fieldsAvailable() {
@@ -197,5 +283,8 @@ ExportData.components = {
   CheckBox,
   ExportDataItem,
 }
-ExportData.props = { resModel: String }
+ExportData.props = {
+  hasLicense: Boolean,
+  resModel: String,
+}
 ExportData.template = "onlyoffice_odoo_templates.ExportData"

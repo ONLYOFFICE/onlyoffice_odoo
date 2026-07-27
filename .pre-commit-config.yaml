@@ -45,7 +45,7 @@ repos:
       # update the NOT INSTALLABLE ADDONS section above
       - id: oca-update-pre-commit-excluded-addons
       - id: oca-fix-manifest-website
-        args: ["https://github.com/ONLYOFFICE/onlyoffice_odoo"]
+        args: ["https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market"]
       - id: oca-gen-addon-readme
         args:
           - --addons-dir=.
@@ -113,6 +113,7 @@ repos:
       - id: check-xml
       - id: mixed-line-ending
         args: ["--fix=lf"]
+        exclude: ^requirements\.txt$
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.8
     hooks:
