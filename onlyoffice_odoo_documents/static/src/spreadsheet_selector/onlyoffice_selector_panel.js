@@ -1,7 +1,7 @@
 /** @odoo-module */
 
-import { SpreadsheetSelectorDialog } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_dialog"
-import { SpreadsheetSelectorPanel } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_panel"
+import { SpreadsheetSelectorDialog } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_dialog" // eslint-disable-line @stylistic/max-len
+import { SpreadsheetSelectorPanel } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_panel" // eslint-disable-line @stylistic/max-len
 import { _t } from "@web/core/l10n/translation"
 import { patch } from "@web/core/utils/patch"
 
@@ -19,11 +19,11 @@ export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
     if (this.currentSearch !== "") {
       domain.push(["name", "ilike", this.currentSearch])
     }
-    const { offset, limit } = this.state.pagerProps
+    const { limit, offset } = this.state.pagerProps
     this.state.spreadsheets = await this.keepLast.add(
       this.orm.call("documents.document", "get_onlyoffice_spreadsheets_to_display", [domain], {
-        offset,
         limit,
+        offset,
       }),
     )
     if (this.state.spreadsheets.length) {
@@ -45,12 +45,12 @@ export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
    */
   _getOpenSpreadsheetAction() {
     return {
-      type: "ir.actions.client",
-      tag: "onlyoffice_editor",
       params: {
         document_id: this.state.selectedSpreadsheetId,
         onlyoffice_insert: true,
       },
+      tag: "onlyoffice_editor",
+      type: "ir.actions.client",
     }
   }
 

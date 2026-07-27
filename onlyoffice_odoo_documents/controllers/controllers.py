@@ -957,8 +957,8 @@ class OnlyOfficeShareRoute(ShareRoute):
                             sheet_name = candidate
                             break
                         i += 1
-        except Exception:
-            pass  # If parsing fails, DocBuilder will try the original name
+        except Exception as ex:
+            _logger.debug("Could not check existing sheet names: %s", ex)
         return sheet_name
 
     def _insert_sheet_via_docbuilder(self, document, name, cells, metadata, new_id):

@@ -1,6 +1,6 @@
 /** @odoo-module */
 
-import { SpreadsheetSelectorDialog } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_dialog"
+import { SpreadsheetSelectorDialog } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_dialog" // eslint-disable-line @stylistic/max-len
 import { _t } from "@web/core/l10n/translation"
 import { patch } from "@web/core/utils/patch"
 
@@ -42,10 +42,10 @@ patch(SpreadsheetSelectorDialog.prototype, {
 
       // Open the target document in the ONLYOFFICE editor
       this.actionService.doAction({
-        type: "ir.actions.client",
+        params: { document_id: action.params.document_id },
         tag: "onlyoffice_editor",
         target: "current",
-        params: { document_id: action.params.document_id },
+        type: "ir.actions.client",
       })
       this.props.close()
     } catch (error) {
@@ -57,7 +57,7 @@ patch(SpreadsheetSelectorDialog.prototype, {
 
   /**
    * Insert the pending data (list or pivot) into the selected XLSX document.
-   * @param {number} documentId target documents.document id
+   * @param {Number} documentId target documents.document id // eslint-disable-line jsdoc/check-types
    * @returns {Promise<boolean>} true when the insertion succeeded
    */
   async _onlyofficeInsert(documentId) {
@@ -65,13 +65,13 @@ patch(SpreadsheetSelectorDialog.prototype, {
     const asyncData = options.preProcessingAsyncActionData
 
     if (options.preProcessingAsyncAction === "insertList" && asyncData && asyncData.list) {
-      const threshold = this.state.threshold ? parseInt(this.state.threshold, 10) : 10
       const name = this.state.name ? this.state.name.toString() : _t("List")
+      const threshold = this.state.threshold ? parseInt(this.state.threshold, 10) : 10
       const result = await this.env.services.rpc("/onlyoffice/documents/insert_list_in_xlsx", {
         document_id: documentId,
         list_data: asyncData.list,
-        threshold,
         name,
+        threshold,
       })
       if (result.error) {
         this.notification.add(_t("Failed to insert list: ") + result.error, { type: "danger" })
@@ -87,15 +87,15 @@ patch(SpreadsheetSelectorDialog.prototype, {
       const name = this.state.name ? this.state.name.toString() : _t("Pivot")
       const result = await this.env.services.rpc("/onlyoffice/documents/insert_pivot_in_xlsx", {
         document_id: documentId,
-        pivot_data: {
-          model: metaData.resModel,
-          domain: searchParams.domain || "[]",
-          context: searchParams.context || {},
-          rowGroupBys: metaData.fullRowGroupBys || [],
-          colGroupBys: metaData.fullColGroupBys || [],
-          measures: metaData.activeMeasures || [],
-        },
         name,
+        pivot_data: {
+          colGroupBys: metaData.fullColGroupBys || [],
+          context: searchParams.context || {},
+          domain: searchParams.domain || "[]",
+          measures: metaData.activeMeasures || [],
+          model: metaData.resModel,
+          rowGroupBys: metaData.fullRowGroupBys || [],
+        },
       })
       if (result.error) {
         this.notification.add(_t("Failed to insert pivot: ") + result.error, { type: "danger" })

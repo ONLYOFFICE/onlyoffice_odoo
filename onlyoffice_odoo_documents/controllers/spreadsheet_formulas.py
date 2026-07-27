@@ -74,8 +74,8 @@ def load_metadata_for_document(document):
     if document.onlyoffice_spreadsheet_metadata:
         try:
             return json.loads(document.onlyoffice_spreadsheet_metadata)
-        except Exception:
-            pass
+        except Exception as e:
+            _logger.debug("Could not load spreadsheet metadata: %s", e)
     if document.onlyoffice_spreadsheet_source_id:
         session_data = document.onlyoffice_spreadsheet_source_id.join_spreadsheet_session()
         return session_data.get("data", {})
@@ -127,7 +127,7 @@ class SpreadsheetFormulaEvaluator:
             if not match:
                 return "#ERROR: Invalid formula"
             result = self._dispatch(snapshot, match.group(1), self._parse_args(match.group(2)))
-            if negate and isinstance(result, (int, float)):
+            if negate and isinstance(result, int | float):
                 result = -result
             return result
         except Exception as e:
@@ -155,7 +155,7 @@ class SpreadsheetFormulaEvaluator:
                     func_name = match.group(1).replace(".", "_")
                     value = self._dispatch(snapshot, func_name, self._parse_args(match.group(2)))
 
-                    if negate and isinstance(value, (int, float)):
+                    if negate and isinstance(value, int | float):
                         value = -value
                     if value is not None:
                         cell_data["value"] = value
@@ -174,13 +174,13 @@ class SpreadsheetFormulaEvaluator:
                 domain_value = safe_eval(domain_value, {"uid": uid, "user": request.env.user})
             except Exception:
                 return []
-        if not isinstance(domain_value, (list, tuple)):
+        if not isinstance(domain_value, list | tuple):
             return []
         return [
             [item[0], item[1], uid]
-            if (isinstance(item, (list, tuple)) and len(item) == 3 and item[2] == "uid")
+            if (isinstance(item, list | tuple) and len(item) == 3 and item[2] == "uid")
             else list(item)
-            if isinstance(item, (list, tuple))
+            if isinstance(item, list | tuple)
             else item
             for item in domain_value
         ]
@@ -342,7 +342,7 @@ class SpreadsheetFormulaEvaluator:
             row = []
             for gb in all_group_bys:
                 val = group.get(gb)
-                row.append(val[1] if isinstance(val, (list, tuple)) and len(val) == 2 else val)
+                row.append(val[1] if isinstance(val, list | tuple) and len(val) == 2 else val)
             for m in measures:
                 k = m.split(":")[0] if ":" in m else m
                 row.append(group.get(k if m != "__count" else "__count", 0))
@@ -434,7 +434,7 @@ class SpreadsheetFormulaEvaluator:
         result = []
         _logger.info("_sanitize_dates input: %r", domain)
         for item in domain:
-            if not (isinstance(item, (list, tuple)) and len(item) == 3):
+            if not (isinstance(item, list | tuple) and len(item) == 3):
                 result.append(item)
                 continue
             field_name, op, value = item
@@ -455,8 +455,8 @@ class SpreadsheetFormulaEvaluator:
                     y = int(value)
                     if 1900 <= y <= 2200:
                         rng = _date_to_range("year", value)
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    _logger.debug("Could not parse year value %r: %s", value, e)
             if rng:
                 _logger.info("_sanitize_dates: converted %r to range %r", item, rng)
                 result.append((field_name, ">=", rng[0]))
@@ -617,8 +617,8 @@ def _infer_date_granularity(value):
                 return "month"
             if 1 <= left <= 4 and 1900 <= right <= 2200:
                 return "quarter"
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as e:
+            _logger.debug("Could not infer date granularity from %r: %s", value, e)
     elif len(parts) == 3:
         return "day"
     elif len(parts) == 1:
@@ -626,8 +626,8 @@ def _infer_date_granularity(value):
             y = int(value)
             if 1900 <= y <= 2200:
                 return "year"
-        except (ValueError, TypeError):
-            pass
+        except (ValueError, TypeError) as e:
+            _logger.debug("Could not infer year from %r: %s", value, e)
     return None
 
 
@@ -675,6 +675,6 @@ def _format_date_header(granularity, value):
             return f"Q{parts[0]} {parts[1]}"
         if granularity == "week" and len(parts) == 2:
             return f"W{parts[0]} {parts[1]}"
-    except (IndexError, ValueError):
-        pass
+    except (IndexError, ValueError) as e:
+        _logger.debug("Could not format date header %r (%r): %s", granularity, value, e)
     return s

@@ -1,4 +1,5 @@
 // Copyright (C) 2026 Ascensio System SIA
+/* eslint-disable */
 
 /**
  * ODOO Custom Functions Initializer for ONLYOFFICE Editor
@@ -6,7 +7,7 @@
  */
 
 ;(function () {
-  "use strict" // eslint-disable-line strict
+  "use strict"
 
   // Wait for document ready event from ONLYOFFICE
   window.initializeOdooCustomFunctions = async function () {
