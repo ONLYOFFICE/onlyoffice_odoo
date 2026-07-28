@@ -96,6 +96,54 @@ def _delete_docbuilder_data(token):
 # Shared formula evaluator instance
 _formula_evaluator = SpreadsheetFormulaEvaluator()
 
+# JS helpers shared by convert_spreadsheet.docbuilder and insert_sheet.docbuilder.
+# DocBuilder scripts run standalone (no module system), so the common
+# column-letter/format-application logic is injected as text from this single
+# source instead of being duplicated in both .docbuilder files.
+_SHARED_DOCBUILDER_HELPERS = """
+// Convert a 0-based column index to its spreadsheet letter (0 -> "A").
+function columnToLetter(column) {
+  var temp,
+    letter = ""
+  while (column >= 0) {
+    temp = column % 26
+    letter = String.fromCharCode(temp + 65) + letter
+    column = Math.floor(column / 26) - 1
+  }
+  return letter
+}
+
+// Apply the number format and horizontal alignment for ODOO_PIVOT/ODOO_LIST
+// value cells, based on the underlying Odoo field type (monetary, date,
+// integer, etc.), so the exported XLSX keeps the same currency symbol,
+// date format and alignment as the native Documents spreadsheet rendering.
+function applyOdooColumnFormat(oRange, formula, metadata) {
+  if (!metadata) return
+  // Native documents_spreadsheet formulas quote every argument
+  // (=ODOO.PIVOT("3","amount_total",...)), our server-built ones do not
+  // (=ODOO_PIVOT(3,"amount_total",...)); accept both plus a leading minus.
+  var m = formula.match(/^=\\s*-?\\s*ODOO_PIVOT\\(\\s*"?(\\d+)"?\\s*,\\s*"([^"]+)"/)
+  if (m) {
+    var pivotMeta = metadata.pivots && metadata.pivots[m[1]]
+    var info = pivotMeta && pivotMeta.columnFormats && pivotMeta.columnFormats[m[2]]
+    if (info) {
+      if (info.format) oRange.SetNumberFormat(info.format)
+      if (info.align) oRange.SetAlignHorizontal(info.align)
+    }
+    return
+  }
+  m = formula.match(/^=\\s*-?\\s*ODOO_LIST\\(\\s*"?(\\d+)"?\\s*,\\s*"?\\d+"?\\s*,\\s*"([^"]+)"\\s*\\)/)
+  if (m) {
+    var listMeta = metadata.lists && metadata.lists[m[1]]
+    var lInfo = listMeta && listMeta.columnFormats && listMeta.columnFormats[m[2]]
+    if (lInfo) {
+      if (lInfo.format) oRange.SetNumberFormat(lInfo.format)
+      if (lInfo.align) oRange.SetAlignHorizontal(lInfo.align)
+    }
+  }
+}
+"""
+
 
 class OnlyofficeDocuments_Connector(http.Controller):
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="json")
@@ -145,6 +193,37 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
+    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
+    def get_config(self, document_id=None, attachment_id=None, access_token=None):
+        """Override to add ODOO custom formula support when a document with metadata is present."""
+        config = super().get_config(document_id=document_id, attachment_id=attachment_id, access_token=access_token)
+
+        # Resolve document from document_id or attachment
+        document = None
+        if document_id:
+            document = request.env["documents.document"].browse(int(document_id))
+        elif attachment_id:
+            attachment = request.env["ir.attachment"].browse(int(attachment_id))
+            if attachment.exists() and attachment.res_model == "documents.document":
+                document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        if document and document.exists():
+            config["document_id"] = document.id
+            config["jwt_token"] = jwt_utils.encode_payload(
+                request.env,
+                {"uid": request.env.user.id, "document_id": document.id},
+                config_utils.get_internal_jwt_secret(request.env),
+            )
+            if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
+                config["has_odoo_formulas"] = True
+                try:
+                    metadata = load_metadata_for_document(document)
+                    config["filter_values_json"] = json.dumps(compute_filter_values(metadata))
+                except Exception:
+                    config["filter_values_json"] = "{}"
+
+        return config
+
     @http.route(
         ["/onlyoffice/documents/share/<int:share_id>/<access_token>/<int:document_id>"], type="http", auth="public"
     )
@@ -449,6 +528,15 @@ class OnlyOfficeShareRoute(ShareRoute):
         result = {"error": None, "xlsx_id": None}
 
         try:
+            # The session/request context's 'lang' can lag behind the user's actual
+            # res.users.lang (e.g. right after switching language in Preferences),
+            # which would make ORM-translated values (display_name, selection
+            # labels, field.string used by ODOO.PIVOT.HEADER/ODOO.LIST.HEADER)
+            # keep showing a stale language. Force it to the fresh value.
+            current_lang = request.env.user.lang
+            if current_lang and request.env.context.get("lang") != current_lang:
+                request.update_env(context=dict(request.env.context, lang=current_lang))
+
             document = request.env["documents.document"].browse(document_id)
 
             if not document.exists() or document.handler != "spreadsheet":
@@ -506,14 +594,22 @@ class OnlyOfficeShareRoute(ShareRoute):
             lists_with_computed_domain = {}
             for list_id, list_data in snapshot["lists"].items():
                 list_copy = dict(list_data)
-                list_copy["domain"] = _formula_evaluator._parse_and_resolve_domain(list_copy.get("domain", []))
+                list_copy["domain"] = _formula_evaluator.parse_and_resolve_domain(list_copy.get("domain", []))
+                try:
+                    list_copy["columnFormats"] = _formula_evaluator.get_list_column_formats(list_copy)
+                except Exception as e:
+                    _logger.debug("Could not compute column formats for list %s: %s", list_id, e)
                 lists_with_computed_domain[list_id] = list_copy
             metadata["lists"] = lists_with_computed_domain
         if snapshot.get("pivots"):
             pivots_with_computed_domain = {}
             for pivot_id, pivot_data in snapshot["pivots"].items():
                 pivot_copy = dict(pivot_data)
-                pivot_copy["domain"] = _formula_evaluator._parse_and_resolve_domain(pivot_copy.get("domain", []))
+                pivot_copy["domain"] = _formula_evaluator.parse_and_resolve_domain(pivot_copy.get("domain", []))
+                try:
+                    pivot_copy["columnFormats"] = _formula_evaluator.get_pivot_column_formats(pivot_copy)
+                except Exception as e:
+                    _logger.debug("Could not compute column formats for pivot %s: %s", pivot_id, e)
                 pivots_with_computed_domain[pivot_id] = pivot_copy
             metadata["pivots"] = pivots_with_computed_domain
         if snapshot.get("globalFilters"):
@@ -629,6 +725,7 @@ class OnlyOfficeShareRoute(ShareRoute):
                 metadata_json = cache_data.get("metadata_json")
                 with file_open("onlyoffice_odoo_documents/controllers/convert_spreadsheet.docbuilder", "r") as f:
                     docbuilder_script = f.read()
+                docbuilder_script = docbuilder_script.replace("SHARED_HELPERS_PLACEHOLDER", _SHARED_DOCBUILDER_HELPERS)
                 docbuilder_script = docbuilder_script.replace("SPREADSHEET_DATA_PLACEHOLDER", spreadsheet_json)
                 docbuilder_script = docbuilder_script.replace("METADATA_PLACEHOLDER", metadata_json or "null")
                 docbuilder_script = docbuilder_script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{output_filename}"')
@@ -651,6 +748,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         with file_open("onlyoffice_odoo_documents/controllers/insert_sheet.docbuilder", "r") as f:
             script = f.read()
 
+        script = script.replace("SHARED_HELPERS_PLACEHOLDER", _SHARED_DOCBUILDER_HELPERS)
         script = script.replace("FILE_URL_PLACEHOLDER", f'"{file_url}"')
         script = script.replace("SHEET_NAME_PLACEHOLDER", json.dumps(cache_data["sheet_name"]))
         script = script.replace("CELLS_PLACEHOLDER", cache_data["cells_json"])
@@ -674,7 +772,7 @@ class OnlyOfficeShareRoute(ShareRoute):
 
         headers = {
             "Content-Disposition": "attachment; filename='source.xlsx'",
-            "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "Content-Type": _XLSX_MIMETYPE,
         }
         return request.make_response(xlsx_data, headers)
 
@@ -718,8 +816,16 @@ class OnlyOfficeShareRoute(ShareRoute):
             _logger.warning("evaluate_formulas_batch: token validation failed for doc %s: %s", document_id, e)
             return {"error": "Invalid security token"}
 
-        # Switch request env to authenticated user so domain resolution uses correct uid
-        request.update_env(user=token_uid)
+        # Switch request env to authenticated user so domain resolution uses correct uid.
+        # This route is auth="public", so the ambient request context's 'lang' has no
+        # relation to token_uid's actual language preference (it comes from the public/
+        # anonymous session default, e.g. Accept-Language) — it must be forced to the
+        # user's current res.users.lang, otherwise ORM-translated values (display_name,
+        # selection labels, field.string used by ODOO_PIVOT_HEADER/ODOO_LIST_HEADER)
+        # randomly show a stale/unrelated language instead of the user's current one.
+        request.update_env(
+            user=token_uid, context=dict(request.env.context, lang=user.lang or request.env.context.get("lang"))
+        )
 
         # Load snapshot once for the whole batch
         snapshot = _formula_evaluator.load_document_snapshot(document_id)
@@ -766,7 +872,7 @@ class OnlyOfficeShareRoute(ShareRoute):
 
         # Add the new list definition to metadata (lists and pivots share the ID space)
         metadata, new_id = self._load_metadata_with_new_id(document)
-        metadata.setdefault("lists", {})[new_id] = {
+        list_entry = {
             "model": list_data.get("model", ""),
             "domain": list_data.get("domain", "[]"),
             "orderBy": list_data.get("orderBy", []),
@@ -774,6 +880,11 @@ class OnlyOfficeShareRoute(ShareRoute):
             "columns": columns,
             "name": name,
         }
+        try:
+            list_entry["columnFormats"] = _formula_evaluator.get_list_column_formats(list_entry)
+        except Exception as e:
+            _logger.debug("Could not compute column formats for new list %s: %s", new_id, e)
+        metadata.setdefault("lists", {})[new_id] = list_entry
 
         cells = self._build_list_cells(new_id, columns, int(threshold))
         return self._insert_sheet_via_docbuilder(document, name, cells, metadata, new_id)
@@ -806,7 +917,7 @@ class OnlyOfficeShareRoute(ShareRoute):
 
         # Add the new pivot definition to metadata (lists and pivots share the ID space)
         metadata, new_id = self._load_metadata_with_new_id(document)
-        metadata.setdefault("pivots", {})[new_id] = {
+        pivot_entry = {
             "model": pivot_data["model"],
             "domain": pivot_data.get("domain", "[]"),
             "context": pivot_data.get("context", {}),
@@ -815,6 +926,11 @@ class OnlyOfficeShareRoute(ShareRoute):
             "colGroupBys": col_group_bys,
             "name": name,
         }
+        try:
+            pivot_entry["columnFormats"] = _formula_evaluator.get_pivot_column_formats(pivot_entry)
+        except Exception as e:
+            _logger.debug("Could not compute column formats for new pivot %s: %s", new_id, e)
+        metadata.setdefault("pivots", {})[new_id] = pivot_entry
 
         try:
             cells = self._build_pivot_cells(new_id, pivot_data, measures, row_group_bys, col_group_bys)
@@ -869,7 +985,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         like the Odoo pivot view) and a final Total row.
         """
         model = request.env[pivot_data["model"]].sudo()
-        domain = _formula_evaluator._parse_and_resolve_domain(pivot_data.get("domain", []))
+        domain = _formula_evaluator.parse_and_resolve_domain(pivot_data.get("domain", []))
 
         col_paths = self._pivot_group_paths(model, domain, col_group_bys)
         row_paths = _expand_group_paths(self._pivot_group_paths(model, domain, row_group_bys))

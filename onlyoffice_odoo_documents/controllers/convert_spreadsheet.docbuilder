@@ -2,10 +2,18 @@
 builder.CreateFile("xlsx")
 
 var spreadsheetData = SPREADSHEET_DATA_PLACEHOLDER
+var _odooMetadata = METADATA_PLACEHOLDER
 
 if (!spreadsheetData || !spreadsheetData.sheets) {
   throw new Error("Invalid spreadsheet data: " + JSON.stringify(spreadsheetData))
 }
+
+// Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
+// from a single Python source so this logic isn't duplicated between
+// convert_spreadsheet.docbuilder and insert_sheet.docbuilder.
+// applyOdooColumnFormat runs BEFORE the explicit cellData.style/format
+// handling below, so any format/alignment the user set manually still wins.
+SHARED_HELPERS_PLACEHOLDER
 
 // --- Pass 1: Create ALL sheets first so cross-sheet references work ---
 spreadsheetData.sheets.forEach(function (sheetData, sheetIndex) {
@@ -69,6 +77,7 @@ spreadsheetData.sheets.forEach(function (sheetData, sheetIndex) {
                 return "ODOO_" + funcName.replace(/\./g, "_") + paren
               })
             oRange.SetValue(convertedFormula)
+            applyOdooColumnFormat(oRange, convertedFormula, _odooMetadata)
           } else {
             // Regular formula (SUM, COUNT, etc.) - insert as is
             oRange.SetValue(content)
@@ -240,20 +249,7 @@ spreadsheetData.sheets.forEach(function (sheetData, sheetIndex) {
   }
 })
 
-// Helper function to convert column index to letter
-function columnToLetter(column) {
-  var temp,
-    letter = ""
-  while (column >= 0) {
-    temp = column % 26
-    letter = String.fromCharCode(temp + 65) + letter
-    column = Math.floor(column / 26) - 1
-  }
-  return letter
-}
-
 // Embed metadata in a hidden sheet so it survives download/re-upload
-var _odooMetadata = METADATA_PLACEHOLDER
 if (_odooMetadata) {
   Api.AddSheet("_OdooMetadata")
   var metaSheet = Api.GetSheet("_OdooMetadata")

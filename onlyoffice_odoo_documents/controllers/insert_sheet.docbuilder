@@ -7,15 +7,10 @@ var sheetName = SHEET_NAME_PLACEHOLDER
 var cells = CELLS_PLACEHOLDER // 2D array of strings (formulas or plain values)
 var metadata = METADATA_PLACEHOLDER
 
-function colLetter(col) {
-  var result = ""
-  var c = col
-  while (c >= 0) {
-    result = String.fromCharCode(65 + (c % 26)) + result
-    c = Math.floor(c / 26) - 1
-  }
-  return result
-}
+// Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
+// from a single Python source so this logic isn't duplicated between
+// convert_spreadsheet.docbuilder and insert_sheet.docbuilder.
+SHARED_HELPERS_PLACEHOLDER
 
 // --- Add the new sheet and fill it with the prepared cells ---
 Api.AddSheet(sheetName)
@@ -26,7 +21,10 @@ for (ri = 0; ri < cells.length; ri++) {
   var row = cells[ri]
   for (ci = 0; ci < row.length; ci++) {
     if (row[ci] !== null && row[ci] !== "") {
-      ws.GetRange(colLetter(ci) + String(ri + 1)).SetValue(String(row[ci]))
+      var cellValue = String(row[ci])
+      var cellRange = ws.GetRange(columnToLetter(ci) + String(ri + 1))
+      cellRange.SetValue(cellValue)
+      applyOdooColumnFormat(cellRange, cellValue, metadata)
     }
   }
 }

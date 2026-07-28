@@ -13,25 +13,66 @@ from datetime import date as date_cls
 from datetime import datetime, timedelta
 
 from odoo.http import request
+from odoo.tools import misc
 from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
 
-_MONTH_NAMES = [
-    "",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
+
+def _get_lang_code(env):
+    """Return the effective res.lang code for the current request/user."""
+    return env.user.lang or env.context.get("lang") or "en_US"
+
+
+def _format_localized_date(env, value, lang_code, with_time=False):
+    """Format a date/datetime as localized text using Odoo's own helpers."""
+    if not with_time:
+        return misc.format_date(env, value, lang_code=lang_code)
+    return misc.format_datetime(env, value, dt_format=False, lang_code=lang_code)
+
+
+def get_field_excel_format(model, field_name):
+    """Return (excel_number_format, horizontal_align) for a model field.
+
+    Used to make ODOO_PIVOT/ODOO_LIST formula cells display with the same
+    alignment conventions as the native Odoo Documents spreadsheet
+    (pivot/list) rendering. Monetary, date and datetime values are rendered
+    as pre-formatted, locale-aware text (see SpreadsheetFormulaEvaluator's
+    _format_value / _format_measure_value) instead of relying on an Excel
+    number format, so they always match Odoo's current language and currency
+    settings exactly regardless of the viewing application's own locale.
+    Returns (None, None) when no specific formatting is required (cell keeps
+    "General").
+    """
+    if not field_name:
+        return None, None
+    field_name = field_name.split(":")[0]
+    fobj = model._fields.get(field_name)
+    if not fobj:
+        return None, None
+    env = model.env
+    ftype = fobj.type
+
+    if ftype in ("monetary", "date", "datetime"):
+        # Pre-formatted as localized text by get_field_display_value /
+        # _format_measure_value; no Excel number format needed.
+        return None, "right"
+    if ftype == "integer":
+        return "#,##0", "right"
+    if ftype == "float":
+        digits = 2
+        try:
+            digits_attr = getattr(fobj, "digits", None)
+            if digits_attr:
+                resolved = digits_attr(env) if callable(digits_attr) else digits_attr
+                if resolved:
+                    digits = resolved[1]
+        except (TypeError, IndexError, AttributeError) as e:
+            _logger.debug("Could not resolve float digits for %s: %s", field_name, e)
+        return "#,##0." + "0" * digits, "right"
+    if ftype == "boolean":
+        return None, "center"
+    return None, "left"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -139,9 +180,7 @@ class SpreadsheetFormulaEvaluator:
         for sheet in snapshot.get("sheets", []):
             for cell_data in sheet.get("cells", {}).values():
                 content = cell_data.get("content", "")
-                if not isinstance(content, str) or "ODOO." not in content:
-                    continue
-                if not (content.startswith("=ODOO.") or content.startswith("=-ODOO.")):
+                if not isinstance(content, str) or not content.startswith(("=ODOO.", "=-ODOO.")):
                     continue
                 try:
                     negate = content.startswith("=-")
@@ -163,7 +202,37 @@ class SpreadsheetFormulaEvaluator:
                     _logger.warning("Snapshot formula error %s: %s", content, e)
                     cell_data["value"] = ""
 
-    def _parse_and_resolve_domain(self, domain_value):
+    def get_pivot_column_formats(self, pivot_data):
+        """Return {measure: {format, align}} for a pivot's measures.
+
+        Mirrors the number/currency/date formatting that the native Odoo
+        Documents spreadsheet pivot applies dynamically, so ODOO_PIVOT cells
+        keep the correct currency symbol, decimals and alignment once
+        converted to XLSX formulas.
+        """
+        model = request.env[pivot_data["model"]].sudo()
+        formats = {}
+        for measure in self._get_measures(pivot_data):
+            if measure == "__count":
+                formats[measure] = {"format": "#,##0", "align": "right"}
+                continue
+            excel_format, align = get_field_excel_format(model, measure)
+            if excel_format or align:
+                formats[measure] = {"format": excel_format, "align": align}
+        return formats
+
+    def get_list_column_formats(self, list_data):
+        """Return {field_name: {format, align}} for a list's columns."""
+        model = request.env[list_data["model"]].sudo()
+        formats = {}
+        for col in list_data.get("columns", []):
+            field_name = col.get("name") if isinstance(col, dict) else str(col)
+            excel_format, align = get_field_excel_format(model, field_name)
+            if excel_format or align:
+                formats[field_name] = {"format": excel_format, "align": align}
+        return formats
+
+    def parse_and_resolve_domain(self, domain_value):
         """Parse domain from snapshot, resolve 'uid' placeholder. Public for controllers.py."""
         uid = request.env.user.id
         if isinstance(domain_value, str):
@@ -268,10 +337,7 @@ class SpreadsheetFormulaEvaluator:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
         model = request.env[pivot_data["model"]].sudo()
-        raw_domain = pivot_data.get("domain", [])
-        _logger.info("PIVOT %s raw_domain: %r (type=%s)", pivot_id, raw_domain, type(raw_domain).__name__)
-        base_domain = self._resolve_domain(raw_domain, model)
-        _logger.info("PIVOT %s base_domain after resolve: %r", pivot_id, base_domain)
+        base_domain = self._resolve_domain(pivot_data.get("domain", []), model)
 
         # Parse field/value pairs from args[2:]
         pairs = []
@@ -286,24 +352,37 @@ class SpreadsheetFormulaEvaluator:
         fields_to_read = [] if measure == "__count" else [measure]
 
         if not pairs:
+            # No matching aggregate at all (e.g. domain excludes every record):
+            # keep this a plain numeric 0 (not a formatted currency/date
+            # string) so downstream arithmetic formulas (e.g. "=C6*$B6")
+            # still work, without showing a misleading "0.0000$"/date text.
             result = self._safe_read_group(model, base_domain, fields_to_read, [])
             if not result:
                 return 0
-            return result[0].get("__count" if measure == "__count" else measure_field, 0)
+            key = "__count" if measure == "__count" else measure_field
+            return self._format_measure_value(model, key, result[0].get(key, 0))
 
         # Build narrow domain from pairs and execute
-        _logger.info("PIVOT %s pairs: %r", pivot_id, pairs)
         extra = self._pairs_to_domain(pairs, model)
         combined = base_domain + extra
-        _logger.info("PIVOT %s combined domain: %r", pivot_id, combined)
+        _logger.debug("PIVOT %s combined domain: %r", pivot_id, combined)
         group_bys = [fs for fs, _ in pairs]
 
         groups = self._safe_read_group(model, combined, fields_to_read, group_bys)
+        if groups is None:
+            # read_group itself failed (bad domain/field combination): don't
+            # silently show a blank cell, that hides a real bug. Surface it.
+            _logger.warning("PIVOT %s: read_group failed for domain %r, group_bys %r", pivot_id, combined, group_bys)
+            return "#ERROR: read_group failed"
         if not groups:
+            # This particular row/column combination doesn't exist in the
+            # data. Return a plain numeric 0 (unformatted) rather than a
+            # formatted "0.0000$"/date string, so arithmetic formulas built
+            # on top of this cell (e.g. "=C6*$B6") keep working.
             return 0
 
         key = "__count" if measure == "__count" else measure_field
-        return groups[0].get(key, 0)
+        return self._format_measure_value(model, key, groups[0].get(key, 0))
 
     def _eval_pivot_table(self, snapshot, args):
         """ODOO.PIVOT.TABLE(pivot_id, ...) — returns 2D array."""
@@ -322,20 +401,18 @@ class SpreadsheetFormulaEvaluator:
         all_group_bys = pivot_data.get("rowGroupBys", []) + pivot_data.get("colGroupBys", [])
 
         if not all_group_bys:
-            result = model.read_group(base_domain, measure_fields, [], lazy=False)
+            result = self._safe_read_group(model, base_domain, measure_fields, [])
             if not result:
                 return [["Total", 0]]
             row = ["Total"]
             for m in measures:
-                k = m.split(":")[0] if ":" in m else m
-                row.append(result[0].get(k if m != "__count" else "__count", 0))
+                k = "__count" if m == "__count" else (m.split(":")[0] if ":" in m else m)
+                row.append(self._format_measure_value(model, k, result[0].get(k, 0)))
             return [row]
 
-        try:
-            groups = model.read_group(base_domain, measure_fields, all_group_bys, lazy=False)
-        except Exception as e:
-            _logger.warning("PIVOT.TABLE read_group error: %s", e)
-            return [["Error", str(e)]]
+        groups = self._safe_read_group(model, base_domain, measure_fields, all_group_bys)
+        if groups is None:
+            return [["Error", "read_group failed"]]
 
         table = [list(all_group_bys) + measures]
         for group in groups:
@@ -344,8 +421,8 @@ class SpreadsheetFormulaEvaluator:
                 val = group.get(gb)
                 row.append(val[1] if isinstance(val, list | tuple) and len(val) == 2 else val)
             for m in measures:
-                k = m.split(":")[0] if ":" in m else m
-                row.append(group.get(k if m != "__count" else "__count", 0))
+                k = "__count" if m == "__count" else (m.split(":")[0] if ":" in m else m)
+                row.append(self._format_measure_value(model, k, group.get(k, 0)))
             table.append(row)
         return table
 
@@ -377,7 +454,7 @@ class SpreadsheetFormulaEvaluator:
         if not field_obj:
             return str(value)
         if field_obj.type in ("date", "datetime") and granularity:
-            return _format_date_header(granularity, value)
+            return _format_date_header(model.env, granularity, value)
         if field_obj.type in ("many2one", "many2many", "one2many") and field_obj.comodel_name:
             try:
                 rec = request.env[field_obj.comodel_name].sudo().browse(int(value))
@@ -425,14 +502,13 @@ class SpreadsheetFormulaEvaluator:
 
     def _resolve_domain(self, domain_value, model):
         """Parse + resolve uid + sanitize dates in one step."""
-        domain = self._parse_and_resolve_domain(domain_value)
+        domain = self.parse_and_resolve_domain(domain_value)
         return self._sanitize_dates(domain, model)
 
     def _sanitize_dates(self, domain, model):
         """Convert date-like strings (MM/YYYY, YYYY) in domain to proper ranges."""
         month_re = re.compile(r"^(\d{1,2})/(\d{4})$")
         result = []
-        _logger.info("_sanitize_dates input: %r", domain)
         for item in domain:
             if not (isinstance(item, list | tuple) and len(item) == 3):
                 result.append(item)
@@ -458,13 +534,11 @@ class SpreadsheetFormulaEvaluator:
                 except (ValueError, TypeError) as e:
                     _logger.debug("Could not parse year value %r: %s", value, e)
             if rng:
-                _logger.info("_sanitize_dates: converted %r to range %r", item, rng)
                 result.append((field_name, ">=", rng[0]))
                 result.append((field_name, "<", rng[1]))
             else:
-                _logger.info("_sanitize_dates: date field %s but no range for value %r", field_name, value)
                 result.append(item)
-        _logger.info("_sanitize_dates output: %r", result)
+        _logger.debug("_sanitize_dates output: %r", result)
         return result
 
     def _pairs_to_domain(self, pairs, model):
@@ -474,16 +548,6 @@ class SpreadsheetFormulaEvaluator:
             fname = field_spec.split(":")[0] if ":" in field_spec else field_spec
             gran = field_spec.split(":")[1] if ":" in field_spec else None
             fobj = model._fields.get(fname)
-            _logger.info(
-                "_pairs_to_domain: spec=%r val=%r(%s) fname=%s gran=%s fobj=%s ftype=%s",
-                field_spec,
-                value,
-                type(value).__name__,
-                fname,
-                gran,
-                bool(fobj),
-                fobj.type if fobj else None,
-            )
 
             if value == "false" or value is False:
                 domain.append((fname, "=", False))
@@ -516,17 +580,29 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _safe_read_group(model, domain, fields, group_bys):
-        """read_group inside a savepoint to not poison the transaction."""
+        """read_group inside a savepoint to not poison the transaction.
+
+        Results are cached on the request (when a cache dict is attached by
+        the batch endpoint) so identical pivot cells share one SQL query.
+        """
+        cache = getattr(request, "_rg_cache", None)
+        cache_key = None
+        if cache is not None:
+            cache_key = (model._name, repr(domain), tuple(fields), tuple(group_bys))
+            if cache_key in cache:
+                return cache[cache_key]
         cr = request.env.cr
         try:
             cr.execute("SAVEPOINT pivot_rg")
             result = model.read_group(domain, fields, group_bys, lazy=False)
             cr.execute("RELEASE SAVEPOINT pivot_rg")
-            return result
         except Exception as e:
             _logger.warning("read_group error: %s", e)
             cr.execute("ROLLBACK TO SAVEPOINT pivot_rg")
-            return None
+            result = None
+        if cache is not None:
+            cache[cache_key] = result
+        return result
 
     @staticmethod
     def _order_string(order_by):
@@ -538,14 +614,31 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _format_value(record, field_name, model):
-        """Format a record field value for display."""
+        """Format a record field value for display.
+
+        Monetary and date/datetime values are rendered as literal,
+        locale-aware text (matching Odoo's current language and currency
+        settings, via odoo.tools.misc) instead of a raw number/Excel serial
+        with a number format, so the displayed result doesn't depend on the
+        viewing application's own locale (see _format_measure_value for the
+        pivot equivalent).
+        """
         fobj = model._fields.get(field_name)
         val = record[field_name] if field_name in record else None
         if val is None or val is False:
             return ""
+        env = model.env
         if fobj and fobj.type == "selection":
-            sel = dict(fobj._description_selection(model.env))
+            sel = dict(fobj._description_selection(env))
             return sel.get(val, val)
+        if fobj and fobj.type == "monetary":
+            currency_field_name = fobj.currency_field or "currency_id"
+            currency = getattr(record, currency_field_name, None) or env.company.currency_id
+            return misc.format_amount(env, amount=val, currency=currency, lang_code=_get_lang_code(env))
+        if fobj and fobj.type == "date":
+            return _format_localized_date(env, val, _get_lang_code(env))
+        if fobj and fobj.type == "datetime":
+            return _format_localized_date(env, val, _get_lang_code(env), with_time=True)
         if hasattr(val, "_name"):
             if not val:
                 return ""
@@ -553,6 +646,30 @@ class SpreadsheetFormulaEvaluator:
                 return ", ".join(r.display_name or str(r) for r in val)
             return val.display_name or str(val)
         return val
+
+    @staticmethod
+    def _format_measure_value(model, measure_field, value):
+        """Localize an aggregated pivot measure (monetary/date/datetime) for display.
+
+        Mirrors _format_value's approach: renders a pre-formatted, locale-aware
+        string via odoo.tools.misc instead of relying on an Excel number
+        format, so pivot cells always match Odoo's current language and
+        currency settings regardless of the viewing application's locale.
+        """
+        if measure_field == "__count" or value is None or value is False:
+            return value
+        fobj = model._fields.get(measure_field)
+        if not fobj:
+            return value
+        env = model.env
+        lang_code = _get_lang_code(env)
+        if fobj.type == "monetary":
+            return misc.format_amount(env, amount=value, currency=env.company.currency_id, lang_code=lang_code)
+        if fobj.type == "date" and isinstance(value, date_cls):
+            return _format_localized_date(env, value, lang_code)
+        if fobj.type == "datetime" and isinstance(value, datetime):
+            return _format_localized_date(env, value, lang_code, with_time=True)
+        return value
 
     @staticmethod
     def _get_measures(pivot_data):
@@ -664,13 +781,20 @@ def _date_to_range(granularity, value):
     return None
 
 
-def _format_date_header(granularity, value):
-    """Format pivot date header for display."""
+def _format_date_header(env, granularity, value):
+    """Format pivot date header for display, localized to the current language.
+
+    Mirrors the native Odoo Documents spreadsheet pivot, which formats the
+    group's start date using the user's full res.lang.date_format (not a
+    fixed "month year" pattern), so a custom format like "%-d %b %Y" renders
+    as e.g. "1 Jan 2026" instead of being truncated to "Jan 2026".
+    """
     s = str(value)
     try:
         parts = s.split("/")
         if granularity == "month" and len(parts) == 2:
-            return f"{_MONTH_NAMES[int(parts[0])]} {parts[1]}"
+            month, year = int(parts[0]), int(parts[1])
+            return _format_localized_date(env, date_cls(year, month, 1), _get_lang_code(env))
         if granularity == "quarter" and len(parts) == 2:
             return f"Q{parts[0]} {parts[1]}"
         if granularity == "week" and len(parts) == 2:

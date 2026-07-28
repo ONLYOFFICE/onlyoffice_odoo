@@ -74,7 +74,6 @@
         window.hasOdooFormulas = <t t-out="'true' if has_odoo_formulas else 'false'" />;
 
         // Setup ODOO custom functions event handler BEFORE creating editor
-        window._odooEditorReady = false;
         config.events = config.events || {};
         var originalOnReady = config.events.onDocumentReady;
         config.events.onDocumentReady = function() {
@@ -82,7 +81,7 @@
             originalOnReady();
           }
           // Call init function from external script
-          if (window.initializeOdooCustomFunctions) if (window.hasOdooFormulas) {
+          if (window.initializeOdooCustomFunctions &amp;&amp; window.hasOdooFormulas) {
             window.initializeOdooCustomFunctions();
           }
         };
