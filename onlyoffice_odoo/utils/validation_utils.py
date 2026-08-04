@@ -1,8 +1,10 @@
 # Copyright (C) 2026 Ascensio System SIA
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import json
 import os
 import re
+import ssl
 import time
 from urllib.request import urlopen
 
@@ -10,7 +12,7 @@ import requests
 
 from odoo.exceptions import ValidationError
 
-from odoo.addons.onlyoffice_odoo.utils import jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
 
 def valid_url(url):
@@ -23,8 +25,6 @@ def valid_url(url):
 
 
 def settings_validation(self):
-    from odoo.addons.onlyoffice_odoo.utils import config_utils
-
     base_url = self.doc_server_odoo_url or config_utils.get_base_or_odoo_url(self.env)
     public_url = self.doc_server_public_url
     inner_url = self.doc_server_inner_url
@@ -54,8 +54,6 @@ def check_doc_serv_url(url, demo, disable_certificate):
 
         context = None
         if disable_certificate and url.startswith("https://"):
-            import ssl
-
             context = ssl._create_unverified_context()
 
         response = urlopen(url, timeout=30, context=context)
@@ -167,8 +165,8 @@ def get_message_error(message, demo):
         raise ValidationError(message)
 
 
-def get_conversion_error_message(errorCode):
-    errorDictionary = {
+def get_conversion_error_message(error_code):
+    error_dictionary = {
         -1: "Unknown error",
         -2: "Conversion timeout error",
         -3: "Conversion error",
@@ -179,8 +177,4 @@ def get_conversion_error_message(errorCode):
         -8: "Invalid token",
     }
 
-    try:
-        return errorDictionary[errorCode]
-
-    except Exception:
-        return "Undefined error code"
+    return error_dictionary.get(error_code, "Undefined error code")

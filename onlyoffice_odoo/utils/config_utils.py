@@ -1,4 +1,5 @@
 # Copyright (C) 2026 Ascensio System SIA
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import uuid
 from datetime import date
@@ -39,6 +40,10 @@ def get_internal_jwt_secret(env):
     if not secret:
         secret = uuid.uuid4().hex
         env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, secret)
+        # Save the new secret to the database right now, before anything else can fail.
+        # Odoo wraps each request in a transaction that can be rolled back on error,
+        # which would delete the secret we just created. By committing here we make sure
+        # the secret survives even if the rest of the request fails later.
         env.cr.commit()
 
     return secret

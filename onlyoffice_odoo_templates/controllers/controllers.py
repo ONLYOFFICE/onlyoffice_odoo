@@ -16,14 +16,14 @@ from odoo.tools import (
     misc,
 )
 
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector, onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
 logger = logging.getLogger(__name__)
 
 
-class Onlyoffice_Inherited_Connector(Onlyoffice_Connector):
+class Onlyoffice_Inherited_Connector(OnlyofficeConnector):
     @http.route("/onlyoffice/template/template_content/<string:path>", auth="public")
     def get_template_content(self, path):
         try:
@@ -265,7 +265,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             return request.not_found()
 
     def _get_cached_keys(self, template, oo_security_token):
-        """Return the template's OFORM field keys, using the value cached on the
+        """Return the template's PDF Form field keys, using the value cached on the
         template when it is still valid.
 
         The keys are derived solely from the template PDF, so we key the cache on

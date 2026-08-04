@@ -16,7 +16,7 @@ from odoo.http import request
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
-from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
+from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
         return json.dumps(result)
 
 
-class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
+class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
     @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
     def render_shared_document_editor(self, access_token=None, folder_token=None):
         try:
