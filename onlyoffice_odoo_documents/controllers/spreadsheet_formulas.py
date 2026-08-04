@@ -34,15 +34,10 @@ def _format_localized_date(env, value, lang_code, with_time=False):
 def get_field_excel_format(model, field_name):
     """Return (excel_number_format, horizontal_align) for a model field.
 
-    Used to make ODOO_PIVOT/ODOO_LIST formula cells display with the same
-    alignment conventions as the native Odoo Documents spreadsheet
-    (pivot/list) rendering. Monetary, date and datetime values are rendered
-    as pre-formatted, locale-aware text (see SpreadsheetFormulaEvaluator's
-    _format_value / _format_measure_value) instead of relying on an Excel
-    number format, so they always match Odoo's current language and currency
-    settings exactly regardless of the viewing application's own locale.
-    Returns (None, None) when no specific formatting is required (cell keeps
-    "General").
+    Monetary and date/datetime values are already rendered as localized
+    text by _format_value / _format_measure_value, so no Excel number
+    format is needed for them here; only their alignment is set.
+    Returns (None, None) when no specific formatting applies.
     """
     if not field_name:
         return None, None
@@ -81,7 +76,7 @@ def get_field_excel_format(model, field_name):
 
 
 def compute_filter_values(metadata):
-    """Compute globalFilter values → {label: resolved_string}."""
+    """Resolve all global filters in metadata to {label: string_value}."""
     result = {}
     if not metadata:
         return result
@@ -111,7 +106,7 @@ def compute_filter_values(metadata):
 
 
 def load_metadata_for_document(document):
-    """Load spreadsheet metadata for a document. Returns dict or {}."""
+    """Load spreadsheet metadata (lists, pivots, filters) for a document."""
     if document.onlyoffice_spreadsheet_metadata:
         try:
             return json.loads(document.onlyoffice_spreadsheet_metadata)
@@ -124,7 +119,7 @@ def load_metadata_for_document(document):
 
 
 def _resolve_date_shortcut(value):
-    """Resolve string date shortcuts (this_year, last_year, etc.) to dicts."""
+    """Convert a named date shortcut ("this_year", ...) to its filter dict form."""
     shortcuts = {
         "this_year": lambda: {"yearOffset": 0},
         "last_year": lambda: {"yearOffset": -1},
@@ -176,7 +171,7 @@ class SpreadsheetFormulaEvaluator:
             return f"#ERROR: {e}"
 
     def evaluate_odoo_formulas_in_snapshot(self, snapshot):
-        """Evaluate all ODOO.* formulas in snapshot cells (for DocBuilder conversion)."""
+        """Evaluate every ODOO.* formula cell in the snapshot and store its value."""
         for sheet in snapshot.get("sheets", []):
             for cell_data in sheet.get("cells", {}).values():
                 content = cell_data.get("content", "")
@@ -203,13 +198,7 @@ class SpreadsheetFormulaEvaluator:
                     cell_data["value"] = ""
 
     def get_pivot_column_formats(self, pivot_data):
-        """Return {measure: {format, align}} for a pivot's measures.
-
-        Mirrors the number/currency/date formatting that the native Odoo
-        Documents spreadsheet pivot applies dynamically, so ODOO_PIVOT cells
-        keep the correct currency symbol, decimals and alignment once
-        converted to XLSX formulas.
-        """
+        """Return {measure: {format, align}} for a pivot's measures."""
         model = request.env[pivot_data["model"]].sudo()
         formats = {}
         for measure in self._get_measures(pivot_data):
@@ -233,7 +222,7 @@ class SpreadsheetFormulaEvaluator:
         return formats
 
     def parse_and_resolve_domain(self, domain_value):
-        """Parse domain from snapshot, resolve 'uid' placeholder. Public for controllers.py."""
+        """Parse a domain from the snapshot and resolve the 'uid' placeholder."""
         uid = request.env.user.id
         if isinstance(domain_value, str):
             domain_value = domain_value.strip()
@@ -276,7 +265,7 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _parse_args(args_str):
-        """Parse comma-separated formula args, respecting quoted strings."""
+        """Split comma-separated formula arguments, ignoring commas inside quotes."""
         if not args_str:
             return []
         args = []
@@ -352,10 +341,9 @@ class SpreadsheetFormulaEvaluator:
         fields_to_read = [] if measure == "__count" else [measure]
 
         if not pairs:
-            # No matching aggregate at all (e.g. domain excludes every record):
-            # keep this a plain numeric 0 (not a formatted currency/date
-            # string) so downstream arithmetic formulas (e.g. "=C6*$B6")
-            # still work, without showing a misleading "0.0000$"/date text.
+            # Return a plain, unformatted number here: formulas that do
+            # arithmetic on this cell must keep working even when there
+            # is no matching data.
             result = self._safe_read_group(model, base_domain, fields_to_read, [])
             if not result:
                 return 0
@@ -370,22 +358,20 @@ class SpreadsheetFormulaEvaluator:
 
         groups = self._safe_read_group(model, combined, fields_to_read, group_bys)
         if groups is None:
-            # read_group itself failed (bad domain/field combination): don't
-            # silently show a blank cell, that hides a real bug. Surface it.
+            # The query itself failed. Report it instead of hiding it as an
+            # empty or zero value.
             _logger.warning("PIVOT %s: read_group failed for domain %r, group_bys %r", pivot_id, combined, group_bys)
             return "#ERROR: read_group failed"
         if not groups:
-            # This particular row/column combination doesn't exist in the
-            # data. Return a plain numeric 0 (unformatted) rather than a
-            # formatted "0.0000$"/date string, so arithmetic formulas built
-            # on top of this cell (e.g. "=C6*$B6") keep working.
+            # No data for this combination. Return a plain, unformatted
+            # number so arithmetic formulas built on this cell keep working.
             return 0
 
         key = "__count" if measure == "__count" else measure_field
         return self._format_measure_value(model, key, groups[0].get(key, 0))
 
     def _eval_pivot_table(self, snapshot, args):
-        """ODOO.PIVOT.TABLE(pivot_id, ...) — returns 2D array."""
+        """ODOO.PIVOT.TABLE(pivot_id, ...) — returns the whole pivot as a 2D array."""
         if len(args) < 1:
             raise ValueError("ODOO.PIVOT.TABLE requires at least 1 arg")
 
@@ -489,7 +475,7 @@ class SpreadsheetFormulaEvaluator:
         return ""
 
     def _eval_currency_rate(self, _snapshot, args):
-        """ODOO.CURRENCY.RATE(from, to) — delegates to Odoo built-in."""
+        """ODOO.CURRENCY.RATE(from, to) — uses Odoo's own currency rate lookup."""
         if len(args) < 2:
             return 1.0
         try:
@@ -501,12 +487,12 @@ class SpreadsheetFormulaEvaluator:
     # ── Domain & date helpers ────────────────────────────────────────────────
 
     def _resolve_domain(self, domain_value, model):
-        """Parse + resolve uid + sanitize dates in one step."""
+        """Parse a domain, resolve 'uid', and normalize any date values."""
         domain = self.parse_and_resolve_domain(domain_value)
         return self._sanitize_dates(domain, model)
 
     def _sanitize_dates(self, domain, model):
-        """Convert date-like strings (MM/YYYY, YYYY) in domain to proper ranges."""
+        """Replace date-like string values (MM/YYYY, YYYY) in a domain with date ranges."""
         month_re = re.compile(r"^(\d{1,2})/(\d{4})$")
         result = []
         for item in domain:
@@ -542,7 +528,7 @@ class SpreadsheetFormulaEvaluator:
         return result
 
     def _pairs_to_domain(self, pairs, model):
-        """Convert pivot field/value pairs to domain conditions."""
+        """Convert pivot field/value pairs into domain conditions."""
         domain = []
         for field_spec, value in pairs:
             fname = field_spec.split(":")[0] if ":" in field_spec else field_spec
@@ -580,10 +566,10 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _safe_read_group(model, domain, fields, group_bys):
-        """read_group inside a savepoint to not poison the transaction.
+        """Run read_group in a savepoint so a failed query doesn't break the transaction.
 
-        Results are cached on the request (when a cache dict is attached by
-        the batch endpoint) so identical pivot cells share one SQL query.
+        Caches the result on the request (if a cache dict is attached) so
+        identical pivot cells reuse one query.
         """
         cache = getattr(request, "_rg_cache", None)
         cache_key = None
@@ -614,14 +600,12 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _format_value(record, field_name, model):
-        """Format a record field value for display.
+        """Format a record field value as text for display in a cell.
 
-        Monetary and date/datetime values are rendered as literal,
-        locale-aware text (matching Odoo's current language and currency
-        settings, via odoo.tools.misc) instead of a raw number/Excel serial
-        with a number format, so the displayed result doesn't depend on the
-        viewing application's own locale (see _format_measure_value for the
-        pivot equivalent).
+        Monetary and date/datetime values are rendered as localized text
+        (see _format_measure_value for the pivot equivalent) instead of a
+        raw number, so they always match Odoo's language and currency
+        settings.
         """
         fobj = model._fields.get(field_name)
         val = record[field_name] if field_name in record else None
@@ -649,13 +633,7 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _format_measure_value(model, measure_field, value):
-        """Localize an aggregated pivot measure (monetary/date/datetime) for display.
-
-        Mirrors _format_value's approach: renders a pre-formatted, locale-aware
-        string via odoo.tools.misc instead of relying on an Excel number
-        format, so pivot cells always match Odoo's current language and
-        currency settings regardless of the viewing application's locale.
-        """
+        """Format an aggregated pivot measure as localized text, like _format_value."""
         if measure_field == "__count" or value is None or value is False:
             return value
         fobj = model._fields.get(measure_field)
@@ -686,7 +664,7 @@ class SpreadsheetFormulaEvaluator:
         return fobj.string if fobj else measure
 
     def _resolve_nested(self, snapshot, content):
-        """Resolve nested ODOO.FILTER.VALUE calls and & concatenation."""
+        """Resolve ODOO.FILTER.VALUE() calls and & string concatenation in a formula."""
 
         def _repl(m):
             try:
@@ -722,10 +700,7 @@ def _coerce(arg):
 
 
 def _infer_date_granularity(value):
-    """Infer date granularity from value pattern when not explicitly specified.
-
-    Returns 'month', 'year', 'quarter', 'day', or None.
-    """
+    """Guess the date granularity ('month', 'year', 'quarter', 'day') from a value's shape."""
     parts = str(value).split("/")
     if len(parts) == 2:
         try:
@@ -749,10 +724,7 @@ def _infer_date_granularity(value):
 
 
 def _date_to_range(granularity, value):
-    """Convert pivot date value (e.g. '2/2026') to (from, to) date strings.
-
-    Returns tuple ('YYYY-MM-DD', 'YYYY-MM-DD') or None.
-    """
+    """Convert a pivot date value to a (from, to) pair of 'YYYY-MM-DD' strings, or None."""
     try:
         parts = value.split("/")
         if granularity == "year":
@@ -782,13 +754,7 @@ def _date_to_range(granularity, value):
 
 
 def _format_date_header(env, granularity, value):
-    """Format pivot date header for display, localized to the current language.
-
-    Mirrors the native Odoo Documents spreadsheet pivot, which formats the
-    group's start date using the user's full res.lang.date_format (not a
-    fixed "month year" pattern), so a custom format like "%-d %b %Y" renders
-    as e.g. "1 Jan 2026" instead of being truncated to "Jan 2026".
-    """
+    """Format a pivot group's date header as localized text."""
     s = str(value)
     try:
         parts = s.split("/")

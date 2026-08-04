@@ -47,23 +47,22 @@ class _DateTimeEncoder(json.JSONEncoder):
 
 
 # ── DocBuilder data cache (DB-backed) ────────────────────────────────────────
-# The DocBuilder callback is a separate HTTP request that can be served by
-# another Odoo worker, so the payload must be stored in the database and not
-# in process memory.
+# The DocBuilder callback arrives as a separate HTTP request, possibly on a
+# different worker, so its payload is stored in the database instead of
+# process memory.
 
 _DOCBUILDER_CACHE_PREFIX = "onlyoffice_docbuilder_cache_"
 _DOCBUILDER_CACHE_TTL_HOURS = 1
 
-# Explicit mimetype for rewritten XLSX attachments: when writing 'datas' Odoo
-# re-guesses the mimetype from content and may detect DocBuilder output as
-# 'application/zip', which breaks the documents thumbnail and mimetype filters.
+# Explicit mimetype for rewritten XLSX attachments, since Odoo re-guesses
+# the mimetype from content and may otherwise detect it as a plain zip file.
 _XLSX_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 def _store_docbuilder_data(token, data):
     """Persist a DocBuilder payload so any worker can serve the callback."""
     attachments = request.env["ir.attachment"].sudo()
-    # Drop stale entries left over from failed conversions
+    # Remove old entries from failed or abandoned conversions
     stale_before = datetime.now() - timedelta(hours=_DOCBUILDER_CACHE_TTL_HOURS)
     attachments.search(
         [
@@ -77,8 +76,7 @@ def _store_docbuilder_data(token, data):
             "raw": json.dumps(data, cls=_DateTimeEncoder).encode(),
         }
     )
-    # Commit so the DocBuilder callback (served in a separate transaction,
-    # possibly by another worker) can see the data immediately.
+    # Commit now so the callback request (a separate transaction) can see it.
     request.env.cr.commit()
 
 
@@ -97,9 +95,8 @@ def _delete_docbuilder_data(token):
 _formula_evaluator = SpreadsheetFormulaEvaluator()
 
 # JS helpers shared by convert_spreadsheet.docbuilder and insert_sheet.docbuilder.
-# DocBuilder scripts run standalone (no module system), so the common
-# column-letter/format-application logic is injected as text from this single
-# source instead of being duplicated in both .docbuilder files.
+# DocBuilder scripts have no module system, so this text is injected into
+# both files instead of duplicating the code.
 _SHARED_DOCBUILDER_HELPERS = """
 // Convert a 0-based column index to its spreadsheet letter (0 -> "A").
 function columnToLetter(column) {
@@ -113,15 +110,11 @@ function columnToLetter(column) {
   return letter
 }
 
-// Apply the number format and horizontal alignment for ODOO_PIVOT/ODOO_LIST
-// value cells, based on the underlying Odoo field type (monetary, date,
-// integer, etc.), so the exported XLSX keeps the same currency symbol,
-// date format and alignment as the native Documents spreadsheet rendering.
+// Apply the number format and horizontal alignment for an ODOO_PIVOT/ODOO_LIST
+// value cell, based on the underlying Odoo field's type.
 function applyOdooColumnFormat(oRange, formula, metadata) {
   if (!metadata) return
-  // Native documents_spreadsheet formulas quote every argument
-  // (=ODOO.PIVOT("3","amount_total",...)), our server-built ones do not
-  // (=ODOO_PIVOT(3,"amount_total",...)); accept both plus a leading minus.
+  // Accept both quoted and unquoted numeric IDs, and an optional leading minus.
   var m = formula.match(/^=\\s*-?\\s*ODOO_PIVOT\\(\\s*"?(\\d+)"?\\s*,\\s*"([^"]+)"/)
   if (m) {
     var pivotMeta = metadata.pivots && metadata.pivots[m[1]]
@@ -288,10 +281,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             config_utils.get_internal_jwt_secret(request.env),
         )
 
-        # Pre-compute filter values so ODOO_FILTER_VALUE is synchronous on the client.
-        # This avoids the async dependency issue where ODOO_PIVOT gets incomplete args.
+        # Pre-compute filter values so ODOO_FILTER_VALUE can resolve synchronously on the client.
         if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
-            # Flag: document has ODOO custom formulas (pivots, lists, or filters in metadata)
             editor_values["has_odoo_formulas"] = True
             try:
                 metadata = load_metadata_for_document(document)
@@ -521,18 +512,13 @@ class OnlyOfficeShareRoute(ShareRoute):
 
     @http.route("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", auth="user", methods=["POST"], type="json")
     def convert_spreadsheet_via_docbuilder(self, document_id):
-        """
-        Convert Odoo Spreadsheet to XLSX using DocBuilder.
-        This preserves formulas and creates a native XLSX file.
-        """
+        """Convert an Odoo Spreadsheet to a native XLSX file via DocBuilder, keeping formulas."""
         result = {"error": None, "xlsx_id": None}
 
         try:
-            # The session/request context's 'lang' can lag behind the user's actual
-            # res.users.lang (e.g. right after switching language in Preferences),
-            # which would make ORM-translated values (display_name, selection
-            # labels, field.string used by ODOO.PIVOT.HEADER/ODOO.LIST.HEADER)
-            # keep showing a stale language. Force it to the fresh value.
+            # The request context's language can be stale compared to the
+            # user's current setting; keep it in sync so translated values
+            # (display names, selection labels, field labels) are correct.
             current_lang = request.env.user.lang
             if current_lang and request.env.context.get("lang") != current_lang:
                 request.update_env(context=dict(request.env.context, lang=current_lang))
@@ -588,7 +574,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         return result
 
     def _prepare_docbuilder_metadata(self, snapshot):
-        """Prepare metadata JSON with resolved domains for DocBuilder conversion."""
+        """Build metadata JSON (lists, pivots, filters) with domains resolved for DocBuilder."""
         metadata = {}
         if snapshot.get("lists"):
             lists_with_computed_domain = {}
@@ -617,7 +603,10 @@ class OnlyOfficeShareRoute(ShareRoute):
         return json.dumps(metadata, cls=_DateTimeEncoder) if metadata else None
 
     def _call_docbuilder(self, oo_security_token, document_id):
-        """Call DocBuilder service and download the resulting XLSX. Returns (content, error)."""
+        """Call the DocBuilder service and download the resulting XLSX.
+
+        Returns (content, error).
+        """
         docserver_url = config_utils.get_doc_server_public_url(request.env)
         docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
         docbuilder_url = f"{docserver_url}docbuilder"
@@ -655,7 +644,7 @@ class OnlyOfficeShareRoute(ShareRoute):
             }
             return None, error_messages.get(error_code, _("Error code: %s") % error_code)
 
-        # Download the generated XLSX file
+        # Fetch the generated XLSX file
         urls = response_json.get("urls", {})
         xlsx_url = next((url for key, url in urls.items() if key.endswith(".xlsx")), None)
         if not xlsx_url:
@@ -785,11 +774,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         cors="*",
     )
     def evaluate_formulas_batch(self, document_id, formulas, jwt_token=None):
-        """Evaluate multiple ODOO formulas in a single HTTP request.
-
-        Snapshot is loaded once and shared across all formulas.
-        read_group results are cached and reused across pivot cells.
-        """
+        """Evaluate several ODOO formulas in one request, sharing the document snapshot."""
         if request.httprequest.method == "OPTIONS":
             return {}
 
@@ -816,13 +801,9 @@ class OnlyOfficeShareRoute(ShareRoute):
             _logger.warning("evaluate_formulas_batch: token validation failed for doc %s: %s", document_id, e)
             return {"error": "Invalid security token"}
 
-        # Switch request env to authenticated user so domain resolution uses correct uid.
-        # This route is auth="public", so the ambient request context's 'lang' has no
-        # relation to token_uid's actual language preference (it comes from the public/
-        # anonymous session default, e.g. Accept-Language) — it must be forced to the
-        # user's current res.users.lang, otherwise ORM-translated values (display_name,
-        # selection labels, field.string used by ODOO_PIVOT_HEADER/ODOO_LIST_HEADER)
-        # randomly show a stale/unrelated language instead of the user's current one.
+        # Switch to the authenticated user (correct uid for domain resolution)
+        # and their language (this route is public, so the ambient context's
+        # language does not reflect the actual user).
         request.update_env(
             user=token_uid, context=dict(request.env.context, lang=user.lang or request.env.context.get("lang"))
         )
@@ -1155,8 +1136,7 @@ def _group_value_literal(model, field_spec, group):
 
 
 def _format_date_group_value(group, field_spec, granularity, is_datetime=False):
-    """Convert a read_group date value into the pivot string format understood
-    by the formula evaluator (e.g. '2/2026' for February 2026)."""
+    """Convert a read_group date value into the pivot string format understood by the formula evaluator."""
     range_info = (group.get("__range") or {}).get(field_spec) or {}
     start = str(range_info.get("from") or "")
     d = None

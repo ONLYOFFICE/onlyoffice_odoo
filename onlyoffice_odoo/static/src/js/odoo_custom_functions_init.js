@@ -443,9 +443,7 @@
 
         /**
          * Get the current value of an Odoo spreadsheet filter.
-         * Synchronous — uses pre-computed filter values passed from the server.
-         * This ensures that concatenation like "01/"&ODOO_FILTER_VALUE("Year")
-         * resolves immediately before being passed to ODOO_PIVOT.
+         * Resolves synchronously from filter values pre-computed by the server.
          * @customfunction
          * @param {string} filterName The label of the filter.
          * @returns {string} The current filter value.
