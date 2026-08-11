@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
-from odoo.addons.onlyoffice_odoo.utils import validation_utils
+from odoo.addons.onlyoffice_odoo.utils import conversion_utils, validation_utils
 
 
 @tagged("post_install", "-at_install")
@@ -56,19 +56,19 @@ class TestValidationUtils(TransactionCase):
 
     def test_error_message_unknown_error(self):
         """Error code -1 returns 'Unknown error' message."""
-        msg = validation_utils.get_conversion_error_message(-1)
+        msg = conversion_utils.get_conversion_error_message(-1)
         self.assertEqual(msg, "Unknown error")
 
     def test_error_message_undefined_code(self):
         """Unrecognized error code returns the fallback 'Undefined error code' message."""
-        msg = validation_utils.get_conversion_error_message(-99)
+        msg = conversion_utils.get_conversion_error_message(-99)
         self.assertEqual(msg, "Undefined error code")
 
     def test_all_defined_error_codes_return_message(self):
         """Every error code defined by the ONLYOFFICE conversion API returns a non-empty string."""
         defined_codes = [-1, -2, -3, -4, -5, -6, -7, -8]
         for code in defined_codes:
-            msg = validation_utils.get_conversion_error_message(code)
+            msg = conversion_utils.get_conversion_error_message(code)
             self.assertIsInstance(msg, str, f"Code {code} must return a string")
             self.assertTrue(len(msg) > 0, f"Code {code} must return a non-empty message")
 
