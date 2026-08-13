@@ -72,6 +72,25 @@ class TestValidationUtils(TransactionCase):
             self.assertIsInstance(msg, str, f"Code {code} must return a string")
             self.assertTrue(len(msg) > 0, f"Code {code} must return a non-empty message")
 
+    # -- get_region --
+
+    def test_get_region_underscore_lang(self):
+        """Odoo-style underscore lang codes are converted to dash-separated region codes."""
+        self.assertEqual(conversion_utils.get_region("en_US"), "en-US")
+        self.assertEqual(conversion_utils.get_region("fr_FR"), "fr-FR")
+        self.assertEqual(conversion_utils.get_region("pt_BR"), "pt-BR")
+
+    def test_get_region_empty_lang_returns_none(self):
+        """Empty or falsy lang returns None (no region sent to the converter)."""
+        self.assertIsNone(conversion_utils.get_region(""))
+        self.assertIsNone(conversion_utils.get_region(None))
+
+    def test_get_region_invalid_lang_returns_none(self):
+        """Lang codes that don't resolve to a valid 'xx-XX' region return None."""
+        self.assertIsNone(conversion_utils.get_region("es_419"))
+        self.assertIsNone(conversion_utils.get_region("sr@latin"))
+        self.assertIsNone(conversion_utils.get_region("en"))
+
     # -- check_mixed_content --
 
     def test_check_mixed_content_raises_when_odoo_https_and_docserver_http(self):

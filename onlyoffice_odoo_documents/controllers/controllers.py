@@ -192,8 +192,9 @@ class OnlyofficeDocuments_Connector(http.Controller):
             )
 
             source_url = f"{odoo_url}onlyoffice/file/content/{attachment.id}?oo_security_token={oo_security_token}"
+            region = conversion_utils.get_region(request.env.user.lang)
             body_json = conversion_utils.build_conversion_body(
-                source_url, source_ext, target_format, extra_options={"async": False}
+                source_url, source_ext, target_format, extra_options={"async": False}, region=region
             )
             conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={body_json['key']}")
             body_json, headers = conversion_utils.sign_conversion_request(
