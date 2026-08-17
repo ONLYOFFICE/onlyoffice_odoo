@@ -32,8 +32,10 @@ class OnlyofficeTemplatesModelTestCase(TransactionCase):
     def _create_template_from_first_bundled_file(self):
         demo = self.env["onlyoffice.odoo.demo.templates"].create({})
         data = demo.get_template_data()
-        template_path = data["structure"][MODEL_NAME]["files"][0]["path"]
-        selected_path = f"{MODEL_NAME}/{template_path}"
+        # "path" is already relative to the templates dir and includes the
+        # model subfolder (e.g. "hr.employee/Employee.pdf"), matching what
+        # the frontend widget sends in `selected_templates`.
+        selected_path = data["structure"][MODEL_NAME]["files"][0]["path"]
 
         demo.selected_templates = json.dumps([selected_path])
         demo.action_save()
