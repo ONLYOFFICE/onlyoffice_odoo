@@ -39,3 +39,169 @@ jobs:
         run: oca_run_tests
       - name: Check coverage threshold
         run: coverage report --fail-under=60
+
+  test-templates:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+        ports:
+          - 5432:5432
+    env:
+      # `hr` ships a bundled default template for hr.employee.
+      INCLUDE: "onlyoffice_odoo_templates,hr"
+      EXCLUDE: "onlyoffice_odoo,onlyoffice_odoo_documents"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create stubs for unavailable addons
+        run: |
+          mkdir -p documents
+          printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          touch documents/__init__.py
+      - name: Install addons and dependencies
+        run: oca_install_addons
+      - name: Initialize test db
+        run: oca_init_test_database
+      - name: Run tests
+        run: oca_run_tests
+      - name: Check coverage threshold
+        run: coverage report --fail-under=60
+
+  # Uses a real Document Server instead of mocks. Delete this job and
+  # onlyoffice_odoo/tests/test_document_server.py to remove it.
+  test-live-docserver:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+        ports:
+          - 5432:5432
+      documentserver:
+        image: onlyoffice/documentserver-de:latest
+        env:
+          JWT_ENABLED: "false"
+        options: >-
+          --health-cmd="curl -f http://localhost/healthcheck || exit 1"
+          --health-interval=15s
+          --health-timeout=10s
+          --health-retries=15
+          --health-start-period=60s
+    env:
+      INCLUDE: "onlyoffice_odoo"
+      EXCLUDE: "onlyoffice_odoo_documents,onlyoffice_odoo_templates"
+      ONLYOFFICE_TEST_LIVE_DOCSERVER: "1"
+      ONLYOFFICE_TEST_DOCSERVER_URL: "http://documentserver/"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create stubs for unavailable addons
+        run: |
+          mkdir -p documents
+          printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          touch documents/__init__.py
+      - name: Wait for Document Server to become ready
+        run: |
+          python3 - <<'PY'
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = "http://documentserver/healthcheck"
+          deadline = time.time() + 180
+          while time.time() < deadline:
+              try:
+                  with urllib.request.urlopen(url, timeout=5) as resp:
+                      if resp.status == 200:
+                          print("Document Server is up")
+                          break
+              except (urllib.error.URLError, OSError) as exc:
+                  print(f"Waiting for Document Server... ({exc})")
+              time.sleep(5)
+          else:
+              raise SystemExit("Document Server did not become healthy in time")
+          PY
+      - name: Install addons and dependencies
+        run: oca_install_addons
+      - name: Initialize test db
+        run: oca_init_test_database
+      - name: Run tests
+        run: oca_run_tests
+
+  # Fills/prints a template using a real Document Server instead of mocks.
+  # Delete this job and onlyoffice_odoo_templates/tests/test_document_server.py to remove it.
+  test-templates-live-docserver:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+        ports:
+          - 5432:5432
+      documentserver:
+        image: onlyoffice/documentserver-de:latest
+        env:
+          JWT_ENABLED: "false"
+        options: >-
+          --health-cmd="curl -f http://localhost/healthcheck || exit 1"
+          --health-interval=15s
+          --health-timeout=10s
+          --health-retries=15
+          --health-start-period=60s
+    env:
+      INCLUDE: "onlyoffice_odoo_templates,hr"
+      EXCLUDE: "onlyoffice_odoo,onlyoffice_odoo_documents"
+      ONLYOFFICE_TEST_LIVE_DOCSERVER: "1"
+      ONLYOFFICE_TEST_DOCSERVER_URL: "http://documentserver/"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create stubs for unavailable addons
+        run: |
+          mkdir -p documents
+          printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          touch documents/__init__.py
+      - name: Wait for Document Server to become ready
+        run: |
+          python3 - <<'PY'
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = "http://documentserver/healthcheck"
+          deadline = time.time() + 180
+          while time.time() < deadline:
+              try:
+                  with urllib.request.urlopen(url, timeout=5) as resp:
+                      if resp.status == 200:
+                          print("Document Server is up")
+                          break
+              except (urllib.error.URLError, OSError) as exc:
+                  print(f"Waiting for Document Server... ({exc})")
+              time.sleep(5)
+          else:
+              raise SystemExit("Document Server did not become healthy in time")
+          PY
+      - name: Install addons and dependencies
+        run: oca_install_addons
+      - name: Initialize test db
+        run: oca_init_test_database
+      - name: Run tests
+        run: oca_run_tests

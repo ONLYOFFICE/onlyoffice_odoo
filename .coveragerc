@@ -1,5 +1,7 @@
 [run]
-source = onlyoffice_odoo
+source =
+    onlyoffice_odoo
+    onlyoffice_odoo_templates
 omit =
     */tests/*
     */__manifest__.py
