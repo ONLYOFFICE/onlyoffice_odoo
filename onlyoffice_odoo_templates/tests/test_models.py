@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from odoo.addons.onlyoffice_odoo.utils import config_constants
+
 # `hr` ships a bundled default template for hr.employee.
 MODEL_NAME = "hr.employee"
 
@@ -23,6 +25,14 @@ class OnlyofficeTemplatesModelTestCase(TransactionCase):
         cls.demo_record = cls.env[MODEL_NAME].search([], limit=1)
         if not cls.demo_record:
             cls.demo_record = cls.env[MODEL_NAME].create({"name": "ONLYOFFICE Test Employee"})
+
+        # Pre-seed the internal JWT secret so `config_utils.get_internal_jwt_secret`
+        # (called by `_render_onlyoffice_pdf`) doesn't lazily generate it and call
+        # `env.cr.commit()` mid-test, which would wipe out this test's own savepoint
+        # and break rollback for this and subsequent tests in the class.
+        cls.env["ir.config_parameter"].sudo().set_param(
+            config_constants.INTERNAL_JWT_SECRET, "test-internal-jwt-secret"
+        )
 
     def setUp(self):
         super().setUp()
