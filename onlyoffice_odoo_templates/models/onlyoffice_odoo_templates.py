@@ -78,6 +78,7 @@ class OnlyOfficeTemplate(models.Model):
                         response = onlyoffice_request(
                             url=converted_result["fileUrl"],
                             method="get",
+                            env=self.env,
                         )
                         new_datas = base64.b64encode(response.content)
                         self.attachment_id.write({"datas": new_datas})
@@ -143,7 +144,7 @@ class OnlyOfficeTemplate(models.Model):
                 raise UserError(_("Failed to download form")) from e
 
         is_pdf_form = None
-        if "file" in vals and vals["file"]:
+        if vals.get("file"):
             try:
                 decode_file = base64.b64decode(vals["file"])
                 is_pdf_form = pdf_utils.is_pdf_form(decode_file)
@@ -198,6 +199,7 @@ class OnlyOfficeTemplate(models.Model):
                     response = onlyoffice_request(
                         url=converted_result["fileUrl"],
                         method="get",
+                        env=self.env,
                     )
                     new_datas = base64.b64encode(response.content)
                     attachment.write({"datas": new_datas, "mimetype": vals.get("mimetype")})
@@ -258,6 +260,7 @@ class OnlyOfficeTemplate(models.Model):
                     "data": json.dumps(payload),
                     "headers": headers,
                 },
+                env=self.env,
             )
             if response.status_code == 200:
                 response_json = response.json()
