@@ -12,11 +12,15 @@ DOCSERVER_URL = os.environ.get("ONLYOFFICE_TEST_DOCSERVER_URL", "http://document
 MODEL_NAME = "hr.employee"
 
 
-@tagged("post_install", "-at_install", "external_docserver")
+@tagged("post_install", "-at_install", "-standard", "external_docserver")
 class TestOnlyofficeTemplatesDocumentServer(HttpCase):
     """Prints a template through a real Document Server (see test_models.py for the mocked version).
 
     Only runs when ONLYOFFICE_TEST_LIVE_DOCSERVER is set (see tests/__init__.py).
+
+    The "-standard" tag is required so Odoo's BaseCase does not patch
+    requests.Session.send to block external HTTP calls: this test
+    deliberately hits a real Document Server over the network.
     """
 
     @classmethod
