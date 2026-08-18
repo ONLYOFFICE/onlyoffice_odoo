@@ -4,6 +4,7 @@
 
 ## Added
 
+- converting documents to other formats
 - desktop editor support
 
 ## Fixed
