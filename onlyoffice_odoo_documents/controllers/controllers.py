@@ -30,34 +30,6 @@ from odoo.addons.onlyoffice_odoo.utils import (
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
-_ROLE_ACTION_REQUIREMENTS = {
-    "commenter": "comment",
-    "custom_filter": "customfilter",
-    "editor": "edit",
-    "form_filling": "fill",
-    "reviewer": "review",
-}
-
-_ROLE_FALLBACK = {
-    "commenter": "viewer",
-    "custom_filter": "editor",
-    "editor": "viewer",
-    "form_filling": "viewer",
-    "reviewer": "viewer",
-}
-
-
-def _adapt_role_to_format(role, target_actions):
-    """Downgrade a share role to one supported by the target format's actions."""
-    if role in ("none", "viewer"):
-        return role
-
-    required_action = _ROLE_ACTION_REQUIREMENTS.get(role)
-    if required_action and required_action not in target_actions:
-        return _adapt_role_to_format(_ROLE_FALLBACK.get(role, "viewer"), target_actions)
-
-    return role
-
 
 def _get_document_share_role(document):
     """Resolve the effective ONLYOFFICE sharing role of the current user on a document.
@@ -232,40 +204,8 @@ class OnlyofficeDocuments_Connector(http.Controller):
                         "mimetype": file_utils.get_mime_by_ext(target_format)
                         or (guess_type(new_name)[0] or "application/octet-stream"),
                         "folder_id": document.folder_id.id,
-                        "partner_id": document.partner_id.id,
-                        "owner_id": document.owner_id.id,
-                        "tag_ids": [(6, 0, document.tag_ids.ids)],
                     }
                 )
-
-                target_actions = []
-                for supported_format in format_utils.get_supported_formats():
-                    if supported_format.name == target_format:
-                        target_actions = supported_format.actions
-                        break
-
-                access = request.env["onlyoffice.odoo.documents.access"].search(
-                    [("document_id", "=", document.id)], limit=1
-                )
-                if access:
-                    request.env["onlyoffice.odoo.documents.access"].create(
-                        {
-                            "document_id": new_document.id,
-                            "internal_users": _adapt_role_to_format(access.internal_users, target_actions),
-                            "link_access": _adapt_role_to_format(access.link_access, target_actions),
-                        }
-                    )
-
-                for user_access in request.env["onlyoffice.odoo.documents.access.user"].search(
-                    [("document_id", "=", document.id)]
-                ):
-                    request.env["onlyoffice.odoo.documents.access.user"].create(
-                        {
-                            "document_id": new_document.id,
-                            "user_id": user_access.user_id.id,
-                            "role": _adapt_role_to_format(user_access.role, target_actions),
-                        }
-                    )
 
                 result["saved"] = True
                 result["document_id"] = new_document.id
