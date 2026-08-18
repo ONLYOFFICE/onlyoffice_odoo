@@ -106,7 +106,7 @@ class IrActionsReport(models.Model):
                 try:
                     templates = self.fill_template(oo_security_token, [res_id], self.onlyoffice_template_id)
                     url = next(iter(templates.values()))
-                    response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
+                    response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get", env=self.env)
                     if response.status_code == 200:
                         collected_streams[res_id]["stream"] = io.BytesIO(response.content)
                 except Exception as e:
@@ -171,9 +171,6 @@ class IrActionsReport(models.Model):
                 else:
                     _logger.info("The PDF documents %r are now saved in the database", attachment_names)
 
-        def custom_handle_merge_pdfs_error(error, error_stream):
-            error_record_ids.append(stream_to_ids[error_stream])
-
         stream_to_ids = {v["stream"]: k for k, v in collected_streams.items() if v["stream"]}
         # Merge all streams together for a single record.
         streams_to_merge = list(stream_to_ids.keys())
@@ -182,7 +179,9 @@ class IrActionsReport(models.Model):
         if len(streams_to_merge) == 1:
             pdf_content = streams_to_merge[0].getvalue()
         else:
-            with self._merge_pdfs(streams_to_merge, custom_handle_merge_pdfs_error) as pdf_merged_stream:
+            with self.with_context(
+                custom_error_handler=lambda error_stream: error_record_ids.append(stream_to_ids[error_stream])
+            )._merge_pdfs(streams_to_merge) as pdf_merged_stream:
                 pdf_content = pdf_merged_stream.getvalue()
 
         if error_record_ids:
@@ -251,6 +250,7 @@ class IrActionsReport(models.Model):
                         "json": docbuilder_payload,
                         "headers": docbuilder_headers,
                     },
+                    env=self.env,
                 )
             else:
                 docbuilder_response = onlyoffice_request(
@@ -259,6 +259,7 @@ class IrActionsReport(models.Model):
                     opts={
                         "json": docbuilder_payload,
                     },
+                    env=self.env,
                 )
             docbuilder_json = docbuilder_response.json()
             if docbuilder_json.get("error"):

@@ -14,7 +14,7 @@ from odoo.modules import get_module_path
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
-from odoo.addons.onlyoffice_odoo_templates.utils import pdf_utils
+from odoo.addons.onlyoffice_odoo_templates.utils import keys_utils, pdf_utils
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +32,12 @@ class OnlyOfficeTemplate(models.Model):
     hide_file_field = fields.Boolean(string="Hide File Field", default=False)  # pylint: disable=attribute-string-redundant
     attachment_id = fields.Many2one("ir.attachment", readonly=True)
     mimetype = fields.Char(default="application/pdf")
-    # Cached PDF Form field keys for the template PDF. The keys depend only on the
-    # attachment contents (not on the records being filled), so we cache them to
-    # avoid an extra synchronous docbuilder round-trip on every fill. Stored as
-    # JSON {"checksum": <attachment.checksum>, "keys": [...]} so the cache is
-    # transparently invalidated whenever the underlying PDF changes.
+    # Cached PDF Form field keys for the template PDF, stored as a JSON list.
+    # The keys depend only on the attachment contents (not on the records
+    # being filled), so they are eagerly (re)computed and cached here whenever
+    # the underlying PDF changes -- see IrAttachment.write/create overrides in
+    # ir_attachment.py, which call ``_update_field_keys`` below. This avoids
+    # an extra synchronous docbuilder round-trip on every fill.
     field_keys = fields.Text(string="Cached form field keys", readonly=True, copy=False)
     report_id = fields.Many2one("ir.actions.report", string="Related Report", copy=False)
 
@@ -77,6 +78,7 @@ class OnlyOfficeTemplate(models.Model):
                         response = onlyoffice_request(
                             url=converted_result["fileUrl"],
                             method="get",
+                            env=self.env,
                         )
                         new_datas = base64.b64encode(response.content)
                         self.attachment_id.write({"datas": new_datas})
@@ -142,7 +144,7 @@ class OnlyOfficeTemplate(models.Model):
                 raise UserError(_("Failed to download form")) from e
 
         is_pdf_form = None
-        if "file" in vals and vals["file"]:
+        if vals.get("file"):
             try:
                 decode_file = base64.b64decode(vals["file"])
                 is_pdf_form = pdf_utils.is_pdf_form(decode_file)
@@ -197,6 +199,7 @@ class OnlyOfficeTemplate(models.Model):
                     response = onlyoffice_request(
                         url=converted_result["fileUrl"],
                         method="get",
+                        env=self.env,
                     )
                     new_datas = base64.b64encode(response.content)
                     attachment.write({"datas": new_datas, "mimetype": vals.get("mimetype")})
@@ -257,6 +260,7 @@ class OnlyOfficeTemplate(models.Model):
                     "data": json.dumps(payload),
                     "headers": headers,
                 },
+                env=self.env,
             )
             if response.status_code == 200:
                 response_json = response.json()
@@ -277,6 +281,47 @@ class OnlyOfficeTemplate(models.Model):
                 "error": 1,
                 "message": "Document conversion service cannot be reached",
             }
+
+    def _update_field_keys(self, attachment=None):
+        """Refresh the cached OFORM field keys for this template.
+
+        Called by ``IrAttachment.create``/``write`` (see ir_attachment.py)
+        whenever the template's PDF attachment is created or its content
+        changes -- covers new uploads, re-uploads, form conversion, and
+        ONLYOFFICE editor saves. Only PDF forms have fillable fields, so a
+        non-form PDF simply clears the cache instead of querying docbuilder.
+        """
+        self.ensure_one()
+        attachment = attachment or self.attachment_id
+        if not attachment or not attachment.datas:
+            self.sudo().write({"field_keys": False})
+            return
+
+        try:
+            content = base64.b64decode(attachment.datas)
+        except Exception as e:
+            logger.warning("_update_field_keys - invalid attachment data for template %s: %s", self.id, str(e))
+            self.sudo().write({"field_keys": False})
+            return
+
+        if not pdf_utils.is_pdf_form(content):
+            self.sudo().write({"field_keys": False})
+            return
+
+        try:
+            keys = self._fetch_field_keys(attachment.id)
+            self.sudo().write({"field_keys": json.dumps(keys)})
+            logger.info("_update_field_keys - cached %s keys for template %s", len(keys), self.id)
+        except Exception as e:
+            logger.warning("_update_field_keys - failed to fetch keys for template %s: %s", self.id, str(e))
+
+    def _fetch_field_keys(self, attachment_id):
+        internal_jwt_secret = config_utils.get_internal_jwt_secret(self.env)
+        oo_security_token = jwt_utils.encode_payload(self.env, {"id": self.env.user.id}, internal_jwt_secret)
+        oo_security_token = (
+            oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
+        )
+        return keys_utils.fetch_field_keys(self.env, attachment_id, oo_security_token)
 
     def _get_conversion_error_message(self, error_code):
         error_dictionary = {

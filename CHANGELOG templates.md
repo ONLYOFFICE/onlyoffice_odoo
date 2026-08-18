@@ -4,7 +4,7 @@
 
 ## Fixed
 
-- cache template form field keys to avoid an extra docbuilder round-trip on every fill
+- cache template form field keys when loading/editing a template
 
 ## 3.4.2
 
