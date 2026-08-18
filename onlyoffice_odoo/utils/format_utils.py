@@ -4,13 +4,6 @@
 import json
 import os
 
-import markupsafe
-
-
-def to_script_json(data):
-    # Escape "<" so "</script>" in user data can't close the surrounding <script> tag (XSS).
-    return markupsafe.Markup(json.dumps(data).replace("<", "\\u003c"))
-
 
 class Format:
     def __init__(self, name, fmt_type, actions=None, convert=None, mime=None):

@@ -18,8 +18,9 @@ from werkzeug.exceptions import Forbidden
 from odoo import _, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
+from odoo.tools.json import scriptsafe
 
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, format_utils, jwt_utils, url_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
@@ -190,8 +191,8 @@ class OnlyofficeConnector(http.Controller):
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
         values = self.prepare_editor_values(attachment, access_token, can_write)
-        values["editorConfig"] = format_utils.to_script_json(values["editorConfig"])
-        values["session_info"] = format_utils.to_script_json(values["session_info"])
+        values["editorConfig"] = scriptsafe.dumps(values["editorConfig"])
+        values["session_info"] = scriptsafe.dumps(values["session_info"])
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
@@ -511,8 +512,8 @@ class OnlyofficeConnector(http.Controller):
                 "docTitle": title,
                 "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
                 "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
-                "editorConfig": format_utils.to_script_json(root_config),
-                "session_info": format_utils.to_script_json(session_info),
+                "editorConfig": scriptsafe.dumps(root_config),
+                "session_info": scriptsafe.dumps(session_info),
             },
         )
 
