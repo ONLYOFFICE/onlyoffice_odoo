@@ -5,6 +5,7 @@
 ## Fixed
 
 - cache template form field keys when loading/editing a template
+- unauthenticated access
 
 ## 2.4.2
 
