@@ -1,10 +1,14 @@
 # Change Log
 
+##
+
+## Added
+- converting documents to other formats
+
 ## 4.3.1
 
 ## Added
 
-- converting documents to other formats
 - desktop editor support
 
 ## Fixed
