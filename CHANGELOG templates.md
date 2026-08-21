@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+## Fixed
+
+- unauthorized local file access
+
 ## 3.4.2
 
 ## Added

@@ -18,8 +18,8 @@
         "views/onlyoffice_menu_views.xml",
         "views/res_config_settings_views.xml",
         "views/ir_actions_report_views.xml",
+        "data/templates_data.xml",
     ],
-    "demo": ["data/templates_data.xml"],
     "images": [
         "static/description/main_screenshot.png",
         "static/description/create_templates.png",
