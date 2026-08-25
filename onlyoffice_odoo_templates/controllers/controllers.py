@@ -473,14 +473,14 @@ class OnlyofficeTemplate_Connector(http.Controller):
         logger.info("get_user_from_token - user: %s", user.name)
         return user
 
-    @http.route("/onlyoffice/template/documents/check", auth="user", type="json")
+    @http.route("/onlyoffice/template/documents/check", auth="user", type="jsonrpc")
     def check_documents_module(self):
         """Check if the documents module is installed."""
         return bool(
             request.env["ir.module.module"].sudo().search([("name", "=", "documents"), ("state", "=", "installed")])
         )
 
-    @http.route("/onlyoffice/template/documents/folders", auth="user", type="json")
+    @http.route("/onlyoffice/template/documents/folders", auth="user", type="jsonrpc")
     def get_documents_folders(self):
         """Get folders available to the current user from the Documents module."""
         try:
@@ -505,7 +505,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         result.sort(key=lambda f: f["display_name"])
         return result
 
-    @http.route("/onlyoffice/template/documents/save", auth="user", type="json")
+    @http.route("/onlyoffice/template/documents/save", auth="user", type="jsonrpc")
     def save_to_documents(self, template_id, record_ids, folder_id):
         """Fill template and save the result to the specified Documents folder."""
         logger.info(
