@@ -9,7 +9,7 @@ from urllib.parse import quote
 from PIL import Image
 
 from odoo import _, api, fields, models
-from odoo.exceptions import AccessError, RedirectWarning
+from odoo.exceptions import AccessError, RedirectWarning, UserError
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
@@ -103,14 +103,31 @@ class IrActionsReport(models.Model):
             oo_security_token = jwt_utils.encode_payload(self.env, {"id": self.env.user.id}, internal_jwt_secret)
 
             for res_id in all_res_ids_wo_stream:
+                # A record whose document cannot be generated must not be dropped in
+                # silence: its stream stays empty and the record simply disappears
+                # from the output, so printing five records can yield four with no
+                # error anywhere, and nothing distinguishes a missing document from
+                # one that was never meant to be there.
                 try:
                     templates = self.fill_template(oo_security_token, [res_id], self.onlyoffice_template_id)
-                    url = next(iter(templates.values()))
+                    url = next(iter(templates.values()), None)
+                    if not url:
+                        raise ValueError("the document generation service returned no document")
                     response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get", env=self.env)
-                    if response.status_code == 200:
-                        collected_streams[res_id]["stream"] = io.BytesIO(response.content)
+                    if response.status_code != 200:
+                        raise ValueError(f"downloading the generated document failed with HTTP {response.status_code}")
+                    collected_streams[res_id]["stream"] = io.BytesIO(response.content)
                 except Exception as e:
-                    _logger.warning(e)
+                    _logger.exception("ONLYOFFICE render failed for %s(%s)", report_sudo.model, res_id)
+                    record = self.env[report_sudo.model].browse(res_id)
+                    raise UserError(
+                        _(
+                            "The document %(report)s could not be generated for %(record)s: %(error)s",
+                            report=report_sudo.name,
+                            record=record.display_name or res_id,
+                            error=e,
+                        )
+                    ) from e
 
             # # Printing a PDF report without any records. The content could be returned directly.
             # if has_duplicated_ids or not res_ids:
