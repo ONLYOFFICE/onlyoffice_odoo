@@ -193,6 +193,7 @@ class OnlyOfficeTemplate(models.Model):
                         response = onlyoffice_request(
                             url=converted_result["fileUrl"],
                             method="get",
+                            env=self.env,
                         )
                         new_datas = base64.b64encode(response.content)
                         attachment.write({"datas": new_datas, "mimetype": vals_copy.get("mimetype")})
