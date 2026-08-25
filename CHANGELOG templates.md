@@ -6,7 +6,7 @@
 
 - cache template form field keys when loading/editing a template
 
-## 2.5.2
+## 3.5.2
 
 ## Fixed
 
