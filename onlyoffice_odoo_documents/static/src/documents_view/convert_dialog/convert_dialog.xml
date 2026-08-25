@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
+<templates xml:space="preserve">
+  <t t-name="onlyoffice_odoo_documents.ConvertDialog" owl="1">
+    <Dialog title="dialogTitle" size="'md'" contentClass="'o-onlyoffice-convert-dialog'" footer="true">
+      <div class="o-onlyoffice-convert-container">
+        <div class="mb-3">
+          <label class="form-label" for="onlyoffice-convert-format">Convert to</label>
+          <select id="onlyoffice-convert-format" class="form-select" t-on-change="onFormatChange">
+            <t t-foreach="state.formats" t-as="format" t-key="format">
+              <option t-att-value="format" t-esc="format.toUpperCase()" />
+            </t>
+          </select>
+        </div>
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="onlyoffice-convert-save"
+            t-att-checked="state.saveToDocuments"
+            t-on-change="onSaveToDocumentsChange"
+          />
+          <label class="form-check-label" for="onlyoffice-convert-save">
+            Save to Documents
+          </label>
+        </div>
+      </div>
+      <t t-set-slot="footer">
+        <button
+          class="btn btn-primary o-onlyoffice-convert-ok-button"
+          t-att-disabled="confirmDisabled"
+          t-on-click="onConvert"
+        >
+          <t t-if="state.converting">Converting...</t>
+          <t t-else="">Convert</t>
+        </button>
+        <button class="btn btn-secondary" t-on-click="() => props.close()">
+          Cancel
+        </button>
+      </t>
+    </Dialog>
+  </t>
+</templates>

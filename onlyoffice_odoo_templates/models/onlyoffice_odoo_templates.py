@@ -6,13 +6,12 @@ import base64
 import json
 import logging
 import os
-import time
 
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, conversion_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import keys_utils, pdf_utils
 
 logger = logging.getLogger(__name__)
@@ -215,59 +214,30 @@ class OnlyOfficeTemplate(models.Model):
             oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
         )
 
-        key = int(time.time())
-        conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={key}")
-
-        payload = {
-            "url": f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}",
-            "key": key,
-            "filetype": "pdf",
-            "outputtype": "pdf",
-            "pdf": {
-                "form": True,
-            },
-        }
-
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
-
-        if bool(jwt_secret):
-            payload = {"payload": payload}
-            token = jwt_utils.encode_payload(self.env, payload, jwt_secret)
-            headers[jwt_header] = "Bearer " + token
-            payload["token"] = token
+        source_url = f"{odoo_url}onlyoffice/template/download/{attachment.id}?oo_security_token={oo_security_token}"
+        body_json = conversion_utils.build_conversion_body(
+            source_url, "pdf", "pdf", extra_options={"pdf": {"form": True}}
+        )
+        conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={body_json['key']}")
+        body_json, headers = conversion_utils.sign_conversion_request(self.env, body_json, jwt_secret, jwt_header)
 
         try:
             response = onlyoffice_request(
                 url=conversion_url,
                 method="post",
                 opts={
-                    "data": json.dumps(payload),
+                    "data": json.dumps(body_json),
                     "headers": headers,
                 },
                 env=self.env,
             )
-            if response.status_code == 200:
-                response_json = response.json()
-                if "error" in response_json:
-                    return {
-                        "error": response_json.get("error"),
-                        "message": self._get_conversion_error_message(response_json.get("error")),
-                    }
-                else:
-                    return response_json
-            else:
-                return {
-                    "error": response.status_code,
-                    "message": f"Document conversion service returned status {response.status_code}",
-                }
         except Exception:
             return {
                 "error": 1,
                 "message": "Document conversion service cannot be reached",
             }
+
+        return conversion_utils.parse_conversion_response(response)
 
     def _update_field_keys(self, attachment=None):
         """Refresh the cached OFORM field keys for this template.
