@@ -1,10 +1,10 @@
 # Change Log
 
-## Unreleased
+## 2.5.2
 
 ## Fixed
 
-- unauthorized local file access
+- Unauthorized access to local files
 
 ## 2.4.2
 
