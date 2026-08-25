@@ -10,7 +10,6 @@ import time
 
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
-from odoo.modules import get_module_path
 
 from odoo.addons.onlyoffice_odoo.controllers.controllers import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
@@ -83,42 +82,30 @@ class OnlyOfficeTemplate(models.Model):
 
     @api.model
     def _create_demo_data(self):
-        module_path = get_module_path(self._module)
-        templates_dir = os.path.join(module_path, "data", "templates")
-        if not os.path.exists(templates_dir):
-            return
+        demo_templates = self.env["onlyoffice.odoo.demo.templates"]
+        structure = demo_templates._get_template_structure()
 
-        model_folders = [name for name in os.listdir(templates_dir) if os.path.isdir(os.path.join(templates_dir, name))]
+        for model_name, model_data in structure.items():
+            model = self.env["ir.model"].search([("model", "=", model_name)], limit=1)
+            if not model:
+                continue
 
-        installed_models = self.env["ir.model"].search([])
-        installed_models_list = [(model.model, model.name) for model in installed_models]
+            for file_info in model_data["files"]:
+                name = os.path.splitext(file_info["name"])[0]
 
-        for model_name in model_folders:
-            if any(model_name == model[0] for model in installed_models_list):
-                templates_path = os.path.join(templates_dir, model_name)
-                templates_name = [
-                    name
-                    for name in os.listdir(templates_path)
-                    if os.path.isfile(os.path.join(templates_path, name)) and name.lower().endswith(".pdf")
-                ]
-                for template_name in templates_name:
-                    template_path = os.path.join(templates_path, template_name)
-                    template = open(template_path, "rb")
-                    try:
-                        template_data = template.read()
-                        template_data = base64.encodebytes(template_data)
-                        model = self.env["ir.model"].search([("model", "=", model_name)], limit=1)
-                        name = template_name.rstrip(".pdf")
-                        self.create(
-                            {
-                                "name": name,
-                                "template_model_id": model.id,
-                                "file": template_data,
-                            }
-                        )
-                    finally:
-                        template.close()
-        return
+                try:
+                    content = demo_templates.get_template_content(file_info["path"])
+                except (ValueError, FileNotFoundError, OSError) as e:
+                    logger.error("Failed to process template %s: %s", file_info["path"], str(e))
+                    continue
+
+                self.create(
+                    {
+                        "name": name,
+                        "template_model_id": model.id,
+                        "file": base64.encodebytes(content),
+                    }
+                )
 
     @api.model
     def create(self, vals):
