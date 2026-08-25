@@ -1,11 +1,16 @@
 # Change Log
 
-##
+## Unreleased
 
 ## Fixed
 
 - cache template form field keys when loading/editing a template
-- unauthenticated access
+
+## 2.5.2
+
+## Fixed
+
+- Unauthorized access to local files
 
 ## 2.4.2
 
