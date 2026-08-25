@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 4.5.2
 
 ## Fixed
 

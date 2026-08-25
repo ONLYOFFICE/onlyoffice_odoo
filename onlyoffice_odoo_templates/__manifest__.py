@@ -7,7 +7,7 @@
     "author": "ONLYOFFICE, Data Dance s.r.o.",
     "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
-    "version": "4.4.2",
+    "version": "4.5.2",
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
     "depends": ["base", "onlyoffice_odoo", "web"],
