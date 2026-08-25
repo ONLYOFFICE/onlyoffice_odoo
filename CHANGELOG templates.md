@@ -1,5 +1,11 @@
 # Change Log
 
+## 4.5.2
+
+## Fixed
+
+- Unauthorized access to local files
+
 ## 4.4.2
 
 ## Added
