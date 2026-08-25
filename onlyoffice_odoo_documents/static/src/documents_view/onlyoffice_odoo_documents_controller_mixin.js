@@ -4,6 +4,7 @@
 import { onWillStart } from "@odoo/owl"
 import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
+import { ConvertDialog } from "./convert_dialog/convert_dialog"
 import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"
 
 export const OnlyofficeDocumentsControllerMixin = () => ({
@@ -100,5 +101,19 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       return this.onlyofficeCanEdit(ext) || this.onlyofficeCanView(ext)
     }
     return false
+  },
+
+  async onClickConvert() {
+    const selection = this.env.model.root.selection.filter((rec) => rec._values.type !== "empty")
+    if (selection.length !== 1) {
+      this.notification.add(_t("Please select exactly one document to convert"), { type: "warning" })
+      return
+    }
+    const record = selection[0]
+    this.dialogService.add(ConvertDialog, {
+      documentId: record.resId,
+      filename: record.data.display_name || record.data.name,
+      model: this.env.model,
+    })
   },
 })

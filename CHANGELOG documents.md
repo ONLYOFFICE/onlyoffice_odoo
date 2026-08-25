@@ -1,5 +1,10 @@
 # Change Log
 
+##
+
+## Added
+- converting documents to other formats
+
 ## 6.3.1
 
 ## Added

@@ -2,6 +2,7 @@
 import base64
 import json
 import logging
+import os
 import re
 from mimetypes import guess_type
 from urllib.request import urlopen
@@ -16,11 +17,59 @@ from odoo.tools.json import scriptsafe
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
-from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
+from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector, onlyoffice_request
+from odoo.addons.onlyoffice_odoo.utils import (
+    config_utils,
+    conversion_utils,
+    file_utils,
+    format_utils,
+    jwt_utils,
+    url_utils,
+)
 
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
+
+
+def _get_document_share_role(document):
+    """Resolve the effective ONLYOFFICE sharing role of the current user on a document.
+
+    Mirrors the resolution order used by OnlyofficeConnector.get_documents_permissions
+    so conversion access matches editor/view access.
+    """
+    if document.owner_id.id == request.env.user.id:
+        return "editor"
+
+    access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
+        [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+    )
+    if access_user:
+        return access_user.role
+
+    access = request.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
+    if access:
+        return access.internal_users
+
+    return "viewer"  # default role for internal users, consistent with get_documents_permissions
+
+
+def _validate_document_for_convert(document, save_to_documents):
+    """Validate access rights for converting a document, returning an error message or None."""
+    try:
+        document.check_access_rule("read")
+    except AccessError:
+        return _("You do not have access to this document")
+
+    if document.is_locked and document.lock_uid.id != request.env.user.id:
+        return _("This document is locked by another user")
+
+    if _get_document_share_role(document) == "none":
+        return _("You do not have access to this document")
+
+    if save_to_documents and not document.folder_id.has_write_access:
+        return _("You do not have permission to create documents in this workspace")
+
+    return None
 
 
 class OnlyofficeDocuments_Connector(http.Controller):
@@ -75,8 +124,110 @@ class OnlyofficeDocuments_Connector(http.Controller):
             result["document_id"] = document.id
 
         except Exception as ex:
-            _logger.exception(f"Failed to create document {str(ex)}")
+            _logger.exception(f"Failed to create document {ex!s}")
             result["error"] = _("Failed to create document")
+
+        return json.dumps(result)
+
+    @http.route("/onlyoffice/documents/file/convert", auth="user", methods=["POST"], type="json")
+    def post_file_convert(self, document_id, target_format, save_to_documents=False):
+        result = {"error": None}
+
+        try:
+            document = request.env["documents.document"].browse(int(document_id)).exists()
+            if not document:
+                result["error"] = _("Document not found")
+                return json.dumps(result)
+
+            access_error = _validate_document_for_convert(document, save_to_documents)
+            if access_error:
+                result["error"] = access_error
+                return json.dumps(result)
+
+            attachment = document.attachment_id
+            if not attachment:
+                result["error"] = _("Document has no attachment")
+                return json.dumps(result)
+
+            source_ext = file_utils.get_file_ext(attachment.name)
+            target_format = (target_format or "").lower()
+
+            allowed_formats = []
+            for supported_format in format_utils.get_supported_formats():
+                if supported_format.name == source_ext:
+                    allowed_formats = supported_format.convert
+                    break
+
+            if target_format not in allowed_formats:
+                result["error"] = _("Unsupported target format")
+                return json.dumps(result)
+
+            jwt_header = config_utils.get_jwt_header(request.env)
+            jwt_secret = config_utils.get_jwt_secret(request.env)
+            internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
+            docserver_url = config_utils.get_doc_server_public_url(request.env)
+            docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
+            odoo_url = config_utils.get_base_or_odoo_url(request.env)
+
+            oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
+            oo_security_token = (
+                oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
+            )
+
+            source_url = f"{odoo_url}onlyoffice/file/content/{attachment.id}?oo_security_token={oo_security_token}"
+            region = conversion_utils.get_region(request.env.user.lang)
+            body_json = conversion_utils.build_conversion_body(
+                source_url, source_ext, target_format, extra_options={"async": False}, region=region
+            )
+            conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={body_json['key']}")
+            body_json, headers = conversion_utils.sign_conversion_request(
+                request.env, body_json, jwt_secret, jwt_header
+            )
+
+            response = onlyoffice_request(
+                url=conversion_url,
+                method="post",
+                opts={"data": json.dumps(body_json), "headers": headers},
+            )
+            conversion_result = conversion_utils.parse_conversion_response(response)
+
+            if "error" in conversion_result:
+                _logger.error("Document conversion failed: %s", conversion_result.get("error"))
+                result["error"] = conversion_result.get("message") or _("Document conversion failed")
+                return json.dumps(result)
+
+            file_url = conversion_result.get("fileUrl")
+            if not file_url:
+                result["error"] = _("Conversion service did not return a file")
+                return json.dumps(result)
+
+            file_response = onlyoffice_request(url=file_url, method="get")
+            converted_data = file_response.content
+
+            title = file_utils.get_file_title_without_ext(attachment.name)
+            new_name = f"{title}.{target_format}"
+
+            if save_to_documents:
+                new_document = request.env["documents.document"].create(
+                    {
+                        "name": new_name,
+                        "raw": converted_data,
+                        "mimetype": file_utils.get_mime_by_ext(target_format)
+                        or (guess_type(new_name)[0] or "application/octet-stream"),
+                        "folder_id": document.folder_id.id,
+                    }
+                )
+
+                result["saved"] = True
+                result["document_id"] = new_document.id
+            else:
+                result["saved"] = False
+                result["filename"] = new_name
+                result["data"] = base64.b64encode(converted_data).decode("utf-8")
+
+        except Exception as ex:
+            _logger.exception(f"Failed to convert document {ex!s}")
+            result["error"] = _("Failed to convert document")
 
         return json.dumps(result)
 
@@ -125,7 +276,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         attachment = self.get_attachment(document.attachment_id.id)
         if not attachment:
             _logger.error("Current document has no attachments")
-            raise Forbidden()  # noqa: B904
+            raise Forbidden()
 
         try:
             document.check_access("write")
