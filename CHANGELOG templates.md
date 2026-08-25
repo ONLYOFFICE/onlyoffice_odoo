@@ -4,7 +4,7 @@
 
 ## Fixed
 
-- unauthorized local file access
+- Unauthorized access to local files
 
 ## 3.4.2
 
