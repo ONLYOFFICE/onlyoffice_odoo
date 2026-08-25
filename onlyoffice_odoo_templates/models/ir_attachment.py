@@ -17,16 +17,20 @@ class IrAttachment(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         attachments = super().create(vals_list)
-        self._refresh_template_field_keys(attachments.filtered(lambda a: a.res_model == "onlyoffice.odoo.templates"))
+        to_refresh = self.env["ir.attachment"]
+        if not self.env.context.get("skip_field_keys_refresh"):
+            to_refresh = attachments.filtered(lambda a: a.res_model == "onlyoffice.odoo.templates")
+        if to_refresh:
+            self.env.cr.postcommit.add(lambda: self._refresh_template_field_keys(to_refresh))
         return attachments
 
     def write(self, vals):
         to_refresh = self.env["ir.attachment"]
-        if _CONTENT_FIELDS.intersection(vals.keys()):
+        if _CONTENT_FIELDS.intersection(vals.keys()) and not self.env.context.get("skip_field_keys_refresh"):
             to_refresh = self.filtered(lambda a: a.res_model == "onlyoffice.odoo.templates")
         res = super().write(vals)
         if to_refresh:
-            self._refresh_template_field_keys(to_refresh)
+            self.env.cr.postcommit.add(lambda: self._refresh_template_field_keys(to_refresh))
         return res
 
     def _refresh_template_field_keys(self, attachments):

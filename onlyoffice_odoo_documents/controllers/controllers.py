@@ -6,13 +6,13 @@ import re
 from mimetypes import guess_type
 from urllib.request import urlopen
 
-import markupsafe
 import requests
 from werkzeug.exceptions import Forbidden
 
 from odoo import http
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.tools.json import scriptsafe
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
@@ -91,12 +91,12 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
                 raise request.not_found()
 
             values = self.prepare_share_editor(document, access_token, folder_token=folder_token)
-            values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+            values["editorConfig"] = scriptsafe.dumps(values["editorConfig"])
             try:
                 session_info = request.env["ir.http"].get_frontend_session_info()
             except Exception:
                 session_info = {}
-            values["session_info"] = markupsafe.Markup(json.dumps(session_info))
+            values["session_info"] = scriptsafe.dumps(session_info)
             return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
         except Exception as ex:
@@ -107,8 +107,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
         values = self.prepare_document_editor(document_id, access_token)
-        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
-        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        values["editorConfig"] = scriptsafe.dumps(values["editorConfig"])
+        values["session_info"] = scriptsafe.dumps(values["session_info"])
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     def prepare_document_editor(self, document_id, access_token):
