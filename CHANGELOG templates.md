@@ -1,10 +1,16 @@
 # Change Log
 
-##
+## Unreleased
 
 ## Fixed
 
-- cache template form field keys to avoid an extra docbuilder round-trip on every fill
+- cache template form field keys when loading/editing a template
+
+## 3.5.2
+
+## Fixed
+
+- Unauthorized access to local files
 
 ## 4.4.2
 

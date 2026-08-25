@@ -1,6 +1,5 @@
 # Copyright (C) 2026 Ascensio System SIA
 import base64
-import codecs
 import io
 import json
 import logging
@@ -19,6 +18,7 @@ from odoo.tools import (
 from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector, onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
+from odoo.addons.onlyoffice_odoo_templates.utils import keys_utils
 
 logger = logging.getLogger(__name__)
 
@@ -265,82 +265,34 @@ class OnlyofficeTemplate_Connector(http.Controller):
             return request.not_found()
 
     def _get_cached_keys(self, template, oo_security_token):
-        """Return the template's PDF Form field keys, using the value cached on the
-        template when it is still valid.
+        """Return the template's PDF Form field keys.
 
-        The keys are derived solely from the template PDF, so we key the cache on
-        the attachment checksum: when the PDF changes (re-upload, conversion,
-        editor save) the checksum changes and the keys are recomputed. Reusing the
-        cache avoids the synchronous docbuilder round-trip in ``get_keys`` that
-        would otherwise pin an additional HTTP worker for the whole fill.
+        The keys are eagerly computed and cached on ``template.field_keys``
+        whenever the underlying PDF changes -- see the ``IrAttachment``
+        create/write overrides in ``onlyoffice_odoo_templates.models.ir_attachment``,
+        which call ``OnlyOfficeTemplate._update_field_keys``. This method just
+        reads that cache, falling back to an on-demand docbuilder round-trip
+        only if it is empty or corrupt (e.g. a template created before this
+        caching was introduced).
         """
-        checksum = template.attachment_id.checksum
         if template.field_keys:
             try:
-                cached = json.loads(template.field_keys)
-            except (ValueError, TypeError):
-                cached = None
-            if cached and cached.get("checksum") == checksum:
                 logger.info("_get_cached_keys - cache hit for template %s", template.id)
-                return cached.get("keys")
+                return json.loads(template.field_keys)
+            except (ValueError, TypeError):
+                logger.warning("_get_cached_keys - corrupt cache for template %s, recomputing", template.id)
 
         keys = self.get_keys(template.attachment_id.id, oo_security_token)
-        template.sudo().write({"field_keys": json.dumps({"checksum": checksum, "keys": keys})})
+        template.sudo().write({"field_keys": json.dumps(keys)})
         logger.info("_get_cached_keys - cache refreshed for template %s", template.id)
         return keys
 
     def get_keys(self, attachment_id, oo_security_token):
         logger.info("get_keys - attachment: %s", attachment_id)
-        docserver_url = config_utils.get_doc_server_public_url(request.env)
-        docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
-        docbuilder_url = f"{docserver_url}docbuilder"
-        jwt_header = config_utils.get_jwt_header(request.env)
-        jwt_secret = config_utils.get_jwt_secret(request.env)
-        odoo_url = config_utils.get_base_or_odoo_url(request.env)
-
-        docbuilder_headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        docbuilder_callback_url = f"{odoo_url}onlyoffice/template/callback/docbuilder/get_keys?attachment_id={attachment_id}&oo_security_token={oo_security_token}"  # noqa: E501
-        docbuilder_payload = {"async": False, "url": docbuilder_callback_url}
-
-        if jwt_secret:
-            docbuilder_payload["token"] = jwt_utils.encode_payload(request.env, docbuilder_payload, jwt_secret)
-            docbuilder_headers[jwt_header] = "Bearer " + jwt_utils.encode_payload(
-                request.env, {"payload": docbuilder_payload}, jwt_secret
-            )
-
         try:
-            if jwt_secret:
-                docbuilder_response = onlyoffice_request(
-                    url=docbuilder_url,
-                    method="post",
-                    opts={
-                        "json": docbuilder_payload,
-                        "headers": docbuilder_headers,
-                    },
-                )
-            else:
-                docbuilder_response = onlyoffice_request(
-                    url=docbuilder_url,
-                    method="post",
-                    opts={
-                        "json": docbuilder_payload,
-                    },
-                )
-            docbuilder_json = docbuilder_response.json()
-            if docbuilder_json.get("error"):
-                e = self.get_docbuilder_error(docbuilder_json.get("error"))
-                raise Exception(e)
-
-            urls = docbuilder_json.get("urls")
-            keys_url = urls.get("keys.txt")
-            keys_response = onlyoffice_request(
-                url=keys_url,
-                method="get",
-            )
-            response_content = codecs.decode(keys_response.content, "utf-8-sig")
-
+            keys = keys_utils.fetch_field_keys(request.env, attachment_id, oo_security_token)
             logger.info("get_keys - success")
-            return json.loads(response_content)
+            return keys
         except Exception as e:
             logger.warning("get_keys - error: %s", str(e))
             raise
