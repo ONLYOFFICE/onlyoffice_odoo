@@ -66,7 +66,7 @@ def _validate_document_for_convert(document, save_to_documents):
     if _get_document_share_role(document) == "none":
         return _("You do not have access to this document")
 
-    if save_to_documents and not document.folder_id.has_write_access:
+    if save_to_documents and document.folder_id.user_permission != "edit":
         return _("You do not have permission to create documents in this workspace")
 
     return None
