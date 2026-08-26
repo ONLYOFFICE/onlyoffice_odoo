@@ -41,14 +41,14 @@ def fetch_field_keys(env, attachment_id, oo_security_token):
         )
         opts["headers"] = docbuilder_headers
 
-    docbuilder_response = onlyoffice_request(url=docbuilder_url, method="post", opts=opts)
+    docbuilder_response = onlyoffice_request(url=docbuilder_url, method="post", opts=opts, env=env)
     docbuilder_json = docbuilder_response.json()
     if docbuilder_json.get("error"):
         raise Exception(f"docbuilder error while fetching field keys: {docbuilder_json.get('error')}")
 
     urls = docbuilder_json.get("urls")
     keys_url = urls.get("keys.txt")
-    keys_response = onlyoffice_request(url=keys_url, method="get")
+    keys_response = onlyoffice_request(url=keys_url, method="get", env=env)
     response_content = codecs.decode(keys_response.content, "utf-8-sig")
 
     return json.loads(response_content)

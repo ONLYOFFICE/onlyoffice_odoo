@@ -80,7 +80,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 filename = filename.encode("ascii", "ignore").decode("ascii")
                 if not filename:
                     filename = "document.pdf"
-                response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
+                response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get", env=request.env)
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
@@ -99,7 +99,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 stream = io.BytesIO()
                 with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
                     for filename, url in templates.items():
-                        response = onlyoffice_request(url=url, method="get")
+                        response = onlyoffice_request(url=url, method="get", env=request.env)
                         if response.status_code == 200:
                             archive.writestr(filename, response.content)
                         else:
@@ -160,6 +160,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                         "json": docbuilder_payload,
                         "headers": docbuilder_headers,
                     },
+                    env=request.env,
                 )
             else:
                 docbuilder_response = onlyoffice_request(
@@ -168,6 +169,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                     opts={
                         "json": docbuilder_payload,
                     },
+                    env=request.env,
                 )
             docbuilder_json = docbuilder_response.json()
             if docbuilder_json.get("error"):
@@ -523,7 +525,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         saved_documents = []
 
         for filename, url in templates.items():
-            response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get")
+            response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get", env=request.env)
             if response.status_code == 200:
                 attachment = request.env["ir.attachment"].create(
                     {
