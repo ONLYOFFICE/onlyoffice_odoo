@@ -3,6 +3,7 @@
 
 import { Dialog } from "@web/core/dialog/dialog"
 import { _t } from "@web/core/l10n/translation"
+import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 
 const { Component, useState, onWillStart } = owl
@@ -13,7 +14,7 @@ export class ConvertDialog extends Component {
   static template = "onlyoffice_odoo_documents.ConvertDialog"
 
   setup() {
-    this.rpc = useService("rpc")
+    this.rpc = rpc
     this.notification = useService("notification")
     this.ui = useService("ui")
 

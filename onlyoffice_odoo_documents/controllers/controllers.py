@@ -66,7 +66,7 @@ def _validate_document_for_convert(document, save_to_documents):
     if _get_document_share_role(document) == "none":
         return _("You do not have access to this document")
 
-    if save_to_documents and not document.folder_id.has_write_access:
+    if save_to_documents and document.folder_id.user_permission != "edit":
         return _("You do not have permission to create documents in this workspace")
 
     return None
@@ -188,6 +188,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 url=conversion_url,
                 method="post",
                 opts={"data": json.dumps(body_json), "headers": headers},
+                env=request.env,
             )
             conversion_result = conversion_utils.parse_conversion_response(response)
 
@@ -201,7 +202,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 result["error"] = _("Conversion service did not return a file")
                 return json.dumps(result)
 
-            file_response = onlyoffice_request(url=file_url, method="get")
+            file_response = onlyoffice_request(url=file_url, method="get", env=request.env)
             converted_data = file_response.content
 
             title = file_utils.get_file_title_without_ext(attachment.name)
