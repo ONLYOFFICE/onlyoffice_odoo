@@ -122,6 +122,7 @@ class OnlyOfficeTemplate(models.Model):
                 response = onlyoffice_request(
                     url=url,
                     method="get",
+                    env=self.env,
                 )
 
                 file_content = response.content
