@@ -12,13 +12,13 @@ import time
 from mimetypes import guess_type
 from urllib.request import urlopen
 
-import markupsafe
 import requests
 from werkzeug.exceptions import Forbidden
 
 from odoo import _, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
+from odoo.tools.json import scriptsafe
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
@@ -26,9 +26,19 @@ _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
 
-def onlyoffice_urlopen(url, timeout=120, context=None):
-    url = url_utils.replace_public_url_to_internal(request.env, url)
-    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+def _resolve_env(env):
+    # Allow callers outside of an HTTP request (shell, cron, server actions) to
+    # pass their own ``env``. Fall back to the bound request when not provided so
+    # existing controller call sites keep working unchanged.
+    if env is not None:
+        return env
+    return request.env
+
+
+def onlyoffice_urlopen(url, timeout=120, context=None, env=None):
+    env = _resolve_env(env)
+    url = url_utils.replace_public_url_to_internal(env, url)
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(env)
 
     if cert_verify_disabled and url.startswith("https://"):
         context = context or ssl._create_unverified_context()
@@ -36,10 +46,11 @@ def onlyoffice_urlopen(url, timeout=120, context=None):
     return urlopen(url, timeout=timeout, context=context)
 
 
-def onlyoffice_request(url, method, opts=None):
+def onlyoffice_request(url, method, opts=None, env=None):
+    env = _resolve_env(env)
     _logger.info("External request: %s %s", method.upper(), url)
-    url = url_utils.replace_public_url_to_internal(request.env, url)
-    cert_verify_disabled = config_utils.get_certificate_verify_disabled(request.env)
+    url = url_utils.replace_public_url_to_internal(env, url)
+    cert_verify_disabled = config_utils.get_certificate_verify_disabled(env)
     if opts is None:
         opts = {}
 
@@ -191,8 +202,8 @@ class OnlyofficeConnector(http.Controller):
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
         values = self.prepare_editor_values(attachment, access_token, can_write)
-        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
-        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        values["editorConfig"] = scriptsafe.dumps(values["editorConfig"])
+        values["session_info"] = scriptsafe.dumps(values["session_info"])
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
@@ -512,8 +523,8 @@ class OnlyofficeConnector(http.Controller):
                 "docTitle": title,
                 "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
                 "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
-                "editorConfig": markupsafe.Markup(json.dumps(root_config)),
-                "session_info": markupsafe.Markup(json.dumps(session_info)),
+                "editorConfig": scriptsafe.dumps(root_config),
+                "session_info": scriptsafe.dumps(session_info),
             },
         )
 

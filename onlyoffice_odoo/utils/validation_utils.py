@@ -5,14 +5,13 @@ import json
 import os
 import re
 import ssl
-import time
 from urllib.request import urlopen
 
 import requests
 
 from odoo.exceptions import ValidationError
 
-from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, conversion_utils, jwt_utils
 
 
 def valid_url(url):
@@ -118,44 +117,24 @@ def check_doc_serv_convert_service(env, url, base_url, jwt_secret, jwt_header, d
 
 
 def convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate):
-    key = int(time.time())
-    body_json = {
-        "key": key,
-        "url": file_url,
-        "filetype": "txt",
-        "outputtype": "txt",
-    }
-
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-
-    if bool(jwt_secret):
-        payload = {"payload": body_json}
-        header_token = jwt_utils.encode_payload(env, payload, jwt_secret)
-        headers[jwt_header] = "Bearer " + header_token
-        token = jwt_utils.encode_payload(env, body_json, jwt_secret)
-        body_json["token"] = token
+    body_json = conversion_utils.build_conversion_body(file_url, "txt", "txt")
+    body_json, headers = conversion_utils.sign_conversion_request(env, body_json, jwt_secret, jwt_header)
 
     try:
         response = requests.post(
-            os.path.join(url, "converter", f"?shardkey={key}"),
+            os.path.join(url, "converter", f"?shardkey={body_json['key']}"),
             verify=not disable_certificate,
             timeout=60,
             data=json.dumps(body_json),
             headers=headers,
         )
-
-        if response.status_code == 200:
-            response_json = response.json()
-            if "error" in response_json:
-                return get_conversion_error_message(response_json.get("error"))
-        else:
-            return f"Document conversion service returned status {response.status_code}"
-
     except Exception:
         return "Document conversion service cannot be reached"
+
+    result = conversion_utils.parse_conversion_response(response)
+    if "error" in result:
+        return result["message"]
+    return None
 
 
 def get_message_error(message, demo):
@@ -163,18 +142,3 @@ def get_message_error(message, demo):
         raise ValidationError(f"Error connecting to demo server: {message}")
     else:
         raise ValidationError(message)
-
-
-def get_conversion_error_message(error_code):
-    error_dictionary = {
-        -1: "Unknown error",
-        -2: "Conversion timeout error",
-        -3: "Conversion error",
-        -4: "Error while downloading the document file to be converted",
-        -5: "Incorrect password",
-        -6: "Error while accessing the conversion result database",
-        -7: "Input error",
-        -8: "Invalid token",
-    }
-
-    return error_dictionary.get(error_code, "Undefined error code")

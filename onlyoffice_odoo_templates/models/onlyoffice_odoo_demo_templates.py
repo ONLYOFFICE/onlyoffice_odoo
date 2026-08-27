@@ -4,9 +4,11 @@ import base64
 import json
 import logging
 import os
+from pathlib import Path
 
 from odoo import api, fields, models
 from odoo.modules import get_module_path
+from odoo.tools import file_open
 
 _logger = logging.getLogger(__name__)
 
@@ -66,26 +68,27 @@ class OnlyOfficeDemoTemplate(models.Model):
         selected_templates = json.loads(self.selected_templates or "[]")
         if len(selected_templates) == 0:
             return
-        templates_dir = self._get_templates_dir()
         template_model = self.env["onlyoffice.odoo.templates"]
 
         for template_path in selected_templates:
-            model_name, filename = template_path.split("/")
-            full_path = os.path.join(templates_dir, template_path)
+            try:
+                model_name, filename = template_path.split("/")
+            except ValueError:
+                _logger.error("Invalid template path %s", template_path)
+                continue
 
             try:
-                with open(full_path, "rb") as f:
-                    template_data = base64.b64encode(f.read())
+                content = self.get_template_content(template_path)
 
                 model = self.env["ir.model"].search([("model", "=", model_name)], limit=1)
                 if not model:
                     continue
 
-                template_model.create(
+                template_model.with_context(skip_field_keys_refresh=True).create(
                     {
                         "name": os.path.splitext(filename)[0],
                         "template_model_id": model.id,
-                        "file": template_data,
+                        "file": base64.b64encode(content),
                         "mimetype": "application/pdf",
                     }
                 )
@@ -100,8 +103,16 @@ class OnlyOfficeDemoTemplate(models.Model):
         }
 
     def get_template_content(self, template_path):
-        templates_dir = self._get_templates_dir()
-        file_path = os.path.join(templates_dir, template_path)
+        templates_dir = Path(self._get_templates_dir()).resolve()
 
-        with open(file_path, "rb") as f:
+        # resolve() + relative_to() rejects "..", absolute paths and symlinks
+        # that escape templates_dir in one go, no manual string checks needed.
+        try:
+            relative_path = (templates_dir / template_path).resolve().relative_to(templates_dir)
+        except ValueError as e:
+            raise ValueError("Invalid template path") from e
+
+        # Use Odoo's file_open() for the actual read: extra safety check + extension filter.
+        relative_name = f"{self._module}/data/templates/{relative_path.as_posix()}"
+        with file_open(relative_name, "rb", filter_ext=(".pdf",)) as f:
             return f.read()

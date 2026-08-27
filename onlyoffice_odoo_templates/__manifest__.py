@@ -7,7 +7,7 @@
     "author": "ONLYOFFICE, Data Dance s.r.o.",
     "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
-    "version": "17.0.2.4.2",
+    "version": "17.0.2.5.2",
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
     "depends": ["base", "onlyoffice_odoo", "web"],
@@ -18,8 +18,8 @@
         "views/onlyoffice_menu_views.xml",
         "views/res_config_settings_views.xml",
         "views/ir_actions_report_views.xml",
+        "data/templates_data.xml",
     ],
-    "demo": ["data/templates_data.xml"],
     "images": [
         "static/description/main_screenshot.png",
         "static/description/create_templates.png",

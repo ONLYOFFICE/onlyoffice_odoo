@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
-from odoo.addons.onlyoffice_odoo.utils import validation_utils
+from odoo.addons.onlyoffice_odoo.utils import conversion_utils, validation_utils
 
 
 @tagged("post_install", "-at_install")
@@ -56,21 +56,40 @@ class TestValidationUtils(TransactionCase):
 
     def test_error_message_unknown_error(self):
         """Error code -1 returns 'Unknown error' message."""
-        msg = validation_utils.get_conversion_error_message(-1)
+        msg = conversion_utils.get_conversion_error_message(-1)
         self.assertEqual(msg, "Unknown error")
 
     def test_error_message_undefined_code(self):
         """Unrecognized error code returns the fallback 'Undefined error code' message."""
-        msg = validation_utils.get_conversion_error_message(-99)
+        msg = conversion_utils.get_conversion_error_message(-99)
         self.assertEqual(msg, "Undefined error code")
 
     def test_all_defined_error_codes_return_message(self):
         """Every error code defined by the ONLYOFFICE conversion API returns a non-empty string."""
         defined_codes = [-1, -2, -3, -4, -5, -6, -7, -8]
         for code in defined_codes:
-            msg = validation_utils.get_conversion_error_message(code)
+            msg = conversion_utils.get_conversion_error_message(code)
             self.assertIsInstance(msg, str, f"Code {code} must return a string")
             self.assertTrue(len(msg) > 0, f"Code {code} must return a non-empty message")
+
+    # -- get_region --
+
+    def test_get_region_underscore_lang(self):
+        """Odoo-style underscore lang codes are converted to dash-separated region codes."""
+        self.assertEqual(conversion_utils.get_region("en_US"), "en-US")
+        self.assertEqual(conversion_utils.get_region("fr_FR"), "fr-FR")
+        self.assertEqual(conversion_utils.get_region("pt_BR"), "pt-BR")
+
+    def test_get_region_empty_lang_returns_none(self):
+        """Empty or falsy lang returns None (no region sent to the converter)."""
+        self.assertIsNone(conversion_utils.get_region(""))
+        self.assertIsNone(conversion_utils.get_region(None))
+
+    def test_get_region_invalid_lang_returns_none(self):
+        """Lang codes that don't resolve to a valid 'xx-XX' region return None."""
+        self.assertIsNone(conversion_utils.get_region("es_419"))
+        self.assertIsNone(conversion_utils.get_region("sr@latin"))
+        self.assertIsNone(conversion_utils.get_region("en"))
 
     # -- check_mixed_content --
 
