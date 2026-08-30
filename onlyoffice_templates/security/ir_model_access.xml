@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Rules -->
+        <record id="default_data_model_access_admin" model="ir.model.access">
+            <field name="name">create from template</field>
+            <field name="model_id" ref="onlyoffice_templates.model_ir_attachment_create_templ"/>
+            <field name="group_id" ref="base.group_user" />
+            <field name="perm_read" eval="True" />
+            <field name="perm_write" eval="True" />
+            <field name="perm_create" eval="True" />
+            <field name="perm_unlink" eval="True" />
+        </record>
+
+    </data>
+</odoo>

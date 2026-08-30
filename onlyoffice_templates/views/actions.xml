@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_attachment_templates" model="ir.actions.act_window">
+            <field name="name">Attachment Templates</field>
+            <field name="res_model">ir.attachment</field>
+            <field name="view_id" eval="False"/>
+            <field name="domain">[('is_template', '=', True)]</field>
+            <field name="context">{'default_is_template': True, 'default_type': 'binary'}</field>
+            <field name="search_view_id" ref="base.view_attachment_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new template
+                </p>
+            </field>
+        </record>
+
+        <menuitem action="action_attachment_templates" id="menu_action_attachment_templates" parent="base.next_id_9"/>
+
+
+        <record id="action_create_doc_from_template" model="ir.actions.server">
+            <field name="name">Create doc from template</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="binding_model_id" ref="base.model_res_partner"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.action_create_doc_template()
+            </field>
+        </record>
+
+
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.only_office_templ</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="onlyoffice_odoo.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+               <xpath expr="//block[@name='onlyoffice_odoo']" position="inside">
+                        <setting string="Templates">
+                            <button name="%(onlyoffice_templates.action_attachment_templates)d" icon="oi-arrow-right" type="action" string="Templates" class="btn-link"/>
+                        </setting>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

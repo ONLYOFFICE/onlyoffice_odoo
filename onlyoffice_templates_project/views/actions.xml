@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="action_doc_project_from_template" model="ir.actions.server">
+            <field name="name">Create doc from template</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="binding_model_id" ref="project.model_project_project"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.action_create_doc_template()
+            </field>
+        </record>
+
+        <record id="action_doc_task_from_template" model="ir.actions.server">
+            <field name="name">Create doc from template</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="binding_model_id" ref="project.model_project_task"/>
+            <field name="binding_view_types">form</field>
+            <field name="state">code</field>
+            <field name="code">
+                if records:
+                    action = records.action_create_doc_template()
+            </field>
+        </record>
+        <!-- For tasks we add a button, because it is used regularly -->
+        <record id="task_form_button" model="ir.ui.view">
+          <field name="name">task_form_button_onlyoffice</field>
+          <field name="model">project.task</field>
+          <field name="inherit_id" ref="project.view_task_form2" />
+          <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_create_doc_template" string="OnlyOffice Doc"
+                        type="object" class="oe_highlight"
+                        icon="fa-plus-square-o"
+                />
+            </xpath>
+          </field>
+        </record>
+    </data>
+</odoo>

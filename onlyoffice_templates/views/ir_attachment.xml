@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_attachment_form" model="ir.ui.view">
+            <field name="name">view_attachment_form.only_office_templ</field>
+            <field name="model">ir.attachment</field>
+            <field name="inherit_id" ref="base.view_attachment_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='type']" position="attributes">
+                    <attribute name="invisible">[('is_template','=',True)]</attribute>
+                </xpath>
+                <xpath expr="//group[2]" position="attributes">
+                    <attribute name="invisible">[('is_template','=',True)]</attribute>
+                </xpath>
+                <xpath expr="//group[2]" position="before">
+                    <group string="Template">
+                        <field name="is_template"/>
+                        <field
+                                name="template_model_id"
+                                options="{'no_create': True, 'no_create_edit':True, 'no_open':True}"
+                                help="Set the model to be used. Keep empty when used for any model."
+                        />.
+                        <field name="icon_image" widget="image" class="oe_avatar"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

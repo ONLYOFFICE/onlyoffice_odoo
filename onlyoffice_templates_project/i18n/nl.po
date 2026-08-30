@@ -1,0 +1,46 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* onlyoffice_templates_project
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-04-12 18:10+0000\n"
+"PO-Revision-Date: 2024-04-12 20:11+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#. module: onlyoffice_templates_project
+#. odoo-python
+#: code:addons/onlyoffice_templates_project/models/project.py:0
+#, python-format
+msgid "Create Attachment"
+msgstr "Bijlage maken"
+
+#. module: onlyoffice_templates_project
+#: model:ir.actions.server,name:onlyoffice_templates_project.action_doc_project_from_template
+#: model:ir.actions.server,name:onlyoffice_templates_project.action_doc_task_from_template
+msgid "Create doc from template"
+msgstr "Document maken van sjabloon"
+
+#. module: onlyoffice_templates_project
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates_project.task_form_button
+msgid "OnlyOffice Doc"
+msgstr "OnlyOffice Document"
+
+#. module: onlyoffice_templates_project
+#: model:ir.model,name:onlyoffice_templates_project.model_project_project
+msgid "Project"
+msgstr "Project/contract"
+
+#. module: onlyoffice_templates_project
+#: model:ir.model,name:onlyoffice_templates_project.model_project_task
+msgid "Task"
+msgstr "Taak"

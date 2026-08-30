@@ -1,0 +1,145 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* onlyoffice_templates
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 17.0+e\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-04-12 18:05+0000\n"
+"PO-Revision-Date: 2024-04-12 20:07+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#. module: onlyoffice_templates
+#: model:ir.model,name:onlyoffice_templates.model_ir_attachment
+msgid "Attachment"
+msgstr "Bijlage"
+
+#. module: onlyoffice_templates
+#: model:ir.actions.act_window,name:onlyoffice_templates.action_attachment_templates
+#: model:ir.ui.menu,name:onlyoffice_templates.menu_action_attachment_templates
+msgid "Attachment Templates"
+msgstr "Bijlage Sjablonen"
+
+#. module: onlyoffice_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates.attachment_copy_form
+msgid "Cancel"
+msgstr "Annuleren"
+
+#. module: onlyoffice_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates.attachment_copy_form
+msgid "Choose template"
+msgstr "Kies sjabloon"
+
+#. module: onlyoffice_templates
+#: model:ir.model,name:onlyoffice_templates.model_res_partner
+msgid "Contact"
+msgstr "Relatie"
+
+#. module: onlyoffice_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates.attachment_copy_form
+msgid "Create"
+msgstr "Aanmaken"
+
+#. module: onlyoffice_templates
+#. odoo-python
+#: code:addons/onlyoffice_templates/models/res_partner.py:0
+#, python-format
+msgid "Create Attachment"
+msgstr "Bijlage maken"
+
+#. module: onlyoffice_templates
+#: model_terms:ir.actions.act_window,help:onlyoffice_templates.action_attachment_templates
+msgid "Create a new template"
+msgstr "Nieuw sjabloon aanmaken"
+
+#. module: onlyoffice_templates
+#: model:ir.actions.server,name:onlyoffice_templates.action_account_invoice_from_list
+msgid "Create doc from template"
+msgstr "Documenten maken van sjabloon"
+
+#. module: onlyoffice_templates
+#: model:ir.model,name:onlyoffice_templates.model_ir_attachment_create_templ
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates.attachment_copy_form
+msgid "Create from template"
+msgstr "Creëer met sjabloon"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__create_uid
+msgid "Created by"
+msgstr "Aangemaakt door"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__create_date
+msgid "Created on"
+msgstr "Aangemaakt op"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__display_name
+msgid "Display Name"
+msgstr "Weergavenaam"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__id
+msgid "ID"
+msgstr "ID"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment__is_template
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_product_document__is_template
+msgid "Is a template"
+msgstr "Is een sjabloon"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__write_uid
+msgid "Last Updated by"
+msgstr "Laatst bijgewerkt door"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__write_date
+msgid "Last Updated on"
+msgstr "Laatst bijgewerkt op"
+
+#. module: onlyoffice_templates
+#. odoo-python
+#: code:addons/onlyoffice_templates/wizard/attachment_from_template.py:0
+#, python-format
+msgid "No record selected to add the document!"
+msgstr "Geen record geselecteerd om het document toe te voegen!"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment__icon_image
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__icon_image
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_product_document__icon_image
+msgid "Preview"
+msgstr "Voorbeeld"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__res_id
+msgid "Resource ID"
+msgstr "Resource-ID"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__res_model
+msgid "Resource Model"
+msgstr "Model in Odoo"
+
+#. module: onlyoffice_templates
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment__template_id
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_ir_attachment_create_templ__template_id
+#: model:ir.model.fields,field_description:onlyoffice_templates.field_product_document__template_id
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates.view_attachment_form
+msgid "Template"
+msgstr "Sjabloon"
+
+#. module: onlyoffice_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_templates.res_config_settings_view_form
+msgid "Templates"
+msgstr "Sjablonen"
