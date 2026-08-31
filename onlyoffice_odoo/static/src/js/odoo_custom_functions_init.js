@@ -60,7 +60,8 @@
          * @returns {string} The value from the list.
          */
         async function ODOO_LIST(listId, index, fieldName) {
-          var formula = "=ODOO_LIST(" + listId + "," + index + ',"' + fieldName + '")'
+          var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var formula = "=ODOO_LIST(" + listId + "," + index + ',"' + escapedFieldName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
               formula: formula,
@@ -113,7 +114,8 @@
          * @returns {string} The header value.
          */
         async function ODOO_LIST_HEADER(listId, fieldName) {
-          var formula = "=ODOO_LIST_HEADER(" + listId + ',"' + fieldName + '")'
+          var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var formula = "=ODOO_LIST_HEADER(" + listId + ',"' + escapedFieldName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
               formula: formula,
@@ -215,7 +217,7 @@
               break
             }
             var a = arguments[i]
-            parts.push(typeof a === "string" ? '"' + a + '"' : a)
+            parts.push(typeof a === "string" ? '"' + a.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"' : a)
           }
           var formula = "=ODOO_PIVOT(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
@@ -317,7 +319,7 @@
               break
             }
             var a = arguments[i]
-            parts.push(typeof a === "string" ? '"' + a + '"' : a)
+            parts.push(typeof a === "string" ? '"' + a.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"' : a)
           }
           var formula = "=ODOO_PIVOT_HEADER(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
@@ -452,7 +454,8 @@
           if (filterName in filterValues) {
             return filterValues[filterName]
           }
-          var formula = '=ODOO_FILTER_VALUE("' + filterName + '")'
+          var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var formula = '=ODOO_FILTER_VALUE("' + escapedFilterName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
               formula: formula,
@@ -506,9 +509,12 @@
          * @returns {number} The exchange rate.
          */
         async function ODOO_CURRENCY_RATE(currencyFrom, currencyTo, date) {
-          var parts = ['"' + currencyFrom + '"', '"' + currencyTo + '"']
+          var escapeQuotes = function (s) {
+            return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          }
+          var parts = ['"' + escapeQuotes(currencyFrom) + '"', '"' + escapeQuotes(currencyTo) + '"']
           if (date !== undefined && date !== null) {
-            parts.push('"' + date + '"')
+            parts.push('"' + escapeQuotes(date) + '"')
           }
           var formula = "=ODOO_CURRENCY_RATE(" + parts.join(",") + ")"
           return new Promise(function (resolve) {

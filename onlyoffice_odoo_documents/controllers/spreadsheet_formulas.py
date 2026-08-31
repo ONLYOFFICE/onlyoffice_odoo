@@ -265,20 +265,34 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _parse_args(args_str):
-        """Split comma-separated formula arguments, ignoring commas inside quotes."""
+        """Split comma-separated formula arguments, ignoring commas inside quotes.
+
+        Supports backslash-escaped quotes (\\") inside string literals, so
+        values containing a literal '"' (e.g. field labels) round-trip
+        correctly instead of breaking argument boundaries.
+        """
         if not args_str:
             return []
         args = []
         current = ""
         in_quotes = False
-        for ch in args_str:
+        i = 0
+        n = len(args_str)
+        while i < n:
+            ch = args_str[i]
+            if ch == "\\" and in_quotes and i + 1 < n and args_str[i + 1] == '"':
+                current += '"'
+                i += 2
+                continue
             if ch == '"':
                 in_quotes = not in_quotes
             elif ch == "," and not in_quotes:
                 args.append(_coerce(current.strip()))
                 current = ""
+                i += 1
                 continue
             current += ch
+            i += 1
         if current:
             args.append(_coerce(current.strip()))
         return args
@@ -348,7 +362,7 @@ class SpreadsheetFormulaEvaluator:
             if not result:
                 return 0
             key = "__count" if measure == "__count" else measure_field
-            return self._format_measure_value(model, key, result[0].get(key, 0))
+            return self._format_measure_value(model, key, result[0].get(key, 0), domain=base_domain)
 
         # Build narrow domain from pairs and execute
         extra = self._pairs_to_domain(pairs, model)
@@ -368,7 +382,7 @@ class SpreadsheetFormulaEvaluator:
             return 0
 
         key = "__count" if measure == "__count" else measure_field
-        return self._format_measure_value(model, key, groups[0].get(key, 0))
+        return self._format_measure_value(model, key, groups[0].get(key, 0), domain=combined)
 
     def _eval_pivot_table(self, snapshot, args):
         """ODOO.PIVOT.TABLE(pivot_id, ...) — returns the whole pivot as a 2D array."""
@@ -393,7 +407,7 @@ class SpreadsheetFormulaEvaluator:
             row = ["Total"]
             for m in measures:
                 k = "__count" if m == "__count" else (m.split(":")[0] if ":" in m else m)
-                row.append(self._format_measure_value(model, k, result[0].get(k, 0)))
+                row.append(self._format_measure_value(model, k, result[0].get(k, 0), domain=base_domain))
             return [row]
 
         groups = self._safe_read_group(model, base_domain, measure_fields, all_group_bys)
@@ -408,7 +422,7 @@ class SpreadsheetFormulaEvaluator:
                 row.append(val[1] if isinstance(val, list | tuple) and len(val) == 2 else val)
             for m in measures:
                 k = "__count" if m == "__count" else (m.split(":")[0] if ":" in m else m)
-                row.append(self._format_measure_value(model, k, group.get(k, 0)))
+                row.append(self._format_measure_value(model, k, group.get(k, 0), domain=base_domain))
             table.append(row)
         return table
 
@@ -632,8 +646,14 @@ class SpreadsheetFormulaEvaluator:
         return val
 
     @staticmethod
-    def _format_measure_value(model, measure_field, value):
-        """Format an aggregated pivot measure as localized text, like _format_value."""
+    def _format_measure_value(model, measure_field, value, domain=None):
+        """Format an aggregated pivot measure as localized text, like _format_value.
+
+        For monetary measures, the currency is resolved from a sample record
+        matching ``domain`` (via the field's ``currency_field``) instead of
+        always assuming the company currency, since aggregated records may
+        use a different currency (e.g. multi-currency invoices).
+        """
         if measure_field == "__count" or value is None or value is False:
             return value
         fobj = model._fields.get(measure_field)
@@ -642,7 +662,17 @@ class SpreadsheetFormulaEvaluator:
         env = model.env
         lang_code = _get_lang_code(env)
         if fobj.type == "monetary":
-            return misc.format_amount(env, amount=value, currency=env.company.currency_id, lang_code=lang_code)
+            currency = env.company.currency_id
+            currency_field_name = fobj.currency_field or "currency_id"
+            if domain is not None:
+                try:
+                    sample = model.search(domain, limit=1)
+                    sample_currency = sample and getattr(sample, currency_field_name, None)
+                    if sample_currency:
+                        currency = sample_currency
+                except Exception as e:
+                    _logger.debug("Could not resolve sample currency for %s: %s", measure_field, e)
+            return misc.format_amount(env, amount=value, currency=currency, lang_code=lang_code)
         if fobj.type == "date" and isinstance(value, date_cls):
             return _format_localized_date(env, value, lang_code)
         if fobj.type == "datetime" and isinstance(value, datetime):
