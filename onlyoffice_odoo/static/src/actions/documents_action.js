@@ -34,6 +34,34 @@ export class DocumentsAction extends Component {
           ...config.editorConfig.customization,
           uiTheme: theme ? `default-${theme}` : "default-light",
         }
+
+        // Register ODOO custom functions (ODOO_LIST, ODOO_PIVOT, ...) when the
+        // document contains them. Same wiring as the standalone editor page.
+        // The init script is loaded raw (not via the assets bundle): the asset
+        // minifier strips the JSDoc comments Api.AddCustomFunction relies on.
+        if (response.has_odoo_formulas) {
+          if (!window.initializeOdooCustomFunctions) {
+            await this.loadScript("/onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js")
+          }
+          window.odooDocumentId = response.document_id
+          window.odooJwtToken = response.jwt_token
+          window.odooFilterValues = JSON.parse(response.filter_values_json || "{}")
+          window._odooRetryCount = 0
+          window._odooPollCount = 0
+          config.events = config.events || {}
+          const originalOnReady = config.events.onDocumentReady
+          config.events.onDocumentReady = () => {
+            if (originalOnReady) {
+              originalOnReady()
+            }
+            window.initializeOdooCustomFunctions()
+          }
+        } else {
+          delete window.odooDocumentId
+          delete window.odooJwtToken
+          delete window.odooFilterValues
+        }
+
         this.config = config
 
         this.docApiJS = response.docApiJS
@@ -54,9 +82,13 @@ export class DocumentsAction extends Component {
   }
 
   async loadDocsAPI(DocsAPI) {
+    return this.loadScript(DocsAPI)
+  }
+
+  async loadScript(src) {
     return new Promise((resolve, reject) => {
       const script = document.createElement("script")
-      script.src = DocsAPI
+      script.src = src
       script.onload = resolve
       script.onerror = reject
       document.body.appendChild(script)

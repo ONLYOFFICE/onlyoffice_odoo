@@ -1,0 +1,17 @@
+<odoo>
+  <t
+    t-name="onlyoffice_odoo_documents.OnlyofficeSelectorPanel"
+    t-inherit="spreadsheet_edition.SpreadsheetSelectorDialog"
+    t-inherit-mode="extension"
+  >
+    <xpath expr="//Notebook" position="inside">
+      <t t-set-slot="3" title="'ONLYOFFICE'" isVisible="true">
+        <OnlyofficeSelectorPanel
+          onSpreadsheetSelected.bind="onSpreadsheetSelected"
+          onSpreadsheetDblClicked.bind="_confirm"
+          displayBlank="false"
+        />
+      </t>
+    </xpath>
+  </t>
+</odoo>

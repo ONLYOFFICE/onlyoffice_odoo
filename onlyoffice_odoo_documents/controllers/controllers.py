@@ -7,6 +7,7 @@ import re
 from mimetypes import guess_type
 from urllib.request import urlopen
 
+import markupsafe
 import requests
 from werkzeug.exceptions import Forbidden
 
@@ -27,8 +28,20 @@ from odoo.addons.onlyoffice_odoo.utils import (
     url_utils,
 )
 
+from .spreadsheet_docbuilder import XLSX_MIMETYPE, SpreadsheetDocBuilder
+from .spreadsheet_formulas import (
+    SpreadsheetFormulaEvaluator,
+    compute_filter_values,
+    load_metadata_for_document,
+)
+
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
+
+# Shared formula evaluator / DocBuilder instances (see spreadsheet_formulas.py
+# and spreadsheet_docbuilder.py for the actual implementation).
+_formula_evaluator = SpreadsheetFormulaEvaluator()
+_docbuilder = SpreadsheetDocBuilder(_formula_evaluator)
 
 
 def _get_document_share_role(document):
@@ -223,6 +236,37 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
 
 class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
+    @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="json", csrf=False)
+    def get_config(self, document_id=None, attachment_id=None, access_token=None):
+        """Override to add ODOO custom formula support when a document with metadata is present."""
+        config = super().get_config(document_id=document_id, attachment_id=attachment_id, access_token=access_token)
+
+        # Resolve document from document_id or attachment
+        document = None
+        if document_id:
+            document = request.env["documents.document"].browse(int(document_id))
+        elif attachment_id:
+            attachment = request.env["ir.attachment"].browse(int(attachment_id))
+            if attachment.exists() and attachment.res_model == "documents.document":
+                document = request.env["documents.document"].browse(int(attachment.res_id))
+
+        if document and document.exists():
+            config["document_id"] = document.id
+            config["jwt_token"] = jwt_utils.encode_payload(
+                request.env,
+                {"uid": request.env.user.id, "document_id": document.id},
+                config_utils.get_internal_jwt_secret(request.env),
+            )
+            if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
+                config["has_odoo_formulas"] = True
+                try:
+                    metadata = load_metadata_for_document(document)
+                    config["filter_values_json"] = json.dumps(compute_filter_values(metadata))
+                except Exception:
+                    config["filter_values_json"] = "{}"
+
+        return config
+
     @http.route(
         ["/onlyoffice/documents/share/<int:share_id>/<access_token>/<int:document_id>"], type="http", auth="public"
     )
@@ -274,10 +318,29 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
         try:
             document.check_access_rule("write")
-            return self.prepare_editor_values(attachment, access_token, True)
+            editor_values = self.prepare_editor_values(attachment, access_token, True)
         except AccessError:
             _logger.debug("Current user has no write access")
-            return self.prepare_editor_values(attachment, access_token, False)
+            editor_values = self.prepare_editor_values(attachment, access_token, False)
+
+        # Add document_id and security token for ODOO custom functions
+        editor_values["document_id"] = document_id
+        editor_values["jwt_token"] = jwt_utils.encode_payload(
+            request.env,
+            {"uid": request.env.user.id, "document_id": document_id},
+            config_utils.get_internal_jwt_secret(request.env),
+        )
+
+        # Pre-compute filter values so ODOO_FILTER_VALUE can resolve synchronously on the client.
+        if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
+            editor_values["has_odoo_formulas"] = True
+            try:
+                metadata = load_metadata_for_document(document)
+                editor_values["filter_values_json"] = markupsafe.Markup(json.dumps(compute_filter_values(metadata)))
+            except Exception:
+                editor_values["filter_values_json"] = markupsafe.Markup("{}")
+
+        return editor_values
 
     def prepare_share_editor(self, document, access_token, share_id):
         role = "viewer"
@@ -496,3 +559,140 @@ class OnlyOfficeShareRoute(ShareRoute):
     @http.route(["/Products/Files/", "/Products/Files"], auth="user", methods=["GET"], type="http")
     def desktop_editor_redirect(self, **kwargs):
         return request.redirect("/web#action=documents.document_action&menu_id=documents.menu_root")
+
+    @http.route("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", auth="user", methods=["POST"], type="json")
+    def convert_spreadsheet_via_docbuilder(self, document_id):
+        """Convert an Odoo Spreadsheet to a native XLSX file via DocBuilder, keeping formulas."""
+        return _docbuilder.convert_spreadsheet_to_xlsx(document_id)
+
+    @http.route("/onlyoffice/documents/docbuilder_callback/<string:oo_security_token>", auth="public", methods=["GET"])
+    def docbuilder_callback(self, oo_security_token):
+        """
+        Callback endpoint for DocBuilder to get the conversion script.
+        Supports two modes: 'convert_spreadsheet' (default) and 'insert_sheet'.
+        """
+        try:
+            docbuilder_script = _docbuilder.build_callback_script(oo_security_token)
+            if docbuilder_script is None:
+                _logger.error("DocBuilder callback: token not found: %s", oo_security_token)
+                return request.make_response("Token not found or expired", status=404)
+
+            headers = {
+                "Content-Disposition": "attachment; filename='docbuilder_script.docbuilder'",
+                "Content-Type": "text/plain; charset=utf-8",
+            }
+            return request.make_response(docbuilder_script.encode("utf-8"), headers)
+
+        except Exception as e:
+            _logger.exception("DocBuilder callback error: %s", e)
+            return request.make_response(str(e), status=500)
+
+    @http.route("/onlyoffice/documents/docbuilder_file/<string:oo_security_token>", auth="public", methods=["GET"])
+    def docbuilder_file(self, oo_security_token):
+        """Serve the existing XLSX file for DocBuilder to open via builder.OpenFile()."""
+        xlsx_data = _docbuilder.get_cached_file(oo_security_token)
+        if xlsx_data is None:
+            return request.make_response("Not found", status=404)
+
+        headers = {
+            "Content-Disposition": "attachment; filename='source.xlsx'",
+            "Content-Type": XLSX_MIMETYPE,
+        }
+        return request.make_response(xlsx_data, headers)
+
+    @http.route(
+        "/onlyoffice/documents/evaluate_formulas_batch",
+        auth="public",
+        methods=["POST", "OPTIONS"],
+        type="json",
+        csrf=False,
+        cors="*",
+    )
+    def evaluate_formulas_batch(self, document_id, formulas, jwt_token=None):
+        """Evaluate several ODOO formulas in one request, sharing the document snapshot."""
+        if request.httprequest.method == "OPTIONS":
+            return {}
+
+        # Validate security token
+        if not jwt_token:
+            _logger.warning("evaluate_formulas_batch: no jwt_token provided for document %s", document_id)
+            return {"error": "Security token required"}
+        try:
+            payload = jwt_utils.decode_token(request.env, jwt_token, config_utils.get_internal_jwt_secret(request.env))
+            token_uid = payload.get("uid")
+            token_doc_id = payload.get("document_id")
+            if str(token_doc_id) != str(document_id):
+                _logger.warning(
+                    "evaluate_formulas_batch: token doc_id=%s != request doc_id=%s", token_doc_id, document_id
+                )
+                return {"error": "Token/document mismatch"}
+            user = request.env["res.users"].sudo().browse(token_uid)
+            document = request.env["documents.document"].with_user(user).browse(int(document_id))
+            document.check_access_rule("read")
+        except AccessError:
+            _logger.warning("evaluate_formulas_batch: access denied for uid=%s doc=%s", token_uid, document_id)
+            return {"error": "Access denied"}
+        except Exception as e:
+            _logger.warning("evaluate_formulas_batch: token validation failed for doc %s: %s", document_id, e)
+            return {"error": "Invalid security token"}
+
+        # Switch to the authenticated user (correct uid for domain resolution)
+        # and their language (this route is public, so the ambient context's
+        # language does not reflect the actual user).
+        request.update_env(
+            user=token_uid, context=dict(request.env.context, lang=user.lang or request.env.context.get("lang"))
+        )
+
+        # Load snapshot once for the whole batch
+        snapshot = _formula_evaluator.load_document_snapshot(document_id)
+
+        # Attach a read_group cache so pivot evaluations share results
+        request._rg_cache = {}
+
+        values = {}
+        for formula in formulas or []:
+            try:
+                values[formula] = _formula_evaluator.evaluate_single_formula(snapshot, formula)
+            except Exception as e:
+                _logger.warning("Batch formula error for %s: %s", formula, e)
+                values[formula] = f"#ERROR: {e}"
+
+        return {"values": values}
+
+    @http.route(
+        "/onlyoffice/documents/insert_list_in_xlsx",
+        auth="user",
+        methods=["POST"],
+        type="json",
+        csrf=False,
+    )
+    def insert_list_in_xlsx(self, document_id, list_data, threshold=10, name="List"):
+        """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
+
+        Rebuilds the XLSX via DocBuilder: opens the existing file, adds a new
+        sheet with formulas, and updates the _OdooMetadata hidden sheet.
+
+        Args:
+            document_id: target XLSX document ID
+            list_data: dict with model, domain, orderBy, columns, context
+            threshold: number of rows to insert
+            name: name for the new sheet and list
+        """
+        return _docbuilder.insert_list(document_id, list_data, threshold, name)
+
+    @http.route(
+        "/onlyoffice/documents/insert_pivot_in_xlsx",
+        auth="user",
+        methods=["POST"],
+        type="json",
+        csrf=False,
+    )
+    def insert_pivot_in_xlsx(self, document_id, pivot_data, name="Pivot"):
+        """Insert an Odoo pivot as ODOO_PIVOT formulas into an existing XLSX document.
+
+        Args:
+            document_id: target XLSX document ID
+            pivot_data: dict with model, domain, context, rowGroupBys, colGroupBys, measures
+            name: name for the new sheet and pivot
+        """
+        return _docbuilder.insert_pivot(document_id, pivot_data, name)

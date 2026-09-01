@@ -1,0 +1,64 @@
+// Open an existing XLSX and insert a new sheet with the given cells.
+// Used for both "insert list" and "insert pivot" flows.
+// The cell contents (ODOO_* formulas) are built server-side in Python.
+builder.OpenFile(FILE_URL_PLACEHOLDER)
+
+var sheetName = SHEET_NAME_PLACEHOLDER
+var cells = CELLS_PLACEHOLDER // 2D array of strings (formulas or plain values)
+var metadata = METADATA_PLACEHOLDER
+
+// Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
+// from a single Python source so this logic isn't duplicated between
+// convert_spreadsheet.docbuilder and insert_sheet.docbuilder.
+SHARED_HELPERS_PLACEHOLDER
+
+// --- Add the new sheet and fill it with the prepared cells ---
+Api.AddSheet(sheetName)
+var ws = Api.GetSheet(sheetName)
+
+var ri, ci
+for (ri = 0; ri < cells.length; ri++) {
+  var row = cells[ri]
+  for (ci = 0; ci < row.length; ci++) {
+    if (row[ci] !== null && row[ci] !== "") {
+      var cellValue = String(row[ci])
+      var cellRange = ws.GetRange(columnToLetter(ci) + String(ri + 1))
+      cellRange.SetValue(cellValue)
+      applyOdooColumnFormat(cellRange, cellValue, metadata)
+    }
+  }
+}
+
+// --- Update the _OdooMetadata hidden sheet ---
+var metaSheet
+try {
+  metaSheet = Api.GetSheet("_OdooMetadata")
+} catch (e) {
+  metaSheet = null
+}
+if (!metaSheet) {
+  Api.AddSheet("_OdooMetadata")
+  metaSheet = Api.GetSheet("_OdooMetadata")
+}
+
+// Write metadata JSON in chunks (clear old cells by overwriting)
+var metaStr = JSON.stringify(metadata)
+var chunkSize = 30000
+var numChunks = Math.ceil(metaStr.length / chunkSize)
+var mi
+for (mi = 0; mi < numChunks; mi++) {
+  var chunk = metaStr.substring(mi * chunkSize, (mi + 1) * chunkSize)
+  metaSheet.GetRange("A" + String(mi + 1)).SetValue(chunk)
+}
+// Clear any remaining old cells (up to 20 extra)
+for (mi = numChunks; mi < numChunks + 20; mi++) {
+  metaSheet.GetRange("A" + String(mi + 1)).SetValue("")
+}
+metaSheet.SetVisible(false)
+
+// Activate the new sheet so the document opens on it
+var newSheet = Api.GetSheet(sheetName)
+newSheet.SetActive()
+
+builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER)
+builder.CloseFile()

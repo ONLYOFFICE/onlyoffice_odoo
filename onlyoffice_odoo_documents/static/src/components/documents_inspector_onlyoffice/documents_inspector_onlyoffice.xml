@@ -6,11 +6,21 @@
       <t t-if="showOnlyofficeButton(records)">
         <button
           class="btn fa o_inspector_button"
-          t-on-click="() => onlyofficeEditorUrl(records[0].data.id)"
+          t-on-click="() => onlyofficeEditorUrl(records[0].data.id, isOdooSpreadsheet(records))"
           title="Open in ONLYOFFICE"
           t-att-disabled="locked"
         >
           <img src="/onlyoffice_odoo_documents/static/svg/edit.svg" role="img" aria-label="Open in ONLYOFFICE" />
+        </button>
+      </t>
+      <t t-if="isOdooSpreadsheet(records)">
+        <button
+          class="btn fa o_inspector_button"
+          t-on-click="convertSpreadsheetViaDocBuilder.bind(this, records[0].data.id)"
+          title="Convert to ONLYOFFICE XLSX (with formulas)"
+          t-att-disabled="locked"
+        >
+          <i class="fa fa-exchange" role="img" aria-label="Convert to ONLYOFFICE XLSX" />
         </button>
       </t>
     </xpath>
