@@ -84,24 +84,7 @@ def compute_filter_values(metadata):
         label = gf.get("label", "")
         if not label:
             continue
-        value = gf.get("currentValue") or gf.get("defaultValue")
-        if not value:
-            result[label] = ""
-            continue
-        if isinstance(value, str):
-            value = _resolve_date_shortcut(value)
-            if isinstance(value, str):
-                result[label] = value
-                continue
-        if isinstance(value, dict):
-            if "yearOffset" in value:
-                result[label] = str(datetime.now().year + int(value.get("yearOffset", 0)))
-            elif "value" in value:
-                result[label] = str(value["value"])
-            else:
-                result[label] = ""
-        else:
-            result[label] = str(value)
+        result[label] = _resolve_filter_value(gf.get("currentValue") or gf.get("defaultValue"))
     return result
 
 
@@ -116,6 +99,27 @@ def load_metadata_for_document(document):
         session_data = document.onlyoffice_spreadsheet_source_id.join_spreadsheet_session()
         return session_data.get("data", {})
     return {}
+
+
+def _resolve_filter_value(value):
+    """Resolve a global filter's raw value (currentValue/defaultValue) to a display string.
+
+    Shared by compute_filter_values (all filters at once) and
+    SpreadsheetFormulaEvaluator._eval_filter_value (single filter by name).
+    """
+    if not value:
+        return ""
+    if isinstance(value, str):
+        value = _resolve_date_shortcut(value)
+        if isinstance(value, str):
+            return value
+    if isinstance(value, dict):
+        if "yearOffset" in value:
+            return str(datetime.now().year + int(value.get("yearOffset", 0)))
+        if "value" in value:
+            return str(value["value"])
+        return ""
+    return str(value)
 
 
 def _resolve_date_shortcut(value):
@@ -474,18 +478,7 @@ class SpreadsheetFormulaEvaluator:
         for f in snapshot.get("globalFilters", []):
             if f.get("label") != name:
                 continue
-            value = f.get("currentValue") or f.get("defaultValue")
-            if not value:
-                return ""
-            if isinstance(value, str):
-                value = _resolve_date_shortcut(value)
-                if isinstance(value, str):
-                    return value
-            if isinstance(value, dict):
-                if "yearOffset" in value:
-                    return str(datetime.now().year + int(value.get("yearOffset", 0)))
-                return str(value.get("value", ""))
-            return str(value)
+            return _resolve_filter_value(f.get("currentValue") or f.get("defaultValue"))
         return ""
 
     def _eval_currency_rate(self, _snapshot, args):
@@ -613,6 +606,23 @@ class SpreadsheetFormulaEvaluator:
         return ", ".join(parts) or None
 
     @staticmethod
+    def _format_typed_value(env, fobj, value, currency, lang_code):
+        """Format a value as localized text based on its field type.
+
+        Shared monetary/date/datetime formatting used by both _format_value
+        (single record field) and _format_measure_value (aggregated pivot
+        measure) — the two differ only in how ``currency`` is resolved.
+        Returns ``value`` unchanged for any other field type.
+        """
+        if fobj.type == "monetary":
+            return misc.format_amount(env, amount=value, currency=currency, lang_code=lang_code)
+        if fobj.type == "date" and isinstance(value, date_cls):
+            return _format_localized_date(env, value, lang_code)
+        if fobj.type == "datetime" and isinstance(value, datetime):
+            return _format_localized_date(env, value, lang_code, with_time=True)
+        return value
+
+    @staticmethod
     def _format_value(record, field_name, model):
         """Format a record field value as text for display in a cell.
 
@@ -626,17 +636,16 @@ class SpreadsheetFormulaEvaluator:
         if val is None or val is False:
             return ""
         env = model.env
+        lang_code = _get_lang_code(env)
         if fobj and fobj.type == "selection":
             sel = dict(fobj._description_selection(env))
             return sel.get(val, val)
         if fobj and fobj.type == "monetary":
             currency_field_name = fobj.currency_field or "currency_id"
             currency = getattr(record, currency_field_name, None) or env.company.currency_id
-            return misc.format_amount(env, amount=val, currency=currency, lang_code=_get_lang_code(env))
-        if fobj and fobj.type == "date":
-            return _format_localized_date(env, val, _get_lang_code(env))
-        if fobj and fobj.type == "datetime":
-            return _format_localized_date(env, val, _get_lang_code(env), with_time=True)
+            return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, val, currency, lang_code)
+        if fobj and fobj.type in ("date", "datetime"):
+            return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, val, None, lang_code)
         if hasattr(val, "_name"):
             if not val:
                 return ""
@@ -672,12 +681,8 @@ class SpreadsheetFormulaEvaluator:
                         currency = sample_currency
                 except Exception as e:
                     _logger.debug("Could not resolve sample currency for %s: %s", measure_field, e)
-            return misc.format_amount(env, amount=value, currency=currency, lang_code=lang_code)
-        if fobj.type == "date" and isinstance(value, date_cls):
-            return _format_localized_date(env, value, lang_code)
-        if fobj.type == "datetime" and isinstance(value, datetime):
-            return _format_localized_date(env, value, lang_code, with_time=True)
-        return value
+            return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, value, currency, lang_code)
+        return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, value, None, lang_code)
 
     @staticmethod
     def _get_measures(pivot_data):
