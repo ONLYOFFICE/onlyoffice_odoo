@@ -30,55 +30,49 @@ patch(DocumentsInspector.prototype, {
 
   /**
    * Export the spreadsheet with the native o-spreadsheet engine, so charts
-   * and other advanced formatting are kept. Returns null on failure so the
-   * caller can fall back to a server-side rebuild.
+   * and other advanced formatting are kept. Throws if the export fails.
    * @param {Number} id documents.document id of the Odoo Spreadsheet.
-   * @returns {Promise<{base64: string, name: string}|null>}
+   * @returns {Promise<{base64: string, name: string}>}
    */
   async _exportSpreadsheetNativeXlsx(id) {
-    try {
-      await loadBundle("spreadsheet.o_spreadsheet")
-      const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
-      const record = await this.env.services.orm.call("documents.document", "join_spreadsheet_session", [id])
-      const model = await createSpreadsheetModel({
-        data: record.data,
-        env: this.env,
-        revisions: record.revisions,
-      })
-      await waitForDataLoaded(model)
-      const xlsxData = model.exportXLSX()
+    await loadBundle("spreadsheet.o_spreadsheet")
+    const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
+    const record = await this.env.services.orm.call("documents.document", "join_spreadsheet_session", [id])
+    const model = await createSpreadsheetModel({
+      data: record.data,
+      env: this.env,
+      revisions: record.revisions,
+    })
+    await waitForDataLoaded(model)
+    const xlsxData = model.exportXLSX()
 
-      const formData = new URLSearchParams({
-        files: JSON.stringify(xlsxData.files),
-        zip_name: `${record.name}.xlsx`,
-      })
-      if (odoo.csrf_token) {
-        formData.append("csrf_token", odoo.csrf_token)
-      }
+    const formData = new URLSearchParams({
+      files: JSON.stringify(xlsxData.files),
+      zip_name: `${record.name}.xlsx`,
+    })
+    if (odoo.csrf_token) {
+      formData.append("csrf_token", odoo.csrf_token)
+    }
 
-      const response = await fetch("/spreadsheet/xlsx", {
-        body: formData,
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        method: "POST",
-      })
-      if (!response.ok) {
-        throw new Error("Failed to export spreadsheet to XLSX")
-      }
-      const xlsxBlob = await response.blob()
+    const response = await fetch("/spreadsheet/xlsx", {
+      body: formData,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      method: "POST",
+    })
+    if (!response.ok) {
+      throw new Error("Failed to export spreadsheet to XLSX")
+    }
+    const xlsxBlob = await response.blob()
 
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onloadend = () => resolve(reader.result.split(",")[1])
-        reader.onerror = reject
-        reader.readAsDataURL(xlsxBlob)
-      })
-      return {
-        base64,
-        name: record.name,
-      }
-    } catch (error) {
-      console.warn("Native XLSX export failed, falling back to server-side rebuild:", error)
-      return null
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result.split(",")[1])
+      reader.onerror = reject
+      reader.readAsDataURL(xlsxBlob)
+    })
+    return {
+      base64,
+      name: record.name,
     }
   },
 
@@ -104,13 +98,13 @@ patch(DocumentsInspector.prototype, {
   async convertSpreadsheetViaDocBuilder(id) {
     this.ui.block({ message: _t("Converting spreadsheet to XLSX via DocBuilder...") })
     try {
-      // Try a native export first (keeps charts/formatting); the server
-      // just patches ODOO.* cells into it. On failure, fall back to a
-      // full server-side rebuild.
+      // Native export keeps charts/formatting; the server then patches the
+      // ODOO.* cells into it. There is no fallback: if the native export
+      // fails, the conversion fails.
       const nativeExport = await this._exportSpreadsheetNativeXlsx(id)
       const payload = {
         document_id: id,
-        xlsx_base64: nativeExport ? nativeExport.base64 : null,
+        xlsx_base64: nativeExport.base64,
       }
       const result = await this.env.services.rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", payload)
 

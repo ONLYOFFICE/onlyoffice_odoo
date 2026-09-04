@@ -564,8 +564,8 @@ class OnlyOfficeShareRoute(ShareRoute):
     def convert_spreadsheet_via_docbuilder(self, document_id, xlsx_base64=None):
         """Convert an Odoo Spreadsheet to XLSX via DocBuilder, keeping formulas.
 
-        If the client sends ``xlsx_base64`` (a native export), only the
-        ODOO.* cells are patched, instead of rebuilding the workbook.
+        ``xlsx_base64`` (a native browser export) is required; only its
+        ODOO.* cells are patched. Returns an error if it is missing.
         """
         return _docbuilder.convert_spreadsheet_to_xlsx(document_id, xlsx_base64)
 
@@ -573,8 +573,7 @@ class OnlyOfficeShareRoute(ShareRoute):
     def docbuilder_callback(self, oo_security_token):
         """
         Callback endpoint for DocBuilder to get the conversion script.
-        Supports three modes: 'convert_spreadsheet' (default), 'insert_sheet'
-        and 'patch_formulas'.
+        Supports two modes: 'insert_sheet' and 'patch_formulas'.
         """
         try:
             docbuilder_script = _docbuilder.build_callback_script(oo_security_token)

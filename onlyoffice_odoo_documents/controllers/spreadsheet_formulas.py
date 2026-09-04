@@ -174,33 +174,6 @@ class SpreadsheetFormulaEvaluator:
             _logger.warning("Formula error %s: %s", formula, e)
             return f"#ERROR: {e}"
 
-    def evaluate_odoo_formulas_in_snapshot(self, snapshot):
-        """Evaluate every ODOO.* formula cell in the snapshot and store its value."""
-        for sheet in snapshot.get("sheets", []):
-            for cell_data in sheet.get("cells", {}).values():
-                content = cell_data.get("content", "")
-                if not isinstance(content, str) or not content.startswith(("=ODOO.", "=-ODOO.")):
-                    continue
-                try:
-                    negate = content.startswith("=-")
-                    clean = ("=" + content[2:].lstrip()) if negate else content
-                    clean = self._resolve_nested(snapshot, clean)
-
-                    match = re.match(r"^=ODOO\.([A-Z._]+)\((.*)\)$", clean)
-                    if not match:
-                        continue
-
-                    func_name = match.group(1).replace(".", "_")
-                    value = self._dispatch(snapshot, func_name, self._parse_args(match.group(2)))
-
-                    if negate and isinstance(value, int | float):
-                        value = -value
-                    if value is not None:
-                        cell_data["value"] = value
-                except Exception as e:
-                    _logger.warning("Snapshot formula error %s: %s", content, e)
-                    cell_data["value"] = ""
-
     def get_pivot_column_formats(self, pivot_data):
         """Return {measure: {format, align}} for a pivot's measures."""
         model = request.env[pivot_data["model"]].sudo()
@@ -697,26 +670,6 @@ class SpreadsheetFormulaEvaluator:
         mf = measure.split(":")[0] if ":" in measure else measure
         fobj = request.env[pivot_data["model"]].sudo()._fields.get(mf)
         return fobj.string if fobj else measure
-
-    def _resolve_nested(self, snapshot, content):
-        """Resolve ODOO.FILTER.VALUE() calls and & string concatenation in a formula."""
-
-        def _repl(m):
-            try:
-                v = self._eval_filter_value(snapshot, [m.group(1)])
-                return str(v) if v else ""
-            except Exception:
-                return ""
-
-        resolved = re.sub(r'ODOO\.FILTER\.VALUE\("([^"]*)"\)', _repl, content)
-        for _ in range(10):
-            prev = resolved
-            resolved = re.sub(r'"([^"]*)"&"([^"]*)"', r'"\1\2"', resolved)
-            resolved = re.sub(r'"([^"]*)"&(\w+)', lambda m: f'"{m.group(1)}{m.group(2)}"', resolved)
-            resolved = re.sub(r'(\w+)&"([^"]*)"', lambda m: f'"{m.group(1)}{m.group(2)}"', resolved)
-            if resolved == prev:
-                break
-        return resolved
 
 
 # ──────────────────────────────────────────────────────────────────────────────

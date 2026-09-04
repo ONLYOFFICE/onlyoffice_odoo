@@ -11,7 +11,7 @@ var metadata = METADATA_PLACEHOLDER
 
 // Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
 // from a single Python source so this logic isn't duplicated between
-// convert_spreadsheet.docbuilder, insert_sheet.docbuilder and this file.
+// insert_sheet.docbuilder and this file.
 SHARED_HELPERS_PLACEHOLDER
 
 var i
