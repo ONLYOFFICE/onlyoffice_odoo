@@ -83,8 +83,17 @@ def _load_docbuilder_data(token):
 
 
 def _delete_docbuilder_data(token):
-    """Remove a stored DocBuilder payload (no-op when already deleted)."""
-    request.env["ir.attachment"].sudo().search([("name", "=", _DOCBUILDER_CACHE_PREFIX + token)]).unlink()
+    """Remove a stored DocBuilder payload (no-op when already deleted).
+
+    In "patch_formulas"/"insert_sheet" modes, get_cached_file() may delete
+    this same row from another request. Ignore that race so both sides
+    can safely try to delete it.
+    """
+    try:
+        with request.env.cr.savepoint():
+            request.env["ir.attachment"].sudo().search([("name", "=", _DOCBUILDER_CACHE_PREFIX + token)]).unlink()
+    except Exception:
+        _logger.debug("DocBuilder cache for token %s already deleted concurrently", token)
 
 
 # JS helpers shared by convert_spreadsheet.docbuilder and insert_sheet.docbuilder.
@@ -209,8 +218,16 @@ class SpreadsheetDocBuilder:
 
     # ── Public entry points (called from controllers.py routes) ─────────────
 
-    def convert_spreadsheet_to_xlsx(self, document_id):
-        """Convert an Odoo Spreadsheet to a native XLSX file via DocBuilder, keeping formulas."""
+    def convert_spreadsheet_to_xlsx(self, document_id, xlsx_base64=None):
+        """Convert an Odoo Spreadsheet to XLSX, keeping formulas.
+
+        If ``xlsx_base64`` is given (a native browser export, with charts
+        and other formatting already in it), just patch the ODOO.* formula
+        cells back to live ODOO_* formulas.
+
+        Otherwise, rebuild the whole workbook from the raw snapshot. This
+        fallback loses charts, images and other advanced formatting.
+        """
         result = {"error": None, "xlsx_id": None}
 
         try:
@@ -235,24 +252,38 @@ class SpreadsheetDocBuilder:
                 result["error"] = _("Spreadsheet has no data or invalid structure")
                 return result
 
-            # Evaluate ODOO.* formulas and add their values to cells
-            self._formula_evaluator.evaluate_odoo_formulas_in_snapshot(snapshot)
-
-            spreadsheet_json = json.dumps(snapshot, cls=_DateTimeEncoder)
             metadata_json = self._prepare_docbuilder_metadata(snapshot)
-
-            # Store data for the DocBuilder callback
             oo_security_token = secrets.token_urlsafe(32)
             output_filename = f"{document.name}_{uuid.uuid4().hex[:8]}.xlsx"
-            _store_docbuilder_data(
-                oo_security_token,
-                {
-                    "document_id": document_id,
-                    "spreadsheet_json": spreadsheet_json,
-                    "metadata_json": metadata_json,
-                    "output_filename": output_filename,
-                },
-            )
+
+            if xlsx_base64:
+                # Patch the native export in place.
+                patches = self._build_formula_patches(snapshot)
+                _store_docbuilder_data(
+                    oo_security_token,
+                    {
+                        "mode": "patch_formulas",
+                        "document_id": document_id,
+                        "xlsx_base64": xlsx_base64,
+                        "patches_json": json.dumps(patches, cls=_DateTimeEncoder),
+                        "metadata_json": metadata_json,
+                        "output_filename": output_filename,
+                        "_token": oo_security_token,
+                    },
+                )
+            else:
+                # Fallback: rebuild the workbook from the snapshot.
+                self._formula_evaluator.evaluate_odoo_formulas_in_snapshot(snapshot)
+                spreadsheet_json = json.dumps(snapshot, cls=_DateTimeEncoder)
+                _store_docbuilder_data(
+                    oo_security_token,
+                    {
+                        "document_id": document_id,
+                        "spreadsheet_json": spreadsheet_json,
+                        "metadata_json": metadata_json,
+                        "output_filename": output_filename,
+                    },
+                )
 
             # Call DocBuilder service
             xlsx_content, error = self._call_docbuilder(oo_security_token, document_id)
@@ -270,6 +301,28 @@ class SpreadsheetDocBuilder:
             result["error"] = str(e)
 
         return result
+
+    @staticmethod
+    def _convert_odoo_formula(content):
+        """Rewrite '=ODOO.PIVOT(...)' to '=ODOO_PIVOT(...)' (dot to underscore)."""
+        return re.sub(r"ODOO\.([A-Z._]+)(\()", lambda m: "ODOO_" + m.group(1).replace(".", "_") + m.group(2), content)
+
+    def _build_formula_patches(self, snapshot):
+        """Collect {sheet, cell, formula} for every ODOO.* formula cell in the snapshot."""
+        patches = []
+        for sheet in snapshot.get("sheets", []):
+            sheet_name = sheet.get("name") or ""
+            for cell_address, cell_data in sheet.get("cells", {}).items():
+                content = cell_data.get("content", "")
+                if isinstance(content, str) and content.startswith(("=ODOO.", "=-ODOO.")):
+                    patches.append(
+                        {
+                            "sheet": sheet_name,
+                            "cell": cell_address,
+                            "formula": self._convert_odoo_formula(content),
+                        }
+                    )
+        return patches
 
     def insert_list(self, document_id, list_data, threshold, name):
         """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
@@ -351,6 +404,8 @@ class SpreadsheetDocBuilder:
         mode = cache_data.get("mode", "convert_spreadsheet")
         if mode == "insert_sheet":
             return self._build_insert_sheet_script(cache_data)
+        if mode == "patch_formulas":
+            return self._build_patch_formulas_script(cache_data)
 
         spreadsheet_json = cache_data["spreadsheet_json"]
         metadata_json = cache_data.get("metadata_json")
@@ -363,16 +418,15 @@ class SpreadsheetDocBuilder:
         return docbuilder_script
 
     def get_cached_file(self, oo_security_token):
-        """Return the cached XLSX bytes for the "insert_sheet" flow, deleting the cache entry.
+        """Return the cached XLSX bytes for "insert_sheet"/"patch_formulas" modes.
 
-        Returns None if the token is unknown or not in "insert_sheet" mode.
+        Returns None if the token is unknown or in another mode.
         """
         cache_data = _load_docbuilder_data(oo_security_token)
-        if not cache_data or cache_data.get("mode") != "insert_sheet":
+        if not cache_data or cache_data.get("mode") not in ("insert_sheet", "patch_formulas"):
             return None
 
         xlsx_data = base64.b64decode(cache_data["xlsx_base64"])
-        # Clean up now that both the script and the file have been served
         _delete_docbuilder_data(oo_security_token)
         return xlsx_data
 
@@ -520,6 +574,25 @@ class SpreadsheetDocBuilder:
         script = script.replace("SHEET_NAME_PLACEHOLDER", json.dumps(cache_data["sheet_name"]))
         script = script.replace("CELLS_PLACEHOLDER", cache_data["cells_json"])
         script = script.replace("METADATA_PLACEHOLDER", cache_data["metadata_json"])
+        script = script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{cache_data["output_filename"]}"')
+
+        # Don't delete the cache entry yet — the file-serving route needs it
+        return script
+
+    def _build_patch_formulas_script(self, cache_data):
+        """Build a DocBuilder script that opens a natively-exported XLSX and patches
+        back only the cells that originally held ODOO.* formulas."""
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
+        oo_security_token = cache_data.get("_token")
+        file_url = f"{odoo_url}onlyoffice/documents/docbuilder_file/{oo_security_token}"
+
+        with file_open("onlyoffice_odoo_documents/controllers/patch_formulas.docbuilder", "r") as f:
+            script = f.read()
+
+        script = script.replace("SHARED_HELPERS_PLACEHOLDER", _SHARED_DOCBUILDER_HELPERS)
+        script = script.replace("FILE_URL_PLACEHOLDER", f'"{file_url}"')
+        script = script.replace("PATCHES_PLACEHOLDER", cache_data["patches_json"])
+        script = script.replace("METADATA_PLACEHOLDER", cache_data.get("metadata_json") or "null")
         script = script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{cache_data["output_filename"]}"')
 
         # Don't delete the cache entry yet — the file-serving route needs it

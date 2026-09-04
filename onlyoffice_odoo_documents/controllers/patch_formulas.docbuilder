@@ -1,0 +1,54 @@
+// Open a natively-exported XLSX (produced client-side by o-spreadsheet's own
+// exportXLSX(), so charts/images/conditional formatting/data validation/
+// freeze panes/autofilters are already correct) and patch back only the
+// cells that originally held ODOO.* formulas, turning their baked-in static
+// value into a live ODOO_* formula evaluated by the ONLYOFFICE custom
+// function plugin. Everything else in the file is left untouched.
+builder.OpenFile(FILE_URL_PLACEHOLDER)
+
+var patches = PATCHES_PLACEHOLDER // [{sheet, cell, formula}, ...]
+var metadata = METADATA_PLACEHOLDER
+
+// Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
+// from a single Python source so this logic isn't duplicated between
+// convert_spreadsheet.docbuilder, insert_sheet.docbuilder and this file.
+SHARED_HELPERS_PLACEHOLDER
+
+var i
+for (i = 0; i < patches.length; i++) {
+  var patch = patches[i]
+  try {
+    var ws = Api.GetSheet(patch.sheet)
+    var cellRange = ws.GetRange(patch.cell)
+    cellRange.SetValue(patch.formula)
+    applyOdooColumnFormat(cellRange, patch.formula, metadata)
+  } catch (e) {
+    // Sheet/cell not found (name changed during native export, etc.) - skip it
+    // rather than failing the whole conversion.
+  }
+}
+
+// Embed metadata in a hidden sheet so it survives download/re-upload
+if (metadata) {
+  var metaSheet
+  try {
+    metaSheet = Api.GetSheet("_OdooMetadata")
+  } catch (e) {
+    metaSheet = null
+  }
+  if (!metaSheet) {
+    Api.AddSheet("_OdooMetadata")
+    metaSheet = Api.GetSheet("_OdooMetadata")
+  }
+  var metaStr = JSON.stringify(metadata)
+  var chunkSize = 30000
+  var ci
+  for (ci = 0; ci * chunkSize < metaStr.length; ci++) {
+    var chunk = metaStr.substring(ci * chunkSize, (ci + 1) * chunkSize)
+    metaSheet.GetRange("A" + (ci + 1)).SetValue(chunk)
+  }
+  metaSheet.SetVisible(false)
+}
+
+builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER)
+builder.CloseFile()
