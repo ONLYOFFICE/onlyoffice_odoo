@@ -7,8 +7,14 @@
         type="button"
         class="btn btn-secondary o_onlyoffice_open"
         t-if="userIsInternal and showOnlyofficeButton(singleSelection)"
-        t-on-click.prevent="onlyofficeEditorUrl"
+        t-on-click.prevent="() => this.onlyofficeEditorUrl(singleSelection.data.id, this.isOdooSpreadsheet(singleSelection))"
       > Open in ONLYOFFICE </button>
+      <button
+        type="button"
+        class="btn btn-secondary o_onlyoffice_convert_spreadsheet"
+        t-if="userIsInternal and this.isOdooSpreadsheet(singleSelection)"
+        t-on-click.prevent="() => this.convertSpreadsheetViaDocBuilder(singleSelection.data.id)"
+      > Convert to ONLYOFFICE XLSX (with formulas) </button>
     </xpath>
   </t>
 </templates>
