@@ -10,7 +10,7 @@
     "version": "19.0.6.3.1",
     "license": "LGPL-3",
     "support": "support@onlyoffice.com",
-    "depends": ["onlyoffice_odoo", "documents"],
+    "depends": ["onlyoffice_odoo", "documents", "documents_spreadsheet"],
     "data": [
         "security/ir.model.access.csv",
         "views/polyfills.xml",
@@ -34,6 +34,7 @@
             "onlyoffice_odoo_documents/static/src/models/*.js",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
+            "onlyoffice_odoo_documents/static/src/spreadsheet_selector/**/*",
             "onlyoffice_odoo_documents/static/src/components/**/*",
             ("remove", "onlyoffice_odoo_documents/static/src/**/*.dark.scss"),
         ],
