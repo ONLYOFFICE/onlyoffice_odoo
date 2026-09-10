@@ -5,6 +5,7 @@
 ## Fixed
 
 - cache template form field keys when loading/editing a template
+- report a failed document generation instead of silently omitting the record
 
 ## 4.5.2
 
