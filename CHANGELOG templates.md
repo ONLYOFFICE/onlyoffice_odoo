@@ -6,6 +6,7 @@
 
 - cache template form field keys when loading/editing a template
 - report a failed document generation instead of silently omitting the record
+- cap the generated document's file name so a long record name cannot fail the build
 
 ## 4.5.2
 
