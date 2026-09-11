@@ -19,12 +19,10 @@ class Document(models.Model):
     )
 
     def _get_onlyoffice_spreadsheets_domain(self, domain=None):
-        """Build the base domain matching XLSX documents in the Spreadsheets workspace folder."""
-        spreadsheet_folder = self.env.company.documents_spreadsheet_folder_id
+        """Build the base domain matching any XLSX document, regardless of folder."""
         base_domain = [
-            ("folder_id", "=", spreadsheet_folder.id if spreadsheet_folder else False),
             ("type", "=", "binary"),
-            ("mimetype", "=", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            ("mimetype", "=", XLSX_MIMETYPE),
         ]
         if domain:
             base_domain += domain
@@ -32,7 +30,7 @@ class Document(models.Model):
 
     @api.model
     def get_onlyoffice_spreadsheets_to_display(self, domain=None, offset=0, limit=0):
-        """Return XLSX documents from the Spreadsheets workspace folder."""
+        """Return XLSX documents available for the ONLYOFFICE insert-sheet tab."""
         records = self.search(
             self._get_onlyoffice_spreadsheets_domain(domain),
             offset=offset,
@@ -50,7 +48,7 @@ class Document(models.Model):
 
     @api.model
     def get_onlyoffice_spreadsheets_count(self, domain=None):
-        """Return count of XLSX documents in the Spreadsheets workspace folder."""
+        """Return count of XLSX documents available for the ONLYOFFICE insert-sheet tab."""
         return self.search_count(self._get_onlyoffice_spreadsheets_domain(domain))
 
     @api.depends("checksum")
