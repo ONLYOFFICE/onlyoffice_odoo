@@ -23,7 +23,7 @@ import pytz
 from odoo import fields
 from odoo.exceptions import AccessError
 from odoo.http import request
-from odoo.tools.misc import file_open
+from odoo.tools.misc import file_open, get_lang
 from odoo.tools.translate import _
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
@@ -257,7 +257,11 @@ class SpreadsheetDocBuilder:
 
             metadata_json = self._prepare_docbuilder_metadata(snapshot)
             oo_security_token = secrets.token_urlsafe(32)
-            output_filename = f"{document.name}_{uuid.uuid4().hex[:8]}.xlsx"
+            lang = get_lang(request.env)
+            dt_format = f"{lang.date_format} {lang.time_format}"
+            now = fields.Datetime.context_timestamp(document, fields.Datetime.now())
+            timestamp = re.sub(r'[\\/:*?"<>|\s]+', "_", now.strftime(dt_format))
+            output_filename = f"{document.name}_{timestamp}.xlsx"
 
             # Patch the native export in place.
             patches = self._build_formula_patches(snapshot)
@@ -281,8 +285,10 @@ class SpreadsheetDocBuilder:
                 result["error"] = error
                 return result
 
-            # Save or update XLSX document
-            result["xlsx_id"] = self._save_xlsx_document(document, document_id, xlsx_content, metadata_json)
+            # Save XLSX document
+            result["xlsx_id"] = self._save_xlsx_document(
+                document, document_id, output_filename, xlsx_content, metadata_json
+            )
             _logger.info("Converted spreadsheet %s to XLSX %s", document_id, result["xlsx_id"])
 
         except Exception as e:
@@ -509,29 +515,11 @@ class SpreadsheetDocBuilder:
 
         return xlsx_response.content, None
 
-    def _save_xlsx_document(self, document, document_id, xlsx_content, metadata_json):
-        """Save or update the XLSX document in Odoo. Returns document ID."""
-        existing_xlsx = request.env["documents.document"].search(
-            [
-                ("onlyoffice_spreadsheet_source_id", "=", document_id),
-                ("name", "like", f"{document.name}_docbuilder%.xlsx"),
-            ],
-            limit=1,
-        )
-
-        if existing_xlsx:
-            existing_xlsx.write(
-                {
-                    "datas": base64.b64encode(xlsx_content),
-                    "mimetype": XLSX_MIMETYPE,
-                    "onlyoffice_spreadsheet_metadata": metadata_json,
-                }
-            )
-            return existing_xlsx.id
-
+    def _save_xlsx_document(self, document, document_id, output_filename, xlsx_content, metadata_json):
+        """Create a new XLSX document in Odoo for this conversion. Returns document ID."""
         xlsx_doc = request.env["documents.document"].create(
             {
-                "name": f"{document.name}_docbuilder.xlsx",
+                "name": output_filename,
                 "folder_id": document.folder_id.id,
                 "datas": base64.b64encode(xlsx_content),
                 "mimetype": XLSX_MIMETYPE,

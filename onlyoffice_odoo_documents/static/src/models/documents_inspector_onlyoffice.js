@@ -3,9 +3,14 @@
 
 import { DocumentsInspector } from "@documents/views/inspector/documents_inspector"
 import { loadBundle } from "@web/core/assets"
+import { formatDateTime } from "@web/core/l10n/dates"
 import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
+
+const { DateTime } = luxon
+
+const getFilenameTimestamp = () => formatDateTime(DateTime.now()).replace(/[\\/:*?"<>|\s]+/g, "_")
 
 let formats = []
 const loadFormats = async () => {
@@ -214,34 +219,20 @@ patch(DocumentsInspector.prototype, {
           reader.readAsDataURL(xlsxBlob)
         })
 
-        // Check if XLSX copy already exists
-        const existingXlsx = await this.env.services.orm.searchRead(
-          "documents.document",
-          [["onlyoffice_spreadsheet_source_id", "=", id]],
-          ["id"],
-          { limit: 1 },
-        )
+        // Get folder info
+        const docInfo = await this.env.services.orm.read("documents.document", [id], ["folder_id"])
 
-        let xlsxId = null
-        if (existingXlsx.length > 0) {
-          // Update existing XLSX copy
-          await this.env.services.orm.write("documents.document", [existingXlsx[0].id], { datas: xlsxBase64 })
-          xlsxId = existingXlsx[0].id
-        } else {
-          // Get folder info
-          const docInfo = await this.env.services.orm.read("documents.document", [id], ["folder_id"])
-
-          // Create new XLSX document
-          xlsxId = await this.env.services.orm.create("documents.document", [
-            {
-              datas: xlsxBase64,
-              folder_id: docInfo[0].folder_id[0],
-              mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-              name: `${record.name}.xlsx`,
-              onlyoffice_spreadsheet_source_id: id,
-            },
-          ])
-        }
+        // Create new XLSX document
+        const uniqueSuffix = getFilenameTimestamp()
+        const xlsxId = await this.env.services.orm.create("documents.document", [
+          {
+            datas: xlsxBase64,
+            folder_id: docInfo[0].folder_id[0],
+            mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            name: `${record.name}_${uniqueSuffix}.xlsx`,
+            onlyoffice_spreadsheet_source_id: id,
+          },
+        ])
 
         // Use the XLSX document
         openDocumentId = xlsxId
