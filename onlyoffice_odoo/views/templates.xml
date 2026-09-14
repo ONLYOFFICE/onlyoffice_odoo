@@ -45,6 +45,7 @@
         </div>
       </div>
       <script type="text/javascript" t-att-src="docApiJS" />
+      <script type="text/javascript" src="/onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js" />
       <script type="text/javascript">
         function getCookie(name) {
           const value = `; ${document.cookie}`;
@@ -65,8 +66,27 @@
             }
           }
         }
+
+        // Pass document data to global scope for init script
+        window.odooDocumentId = <t t-out="document_id or 'null'" />;
+        window.odooJwtToken = "<t t-out="jwt_token or ''" />";
+        window.odooFilterValues = <t t-out="filter_values_json or '{}'" />;
+        window.hasOdooFormulas = <t t-out="'true' if has_odoo_formulas else 'false'" />;
+
+        // Setup ODOO custom functions event handler BEFORE creating editor
+        config.events = config.events || {};
+        var originalOnReady = config.events.onDocumentReady;
+        config.events.onDocumentReady = function() {
+          if (originalOnReady) {
+            originalOnReady();
+          }
+          // Call init function from external script
+          if (window.initializeOdooCustomFunctions &amp;&amp; window.hasOdooFormulas) {
+            window.initializeOdooCustomFunctions();
+          }
+        };
         if (window.DocsAPI) {
-          var docEditor = new DocsAPI.DocEditor("doceditor", config);
+          window.docEditor = new DocsAPI.DocEditor("doceditor", config);
         } else {
           document.getElementById("error").classList.remove("d-none");
         }

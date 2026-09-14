@@ -3,7 +3,9 @@
 ##
 
 ## Added
+
 - converting documents to other formats
+- converting "spreadsheet documents" to XLSX format with support for Odoo functions
 
 ## 4.3.1
 

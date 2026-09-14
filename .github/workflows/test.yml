@@ -28,9 +28,10 @@ jobs:
           persist-credentials: false
       - name: Create stubs for unavailable addons
         run: |
-          mkdir -p documents
+          mkdir -p documents documents_spreadsheet
           printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
-          touch documents/__init__.py
+          printf "{'name': 'Documents Spreadsheet', 'version': '17.0.1.0.0', 'depends': ['documents']}\n" > documents_spreadsheet/__manifest__.py
+          touch documents/__init__.py documents_spreadsheet/__init__.py
       - name: Install addons and dependencies
         run: oca_install_addons
       - name: Initialize test db
