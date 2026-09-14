@@ -3,11 +3,16 @@
 
 import { onWillStart } from "@odoo/owl"
 import { loadBundle } from "@web/core/assets"
+import { formatDateTime } from "@web/core/l10n/dates"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 import { ConvertDialog } from "./convert_dialog/convert_dialog"
 import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"
+
+const { DateTime } = luxon
+
+const getFilenameTimestamp = () => formatDateTime(DateTime.now()).replace(/[\\/:*?"<>|\s]+/g, "_")
 
 export const OnlyofficeDocumentsControllerMixin = () => ({
   setup() {
@@ -223,26 +228,16 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       this.ui.block({ message: _t("Converting spreadsheet to XLSX...") })
       try {
         const { base64, name } = await this._exportSpreadsheetNativeXlsx(doc.data.id)
-        const existingXlsx = await this.orm.searchRead(
-          "documents.document",
-          [["onlyoffice_spreadsheet_source_id", "=", doc.data.id]],
-          ["id"],
-          { limit: 1 },
-        )
-        if (existingXlsx.length > 0) {
-          await this.orm.write("documents.document", [existingXlsx[0].id], { datas: base64 })
-          openDocumentId = existingXlsx[0].id
-        } else {
-          openDocumentId = await this.orm.create("documents.document", [
-            {
-              datas: base64,
-              folder_id: doc.data.folder_id.id,
-              mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-              name: `${name}.xlsx`,
-              onlyoffice_spreadsheet_source_id: doc.data.id,
-            },
-          ])
-        }
+        const uniqueSuffix = getFilenameTimestamp()
+        openDocumentId = await this.orm.create("documents.document", [
+          {
+            datas: base64,
+            folder_id: doc.data.folder_id.id,
+            mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            name: `${name}_${uniqueSuffix}.xlsx`,
+            onlyoffice_spreadsheet_source_id: doc.data.id,
+          },
+        ])
         this.notification.add(_t("Spreadsheet converted to XLSX for editing in ONLYOFFICE"), { type: "success" })
         await this._refreshDocumentsFolder()
       } catch (error) {
