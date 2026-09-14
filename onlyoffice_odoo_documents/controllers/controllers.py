@@ -257,6 +257,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
                 {"uid": request.env.user.id, "document_id": document.id},
                 config_utils.get_internal_jwt_secret(request.env),
             )
+            document._ensure_onlyoffice_spreadsheet_metadata()
             if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
                 config["has_odoo_formulas"] = True
                 try:
@@ -332,6 +333,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         )
 
         # Pre-compute filter values so ODOO_FILTER_VALUE can resolve synchronously on the client.
+        document._ensure_onlyoffice_spreadsheet_metadata()
         if document.onlyoffice_spreadsheet_metadata or document.onlyoffice_spreadsheet_source_id:
             editor_values["has_odoo_formulas"] = True
             try:
