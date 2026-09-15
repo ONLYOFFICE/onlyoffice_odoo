@@ -97,6 +97,19 @@ To configure the app, go to `Settings`. Find `ONLYOFFICE` on the left sidebar an
 
 Configuration settings include JWT, enabled by default to protect the editors from unauthorized access. If setting a custom **Secret key**, ensure it matches the one in the ONLYOFFICE Docs [config file](https://api.onlyoffice.com/docs/docs-api/additional-api/signature/) for proper validation.
 
+### Local network addresses
+
+For security reasons, the address that Odoo uses to reach ONLYOFFICE Docs (the ONLYOFFICE Docs address, or the address for internal requests when it is set) must not point to the local machine or to a private network. Addresses such as `localhost`, `127.0.0.1`, `10.x.x.x`, `172.16.x.x`, `192.168.x.x` or Docker service names like `http://documentserver/` are rejected when the settings are saved.
+
+If ONLYOFFICE Docs runs next to Odoo in the same private network (for example in Docker Compose), allow local addresses in the Odoo configuration file and restart Odoo:
+
+```
+[onlyoffice]
+allow_local_address = True
+```
+
+Details of failed connection checks are written to the Odoo server log; the settings form shows only a generic message.
+
 ## ONLYOFFICE Docs editions
 
 ONLYOFFICE offers different versions of its online document editors that can be deployed on your own servers.

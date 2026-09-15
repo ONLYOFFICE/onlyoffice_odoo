@@ -5,10 +5,14 @@
 ## Added
 
 - shardkey param to url for requests to Docs
+- local and private network addresses are rejected for ONLYOFFICE Docs when saving the settings; the ban can be turned
+  off with `allow_local_address = True` in the `[onlyoffice]` section of the Odoo configuration file
 
 ## Changed
 
 - support tsv
+- connection check errors are written to the Odoo server log; the settings form shows one generic message instead of the
+  request error details
 
 ## Fixed
 
