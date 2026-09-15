@@ -241,6 +241,13 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 record_name = getattr(record, "display_name", getattr(record, "name", str(record_id)))
                 template_name = getattr(template, "display_name", getattr(template, "name", "Filled Template"))
                 filename = re.sub(r"[<>:'/\\|?*\x00-\x1f]", " ", f"{template_name} - {record_name}")
+                # A record's display name can be a paragraph, and the name built from
+                # it then overruns the filesystem's 255-byte limit. The Document
+                # Server fails to save the file and reports only "Document generation
+                # error", which points nowhere near the cause: the same template
+                # renders fine for a record with a shorter name, and the same record
+                # fails on every template.
+                filename = " ".join(filename.split())[:120].strip()
 
                 editable_form_fields = templates_config_utils.get_editable_form_fields(http.request.env)
                 if editable_form_fields:
