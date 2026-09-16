@@ -105,9 +105,11 @@ class TestNetworkUtils(TransactionCase):
 
     def test_is_local_host_unresolvable_name(self):
         """A host name that does not resolve is not treated as local; the connection check reports it."""
-        with patch(GETADDRINFO, side_effect=socket.gaierror("Name or service not known")):
-            with self.assertLogs(network_utils._logger, level="WARNING") as logs:
-                self.assertFalse(network_utils.is_local_host("no-such-host.invalid"))
+        with (
+            patch(GETADDRINFO, side_effect=socket.gaierror("Name or service not known")),
+            self.assertLogs(network_utils._logger, level="WARNING") as logs,
+        ):
+            self.assertFalse(network_utils.is_local_host("no-such-host.invalid"))
         self.assertIn("cannot resolve host", logs.output[0])
 
     # -- is_local_url --

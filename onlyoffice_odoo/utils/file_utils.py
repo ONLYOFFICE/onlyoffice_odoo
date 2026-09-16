@@ -30,27 +30,24 @@ def get_file_type(context):
 
 def can_view(context):
     for supported_format in format_utils.get_supported_formats():
-        if supported_format.name == get_file_ext(context):
-            if "view" in supported_format.actions:
-                return True
+        if supported_format.name == get_file_ext(context) and "view" in supported_format.actions:
+            return True
 
     return False
 
 
 def can_edit(context):
     for supported_format in format_utils.get_supported_formats():
-        if supported_format.name == get_file_ext(context):
-            if "edit" in supported_format.actions:
-                return True
+        if supported_format.name == get_file_ext(context) and "edit" in supported_format.actions:
+            return True
 
     return False
 
 
 def can_fill_form(context):
     for supported_format in format_utils.get_supported_formats():
-        if supported_format.name == get_file_ext(context):
-            if "fill" in supported_format.actions:
-                return True
+        if supported_format.name == get_file_ext(context) and "fill" in supported_format.actions:
+            return True
 
     return False
 

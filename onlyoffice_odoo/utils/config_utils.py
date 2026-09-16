@@ -2,7 +2,8 @@
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import uuid
-from datetime import date
+
+from odoo import fields
 
 from odoo.addons.onlyoffice_odoo.utils import config_constants
 
@@ -108,7 +109,7 @@ def set_demo(env, param):
 
 
 def set_demo_date(env):
-    demo_date = date.today()
+    demo_date = fields.Date.today()
     env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DEMO_DATE, demo_date)
 
 

@@ -39,9 +39,7 @@ def valid_url(url):
     if not url:
         return True
     pattern = r"^(https?://)?[\w-]{1,32}(\.[\w-]{1,32})*[/\w-]*(:[\d]{1,5}/?)?$"
-    if re.findall(pattern, url):
-        return True
-    return False
+    return bool(re.findall(pattern, url))
 
 
 def settings_validation(self):
@@ -91,7 +89,7 @@ def check_api_js(url, demo, disable_certificate):
         if disable_certificate and api_js_url.startswith("https://"):
             context = ssl._create_unverified_context()
         status = urlopen(api_js_url, timeout=30, context=context).status
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any failure means api.js is unreachable
         _logger.warning("check_api_js - cannot reach %s: %r", api_js_url, e)
         status = None
 
@@ -115,7 +113,7 @@ def check_doc_serv_healthcheck(url, demo, disable_certificate):
 
     except ValidationError:
         raise
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any failure means the healthcheck is unreachable
         _logger.error("check_doc_serv_healthcheck - cannot reach %s: %r", url, e)
         get_request_error("Document Server cannot be reached.", demo)
 
@@ -152,7 +150,7 @@ def check_doc_serv_command_service(env, url, jwt_secret, jwt_header, disable_cer
 
     except ValidationError:
         raise
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any failure means the request could not be completed
         _logger.error("check_doc_serv_command_service - request failed at %s: %r", url, e)
         get_request_error("Error when trying to check CommandService(Connection error).", demo)
 
@@ -178,7 +176,7 @@ def convert(env, file_url, url, jwt_secret, jwt_header, disable_certificate):
             data=json.dumps(body_json),
             headers=headers,
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any failure means the request could not be completed
         _logger.error("convert - conversion service request failed at %s: %r", url, e)
         return "Connection error"
 

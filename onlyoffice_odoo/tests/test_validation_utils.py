@@ -129,9 +129,11 @@ class TestValidationUtils(TransactionCase):
 
     def test_check_api_js_raises_official_message_when_unreachable(self):
         """An unreachable api.js file raises the exact client-facing ONLYOFFICE message."""
-        with patch(f"{VALIDATION}.urlopen", side_effect=ConnectionRefusedError("refused")):
-            with self.assertRaises(ValidationError) as ctx:
-                validation_utils.check_api_js("http://docserver/", False, False)
+        with (
+            patch(f"{VALIDATION}.urlopen", side_effect=ConnectionRefusedError("refused")),
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_api_js("http://docserver/", False, False)
         self.assertEqual(str(ctx.exception), "The API JavaScript file cannot be reached.")
 
     def test_check_api_js_raises_when_status_not_200(self):
@@ -146,10 +148,12 @@ class TestValidationUtils(TransactionCase):
         """An unverified SSL context is created when certificate check is disabled for an HTTPS URL."""
         mock_resp = MagicMock()
         mock_resp.status = 200
-        with patch(f"{VALIDATION}.urlopen", return_value=mock_resp):
-            with patch("ssl._create_unverified_context", return_value=MagicMock()) as mock_ssl:
-                validation_utils.check_api_js("https://docserver/", False, True)
-                mock_ssl.assert_called_once()
+        with (
+            patch(f"{VALIDATION}.urlopen", return_value=mock_resp),
+            patch("ssl._create_unverified_context", return_value=MagicMock()) as mock_ssl,
+        ):
+            validation_utils.check_api_js("https://docserver/", False, True)
+            mock_ssl.assert_called_once()
 
     # -- get_message_error --
 
@@ -178,18 +182,22 @@ class TestValidationUtils(TransactionCase):
         """ValidationError is raised when the healthcheck endpoint returns an empty body."""
         mock_resp = MagicMock()
         mock_resp.read.return_value = b""
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp):
-            with self.assertRaises(ValidationError):
-                validation_utils.check_doc_serv_healthcheck("http://docserver/", False, False)
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp),
+            self.assertRaises(ValidationError),
+        ):
+            validation_utils.check_doc_serv_healthcheck("http://docserver/", False, False)
 
     def test_check_doc_serv_healthcheck_creates_ssl_context_when_certificate_disabled_and_https(self):
         """An unverified SSL context is created when certificate check is disabled for an HTTPS URL."""
         mock_resp = MagicMock()
         mock_resp.read.return_value = b"true"
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp):
-            with patch("ssl._create_unverified_context", return_value=MagicMock()) as mock_ssl:
-                validation_utils.check_doc_serv_healthcheck("https://docserver/", False, True)
-                mock_ssl.assert_called_once()
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp),
+            patch("ssl._create_unverified_context", return_value=MagicMock()) as mock_ssl,
+        ):
+            validation_utils.check_doc_serv_healthcheck("https://docserver/", False, True)
+            mock_ssl.assert_called_once()
 
     # -- check_doc_serv_convert_service --
 
@@ -202,11 +210,13 @@ class TestValidationUtils(TransactionCase):
 
     def test_check_doc_serv_convert_service_raises_when_convert_returns_error(self):
         """ValidationError is raised when the conversion service returns an error message."""
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.convert", return_value="Conversion error"):
-            with self.assertRaises(ValidationError):
-                validation_utils.check_doc_serv_convert_service(
-                    self.env, "http://docserver/", "http://odoo/", "", "Authorization", False, False
-                )
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.convert", return_value="Conversion error"),
+            self.assertRaises(ValidationError),
+        ):
+            validation_utils.check_doc_serv_convert_service(
+                self.env, "http://docserver/", "http://odoo/", "", "Authorization", False, False
+            )
 
     # -- convert --
 
@@ -283,12 +293,14 @@ class TestValidationUtils(TransactionCase):
         """Error code 6 (invalid token) is a request error: masked to the client, logged in full."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"error": 6}
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_command_service(
-                        self.env, "http://docserver/", "", "Authorization", False, False
-                    )
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_command_service(
+                self.env, "http://docserver/", "", "Authorization", False, False
+            )
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertIn("Error when trying to check CommandService(Invalid token).", logs.output[0])
 
@@ -296,11 +308,13 @@ class TestValidationUtils(TransactionCase):
         """ValidationError is raised when the command service returns any non-zero error code."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"error": 5}
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp):
-            with self.assertRaises(ValidationError):
-                validation_utils.check_doc_serv_command_service(
-                    self.env, "http://docserver/", "", "Authorization", False, False
-                )
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp),
+            self.assertRaises(ValidationError),
+        ):
+            validation_utils.check_doc_serv_command_service(
+                self.env, "http://docserver/", "", "Authorization", False, False
+            )
 
     # -- check_local_address --
 
@@ -318,10 +332,12 @@ class TestValidationUtils(TransactionCase):
 
     def test_check_local_address_rejects_docker_service_name(self):
         """The default 'documentserver' Docker name resolving to a private address is rejected."""
-        with patch.dict(network_utils.config.misc, {}, clear=True):
-            with patch(GETADDRINFO, return_value=[(2, 1, 6, "", ("172.18.0.2", 0))]):
-                with self.assertRaises(ValidationError):
-                    validation_utils.check_local_address("http://documentserver/", False)
+        with (
+            patch.dict(network_utils.config.misc, {}, clear=True),
+            patch(GETADDRINFO, return_value=[(2, 1, 6, "", ("172.18.0.2", 0))]),
+            self.assertRaises(ValidationError),
+        ):
+            validation_utils.check_local_address("http://documentserver/", False)
 
     def test_check_local_address_accepts_public_address(self):
         """A public Document Server address passes the local-address check."""
@@ -335,10 +351,12 @@ class TestValidationUtils(TransactionCase):
 
     def test_check_local_address_logs_rejection(self):
         """The rejected address is written to the server log."""
-        with patch.dict(network_utils.config.misc, {}, clear=True):
-            with self.assertLogs(validation_utils._logger, level="WARNING") as logs:
-                with self.assertRaises(ValidationError):
-                    validation_utils.check_local_address("http://127.0.0.1/", False)
+        with (
+            patch.dict(network_utils.config.misc, {}, clear=True),
+            self.assertLogs(validation_utils._logger, level="WARNING") as logs,
+            self.assertRaises(ValidationError),
+        ):
+            validation_utils.check_local_address("http://127.0.0.1/", False)
         self.assertIn("127.0.0.1", logs.output[0])
 
     def test_check_local_address_demo_prefix(self):
@@ -349,9 +367,11 @@ class TestValidationUtils(TransactionCase):
 
     def test_check_local_address_disabled_by_config_file(self):
         """allow_local_address = True in odoo.conf turns the ban off and lets a local address through."""
-        with patch.dict(network_utils.config.misc, {"onlyoffice": {"allow_local_address": True}}):
-            with self.assertLogs(validation_utils._logger, level="INFO") as logs:
-                validation_utils.check_local_address("http://127.0.0.1:8080/", False)
+        with (
+            patch.dict(network_utils.config.misc, {"onlyoffice": {"allow_local_address": True}}),
+            self.assertLogs(validation_utils._logger, level="INFO") as logs,
+        ):
+            validation_utils.check_local_address("http://127.0.0.1:8080/", False)
         self.assertIn("disabled", logs.output[0])
 
     # -- settings_validation --
@@ -370,43 +390,54 @@ class TestValidationUtils(TransactionCase):
     def test_settings_validation_rejects_local_address_before_any_request(self):
         """A local address is rejected before the healthcheck or any other request is sent."""
         settings = self._settings("http://127.0.0.1:8080/")
-        with patch.dict(network_utils.config.misc, {}, clear=True):
-            with patch(f"{VALIDATION}.urlopen") as mock_urlopen:
-                with patch(f"{VALIDATION}.requests.post") as mock_post:
-                    with self.assertRaises(ValidationError):
-                        validation_utils.settings_validation(settings)
+        with (
+            patch.dict(network_utils.config.misc, {}, clear=True),
+            patch(f"{VALIDATION}.urlopen") as mock_urlopen,
+            patch(f"{VALIDATION}.requests.post") as mock_post,
+            self.assertRaises(ValidationError),
+        ):
+            validation_utils.settings_validation(settings)
         mock_urlopen.assert_not_called()
         mock_post.assert_not_called()
 
     def test_settings_validation_checks_inner_url_when_set(self):
         """The address Odoo connects to is the inner URL, so a local inner URL is rejected."""
         settings = self._settings("https://docs.example.com/", inner_url="http://10.0.0.5/")
-        with patch.dict(network_utils.config.misc, {}, clear=True):
-            with patch(GETADDRINFO, return_value=[(2, 1, 6, "", ("93.184.216.34", 0))]):
-                with patch(f"{VALIDATION}.urlopen") as mock_urlopen:
-                    with self.assertRaises(ValidationError) as ctx:
-                        validation_utils.settings_validation(settings)
+        with (
+            patch.dict(network_utils.config.misc, {}, clear=True),
+            patch(GETADDRINFO, return_value=[(2, 1, 6, "", ("93.184.216.34", 0))]),
+            patch(f"{VALIDATION}.urlopen") as mock_urlopen,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.settings_validation(settings)
         self.assertIn("Local and private addresses", str(ctx.exception))
         mock_urlopen.assert_not_called()
 
     def test_settings_validation_ignores_local_odoo_url(self):
         """The Odoo URL is used by the Document Server, not by Odoo, so a local Odoo URL is fine."""
         settings = self._settings("https://93.184.216.34/", odoo_url="http://odoo:8069/")
-        with patch.dict(network_utils.config.misc, {}, clear=True), patch(f"{VALIDATION}.check_mixed_content"):
-            with patch(f"{VALIDATION}.check_api_js"), patch(f"{VALIDATION}.check_doc_serv_healthcheck") as mock_health:
-                with patch(f"{VALIDATION}.check_doc_serv_command_service"):
-                    with patch(f"{VALIDATION}.check_doc_serv_convert_service"):
-                        validation_utils.settings_validation(settings)
+        with (
+            patch.dict(network_utils.config.misc, {}, clear=True),
+            patch(f"{VALIDATION}.check_mixed_content"),
+            patch(f"{VALIDATION}.check_api_js"),
+            patch(f"{VALIDATION}.check_doc_serv_healthcheck") as mock_health,
+            patch(f"{VALIDATION}.check_doc_serv_command_service"),
+            patch(f"{VALIDATION}.check_doc_serv_convert_service"),
+        ):
+            validation_utils.settings_validation(settings)
         mock_health.assert_called_once()
 
     def test_settings_validation_runs_network_checks_when_ban_disabled(self):
         """With the ban disabled in odoo.conf a local address reaches the regular connection checks."""
         settings = self._settings("http://127.0.0.1:8080/")
-        with patch.dict(network_utils.config.misc, {"onlyoffice": {"allow_local_address": True}}):
-            with patch(f"{VALIDATION}.check_api_js"), patch(f"{VALIDATION}.check_doc_serv_healthcheck") as mock_health:
-                with patch(f"{VALIDATION}.check_doc_serv_command_service") as mock_command:
-                    with patch(f"{VALIDATION}.check_doc_serv_convert_service") as mock_convert:
-                        validation_utils.settings_validation(settings)
+        with (
+            patch.dict(network_utils.config.misc, {"onlyoffice": {"allow_local_address": True}}),
+            patch(f"{VALIDATION}.check_api_js"),
+            patch(f"{VALIDATION}.check_doc_serv_healthcheck") as mock_health,
+            patch(f"{VALIDATION}.check_doc_serv_command_service") as mock_command,
+            patch(f"{VALIDATION}.check_doc_serv_convert_service") as mock_convert,
+        ):
+            validation_utils.settings_validation(settings)
         mock_health.assert_called_once()
         mock_command.assert_called_once()
         mock_convert.assert_called_once()
@@ -415,27 +446,33 @@ class TestValidationUtils(TransactionCase):
 
     def test_get_request_error_hides_details_and_logs_them(self):
         """Request errors reach the client as one generic message; the details go to the server log."""
-        with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-            with self.assertRaises(ValidationError) as ctx:
-                validation_utils.get_request_error("http://10.0.0.5:5432/healthcheck returned false.", False)
+        with (
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.get_request_error("http://10.0.0.5:5432/healthcheck returned false.", False)
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertNotIn("10.0.0.5", str(ctx.exception))
         self.assertIn("10.0.0.5:5432", logs.output[0])
 
     def test_get_request_error_demo_prefix(self):
         """In demo mode the generic message carries the demo server prefix."""
-        with self.assertLogs(validation_utils._logger, level="ERROR"):
-            with self.assertRaises(ValidationError) as ctx:
-                validation_utils.get_request_error("details", True)
+        with (
+            self.assertLogs(validation_utils._logger, level="ERROR"),
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.get_request_error("details", True)
         self.assertIn("demo server", str(ctx.exception).lower())
         self.assertIn(validation_utils.REQUEST_ERROR_MESSAGE, str(ctx.exception))
 
     def test_check_doc_serv_healthcheck_unreachable_returns_generic_message(self):
         """A connection failure on healthcheck is reported generically; the official message is logged."""
-        with patch(f"{VALIDATION}.urlopen", side_effect=ConnectionRefusedError("refused")):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_healthcheck("http://docserver/", False, False)
+        with (
+            patch(f"{VALIDATION}.urlopen", side_effect=ConnectionRefusedError("refused")),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_healthcheck("http://docserver/", False, False)
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertIn("refused", logs.output[0])
         self.assertIn("Document Server cannot be reached.", "\n".join(logs.output))
@@ -444,10 +481,12 @@ class TestValidationUtils(TransactionCase):
         """An empty healthcheck body is reported generically; the official bad-healthcheck message is logged."""
         mock_resp = MagicMock()
         mock_resp.read.return_value = b""
-        with patch(f"{VALIDATION}.urlopen", return_value=mock_resp):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_healthcheck("http://docserver/", False, False)
+        with (
+            patch(f"{VALIDATION}.urlopen", return_value=mock_resp),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_healthcheck("http://docserver/", False, False)
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertIn("returned false", logs.output[0])
         self.assertIn("Document Server return bad healthcheck status.", "\n".join(logs.output))
@@ -456,55 +495,65 @@ class TestValidationUtils(TransactionCase):
         """In demo mode the demo prefix appears once, even though the error is raised inside the try block."""
         mock_resp = MagicMock()
         mock_resp.read.return_value = b""
-        with patch(f"{VALIDATION}.urlopen", return_value=mock_resp):
-            with self.assertLogs(validation_utils._logger, level="ERROR"):
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_healthcheck("http://docserver/", True, False)
+        with (
+            patch(f"{VALIDATION}.urlopen", return_value=mock_resp),
+            self.assertLogs(validation_utils._logger, level="ERROR"),
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_healthcheck("http://docserver/", True, False)
         self.assertEqual(str(ctx.exception).count("Demo server error"), 1)
 
     def test_command_service_nonzero_error_returns_generic_message(self):
         """A non-zero, non-authorization command service error code is hidden behind the generic message."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"error": 5}
-        with patch(f"{VALIDATION}.requests.post", return_value=mock_resp):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_command_service(
-                        self.env, "http://docserver/", "", "Authorization", False, False
-                    )
+        with (
+            patch(f"{VALIDATION}.requests.post", return_value=mock_resp),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_command_service(
+                self.env, "http://docserver/", "", "Authorization", False, False
+            )
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertIn("Error when trying to check CommandService(Command not correct).", logs.output[0])
 
     def test_command_service_request_failure_returns_generic_message(self):
         """A failed command service request is hidden behind the generic message and logged."""
-        with patch(f"{VALIDATION}.requests.post", side_effect=ConnectionError("no route")):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_command_service(
-                        self.env, "http://docserver/", "", "Authorization", False, False
-                    )
+        with (
+            patch(f"{VALIDATION}.requests.post", side_effect=ConnectionError("no route")),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_command_service(
+                self.env, "http://docserver/", "", "Authorization", False, False
+            )
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertIn("no route", logs.output[0])
 
     def test_convert_service_error_returns_generic_message(self):
         """A conversion service error message is logged and replaced by the generic message."""
-        with patch(f"{VALIDATION}.convert", return_value="Document conversion service cannot be reached"):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                with self.assertRaises(ValidationError) as ctx:
-                    validation_utils.check_doc_serv_convert_service(
-                        self.env, "http://docserver/", "http://odoo/", "", "Authorization", False, False
-                    )
+        with (
+            patch(f"{VALIDATION}.convert", return_value="Document conversion service cannot be reached"),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+            self.assertRaises(ValidationError) as ctx,
+        ):
+            validation_utils.check_doc_serv_convert_service(
+                self.env, "http://docserver/", "http://odoo/", "", "Authorization", False, False
+            )
         self.assertEqual(str(ctx.exception), validation_utils.REQUEST_ERROR_MESSAGE)
         self.assertIn("Error when trying to check ConvertService", logs.output[0])
         self.assertIn("cannot be reached", logs.output[0])
 
     def test_convert_logs_request_failure(self):
         """A failed converter request is logged with the exception before the error string is returned."""
-        with patch(f"{VALIDATION}.requests.post", side_effect=ConnectionError("timeout")):
-            with self.assertLogs(validation_utils._logger, level="ERROR") as logs:
-                result = validation_utils.convert(
-                    self.env, "http://odoo/test.txt", "http://docserver/", "", "Authorization", False
-                )
+        with (
+            patch(f"{VALIDATION}.requests.post", side_effect=ConnectionError("timeout")),
+            self.assertLogs(validation_utils._logger, level="ERROR") as logs,
+        ):
+            result = validation_utils.convert(
+                self.env, "http://odoo/test.txt", "http://docserver/", "", "Authorization", False
+            )
         self.assertEqual(result, "Connection error")
         self.assertIn("timeout", logs.output[0])
 

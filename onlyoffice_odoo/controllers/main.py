@@ -79,9 +79,7 @@ def onlyoffice_request(url, method, opts=None, env=None):
         }
 
         _logger.error("ONLYOFFICE request failed: %s", error_details)
-        raise requests.exceptions.RequestException(
-            f"ONLYOFFICE request failed to {method.upper()} {url}: {str(e)}"
-        ) from e
+        raise requests.exceptions.RequestException(f"ONLYOFFICE request failed to {method.upper()} {url}: {e!s}") from e
 
     except Exception as e:
         error_details = {
@@ -94,7 +92,7 @@ def onlyoffice_request(url, method, opts=None, env=None):
 
         _logger.error("Unexpected error in ONLYOFFICE request: %s", error_details)
         raise requests.exceptions.RequestException(
-            f"Unexpected error in ONLYOFFICE request to {method.upper()} {url}: {str(e)}"
+            f"Unexpected error in ONLYOFFICE request to {method.upper()} {url}: {e!s}"
         ) from e
 
 
@@ -280,7 +278,7 @@ class OnlyofficeConnector(http.Controller):
 
                 _logger.info("POST /onlyoffice/editor/callback/%s - file saved successfully", attachment_id)
 
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001 - callback must always answer with a JSON error, not a 500
             _logger.error("POST /onlyoffice/editor/callback/%s - error: %s", attachment_id, str(ex))
             response_json["error"] = 1
             response_json["message"] = http.serialize_exception(ex)
@@ -351,7 +349,7 @@ class OnlyofficeConnector(http.Controller):
 
         try:
             session_info = request.env["ir.http"].get_frontend_session_info()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - session info is optional, any failure falls back to {}
             _logger.error("Failed to get frontend session info: %s", str(e))
             session_info = {}
         _logger.info("prepare_editor_values - success: %s", attachment.id)
@@ -375,10 +373,7 @@ class OnlyofficeConnector(http.Controller):
             return root_config
 
         if document.owner_id.id == request.env.user.id:
-            if can_write:
-                role = "editor"
-            else:
-                role = "viewer"
+            role = "editor" if can_write else "viewer"
         else:
             access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
                 [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
@@ -513,7 +508,7 @@ class OnlyofficeConnector(http.Controller):
 
         try:
             session_info = request.env["ir.http"].get_frontend_session_info()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - session info is optional, any failure falls back to {}
             _logger.error("Failed to get frontend session info: %s", str(e))
             session_info = {}
         _logger.info("GET /onlyoffice/preview - success")
@@ -548,7 +543,7 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             return response.json()
         except requests.exceptions.RequestException as e:
             _logger.error("API request failed to %s: %s", url, e)
-            raise UserError(f"Failed to connect to Forms API: {str(e)}") from e
+            raise UserError(f"Failed to connect to Forms API: {e!s}") from e
 
     @http.route("/onlyoffice/oforms/locales", type="json", auth="user")
     def get_oform_locales(self):
