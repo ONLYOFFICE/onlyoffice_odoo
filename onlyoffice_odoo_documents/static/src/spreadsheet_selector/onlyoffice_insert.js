@@ -3,6 +3,7 @@
 import { SpreadsheetSelectorDialog } from "@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/spreadsheet_selector_dialog" // eslint-disable-line @stylistic/max-len
 import { _t } from "@web/core/l10n/translation"
 import { patch } from "@web/core/utils/patch"
+import { FolderSelectionDialog } from "./folder_selection_dialog"
 
 /**
  * Patch the SpreadsheetSelectorDialog to intercept confirmation
@@ -16,7 +17,8 @@ import { patch } from "@web/core/utils/patch"
  *
  * List and pivot insertion is done server-side: the XLSX file is rebuilt
  * with ODOO_* formulas before opening it in the ONLYOFFICE editor.
- * Link and chart insertion is not supported for ONLYOFFICE spreadsheets.
+ * With "Blank spreadsheet" the target XLSX is created first, in a workspace
+ * picked by the user. Link and chart insertion is not supported.
  */
 patch(SpreadsheetSelectorDialog.prototype, {
   async _confirm() {
@@ -34,7 +36,14 @@ patch(SpreadsheetSelectorDialog.prototype, {
     this.state.confirmationIsPending = true
 
     try {
-      const inserted = await this._onlyofficeInsert(action.params.document_id)
+      // "Blank spreadsheet": create the XLSX first, then insert into it
+      const documentId = action.params.document_id || (await this._onlyofficeCreateBlank())
+      if (!documentId) {
+        this.state.confirmationIsPending = false
+        return
+      }
+
+      const inserted = await this._onlyofficeInsert(documentId)
       if (!inserted) {
         this.state.confirmationIsPending = false
         return
@@ -42,7 +51,7 @@ patch(SpreadsheetSelectorDialog.prototype, {
 
       // Open the target document in the ONLYOFFICE editor
       this.actionService.doAction({
-        params: { document_id: action.params.document_id },
+        params: { document_id: documentId },
         tag: "onlyoffice_editor",
         target: "current",
         type: "ir.actions.client",
@@ -53,6 +62,42 @@ patch(SpreadsheetSelectorDialog.prototype, {
       this.notification.add(_t("Failed to insert data into the ONLYOFFICE spreadsheet"), { type: "danger" })
       this.state.confirmationIsPending = false
     }
+  },
+
+  /**
+   * Ask for a workspace and a file name, then create a blank XLSX document there.
+   * @returns {Promise<Number|false>} the new document id, or false when cancelled // eslint-disable-line jsdoc/check-types
+   */
+  async _onlyofficeCreateBlank() {
+    const choice = await new Promise((resolve) => {
+      let confirmed = null
+      this.env.services.dialog.add(
+        FolderSelectionDialog,
+        {
+          defaultName: this.state.name ? this.state.name.toString() : "",
+          onConfirmed: (data) => {
+            confirmed = data
+          },
+        },
+        { onClose: () => resolve(confirmed) },
+      )
+    })
+    if (!choice) {
+      return false
+    }
+
+    const result = JSON.parse(
+      await this.env.services.rpc("/onlyoffice/documents/file/create", {
+        folder_id: choice.folderId,
+        supported_format: "xlsx",
+        title: choice.name,
+      }),
+    )
+    if (result.error) {
+      this.notification.add(result.error, { type: "danger" })
+      return false
+    }
+    return result.document_id
   },
 
   /**
