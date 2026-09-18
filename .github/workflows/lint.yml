@@ -32,7 +32,7 @@ jobs:
 
       - name: Install linters
         run: |
-          pip install ruff pylint pylint-odoo
+          pip install ruff==0.15.21 pylint pylint-odoo
 
       - name: Run ruff
         run: ruff check onlyoffice_odoo/
