@@ -9,7 +9,7 @@
         <OnlyofficeSelectorPanel
           onSpreadsheetSelected.bind="onSpreadsheetSelected"
           onSpreadsheetDblClicked.bind="_confirm"
-          displayBlank="false"
+          displayBlank="true"
         />
       </t>
     </xpath>
