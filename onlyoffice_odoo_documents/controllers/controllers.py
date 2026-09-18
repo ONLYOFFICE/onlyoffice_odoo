@@ -73,7 +73,7 @@ def _validate_document_for_convert(document, save_to_documents):
     except AccessError:
         return _("You do not have access to this document")
 
-    if document.is_locked and document.lock_uid.id != request.env.user.id:
+    if document.lock_uid and document.lock_uid.id != request.env.user.id:
         return _("This document is locked by another user")
 
     if _get_document_share_role(document) == "none":
