@@ -4,7 +4,7 @@
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
 import { _t } from "@web/core/l10n/translation"
-import { useService } from "@web/core/utils/hooks"
+import { rpc } from "@web/core/network/rpc"
 
 const { Component, onWillStart, useState } = owl
 
@@ -14,7 +14,7 @@ const { Component, onWillStart, useState } = owl
  */
 export class FolderSelectionDialog extends Component {
   setup() {
-    this.rpc = useService("rpc")
+    this.rpc = rpc
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 

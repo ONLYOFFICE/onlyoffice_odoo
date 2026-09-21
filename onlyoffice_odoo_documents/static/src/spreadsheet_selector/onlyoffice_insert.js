@@ -88,7 +88,7 @@ patch(SpreadsheetSelectorDialog.prototype, {
     }
 
     const result = JSON.parse(
-      await this.env.services.rpc("/onlyoffice/documents/file/create", {
+      await rpc("/onlyoffice/documents/file/create", {
         folder_id: choice.folderId,
         supported_format: "xlsx",
         title: choice.name,
