@@ -8,7 +8,13 @@
     <field name="inherit_id" ref="base.res_config_settings_view_form" />
     <field name="arch" type="xml">
       <xpath expr="//form" position="inside">
-        <app data-string="ONLYOFFICE" string="ONLYOFFICE" name="onlyoffice_odoo" groups="base.group_system">
+        <app
+          data-string="ONLYOFFICE"
+          string="ONLYOFFICE"
+          name="onlyoffice_odoo"
+          logo="/onlyoffice_odoo/static/description/settings_icon.png"
+          groups="base.group_system"
+        >
           <block title="About">
             <setting
               string="Welcome to ONLYOFFICE!"

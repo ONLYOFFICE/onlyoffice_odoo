@@ -86,6 +86,26 @@ def _validate_document_for_convert(document, save_to_documents):
 
 
 class OnlyofficeDocuments_Connector(http.Controller):
+    @http.route("/onlyoffice/documents/folders", auth="user", methods=["POST"], type="jsonrpc")
+    def get_folders(self):
+        """Return the workspaces the current user can create documents in."""
+        folders = request.env["documents.document"].search([("type", "=", "folder")])
+        result = []
+        for folder in folders:
+            if folder.user_permission != "edit":
+                continue
+
+            parts = []
+            current = folder
+            while current and current.type == "folder":
+                parts.append(current.name)
+                current = current.folder_id
+            full_path = "/".join(reversed(parts))
+            result.append({"display_name": full_path, "id": folder.id})
+
+        result.sort(key=lambda f: f["display_name"])
+        return result
+
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="jsonrpc")
     def post_file_create(self, folder_id, supported_format, title, url=None):
         result = {"error": None, "file_id": None, "document_id": None}
