@@ -1,0 +1,27 @@
+// Copyright (C) 2026 Ascensio System SIA
+
+// Scoped to the dialog so the rules do not collide with the folder list
+// of onlyoffice_odoo_templates, which uses the same class names globally.
+.o-onlyoffice-blank-spreadsheet-dialog {
+  .o-onlyoffice-folder-list {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  // cursor comes from the .cursor-pointer utility in the template
+  .o-onlyoffice-folder-item {
+    transition: background-color 0.15s;
+
+    // $o-black is white in dark mode, so the tint follows the theme
+    &:hover {
+      background-color: rgba($o-black, 0.04);
+    }
+
+    // Inset shadow instead of a border: no 3px content shift on selection
+    &.o-onlyoffice-folder-selected {
+      background-color: $o-component-active-bg;
+      box-shadow: inset 3px 0 0 $o-component-active-border;
+    }
+  }
+}
