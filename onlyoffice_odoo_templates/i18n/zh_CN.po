@@ -25,6 +25,28 @@ msgid ""
 msgstr "，选择所需的 Odoo 模块，并创建或上传带有可填写字段的 PDF 模板。"
 
 #. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Create associated report</span>"
+msgstr "<span class=\"o_stat_text\">创建关联报表</span>"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Remove associated report</span>"
+msgstr "<span class=\"o_stat_text\">删除关联报表</span>"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Report</span>"
+msgstr "<span class=\"o_stat_text\">报表</span>"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
+#, python-format
+msgid "Add to Documents"
+msgstr "添加到文档"
+
+#. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
 msgid "Administrator"
 msgstr "管理员"
@@ -33,6 +55,11 @@ msgstr "管理员"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr "附件"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__field_keys
+msgid "Cached form field keys"
+msgstr "已缓存的表单字段密钥"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,comment:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
@@ -144,6 +171,13 @@ msgid "Display Name"
 msgstr "显示名称"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Document saved to Documents successfully."
+msgstr "文档已成功保存到文档。"
+
+#. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Download"
 msgstr "下载"
@@ -152,6 +186,18 @@ msgstr "下载"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Edit"
 msgstr "编辑"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_list
+msgid "Edit Template"
+msgstr "编辑模板"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Error saving document to Documents."
+msgstr "保存文档到文档时出错。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
@@ -180,6 +226,13 @@ msgstr "下载表单失败"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Failed to save document."
+msgstr "保存文档失败。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
 #, python-format
 msgid "Fields"
@@ -190,9 +243,7 @@ msgstr "字段"
 msgid ""
 "Form fields cannot be filled in manually if they were not automatically "
 "filled in with data from Odoo"
-msgstr ""
-"如果字段没有通过 Odoo 数据自动填写，\n"
-"                  则无法手动填写。"
+msgstr "如果字段没有通过 Odoo 数据自动填写，则无法手动填写。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -238,6 +289,13 @@ msgstr "如果您已有带有可填写字段的 <span class=\"fw-bolder\">PDF �
 #, python-format
 msgid "Invalid file format."
 msgstr "文件格式无效。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
+#, python-format
+msgid "Key copied to clipboard: %s"
+msgstr "密钥已复制到剪贴板: %s"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__write_uid
@@ -309,15 +367,38 @@ msgstr "模块/部分"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
+#, python-format
+msgid "No available folders found."
+msgstr "未找到可用的文件夹。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
 #, python-format
 msgid "No match found."
 msgstr "未找到匹配项"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
+#, python-format
+msgid ""
+"Note: The ONLYOFFICE Automation API is not activated in your instance, so "
+"automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor "
+"isn't available. You can manually create the field and paste the key from "
+"your clipboard."
+msgstr "注意：您的实例中未启用 ONLYOFFICE 自动化 API，因此无法从 Odoo 将预定义密钥自动插入到 ONLYOFFICE 编辑器中。您可以手动创建字段，并从剪贴板中粘贴密钥。"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_demo_templates
 msgid "ONLYOFFICE Demo Templates"
 msgstr "ONLYOFFICE 示例模板"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_templates.selection__ir_actions_report__report_type__onlyoffice-pdf
+msgid "ONLYOFFICE PDF"
+msgstr "ONLYOFFICE PDF"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
@@ -354,6 +435,13 @@ msgid "ONLYOFFICE templates"
 msgstr "ONLYOFFICE 模板"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)"
+msgstr "由于 %(num_errors)s 个文件损坏，Odoo 无法合并生成的 PDF"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format
@@ -374,6 +462,11 @@ msgstr "在此页面，您可以为任何 Odoo 模块（如发票、收据、员
 msgid ""
 "Once you've saved the template, return to the ONLYOFFICE Templates list."
 msgstr "保存模板后，返回 ONLYOFFICE 模板列表。"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__onlyoffice_template_id
+msgid "Onlyoffice Template"
+msgstr "ONLYOFFICE 模板"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -426,6 +519,35 @@ msgid "Print with ONLYOFFICE"
 msgstr "使用 ONLYOFFICE 打印"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "Problematic record(s)"
+msgstr "有问题的记录"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__report_id
+msgid "Related Report"
+msgstr "关联报表"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_actions_report
+msgid "Report Action"
+msgstr "报表动作"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid "Report Type"
+msgstr "报表类型"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
+#, python-format
+msgid "Save"
+msgstr "保存"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__template_model_id
 msgid "Select Model"
 msgstr "选择类型"
@@ -436,6 +558,13 @@ msgstr "选择类型"
 #, python-format
 msgid "Select Print with ONLYOFFICE."
 msgstr "选择使用 ONLYOFFICE 打印。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
+#, python-format
+msgid "Select a field below to copy its parameter to your clipboard."
+msgstr "选择下方的字段以将其参数复制到剪贴板。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
@@ -456,6 +585,16 @@ msgstr "已选模板"
 #, python-format
 msgid "Show sub-fields"
 msgstr "显示子字段"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_list
+msgid "Technical Name"
+msgstr "技术名称"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.actions.client,name:onlyoffice_odoo_templates.action_onlyoffice_template_editor
+msgid "Template Editor Action"
+msgstr "模板编辑器动作"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__name
@@ -490,6 +629,23 @@ msgid ""
 "The ONLYOFFICE Templates module allows you to create, manage, and use "
 "fillable PDF"
 msgstr "ONLYOFFICE 模板模块允许您创建、管理并使用可填写的 PDF"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid ""
+"The document %(report)s could not be generated for %(record)s: %(error)s"
+msgstr "无法为 %(record)s 生成文档 %(report)s: %(error)s"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,help:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid ""
+"The type of the report that will be rendered, each one having its own "
+"rendering method. HTML means the report will be opened directly in your "
+"browser PDF means the report will be rendered using Wkhtmltopdf and "
+"downloaded by the user."
+msgstr "将生成的报表类型，每个类型都有自己的渲染方式。HTML 表示报表将在您的浏览器中直接打开，PDF 表示报表将使用 Wkhtmltopdf 渲染并由用户下载。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -534,6 +690,13 @@ msgstr ""
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
 msgid "User"
 msgstr "用户"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "View Problematic Record(s)"
+msgstr "查看有问题的记录"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript

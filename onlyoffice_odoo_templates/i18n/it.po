@@ -25,6 +25,28 @@ msgid ""
 msgstr ", seleziona il modulo Odoo desiderato e crea o carica un modello PDF con campi compilabili."
 
 #. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Create associated report</span>"
+msgstr "<span class=\"o_stat_text\">Crea report associato</span>"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Remove associated report</span>"
+msgstr "<span class=\"o_stat_text\">Rimuovi report associato</span>"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Report</span>"
+msgstr "<span class=\"o_stat_text\">Report</span>"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
+#, python-format
+msgid "Add to Documents"
+msgstr "Aggiungi a Documenti"
+
+#. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
 msgid "Administrator"
 msgstr "Amministratore"
@@ -33,6 +55,11 @@ msgstr "Amministratore"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr "Allegato"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__field_keys
+msgid "Cached form field keys"
+msgstr "Chiavi dei campi modulo memorizzate nella cache"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,comment:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
@@ -144,6 +171,13 @@ msgid "Display Name"
 msgstr "Visualizza nome"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Document saved to Documents successfully."
+msgstr "Documento salvato correttamente in Documenti."
+
+#. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Download"
 msgstr "Scarica"
@@ -152,6 +186,18 @@ msgstr "Scarica"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Edit"
 msgstr "Modifica"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_list
+msgid "Edit Template"
+msgstr "Modifica modello"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Error saving document to Documents."
+msgstr "Errore durante il salvataggio del documento in Documenti."
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
@@ -180,6 +226,13 @@ msgstr "Impossibile scaricare il modulo"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Failed to save document."
+msgstr "Impossibile salvare il documento."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
 #, python-format
 msgid "Fields"
@@ -190,9 +243,7 @@ msgstr "Campi"
 msgid ""
 "Form fields cannot be filled in manually if they were not automatically "
 "filled in with data from Odoo"
-msgstr ""
-"I campi del modulo non possono essere compilati manualmente se non sono stati compilati automaticamente\n"
-"                  con i dati provenienti da Odoo\n"
+msgstr "I campi del modulo non possono essere compilati manualmente se non sono stati compilati automaticamente con i dati provenienti da Odoo"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -232,7 +283,7 @@ msgid ""
 "              PDF file</span> with fillable fields, you can upload it here"
 msgstr ""
 "Se hai già un <span class=\"fw-bolder\">file PDF preparato\n"
-"              con campi compilabili</span>, puoi caricarlo qui\n"
+"              con campi compilabili</span>, puoi caricarlo qui"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-python
@@ -240,6 +291,13 @@ msgstr ""
 #, python-format
 msgid "Invalid file format."
 msgstr "Formato file non valido."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
+#, python-format
+msgid "Key copied to clipboard: %s"
+msgstr "Chiave copiata negli appunti: %s"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__write_uid
@@ -308,15 +366,38 @@ msgstr "Modulo/sezione"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
+#, python-format
+msgid "No available folders found."
+msgstr "Nessuna cartella disponibile trovata."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
 #, python-format
 msgid "No match found."
 msgstr "Nessuna corrispondeza trovata."
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
+#, python-format
+msgid ""
+"Note: The ONLYOFFICE Automation API is not activated in your instance, so "
+"automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor "
+"isn't available. You can manually create the field and paste the key from "
+"your clipboard."
+msgstr "Nota: l'API di automazione di ONLYOFFICE non è attivata nella tua istanza, quindi l'inserimento automatico delle chiavi predefinite da Odoo nell'editor ONLYOFFICE non è disponibile. Puoi creare manualmente il campo e incollare la chiave dagli appunti."
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_demo_templates
 msgid "ONLYOFFICE Demo Templates"
 msgstr "Modelli demo di ONLYOFFICE"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_templates.selection__ir_actions_report__report_type__onlyoffice-pdf
+msgid "ONLYOFFICE PDF"
+msgstr "ONLYOFFICE PDF"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
@@ -353,6 +434,13 @@ msgid "ONLYOFFICE templates"
 msgstr "Modelli di ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)"
+msgstr "Odoo non riesce a unire i PDF generati a causa di %(num_errors)s file danneggiato(i)"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format
@@ -373,6 +461,11 @@ msgstr "In questa pagina puoi creare modelli di modulo per qualsiasi modulo Odoo
 msgid ""
 "Once you've saved the template, return to the ONLYOFFICE Templates list."
 msgstr "Una volta salvato il modello, torna all’elenco dei modelli di ONLYOFFICE."
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__onlyoffice_template_id
+msgid "Onlyoffice Template"
+msgstr "Modello ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -425,6 +518,35 @@ msgid "Print with ONLYOFFICE"
 msgstr "Stampa con ONLYOFFICE"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "Problematic record(s)"
+msgstr "Record problematico(i)"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__report_id
+msgid "Related Report"
+msgstr "Report associato"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_actions_report
+msgid "Report Action"
+msgstr "Azione report"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid "Report Type"
+msgstr "Tipo di report"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
+#, python-format
+msgid "Save"
+msgstr "Salva"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__template_model_id
 msgid "Select Model"
 msgstr "Seleziona modello"
@@ -435,6 +557,13 @@ msgstr "Seleziona modello"
 #, python-format
 msgid "Select Print with ONLYOFFICE."
 msgstr "Seleziona Stampa con ONLYOFFICE."
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
+#, python-format
+msgid "Select a field below to copy its parameter to your clipboard."
+msgstr "Seleziona un campo sottostante per copiare il suo parametro negli appunti."
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
@@ -455,6 +584,16 @@ msgstr "Modelli selezionati"
 #, python-format
 msgid "Show sub-fields"
 msgstr "Mostra sotto-campi"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_list
+msgid "Technical Name"
+msgstr "Nome tecnico"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.actions.client,name:onlyoffice_odoo_templates.action_onlyoffice_template_editor
+msgid "Template Editor Action"
+msgstr "Azione dell'editor di modelli"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__name
@@ -489,6 +628,23 @@ msgid ""
 "The ONLYOFFICE Templates module allows you to create, manage, and use "
 "fillable PDF"
 msgstr "Il modulo Modelli di ONLYOFFICE consente di creare, gestire e usare PDF compilabili"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid ""
+"The document %(report)s could not be generated for %(record)s: %(error)s"
+msgstr "Impossibile generare il documento %(report)s per %(record)s: %(error)s"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,help:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid ""
+"The type of the report that will be rendered, each one having its own "
+"rendering method. HTML means the report will be opened directly in your "
+"browser PDF means the report will be rendered using Wkhtmltopdf and "
+"downloaded by the user."
+msgstr "Il tipo di report che verrà generato, ciascuno con il proprio metodo di rendering. HTML significa che il report verrà aperto direttamente nel browser, PDF significa che il report verrà generato tramite Wkhtmltopdf e scaricato dall'utente."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -527,12 +683,19 @@ msgid ""
 msgstr ""
 "Usa questo modulo per creare un nuovo modello PDF compilabile\n"
 "              per i tuoi moduli Odoo. Inizia inserendo un <span class=\"fw-bolder\">nome</span> per\n"
-"              il tuo modello, così da identificarlo facilmente in seguito nell’elenco dei modelli di ONLYOFFICE.\n"
+"              il tuo modello, così da identificarlo facilmente in seguito nell’elenco dei modelli di ONLYOFFICE."
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
 msgid "User"
 msgstr "Utente"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "View Problematic Record(s)"
+msgstr "Visualizza record problematico(i)"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
