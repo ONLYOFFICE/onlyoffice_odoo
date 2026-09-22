@@ -101,7 +101,7 @@ patch(DocumentsInspector.prototype, {
     docModel.notify()
   },
   async convertSpreadsheetViaDocBuilder(id) {
-    this.ui.block({ message: _t("Converting spreadsheet to XLSX via DocBuilder...") })
+    this.ui.block({ message: _t("Converting spreadsheet to XLSX via ONLYOFFICE...") })
     try {
       // Native export keeps charts/formatting; the server then patches the
       // ODOO.* cells into it. There is no fallback: if the native export
@@ -124,7 +124,7 @@ patch(DocumentsInspector.prototype, {
         await this._openDocumentInOnlyoffice(result.xlsx_id)
       }
     } catch (error) {
-      console.error("Failed to convert spreadsheet via DocBuilder:", error)
+      console.error("Failed to convert spreadsheet via ONLYOFFICE:", error)
       this.notification.add(_t("Conversion failed: ") + error.message, { type: "danger" })
     } finally {
       this.ui.unblock()

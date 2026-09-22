@@ -572,7 +572,7 @@ class OnlyOfficeShareRoute(ShareRoute):
 
     @http.route("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", auth="user", methods=["POST"], type="json")
     def convert_spreadsheet_via_docbuilder(self, document_id, xlsx_base64=None):
-        """Convert an Odoo Spreadsheet to XLSX via DocBuilder, keeping formulas.
+        """Convert an Odoo Spreadsheet to XLSX via ONLYOFFICE, keeping formulas.
 
         ``xlsx_base64`` (a native browser export) is required; only its
         ODOO.* cells are patched. Returns an error if it is missing.
@@ -683,7 +683,7 @@ class OnlyOfficeShareRoute(ShareRoute):
     def insert_list_in_xlsx(self, document_id, list_data, threshold=10, name="List"):
         """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
 
-        Rebuilds the XLSX via DocBuilder: opens the existing file, adds a new
+        Rebuilds the XLSX via ONLYOFFICE: opens the existing file, adds a new
         sheet with formulas, and updates the _OdooMetadata hidden sheet.
 
         Args:

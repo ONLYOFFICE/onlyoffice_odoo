@@ -292,7 +292,7 @@ class SpreadsheetDocBuilder:
             _logger.info("Converted spreadsheet %s to XLSX %s", document_id, result["xlsx_id"])
 
         except Exception as e:
-            _logger.exception("Error converting spreadsheet via DocBuilder: %s", e)
+            _logger.exception("Error converting spreadsheet via ONLYOFFICE: %s", e)
             result["error"] = str(e)
 
         return result
@@ -322,7 +322,7 @@ class SpreadsheetDocBuilder:
     def insert_list(self, document_id, list_data, threshold, name):
         """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
 
-        Rebuilds the XLSX via DocBuilder: opens the existing file, adds a new
+        Rebuilds the XLSX via ONLYOFFICE: opens the existing file, adds a new
         sheet with formulas, and updates the _OdooMetadata hidden sheet.
         """
         document, error = self._get_writable_document(document_id)
@@ -705,7 +705,7 @@ class SpreadsheetDocBuilder:
         return sheet_name
 
     def _insert_sheet_via_docbuilder(self, document, name, cells, metadata, new_id):
-        """Rebuild the XLSX via DocBuilder adding a new sheet, then save the result."""
+        """Rebuild the XLSX via ONLYOFFICE adding a new sheet, then save the result."""
         sheet_name = self._unique_sheet_name(document, name)
         metadata_json = json.dumps(metadata, cls=_DateTimeEncoder)
 
@@ -733,7 +733,7 @@ class SpreadsheetDocBuilder:
         document.attachment_id.write({"datas": base64.b64encode(xlsx_content), "mimetype": XLSX_MIMETYPE})
         document.write({"onlyoffice_spreadsheet_metadata": metadata_json})
 
-        _logger.info("Inserted sheet '%s' (id=%s) into document %s via DocBuilder", sheet_name, new_id, document.id)
+        _logger.info("Inserted sheet '%s' (id=%s) into document %s via ONLYOFFICE", sheet_name, new_id, document.id)
 
         return {
             "success": True,
