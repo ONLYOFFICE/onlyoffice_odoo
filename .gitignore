@@ -87,3 +87,9 @@ docs/_build/
 
 # OCA rules
 !static/lib/
+
+# Playwright e2e (e2e/)
+/e2e/node_modules/
+/e2e/.auth/
+/e2e/test-results/
+/e2e/playwright-report/
