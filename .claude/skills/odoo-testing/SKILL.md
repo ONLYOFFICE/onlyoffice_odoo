@@ -15,6 +15,7 @@ description:
 | `onlyoffice_odoo`           | `tests/test_config_utils.py`, `test_jwt_utils.py`, `test_url_utils.py`, `test_file_utils.py`, `test_validation_utils.py`, `test_models.py` (`onlyoffice.odoo`, `res.config.settings`), `test_controllers.py` (`HttpCase`, all base routes). ~130 tests. | yes, coverage `fail_under=60` |
 | `onlyoffice_odoo_documents` | none                                                                                                                                                                                                                                                    | excluded (needs Enterprise)   |
 | `onlyoffice_odoo_templates` | `tests/test_field_keys_cache.py` (`TransactionCase`, no tags; patches `pdf_utils.is_pdf_form` and `OnlyOfficeTemplate._fetch_field_keys`)                                                                                                               | excluded                      |
+| Playwright e2e (`e2e/`)     | `tests/settings.spec.ts`, `tests/editor.spec.ts`, `tests/access.spec.ts` against a live Document Server (see below)                                                                                                                                     | yes, `e2e.yml` (push / PR)    |
 
 Every new `test_*.py` must be imported from the module's `tests/__init__.py` or the runner will not see it.
 
@@ -107,17 +108,39 @@ Higher-level seams that avoid HTTP entirely:
 Note: Odoo's test framework blocks non-localhost HTTP for classes tagged `standard` (added automatically). Mock instead
 of fighting this.
 
-## Live Document Server tests (optional, not currently in this repo)
+## Live Document Server tests (Playwright, `e2e/`)
 
-There is no live-Document-Server test file or CI job in this repo today. If a test genuinely needs a real Document
-Server:
+Browser tests against a real Document Server live in `e2e/` (Playwright + TypeScript) and run in
+`.github/workflows/e2e.yml` on push / pull request (CI is Gitea Actions with GitHub syntax). The job mirrors `test.yml`:
+OCA Odoo image as the job container, `postgres` and `onlyoffice/documentserver` (JWT on) as `services`; Odoo is started
+in the background inside the job container and the browser runs there too, so the Document Server address is
+`http://documentserver/` for both sides and Odoo is reached at the job container IP. `e2e/docker-compose.yml`
+(`odoo:17` + `pyjwt`, `postgres:13`, Document Server) is for local runs only.
 
-- Gate it behind an explicit opt-in (e.g. an env var you introduce and document), so it is skipped by default and in CI.
-- Tag it with `-standard` so Odoo's external-request block does not apply; add a distinct extra tag so it can be
-  selected on its own.
-- Pass `env=self.env` explicitly to `onlyoffice_request(...)` because there is no HTTP request context inside tests.
-- Document the new env var and CI wiring in the same PR, and update this skill once the pattern actually exists in the
-  repo.
+Layout: `fixtures.ts` (`odoo` worker fixture = JSON-RPC client, `AUTH_FILE`), `helpers/env.ts` (URLs, JWT secret,
+`SAVE_GRACE_MS`, template dir, config keys), `helpers/odoo.ts`, `helpers/discuss.ts` (post a template to a new channel),
+`helpers/editor.ts` (wait for `iframe[name="frameEditor"]`, type through the canvas), `helpers/office.ts` (text of an
+OOXML file), `tests/auth.setup.ts` (login, storage state), `tests/settings.spec.ts` (negative + positive Document Server
+connection through Settings), `tests/editor.spec.ts` (docx/xlsx/pptx round trip from Discuss in a new tab, docx in "Open
+file in the same tab" mode, rtf opens read-only), `tests/access.spec.ts` (no button for a zip, 403 for another user's
+private file). Projects run in a chain `login -> settings -> editor` with one worker.
+
+Rules for this suite:
+
+- One test = one scenario, readable top to bottom; setup lives in the small helpers above, not in universal ones.
+- Fixtures are the blank templates in `onlyoffice_odoo/static/assets/document_templates/en-US/`; do not add binaries.
+- Network addresses are the three settings fields: public URL `http://localhost:8080/` (browser -> DS), inner URL
+  `http://documentserver/` (Odoo -> DS), Odoo URL `http://web:8069/` (DS -> Odoo); the DS needs
+  `ALLOW_PRIVATE_IP_ADDRESS=true` and its font generation (`AllFonts.js`) must stay enabled.
+- Save verification = `ir.attachment.checksum` changed + marker found in the saved OOXML. The DS waits
+  `savetimeoutdelay` (5 s) after the last user leaves (measured 6-7 s), hence `E2E_SAVE_GRACE_MS` (0 = strict 5 s).
+- Odoo selectors come from Odoo 17 `mail` and the connector templates; re-check them when porting to 18/19.
+- `browser.newContext()` inherits `use` options, including the admin `storageState`: pass
+  `storageState: { cookies: [], origins: [] }` for another user, or the login takes over the admin session.
+- Keep Odoo unit tests free of live network calls; anything that needs a real Document Server belongs in `e2e/`.
+
+Local run: `cd e2e && npm run setup && npm run e2e` (compose stack on ports 8069/8080, details in `e2e/README.md`). Ask
+the user before starting the Docker stack.
 
 ## JWT test helper
 

@@ -92,7 +92,8 @@ Base skill for this repository. Read it before any change, then load the skill f
   `CONTRIBUTING.md`. The config excludes `**/assets/**` (vendored formats/templates) and
   `static/description/index.html`.
 - CI (`.github/workflows/test.yml`) runs only the `onlyoffice_odoo` tests with stub `documents`/`documents_spreadsheet`
-  manifests and `coverage --fail-under=60`; the other two modules are tested locally only. Details in `odoo-testing`.
+  manifests and `coverage --fail-under=60`; the other two modules are tested locally only. `.github/workflows/e2e.yml`
+  runs the Playwright suite in `e2e/` against a live Document Server after `test` succeeds. Details in `odoo-testing`.
 - A local Odoo 17 + Enterprise usually runs from a `docker-compose.yml` in the parent workspace (repo mounted as
   `/mnt/extra-addons`).
 

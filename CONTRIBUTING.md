@@ -50,3 +50,17 @@ docker exec <container_name> odoo -d <db> --test-enable --stop-after-init \
 - [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
 - [Pylint](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint)
 - [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+
+## End-to-end tests (Playwright)
+
+Browser tests against a live ONLYOFFICE Docs live in `e2e/` and run in CI on every push and pull request
+(`.github/workflows/e2e.yml`, PostgreSQL and the Document Server as job services). They connect the Document Server
+through Settings, post docx/xlsx/pptx files to a Discuss channel, edit them in the editor and check that the files are
+saved back. Locally the stack (Odoo 17, PostgreSQL, Document Server) is started with Docker Compose; see `e2e/README.md`
+for details and the environment variables.
+
+```bash
+cd e2e
+npm run setup   # once
+npm run e2e     # stack up, tests, stack down
+```
