@@ -48,6 +48,28 @@ msgid "About"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Attachment not found"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Cancel"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Cannot read attachment"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
@@ -127,6 +149,13 @@ msgid "Document Server Public URL"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+#, python-format
+msgid "Document conversion service returned status %s"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
@@ -138,6 +167,14 @@ msgstr ""
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
 msgid "Error loading forms"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Expected JWT token"
 msgstr ""
 
 #. module: onlyoffice_odoo
@@ -208,6 +245,13 @@ msgstr ""
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
 msgid "Loading forms..."
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Missing security token"
 msgstr ""
 
 #. module: onlyoffice_odoo

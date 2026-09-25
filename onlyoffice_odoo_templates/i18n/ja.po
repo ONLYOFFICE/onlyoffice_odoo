@@ -27,6 +27,28 @@ msgstr ""
 "ドしてください。"
 
 #. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Create associated report</span>"
+msgstr "<span class=\"o_stat_text\">関連レポートを作成</span>"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Remove associated report</span>"
+msgstr "<span class=\"o_stat_text\">関連レポートを削除</span>"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
+msgid "<span class=\"o_stat_text\">Report</span>"
+msgstr "<span class=\"o_stat_text\">レポート</span>"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
+#, python-format
+msgid "Add to Documents"
+msgstr "ドキュメントに追加"
+
+#. module: onlyoffice_odoo_templates
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
 msgid "Administrator"
 msgstr "管理者"
@@ -35,6 +57,11 @@ msgstr "管理者"
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr "添付ファイル"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__field_keys
+msgid "Cached form field keys"
+msgstr "キャッシュされたフォームフィールドキー"
 
 #. module: onlyoffice_odoo_templates
 #: model:res.groups,comment:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
@@ -146,6 +173,13 @@ msgid "Display Name"
 msgstr "表示名"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Document saved to Documents successfully."
+msgstr "ドキュメントはドキュメントに正常に保存されました。"
+
+#. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Download"
 msgstr "ダウンロード"
@@ -154,6 +188,18 @@ msgstr "ダウンロード"
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban
 msgid "Edit"
 msgstr "編集"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_list
+msgid "Edit Template"
+msgstr "テンプレートを編集"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Error saving document to Documents."
+msgstr "ドキュメントをドキュメントに保存するときにエラーが発生しました。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
@@ -182,6 +228,13 @@ msgstr "フォームのダウンロードに失敗しました"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.js:0
+#, python-format
+msgid "Failed to save document."
+msgstr "ドキュメントの保存に失敗しました。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.xml:0
 #, python-format
 msgid "Fields"
@@ -192,9 +245,7 @@ msgstr "フィールド"
 msgid ""
 "Form fields cannot be filled in manually if they were not automatically "
 "filled in with data from Odoo"
-msgstr ""
-"Odooのデータで自動入力されなかったフィールドは、\n"
-"                  手動で入力できません"
+msgstr "Odooのデータで自動入力されなかったフィールドは、手動で入力できません"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -242,6 +293,13 @@ msgstr ""
 #, python-format
 msgid "Invalid file format."
 msgstr "無効なファイル形式です。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
+#, python-format
+msgid "Key copied to clipboard: %s"
+msgstr "キーがクリップボードにコピーされました: %s"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__write_uid
@@ -313,15 +371,38 @@ msgstr "モジュール/セクション"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
+#, python-format
+msgid "No available folders found."
+msgstr "利用可能なフォルダーが見つかりません。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
 #, python-format
 msgid "No match found."
 msgstr "一致しているものはありません"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
+#, python-format
+msgid ""
+"Note: The ONLYOFFICE Automation API is not activated in your instance, so "
+"automatic insertion of predefined keys from Odoo into the ONLYOFFICE editor "
+"isn't available. You can manually create the field and paste the key from "
+"your clipboard."
+msgstr "注意: このインスタンスではONLYOFFICE Automation APIが有効化されていないため、Odooからエディターへの定義済みキーの自動挿入は利用できません。手動でフィールドを作成し、クリップボードからキーを貼り付けることもできます。"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_demo_templates
 msgid "ONLYOFFICE Demo Templates"
 msgstr "ONLYOFFICEデモテンプレート"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields.selection,name:onlyoffice_odoo_templates.selection__ir_actions_report__report_type__onlyoffice-pdf
+msgid "ONLYOFFICE PDF"
+msgstr "ONLYOFFICE PDF"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
@@ -358,6 +439,13 @@ msgid "ONLYOFFICE templates"
 msgstr "ONLYOFFICEテンプレート"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)"
+msgstr "%(num_errors)s件の損傷ファイルのため、Odooは生成されたPDFをマージできません"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 #, python-format
@@ -379,6 +467,11 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
 msgid "Once you've saved the template, return to the ONLYOFFICE Templates list."
 msgstr "テンプレートを保存したら、ONLYOFFICEテンプレートリストに戻ります。"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__onlyoffice_template_id
+msgid "Onlyoffice Template"
+msgstr "ONLYOFFICEテンプレート"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -431,6 +524,35 @@ msgid "Print with ONLYOFFICE"
 msgstr "ONLYOFFICEで印刷"
 
 #. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "Problematic record(s)"
+msgstr "問題のあるレコード"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__report_id
+msgid "Related Report"
+msgstr "関連レポート"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_actions_report
+msgid "Report Action"
+msgstr "レポートアクション"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid "Report Type"
+msgstr "レポートタイプ"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
+#, python-format
+msgid "Save"
+msgstr "保存"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__template_model_id
 msgid "Select Model"
 msgstr "モデルを選択"
@@ -441,6 +563,13 @@ msgstr "モデルを選択"
 #, python-format
 msgid "Select Print with ONLYOFFICE."
 msgstr "ONLYOFFICEで印刷を選択します。"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor_export_data.xml:0
+#, python-format
+msgid "Select a field below to copy its parameter to your clipboard."
+msgstr "下のフィールドを選択すると、そのパラメーターをクリップボードにコピーできます。"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
@@ -461,6 +590,16 @@ msgstr "選択されたテンプレート"
 #, python-format
 msgid "Show sub-fields"
 msgstr "サブフィールドを表示"
+
+#. module: onlyoffice_odoo_templates
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_list
+msgid "Technical Name"
+msgstr "技術名"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.actions.client,name:onlyoffice_odoo_templates.action_onlyoffice_template_editor
+msgid "Template Editor Action"
+msgstr "テンプレートエディターアクション"
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__name
@@ -493,6 +632,23 @@ msgstr "テンプレートギャラリー"
 #, python-format
 msgid "The ONLYOFFICE Templates module allows you to create, manage, and use fillable PDF"
 msgstr "ONLYOFFICEテンプレートモジュールでは、入力可能なPDFの作成、管理、利用が可能です"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid ""
+"The document %(report)s could not be generated for %(record)s: %(error)s"
+msgstr "ドキュメント %(report)s を %(record)s に対して生成できませんでした: %(error)s"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,help:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid ""
+"The type of the report that will be rendered, each one having its own "
+"rendering method. HTML means the report will be opened directly in your "
+"browser PDF means the report will be rendered using Wkhtmltopdf and "
+"downloaded by the user."
+msgstr "レポートの種類です。それぞれ固有のレンダリング方法を持ちます。HTMLは、レポートがブラウザで直接開かれることを意味し、PDFはWkhtmltopdfでレンダリングされ、ユーザーによってダウンロードされることを意味します。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -540,6 +696,13 @@ msgstr ""
 #: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user
 msgid "User"
 msgstr "ユーザー"
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid "View Problematic Record(s)"
+msgstr "問題のあるレコードを表示"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript

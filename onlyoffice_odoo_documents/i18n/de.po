@@ -69,6 +69,70 @@ msgid "Commenter"
 msgstr "Kommentator"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Conversion error"
+msgstr "Konvertierungsfehler"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Conversion service did not return a file"
+msgstr "Der Konvertierungsdienst hat keine Datei zurückgegeben"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Conversion timeout"
+msgstr "Zeitüberschreitung bei der Konvertierung"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
+#, python-format
+msgid "Convert"
+msgstr "Konvertieren"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
+#, python-format
+msgid "Convert to"
+msgstr "Konvertieren in"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#, python-format
+msgid "Convert to ONLYOFFICE XLSX"
+msgstr "In ONLYOFFICE XLSX konvertieren"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/components/documents_inspector_onlyoffice/documents_inspector_onlyoffice.xml:0
+#, python-format
+msgid "Convert to ONLYOFFICE XLSX (with formulas)"
+msgstr "In ONLYOFFICE XLSX konvertieren (mit Formeln)"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.js:0
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/onlyoffice_odoo_documents_controller_mixin.xml:0
+#, python-format
+msgid "Convert with ONLYOFFICE"
+msgstr "Mit ONLYOFFICE konvertieren"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
+#, python-format
+msgid "Converting..."
+msgstr "Wird konvertiert..."
+
+#. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
@@ -127,6 +191,13 @@ msgid "Display Name"
 msgstr "Anzeigename"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "DocBuilder conversion failed: %s"
+msgstr "DocBuilder-Konvertierung fehlgeschlagen: %s"
+
+#. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
 #: model:ir.model,name:onlyoffice_odoo_documents.model_documents_document
@@ -135,6 +206,48 @@ msgstr "Anzeigename"
 #, python-format
 msgid "Document"
 msgstr "Dokument"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Document conversion failed"
+msgstr "Dokumentkonvertierung fehlgeschlagen"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.js:0
+#, python-format
+msgid "Document converted and saved to Documents"
+msgstr "Dokument konvertiert und in Dokumente gespeichert"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.js:0
+#, python-format
+msgid "Document converted successfully"
+msgstr "Dokument erfolgreich konvertiert"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Document has no attachment"
+msgstr "Dokument hat keinen Anhang"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Document is not a spreadsheet"
+msgstr "Dokument ist keine Tabelle"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Document not found"
+msgstr "Dokument nicht gefunden"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -159,10 +272,80 @@ msgstr "Editor"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Error accessing database"
+msgstr "Fehler beim Zugriff auf die Datenbank"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Error code: %s"
+msgstr "Fehlercode: %s"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.js:0
+#, python-format
+msgid "Error converting document"
+msgstr "Fehler beim Konvertieren des Dokuments"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Error downloading file"
+msgstr "Fehler beim Herunterladen der Datei"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Failed to convert document"
+msgstr "Dokument konnte nicht konvertiert werden"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 #, python-format
 msgid "Failed to create document"
 msgstr "Dokument kann nicht erstellt werden"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Failed to download converted file"
+msgstr "Konvertierte Datei konnte nicht heruntergeladen werden"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "Failed to insert data into the ONLYOFFICE spreadsheet"
+msgstr "Daten konnten nicht in die ONLYOFFICE-Tabelle eingefügt werden"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "Failed to insert list: "
+msgstr "Liste konnte nicht eingefügt werden: "
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "Failed to insert pivot: "
+msgstr "Pivot-Tabelle konnte nicht eingefügt werden: "
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.xml:0
+#, python-format
+msgid "File name"
+msgstr "Dateiname"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -220,6 +403,20 @@ msgid "Internal Users Access"
 msgstr "Zugriff für interne Benutzer"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Invalid token"
+msgstr "Ungültiges Token"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,help:onlyoffice_odoo_documents.field_documents_document__onlyoffice_spreadsheet_metadata
+msgid ""
+"JSON metadata from original spreadsheet (lists, pivots, filters) for XLSX "
+"copies"
+msgstr "JSON-Metadaten aus der ursprünglichen Tabelle (Listen, Pivot-Tabellen, Filter) für XLSX-Kopien"
+
+#. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_uid
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access__write_uid
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__write_uid
@@ -243,10 +440,45 @@ msgstr "Linkzugriff"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "List"
+msgstr "Liste"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_selector_panel.js:0
+#, python-format
+msgid "List inserted in ONLYOFFICE spreadsheet"
+msgstr "Liste in die ONLYOFFICE-Tabelle eingefügt"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "List inserted into ONLYOFFICE spreadsheet"
+msgstr "Liste in die ONLYOFFICE-Tabelle eingefügt"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Native spreadsheet export is required for conversion"
+msgstr "Für die Konvertierung ist ein Export im nativen Tabellenformat erforderlich"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/onlyoffice_create_template_dialog.js:0
 #, python-format
 msgid "New Document"
 msgstr "Neues Dokument"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.js:0
+#, python-format
+msgid "New ONLYOFFICE spreadsheet"
+msgstr "Neue ONLYOFFICE-Tabelle"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -255,6 +487,20 @@ msgstr "Neues Dokument"
 #, python-format
 msgid "New document created in Documents"
 msgstr "Neues Dokument erstellt in Dokumente"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "No XLSX file in output"
+msgstr "Keine XLSX-Datei in der Ausgabe"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.xml:0
+#, python-format
+msgid "No available workspaces found."
+msgstr "Keine verfügbaren Arbeitsbereiche gefunden."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -309,6 +555,11 @@ msgid "Only the owner or administrator can share documents."
 msgstr "Nur Besitzer oder Administrator kann Dokumente freigeben"
 
 #. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_documents_document__onlyoffice_spreadsheet_metadata_checked
+msgid "Onlyoffice Spreadsheet Metadata Checked"
+msgstr "Onlyoffice-Tabellenmetadaten geprüft"
+
+#. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
 msgid "Oo Attachment Version"
 msgstr "Oo Attachment Version"
@@ -338,6 +589,27 @@ msgid "People with access"
 msgstr "Personen mit Zugriff"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "Pivot"
+msgstr "Pivot-Tabelle"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "Pivot inserted into ONLYOFFICE spreadsheet"
+msgstr "Pivot-Tabelle in die ONLYOFFICE-Tabelle eingefügt"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/onlyoffice_odoo_documents_controller_mixin.js:0
+#, python-format
+msgid "Please select exactly one document to convert"
+msgstr "Bitte wählen Sie genau ein Dokument zur Konvertierung aus"
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
@@ -351,6 +623,11 @@ msgstr "Bitte wählen Sie nur ein Dokument für die erweiterte Freigabe aus."
 #, python-format
 msgid "Presentation"
 msgstr "Präsentation"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,help:onlyoffice_odoo_documents.field_documents_document__onlyoffice_spreadsheet_source_id
+msgid "Reference to the original Odoo spreadsheet if this is an XLSX copy"
+msgstr "Verweis auf die ursprüngliche Odoo-Tabelle, falls dies eine XLSX-Kopie ist"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -388,6 +665,13 @@ msgstr "Speichern"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
+#, python-format
+msgid "Save to Documents"
+msgstr "In Dokumente speichern"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #, python-format
 msgid "Shared Document"
@@ -399,6 +683,37 @@ msgstr "Freigegebenes Dokument"
 #, python-format
 msgid "Spreadsheet"
 msgstr "Tabelle"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_documents_document__onlyoffice_spreadsheet_metadata
+msgid "Spreadsheet Metadata"
+msgstr "Tabellenmetadaten"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_documents_document__onlyoffice_spreadsheet_source_id
+msgid "Spreadsheet Source"
+msgstr "Tabellenquelle"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Spreadsheet has no data or invalid structure"
+msgstr "Die Tabelle enthält keine Daten oder hat eine ungültige Struktur"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "This document is locked by another user"
+msgstr "Dieses Dokument ist von einem anderen Benutzer gesperrt"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/onlyoffice_insert.js:0
+#, python-format
+msgid "This insert type is not supported for ONLYOFFICE spreadsheets"
+msgstr "Dieser Einfügetyp wird für ONLYOFFICE-Tabellen nicht unterstützt"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -415,6 +730,33 @@ msgstr "Der 30-tägige Testzeitraum ist vorbei. Sie können sich nicht mehr mit 
 #, python-format
 msgid "Title"
 msgstr "Titel"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.model.fields,help:onlyoffice_odoo_documents.field_documents_document__onlyoffice_spreadsheet_metadata_checked
+msgid ""
+"True once we looked for embedded ODOO metadata in this file's hidden sheet"
+msgstr "Wird auf true gesetzt, nachdem nach eingebetteten ODOO-Metadaten im verborgenen Blatt dieser Datei gesucht wurde"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
+#, python-format
+msgid "Unknown error"
+msgstr "Unbekannter Fehler"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "Unsupported target format"
+msgstr "Nicht unterstütztes Zielformat"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.js:0
+#, python-format
+msgid "Untitled spreadsheet"
+msgstr "Unbenannte Tabelle"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user__user_id
@@ -448,3 +790,18 @@ msgstr ""
 #, python-format
 msgid "Viewer"
 msgstr "Betrachter"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "You do not have access to this document"
+msgstr "Sie haben keinen Zugriff auf dieses Dokument"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
+#, python-format
+msgid "You do not have permission to create documents in this workspace"
+msgstr "Sie haben keine Berechtigung, Dokumente in diesem Arbeitsbereich zu erstellen"

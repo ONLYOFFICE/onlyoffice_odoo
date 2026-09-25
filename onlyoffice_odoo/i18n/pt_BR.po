@@ -54,6 +54,28 @@ msgid "About"
 msgstr "Sobre"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Attachment not found"
+msgstr "Anexo não encontrado"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Cancel"
+msgstr "Cancelar"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Cannot read attachment"
+msgstr "Não é possível ler o anexo"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
@@ -133,6 +155,13 @@ msgid "Document Server Public URL"
 msgstr "URL pública do servidor de documentos"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+#, python-format
+msgid "Document conversion service returned status %s"
+msgstr "O serviço de conversão de documentos retornou o status %s"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
@@ -145,6 +174,14 @@ msgstr "Modelos de documento"
 #, python-format
 msgid "Error loading forms"
 msgstr "Erro ao carregar formulários"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Expected JWT token"
+msgstr "Token JWT esperado"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -215,6 +252,13 @@ msgstr "Última atualização em"
 #, python-format
 msgid "Loading forms..."
 msgstr "Carregando formulários..."
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Missing security token"
+msgstr "Token de segurança ausente"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

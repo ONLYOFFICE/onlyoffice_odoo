@@ -55,6 +55,28 @@ msgid "About"
 msgstr "À propos"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Attachment not found"
+msgstr "Pièce jointe non trouvée"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Cancel"
+msgstr "Annuler"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Cannot read attachment"
+msgstr "Impossible de lire la pièce jointe"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
@@ -134,6 +156,13 @@ msgid "Document Server Public URL"
 msgstr "URL public de Document Server"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+#, python-format
+msgid "Document conversion service returned status %s"
+msgstr "Le service de conversion de documents a renvoyé le statut %s"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
@@ -146,6 +175,14 @@ msgstr "Modèles de documents"
 #, python-format
 msgid "Error loading forms"
 msgstr "Erreur lors du chargement des formulaires"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Expected JWT token"
+msgstr "Jeton JWT attendu"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -216,6 +253,13 @@ msgstr "Dernière mise à jour le"
 #, python-format
 msgid "Loading forms..."
 msgstr "Chargement des formulaires..."
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Missing security token"
+msgstr "Jeton de sécurité manquant"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

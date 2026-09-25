@@ -54,6 +54,28 @@ msgid "About"
 msgstr "概要"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Attachment not found"
+msgstr "添付ファイルが見つかりません"
+
+#. module: onlyoffice_odoo
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
+#, python-format
+msgid "Cancel"
+msgstr "キャンセル"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Cannot read attachment"
+msgstr "添付ファイルを読み取れません"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
@@ -138,6 +160,13 @@ msgid "Document Server Public URL"
 msgstr "ドキュメントサーバ公開URL"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+#, python-format
+msgid "Document conversion service returned status %s"
+msgstr "ドキュメント変換サービスがステータス %s を返しました"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 #, python-format
@@ -150,6 +179,14 @@ msgstr "ドキュメントテンプレート"
 #, python-format
 msgid "Error loading forms"
 msgstr "フォームの読み込みエラー"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Expected JWT token"
+msgstr "JWTトークンが必要です"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -220,6 +257,13 @@ msgstr "最終更新日"
 #, python-format
 msgid "Loading forms..."
 msgstr "フォームを読み込み中..."
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+#, python-format
+msgid "Missing security token"
+msgstr "セキュリティトークンがありません"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

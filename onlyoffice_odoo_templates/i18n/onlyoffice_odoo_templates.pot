@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 17.0+e-20260217\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 11:28+0000\n"
-"PO-Revision-Date: 2026-07-10 11:28+0000\n"
+"POT-Creation-Date: 2026-09-22 09:57+0000\n"
+"PO-Revision-Date: 2026-09-22 09:57+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -52,6 +52,7 @@ msgid "Administrator"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_attachment
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr ""
@@ -618,6 +619,14 @@ msgstr ""
 msgid ""
 "The ONLYOFFICE Templates module allows you to create, manage, and use "
 "fillable PDF"
+msgstr ""
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+#, python-format
+msgid ""
+"The document %(report)s could not be generated for %(record)s: %(error)s"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
