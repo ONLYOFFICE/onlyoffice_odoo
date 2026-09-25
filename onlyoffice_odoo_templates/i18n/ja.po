@@ -27,7 +27,7 @@ msgstr ""
 "ドしてください。"
 
 #. module: onlyoffice_odoo_templates
-#: model:res.groups,name:onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_admin
+#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_form
 msgid "<span class=\"o_stat_text\">Create associated report</span>"
 msgstr "<span class=\"o_stat_text\">関連レポートを作成</span>"
 
