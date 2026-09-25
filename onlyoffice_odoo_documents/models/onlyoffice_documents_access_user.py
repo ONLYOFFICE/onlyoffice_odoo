@@ -8,7 +8,7 @@ class OnlyofficeDocumentsAccessUser(models.Model):
     _description = "ONLYOFFICE Documents Access Users"
 
     document_id = fields.Many2one("documents.document", required=True, ondelete="cascade")
-    user_id = fields.Many2one("res.users", required=True, string="User")
+    user_id = fields.Many2one("res.users", required=True)
     role = fields.Selection(
         [
             ("none", "None"),

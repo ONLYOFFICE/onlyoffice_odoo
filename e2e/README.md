@@ -1,19 +1,22 @@
 # End-to-end tests (Playwright)
 
-Browser tests of the `onlyoffice_odoo` connector against a **live** ONLYOFFICE Docs. CI runs them in
+Browser tests of the `onlyoffice_odoo` connector and the `onlyoffice_odoo_templates` module against a **live**
+ONLYOFFICE Docs (Developer Edition: the template editor needs its Automation API). CI runs them in
 `.github/workflows/e2e.yml` on every push and pull request, in the runtime model of `test.yml`: the OCA Odoo image as
 the job container, PostgreSQL and the Document Server as `services`. Odoo and the browser run inside the job container,
 so the Document Server is `http://documentserver/` for both and reaches Odoo at the job container address.
 
-| Spec                     | Scenario                                                                                                                                                                                                                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tests/auth.setup.ts`    | Logs in as `admin`; the session is reused by the other projects.                                                                                                                                                                                                         |
-| `tests/settings.spec.ts` | Unreachable Docs address → validation error, nothing stored. Real address → validation passes, settings stored.                                                                                                                                                          |
-| `tests/editor.spec.ts`   | For docx, xlsx, pptx: post the file to a Discuss channel, "Open in ONLYOFFICE", type, leave → the attachment is saved and contains the typed text. Also for docx in "Open file in the same tab" mode. An rtf (view-only format) opens read-only without a save callback. |
-| `tests/access.spec.ts`   | A zip in Discuss has no "Open in ONLYOFFICE" button. Another user opening the editor link of a file in a private chat gets 403.                                                                                                                                          |
+| Spec                      | Scenario                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests/auth.setup.ts`     | Logs in as `admin`; the session is reused by the other projects.                                                                                                                                                                                                                                                                                                               |
+| `tests/settings.spec.ts`  | Unreachable Docs address → validation error, nothing stored. Real address → validation passes, settings stored.                                                                                                                                                                                                                                                                |
+| `tests/editor.spec.ts`    | For docx, xlsx, pptx: post the file to a Discuss channel, "Open in ONLYOFFICE", type, leave → the attachment is saved and contains the typed text. Also for docx in "Open file in the same tab" mode. An rtf (view-only format) opens read-only without a save callback.                                                                                                       |
+| `tests/templates.spec.ts` | With the "Employee" demo template: print from a form (form fields hold the employee's data), from the list (ZIP), and through the `onlyoffice-pdf` report; "Disable form fields after printing" leaves no form fields; Preview; a blank template opens in the editor; a plain PDF becomes a PDF form; the form gallery (API stubbed) and the Settings export create templates. |
+| `tests/access.spec.ts`    | A zip in Discuss has no "Open in ONLYOFFICE" button. Another user opening the editor link of a file in a private chat gets 403.                                                                                                                                                                                                                                                |
 
-Projects run in a chain (`login` → `settings` → `editor`) with one worker: the editor tests need the Document Server
-connected by the settings test.
+Projects run in a chain (`login` → `settings` → `editor`, `templates`) with one worker: both need the Document Server
+connected by the settings test. One Document Server serves both modules; the one of the `test.yml` templates job cannot
+be reused, because a service lives only as long as its job.
 
 **Save timing.** The task requires the file to be saved 5 s after leaving the editor. The Document Server assembles the
 file `savetimeoutdelay` (5 s) after the last user leaves: 6–7 s normally for every leave path (closing the tab, going
@@ -32,13 +35,15 @@ npm run setup   # once: npm ci + Chromium for Playwright (Linux: also `npx playw
 npm run e2e     # starts the stack, runs the tests, stops the stack
 ```
 
-`npm run e2e` = `npm run stack:up` (PostgreSQL, Document Server, Odoo 17 with `onlyoffice_odoo` installed in database
-`e2e`) → `npm test` → `npm run stack:down`. When a test fails the stack stays up for debugging: `npm run report` opens
+`npm run e2e` = `npm run stack:up` (PostgreSQL, Document Server, Odoo 17 with `hr`, then `onlyoffice_odoo` and
+`onlyoffice_odoo_templates` installed in database `e2e`; `hr` goes first so that the "Employee" demo template is
+created) → `npm test` → `npm run stack:down`. When a test fails the stack stays up for debugging: `npm run report` opens
 the HTML report with traces, `docker compose logs web` shows Odoo, `npm run stack:down` removes everything.
 
-The local stack (`docker-compose.yml`): `postgres:13`, `odoo:17` + `pyjwt` (`odoo/Dockerfile`) on port 8069 and
-`onlyoffice/documentserver` (JWT enabled) on port 8080. The settings test stores: Docs address `http://localhost:8080/`,
-inner address `http://documentserver/`, Odoo address for Docs `http://web:8069/`. Fixtures are the blank templates in
+The local stack (`docker-compose.yml`): `postgres:13`, `odoo:17` + `pyjwt` (`odoo/Dockerfile`) on port 8069 with
+`onlyoffice_odoo`, `onlyoffice_odoo_templates` and `hr` installed, and `onlyoffice/documentserver-de` (JWT enabled) on
+port 8080. The settings test stores: Docs address `http://localhost:8080/`, inner address `http://documentserver/`, Odoo
+address for Docs `http://web:8069/`. Fixtures are the blank templates in
 `onlyoffice_odoo/static/assets/document_templates/en-US/`.
 
 To run against your own Odoo + Document Server instead, skip the `stack:*` scripts and set `E2E_ODOO_URL`,

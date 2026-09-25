@@ -169,9 +169,10 @@ class Document(models.Model):
 
     @api.depends("checksum")
     def _compute_thumbnail(self):
-        super()._compute_thumbnail()
+        res = super()._compute_thumbnail()
 
         for record in self:
             if record.mimetype == "application/pdf":
                 record.thumbnail = False
                 record.thumbnail_status = False
+        return res

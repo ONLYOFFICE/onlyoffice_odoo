@@ -22,14 +22,14 @@ jobs:
           POSTGRES_PASSWORD: odoo
           POSTGRES_DB: odoo
       documentserver:
-        image: onlyoffice/documentserver:latest
+        # Developer Edition: the template editor needs the Automation API (see onlyoffice_odoo_templates).
+        image: onlyoffice/documentserver-de:latest
         env:
           JWT_SECRET: e2e-secret-0123456789abcdef0123456789
           # Odoo (the job container) has a private address on the job network.
           ALLOW_PRIVATE_IP_ADDRESS: "true"
     env:
-      INCLUDE: onlyoffice_odoo
-      EXCLUDE: onlyoffice_odoo_documents,onlyoffice_odoo_templates
+      INCLUDE: onlyoffice_odoo,onlyoffice_odoo_templates
       PGDATABASE: e2e
       # Browser and Odoo share the job network with the Document Server, so both addresses are the same.
       E2E_DS_PUBLIC_URL: http://documentserver/
@@ -52,7 +52,9 @@ jobs:
       - name: Initialize the database and start Odoo
         run: |
           oca_wait_for_postgres
-          odoo -d "$PGDATABASE" -i onlyoffice_odoo --stop-after-init --without-demo=all
+          # hr first: the templates module creates the "Employee" demo template at install only if hr.employee exists.
+          odoo -d "$PGDATABASE" -i hr --stop-after-init --without-demo=all
+          odoo -d "$PGDATABASE" -i onlyoffice_odoo,onlyoffice_odoo_templates --stop-after-init
           nohup odoo -d "$PGDATABASE" > odoo.log 2>&1 &
           # The Document Server downloads files from and posts callbacks to this container.
           echo "E2E_ODOO_INNER_URL=http://$(hostname -i | cut -d' ' -f1):8069/" >> "$GITHUB_ENV"
@@ -60,6 +62,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('e2e/package-lock.json') }}
 
       - name: Install Playwright
         working-directory: e2e

@@ -1,5 +1,5 @@
 # Copyright (C) 2026 Ascensio System SIA
-# Local stack for the Playwright tests: Odoo 17 + PostgreSQL + ONLYOFFICE Docs.
+# Local stack for the Playwright tests: Odoo 17 (onlyoffice_odoo, onlyoffice_odoo_templates, hr) + PostgreSQL + ONLYOFFICE Docs.
 #   browser         -> http://localhost:8069  Odoo,            http://localhost:8080  Document Server
 #   Odoo container  -> http://documentserver/ Document Server (inner URL)
 #   Document Server -> http://web:8069/       Odoo (Odoo URL for internal requests)
@@ -16,12 +16,14 @@ services:
       - "8069:8069"
     volumes:
       - ../onlyoffice_odoo:/mnt/extra-addons/onlyoffice_odoo:ro
+      - ../onlyoffice_odoo_templates:/mnt/extra-addons/onlyoffice_odoo_templates:ro
       # The database is initialised with `docker compose run --rm web`; keep its filestore.
       - odoo-data:/var/lib/odoo
     command: ["odoo", "-d", "e2e"]
 
   documentserver:
-    image: onlyoffice/documentserver:latest
+    # Developer Edition: the template editor needs the Automation API (see onlyoffice_odoo_templates).
+    image: onlyoffice/documentserver-de:latest
     environment:
       JWT_SECRET: e2e-secret-0123456789abcdef0123456789
       # Odoo has a private address inside the compose network.

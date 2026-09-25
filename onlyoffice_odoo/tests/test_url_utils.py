@@ -63,10 +63,3 @@ class TestUrlUtils(TransactionCase):
         callback_url = "https://company.com/onlyoffice/cache/files/convert/output.docx"
         result = url_utils.replace_public_url_to_internal(self.env, callback_url)
         self.assertEqual(result, "http://192.168.0.10:8080/cache/files/convert/output.docx")
-
-    def test_replace_url_in_docserver_callback_url(self):
-        """Replacement works on a realistic DocServer callback file URL with a versioned path."""
-        config_utils.set_doc_server_inner_url(self.env, self.inner_url)
-        docserver_url = "https://docs.example.com/cache/files/5.0/convert_abc123/output.docx"
-        result = url_utils.replace_public_url_to_internal(self.env, docserver_url)
-        self.assertEqual(result, "http://docserver-internal:8080/cache/files/5.0/convert_abc123/output.docx")

@@ -91,9 +91,10 @@ Base skill for this repository. Read it before any change, then load the skill f
 - `pre-commit run -a` runs all linters (ruff, pylint-odoo, prettier with plugin-xml, eslint, OCA checks); setup is in
   `CONTRIBUTING.md`. The config excludes `**/assets/**` (vendored formats/templates) and
   `static/description/index.html`.
-- CI (`.github/workflows/test.yml`) runs only the `onlyoffice_odoo` tests with stub `documents`/`documents_spreadsheet`
-  manifests and `coverage --fail-under=60`; the other two modules are tested locally only. `.github/workflows/e2e.yml`
-  runs the Playwright suite in `e2e/` against a live Document Server after `test` succeeds. Details in `odoo-testing`.
+- CI (`.github/workflows/test.yml`) runs the `onlyoffice_odoo` and `onlyoffice_odoo_templates` tests (a matrix, with
+  stub `documents`/`documents_spreadsheet` manifests and the coverage thresholds of `.coveragerc*`); the documents
+  module is tested locally only. `.github/workflows/e2e.yml` runs the Playwright suite in `e2e/` against a live Document
+  Server on every push / pull request; `lint.yml` runs pre-commit and a strict pylint. Details in `odoo-testing`.
 - A local Odoo 17 + Enterprise usually runs from a `docker-compose.yml` in the parent workspace (repo mounted as
   `/mnt/extra-addons`).
 

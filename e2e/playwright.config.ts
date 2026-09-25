@@ -4,7 +4,7 @@ import { defineConfig } from "@playwright/test"
 import { AUTH_FILE } from "./fixtures"
 import { ODOO_URL } from "./helpers/env"
 
-// Projects run in a chain: login -> settings (connects the Document Server) -> editor.
+// Projects run in a chain: login -> settings (connects the Document Server) -> editor, templates.
 export default defineConfig({
   testDir: "tests",
   workers: 1,
@@ -26,5 +26,6 @@ export default defineConfig({
       dependencies: ["settings"],
       use: { storageState: AUTH_FILE },
     },
+    { name: "templates", testMatch: "templates.spec.ts", dependencies: ["settings"], use: { storageState: AUTH_FILE } },
   ],
 })

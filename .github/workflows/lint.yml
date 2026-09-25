@@ -20,22 +20,18 @@ jobs:
       - run: npm i
       - uses: pre-commit/action@v3.0.0
 
+  # ruff runs in pre-commit; its pylint hook only reports (--exit-zero), so this job enforces pylint.
+  # pylint-odoo is pinned like the pre-commit hook: newer versions do not know some checks listed in .pylintrc.
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install linters
-        run: |
-          pip install ruff==0.15.21 pylint pylint-odoo
-
-      - name: Run ruff
-        run: ruff check onlyoffice_odoo/
+      - run: pip install pylint-odoo==9.1.3
 
       - name: Run pylint
-        run: pylint --rcfile=.pylintrc onlyoffice_odoo/ || true
+        run: pylint --rcfile=.pylintrc onlyoffice_odoo onlyoffice_odoo_documents onlyoffice_odoo_templates
