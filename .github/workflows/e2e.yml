@@ -1,0 +1,101 @@
+name: e2e
+
+# Playwright tests against a live ONLYOFFICE Docs, see e2e/README.md.
+# Same runtime model as test.yml: the OCA Odoo container as the job container, PostgreSQL and the
+# Document Server as services. Odoo is served from the job container; the browser runs there too.
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
+    paths-ignore:
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/**'
+      - '.check-licenses.yml'
+  pull_request:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+      documentserver:
+        # Developer Edition: the template editor needs the Automation API (see onlyoffice_odoo_templates).
+        image: onlyoffice/documentserver-de:latest
+        env:
+          JWT_SECRET: e2e-secret-0123456789abcdef0123456789
+          # Odoo (the job container) has a private address on the job network.
+          ALLOW_PRIVATE_IP_ADDRESS: "true"
+    env:
+      INCLUDE: onlyoffice_odoo,onlyoffice_odoo_templates
+      PGDATABASE: e2e
+      # Browser and Odoo share the job network with the Document Server, so both addresses are the same.
+      E2E_DS_PUBLIC_URL: http://documentserver/
+      E2E_DS_INNER_URL: http://documentserver/
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Create stubs for unavailable addons
+        run: |
+          mkdir -p documents documents_spreadsheet
+          printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          printf "{'name': 'Documents Spreadsheet', 'version': '17.0.1.0.0', 'depends': ['documents']}\n" > documents_spreadsheet/__manifest__.py
+          touch documents/__init__.py documents_spreadsheet/__init__.py
+
+      - name: Install addons and dependencies
+        run: oca_install_addons
+
+      - name: Initialize the database and start Odoo
+        run: |
+          oca_wait_for_postgres
+          # hr first: the templates module creates the "Employee" demo template at install only if hr.employee exists.
+          odoo -d "$PGDATABASE" -i hr --stop-after-init --without-demo=all
+          odoo -d "$PGDATABASE" -i onlyoffice_odoo,onlyoffice_odoo_templates --stop-after-init
+          nohup odoo -d "$PGDATABASE" > odoo.log 2>&1 &
+          # The Document Server downloads files from and posts callbacks to this container.
+          echo "E2E_ODOO_INNER_URL=http://$(hostname -i | cut -d' ' -f1):8069/" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('e2e/package-lock.json') }}
+
+      - name: Install Playwright
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Wait for the stack
+        run: node e2e/scripts/wait-for-stack.mjs
+
+      - name: Run tests
+        working-directory: e2e
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            odoo.log
+          if-no-files-found: ignore
+          retention-days: 14
