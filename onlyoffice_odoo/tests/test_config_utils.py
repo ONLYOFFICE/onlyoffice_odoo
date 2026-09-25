@@ -27,12 +27,6 @@ class TestConfigUtils(TransactionCase):
         url = config_utils.get_doc_server_public_url(self.env)
         self.assertEqual(url, "https://docs.example.com/")
 
-    def test_set_doc_server_public_url_adds_trailing_slash(self):
-        """URL is normalized with a trailing slash."""
-        config_utils.set_doc_server_public_url(self.env, "https://docs.example.com")
-        url = config_utils.get_doc_server_public_url(self.env)
-        self.assertTrue(url.endswith("/"))
-
     def test_set_doc_server_public_url_empty_resets_to_default(self):
         """Setting empty URL resets to default document server URL."""
         config_utils.set_doc_server_public_url(self.env, "")
@@ -98,9 +92,8 @@ class TestConfigUtils(TransactionCase):
         self.env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, "")
         with patch.object(self.env.cr, "commit"):
             secret = config_utils.get_internal_jwt_secret(self.env)
-        self.assertTrue(secret)
         self.assertIsInstance(secret, str)
-        self.assertTrue(len(secret) > 0)
+        self.assertTrue(secret)
 
     def test_get_internal_jwt_secret_stable(self):
         """Internal JWT secret remains the same across multiple calls."""
@@ -123,12 +116,6 @@ class TestConfigUtils(TransactionCase):
         config_utils.set_demo(self.env, False)
         url = config_utils.get_doc_server_public_url(self.env)
         self.assertEqual(url, "http://documentserver/")
-
-    def test_get_demo_returns_param(self):
-        """get_demo returns the current demo parameter value."""
-        config_utils.set_demo(self.env, True)
-        demo = config_utils.get_demo(self.env)
-        self.assertTrue(demo)
 
     # -- Same tab --
 

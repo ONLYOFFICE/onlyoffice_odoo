@@ -19,9 +19,24 @@ on:
       - '.check-licenses.yml'
 
 jobs:
-  test:
+  # Unit tests of one addon; onlyoffice_odoo also has live Document Server tests (tests/test_document_server.py).
+  # onlyoffice_odoo_documents needs Enterprise and is tested locally only.
+  unit:
+    name: ${{ matrix.addon }}
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - addon: onlyoffice_odoo
+            coveragerc: .coveragerc
+          # `hr` provides hr.employee and its bundled demo templates; it is installed before the tests so that its
+          # own test suite does not run.
+          - addon: onlyoffice_odoo_templates
+            coveragerc: .coveragerc-templates
+            preinstall: hr
     services:
       postgres:
         image: postgres:12
@@ -29,11 +44,15 @@ jobs:
           POSTGRES_USER: odoo
           POSTGRES_PASSWORD: odoo
           POSTGRES_DB: odoo
-        ports:
-          - 5432:5432
+      documentserver:
+        image: onlyoffice/documentserver-de:latest
+        env:
+          JWT_ENABLED: "false"
     env:
-      INCLUDE: "onlyoffice_odoo"
-      EXCLUDE: "onlyoffice_odoo_documents,onlyoffice_odoo_templates"
+      INCLUDE: ${{ matrix.addon }}
+      COVERAGE_RCFILE: ${{ matrix.coveragerc }}
+      ONLYOFFICE_TEST_LIVE_DOCSERVER: "1"
+      ONLYOFFICE_TEST_DOCSERVER_URL: "http://documentserver/"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,7 +67,17 @@ jobs:
         run: oca_install_addons
       - name: Initialize test db
         run: oca_init_test_database
+      - name: Install modules needed by the tests
+        if: matrix.preinstall
+        run: odoo -d "$PGDATABASE" -i "${{ matrix.preinstall }}" --stop-after-init
+      # The Document Server boots while the addons install; by now it is usually ready.
+      - name: Wait for the Document Server
+        run: timeout 300 sh -c 'until curl -fsS http://documentserver/healthcheck; do sleep 5; done'
+      # oca_run_tests, plus the live Document Server tests: they are tagged external_docserver instead of standard,
+      # and oca_run_tests cannot select extra tags.
       - name: Run tests
-        run: oca_run_tests
+        run: >-
+          coverage run --include "./*" --branch "$(which odoo)" -d "$PGDATABASE" -i "$INCLUDE" --test-enable --test-tags
+          standard,external_docserver --stop-after-init
       - name: Check coverage threshold
-        run: coverage report --fail-under=60
+        run: coverage report

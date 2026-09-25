@@ -32,5 +32,4 @@ class OnlyofficeDocumentsAccessUser(models.Model):
             ("custom_filter", "Custom Filter"),
         ],
         default="viewer",
-        string="Link Access",
     )

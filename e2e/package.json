@@ -1,17 +1,18 @@
 {
   "name": "onlyoffice-odoo-e2e",
   "private": true,
-  "description": "Playwright end-to-end tests for the ONLYOFFICE Odoo connector against a live Document Server",
+  "description": "Playwright end-to-end tests for the ONLYOFFICE Odoo modules against a live Document Server",
   "scripts": {
     "setup": "npm ci && npx playwright install chromium",
     "e2e": "npm run stack:up && npm test && npm run stack:down",
-    "stack:up": "docker compose up -d db documentserver && docker compose run --build --rm web odoo -d e2e -i onlyoffice_odoo --stop-after-init --without-demo=all && docker compose up -d web && node scripts/wait-for-stack.mjs",
+    "stack:up": "docker compose up -d db documentserver && docker compose run --build --rm web odoo -d e2e -i hr --stop-after-init --without-demo=all && docker compose run --rm web odoo -d e2e -i onlyoffice_odoo,onlyoffice_odoo_templates --stop-after-init && docker compose up -d web && node scripts/wait-for-stack.mjs",
     "stack:down": "docker compose down -v --remove-orphans",
     "test": "playwright test",
     "report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "pdf-lib": "^1.17.1"
   }
 }
