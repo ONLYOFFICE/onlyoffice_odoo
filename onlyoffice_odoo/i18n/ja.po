@@ -79,20 +79,8 @@ msgstr "添付ファイルを読み取れません"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
-msgid "Back"
-msgstr "戻る"
-
-#. module: onlyoffice_odoo
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Categories"
 msgstr "カテゴリ"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Common settings"
-msgstr "共通設定"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
@@ -330,11 +318,6 @@ msgid "Odoo URL"
 msgstr "Odoo URL"
 
 #. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Only use when accessing Document Server with a self-signed certificate"
-msgstr "自己署名証明書使用時のみ有効"
-
-#. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Open file in the same tab"
@@ -406,9 +389,7 @@ msgstr "30日間のテスト期間が終了し、ONLYOFFICE Docsのデモサー�
 msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
-msgstr ""
-"このアプリを使用すると、Odoo内でONLYOFFICE Docsを使って、入力可能なフォームや"
-"オフィスファイル、添付ドキュメントを作成・編集・共同編集できます。"
+msgstr "このアプリを使用すると、Odoo内でONLYOFFICE Docsを使って、入力可能なフォームやオフィスファイル、添付ドキュメントを作成・編集・共同編集できます。"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

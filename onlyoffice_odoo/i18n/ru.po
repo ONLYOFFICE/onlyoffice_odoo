@@ -80,13 +80,6 @@ msgstr "Не удается прочитать вложение"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
-msgid "Back"
-msgstr "Назад"
-
-#. module: onlyoffice_odoo
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Categories"
 msgstr "Группы"
 
@@ -302,10 +295,7 @@ msgid ""
 "ONLYOFFICE Templates requires a properly licensed Document Server connected "
 "with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper "
 "license."
-msgstr ""
-"Для шаблонов ONLYOFFICE требуется надлежащим образом лицензированный сервер документов, подключенный "
-"к Odoo. Чтобы получить соответствующую лицензию, свяжитесь с отделом продаж по адресу "
-"sales@onlyoffice.com."
+msgstr "Для шаблонов ONLYOFFICE требуется надлежащим образом лицензированный сервер документов, подключенный к Odoo. Чтобы получить соответствующую лицензию, свяжитесь с отделом продаж по адресу sales@onlyoffice.com."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -344,7 +334,7 @@ msgstr "Открыть в ONLYOFFICE"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr ""
+msgstr "Прочее"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -393,18 +383,14 @@ msgstr "Электронная таблица"
 msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
-msgstr ""
-"30-дневный тестовый период закончился, вы больше не можете подключиться к демо-серверу ONLYOFFICE"
-" Docs."
+msgstr "30-дневный тестовый период закончился, вы больше не можете подключиться к демо-серверу ONLYOFFICE Docs."
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
-msgstr ""
-"Это приложение позволяет создавать, редактировать заполняемые формы, офисные файлы и вложенные документы "
-"и совместно работать над ними в Odoo с помощью ONLYOFFICE Docs."
+msgstr "Это приложение позволяет создавать, редактировать заполняемые формы, офисные файлы и вложенные документы и совместно работать над ними в Odoo с помощью ONLYOFFICE Docs."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

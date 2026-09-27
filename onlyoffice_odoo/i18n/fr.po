@@ -80,13 +80,6 @@ msgstr "Impossible de lire la pièce jointe"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
-msgid "Back"
-msgstr "Retour"
-
-#. module: onlyoffice_odoo
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Categories"
 msgstr "Catégories"
 
@@ -341,7 +334,7 @@ msgstr "Ouvrir dans ONLYOFFICE"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr ""
+msgstr "Autres"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

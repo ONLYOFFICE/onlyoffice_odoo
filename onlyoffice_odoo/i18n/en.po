@@ -73,13 +73,6 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
-msgid "Back"
-msgstr ""
-
-#. module: onlyoffice_odoo
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Categories"
 msgstr ""
 

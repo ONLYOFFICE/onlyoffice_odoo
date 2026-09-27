@@ -48,18 +48,17 @@ msgstr "空白"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.xml:0
 #, python-format
 msgid "Cancel"
 msgstr "キャンセル"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__commenter
@@ -74,6 +73,14 @@ msgstr "コメント可"
 #, python-format
 msgid "Conversion error"
 msgstr "変換エラー"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Conversion failed: "
+msgstr "変換に失敗しました："
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -127,6 +134,20 @@ msgstr "ONLYOFFICEで変換"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Converting spreadsheet to XLSX via ONLYOFFICE..."
+msgstr "ONLYOFFICEでスプレッドシートをXLSXに変換中..."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Converting spreadsheet to XLSX..."
+msgstr "スプレッドシートをXLSXに変換中..."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
 #, python-format
 msgid "Converting..."
@@ -136,6 +157,7 @@ msgstr "変換中..."
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.xml:0
 #, python-format
 msgid "Create"
 msgstr "作成"
@@ -172,9 +194,6 @@ msgstr "作成日"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__custom_filter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__custom_filter
@@ -258,9 +277,6 @@ msgstr "完了"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__editor
@@ -306,6 +322,13 @@ msgid "Failed to convert document"
 msgstr "文書の変換に失敗しました"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Failed to convert spreadsheet: "
+msgstr "スプレッドシートの変換に失敗しました："
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 #, python-format
@@ -349,9 +372,6 @@ msgstr "ファイル名"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__form_filling
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__form_filling
@@ -385,7 +405,9 @@ msgstr "ID"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #, python-format
-msgid "Incorrect file type for advanced sharing. Please select a different document."
+msgid ""
+"Incorrect file type for advanced sharing. Please select a different "
+"document."
 msgstr "詳細共有に不適切なファイル形式です。別のドキュメントを選択してください。"
 
 #. module: onlyoffice_odoo_documents
@@ -413,13 +435,6 @@ msgid ""
 "JSON metadata from original spreadsheet (lists, pivots, filters) for XLSX "
 "copies"
 msgstr "XLSXコピー用の元のスプレッドシートのJSONメタデータ（リスト、ピボット、フィルター）"
-
-#. module: onlyoffice_odoo_documents
-#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents____last_update
-#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access____last_update
-#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents_access_user____last_update
-msgid "Last Modified on"
-msgstr "最終変更日"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_onlyoffice_odoo_documents__write_uid
@@ -517,9 +532,6 @@ msgstr "共有するドキュメントが選択されていません。"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__none
@@ -650,10 +662,6 @@ msgstr "変更をリセット"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__reviewer
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__reviewer
@@ -701,11 +709,34 @@ msgid "Spreadsheet Source"
 msgstr "スプレッドシートのソース"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Spreadsheet converted to XLSX for editing in ONLYOFFICE"
+msgstr "ONLYOFFICEで編集できるようにスプレッドシートをXLSXに変換しました"
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
 #, python-format
 msgid "Spreadsheet has no data or invalid structure"
 msgstr "スプレッドシートにデータがないか、構造が無効です"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Spreadsheet successfully converted to XLSX with formulas!"
+msgstr "スプレッドシートを数式付きのXLSXに正常に変換しました！"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid ""
+"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
+" Docs server"
+msgstr "30日間のテスト期間が終了し、ONLYOFFICE Docsのデモサーバーに接続できなくなりました"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -720,15 +751,6 @@ msgstr "この文書は他のユーザーによってロックされています
 #, python-format
 msgid "This insert type is not supported for ONLYOFFICE spreadsheets"
 msgstr "この挿入タイプはONLYOFFICEスプレッドシートではサポートされていません"
-
-#. module: onlyoffice_odoo_documents
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
-#, python-format
-msgid ""
-"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
-" Docs server"
-msgstr "30日間のテスト期間が終了し、ONLYOFFICE Docsのデモサーバーに接続できなくなりました"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -785,9 +807,6 @@ msgstr "ユーザーにはこのドキュメントを開く権限がありませ
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__viewer

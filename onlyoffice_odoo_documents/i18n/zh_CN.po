@@ -48,18 +48,17 @@ msgstr "空白"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/share/advanced_share.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.xml:0
 #, python-format
 msgid "Cancel"
 msgstr "取消"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__commenter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__commenter
@@ -74,6 +73,14 @@ msgstr "可评论"
 #, python-format
 msgid "Conversion error"
 msgstr "转换错误"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Conversion failed: "
+msgstr "转换失败："
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -127,6 +134,20 @@ msgstr "使用 ONLYOFFICE 转换"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Converting spreadsheet to XLSX via ONLYOFFICE..."
+msgstr "正在通过 ONLYOFFICE 将电子表格转换为 XLSX..."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Converting spreadsheet to XLSX..."
+msgstr "正在将电子表格转换为 XLSX..."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
 #, python-format
 msgid "Converting..."
@@ -136,6 +157,7 @@ msgstr "正在转换..."
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/onlyoffice_create_template/create_dialog.xml:0
+#: code:addons/onlyoffice_odoo_documents/static/src/spreadsheet_selector/folder_selection_dialog.xml:0
 #, python-format
 msgid "Create"
 msgstr "创建"
@@ -172,9 +194,6 @@ msgstr "创建时间"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__custom_filter
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__custom_filter
@@ -258,9 +277,6 @@ msgstr "完成"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__editor
@@ -306,6 +322,13 @@ msgid "Failed to convert document"
 msgstr "文档转换失败"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Failed to convert spreadsheet: "
+msgstr "电子表格转换失败："
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 #, python-format
@@ -349,9 +372,6 @@ msgstr "文件名"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__form_filling
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__form_filling
@@ -512,9 +532,6 @@ msgstr "未选择要共享的文档。"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__none
@@ -562,7 +579,7 @@ msgstr "已检查 Onlyoffice 电子表格元数据"
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
 msgid "Oo Attachment Version"
-msgstr ""
+msgstr "Oo 附件版本"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -645,9 +662,6 @@ msgstr "重置更改"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__reviewer
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__link_access__reviewer
@@ -695,11 +709,34 @@ msgid "Spreadsheet Source"
 msgstr "电子表格来源"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Spreadsheet converted to XLSX for editing in ONLYOFFICE"
+msgstr "电子表格已转换为 XLSX，可在 ONLYOFFICE 中编辑"
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/spreadsheet_docbuilder.py:0
 #, python-format
 msgid "Spreadsheet has no data or invalid structure"
 msgstr "电子表格没有数据或结构无效"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid "Spreadsheet successfully converted to XLSX with formulas!"
+msgstr "电子表格已成功转换为含公式的 XLSX！"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-javascript
+#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
+#, python-format
+msgid ""
+"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
+" Docs server"
+msgstr "30 天测试期结束后，您将无法再访问 ONLYOFFICE文档服务器演示版"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -714,15 +751,6 @@ msgstr "此文档已被其他用户锁定"
 #, python-format
 msgid "This insert type is not supported for ONLYOFFICE spreadsheets"
 msgstr "ONLYOFFICE 电子表格不支持此插入类型"
-
-#. module: onlyoffice_odoo_documents
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
-#, python-format
-msgid ""
-"The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
-" Docs server"
-msgstr "30 天测试期结束后，您将无法再访问 ONLYOFFICE文档服务器演示版"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -775,13 +803,10 @@ msgstr "用户访问"
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 #, python-format
 msgid "User has no read access rights to open this document"
-msgstr ""
+msgstr "用户没有打开此文档的读取权限"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access.py:0
-#: code:addons/onlyoffice_odoo_documents/models/onlyoffice_documents_access_user.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: code:addons/onlyoffice_odoo_documents/models/onlyoffice_odoo_documents.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__viewer

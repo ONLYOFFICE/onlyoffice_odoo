@@ -52,6 +52,7 @@ msgid "Administrator"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_attachment
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr ""
@@ -73,6 +74,7 @@ msgstr ""
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
 #, python-format
@@ -118,13 +120,6 @@ msgstr ""
 #. module: onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_res_config_settings
 msgid "Config Settings"
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
-#, python-format
-msgid "Couldn't insert the field. Please check Automation API."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
@@ -432,7 +427,9 @@ msgstr ""
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
 #, python-format
-msgid "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)"
+msgid ""
+"Odoo is unable to merge the generated PDFs because of %(num_errors)s "
+"corrupted file(s)"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates

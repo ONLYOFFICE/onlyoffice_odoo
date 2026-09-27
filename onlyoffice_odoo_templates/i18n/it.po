@@ -52,6 +52,7 @@ msgid "Administrator"
 msgstr "Amministratore"
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_attachment
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr "Allegato"
@@ -73,6 +74,7 @@ msgstr "Può aprire, creare, modificare e stampare modelli di ONLYOFFICE."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
 #, python-format
@@ -122,13 +124,6 @@ msgstr "Fai clic sul pulsante Azione."
 #: model:ir.model,name:onlyoffice_odoo_templates.model_res_config_settings
 msgid "Config Settings"
 msgstr "Impostazioni di configurazione"
-
-#. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
-#, python-format
-msgid "Couldn't insert the field. Please check Automation API."
-msgstr "Impossibile inserire il campo. Controlla l'API di automazione."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -325,6 +320,9 @@ msgid ""
 "                fields in the ONLYOFFICE editor and the corresponding data fields from the selected\n"
 "                Odoo model."
 msgstr ""
+"Individua il modello appena creato e configura i collegamenti tra i campi del modulo\n"
+"                nell'editor ONLYOFFICE e i campi dati corrispondenti del modello\n"
+"                Odoo selezionato."
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_demo_templates
@@ -437,7 +435,9 @@ msgstr "Modelli di ONLYOFFICE"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
 #, python-format
-msgid "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)"
+msgid ""
+"Odoo is unable to merge the generated PDFs because of %(num_errors)s "
+"corrupted file(s)"
 msgstr "Odoo non riesce a unire i PDF generati a causa di %(num_errors)s file danneggiato(i)"
 
 #. module: onlyoffice_odoo_templates
@@ -613,7 +613,7 @@ msgstr "Caricamento del modello"
 #. module: onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
 msgid "Templates"
-msgstr ""
+msgstr "Modelli"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form

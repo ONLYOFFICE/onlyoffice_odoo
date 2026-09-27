@@ -52,6 +52,7 @@ msgid "Administrator"
 msgstr "Administrador"
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_attachment
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr "Archivo adjunto"
@@ -73,6 +74,7 @@ msgstr "Puede abrir, crear, editar e imprimir plantillas de ONLYOFFICE."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
+#: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/onlyoffice_dialog.xml:0
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_demo_templates_form
 #, python-format
@@ -122,13 +124,6 @@ msgstr "Haga clic en el botón Acción."
 #: model:ir.model,name:onlyoffice_odoo_templates.model_res_config_settings
 msgid "Config Settings"
 msgstr "Ajustes de configuración"
-
-#. module: onlyoffice_odoo_templates
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo_templates/static/src/views/editor/onlyoffice_editor.js:0
-#, python-format
-msgid "Couldn't insert the field. Please check Automation API."
-msgstr "No se ha podido insertar el campo. Por favor, compruebe la API de automatización."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -440,7 +435,9 @@ msgstr "Plantillas de ONLYOFFICE"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
 #, python-format
-msgid "Odoo is unable to merge the generated PDFs because of %(num_errors)s corrupted file(s)"
+msgid ""
+"Odoo is unable to merge the generated PDFs because of %(num_errors)s "
+"corrupted file(s)"
 msgstr "Odoo no puede combinar los PDF generados debido a %(num_errors)s archivo(s) corrupto(s)"
 
 #. module: onlyoffice_odoo_templates
@@ -616,7 +613,7 @@ msgstr "Carga de plantillas"
 #. module: onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
 msgid "Templates"
-msgstr ""
+msgstr "Plantillas"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form

@@ -80,13 +80,6 @@ msgstr "Anhang kann nicht gelesen werden"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 #, python-format
-msgid "Back"
-msgstr "Zurück"
-
-#. module: onlyoffice_odoo
-#. odoo-javascript
-#: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-#, python-format
 msgid "Categories"
 msgstr "Kategorien"
 
@@ -341,7 +334,7 @@ msgstr "In ONLYOFFICE öffnen"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr ""
+msgstr "Sonstiges"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
