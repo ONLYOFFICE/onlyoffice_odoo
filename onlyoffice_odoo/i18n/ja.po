@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Plural-Forms: nplurals=1; plural=0;"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -54,21 +54,28 @@ msgid "About"
 msgstr "概要"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Attachment not found"
+msgstr "添付ファイルが見つかりません"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-msgid "Back"
-msgstr "戻る"
+msgid "Cancel"
+msgstr "キャンセル"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Cannot read attachment"
+msgstr "添付ファイルを読み取れません"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Categories"
 msgstr "カテゴリ"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Common settings"
-msgstr "共通設定"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_res_config_settings
@@ -135,6 +142,12 @@ msgstr "ドキュメントサーバ公開URL"
 
 #. module: onlyoffice_odoo
 #. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+msgid "Document conversion service returned status %s"
+msgstr "ドキュメント変換サービスがステータス %s を返しました"
+
+#. module: onlyoffice_odoo
+#. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
 msgstr ""
@@ -150,6 +163,12 @@ msgstr "ドキュメントテンプレート"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
 msgstr "フォームの読み込みエラー"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Expected JWT token"
+msgstr "JWTトークンが必要です"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -217,6 +236,12 @@ msgid "Loading forms..."
 msgstr "フォームを読み込み中..."
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Missing security token"
+msgstr "セキュリティトークンがありません"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "No forms found"
@@ -275,11 +300,6 @@ msgstr "ONLYOFFICEロゴ"
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__doc_server_odoo_url
 msgid "Odoo URL"
 msgstr "Odoo URL"
-
-#. module: onlyoffice_odoo
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "Only use when accessing Document Server with a self-signed certificate"
-msgstr "自己署名証明書使用時のみ有効"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__same_tab
@@ -345,9 +365,7 @@ msgstr "30日間のテスト期間が終了し、ONLYOFFICE Docsのデモサー�
 msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
-msgstr ""
-"このアプリを使用すると、Odoo内でONLYOFFICE Docsを使って、入力可能なフォームや"
-"オフィスファイル、添付ドキュメントを作成・編集・共同編集できます。"
+msgstr "このアプリを使用すると、Odoo内でONLYOFFICE Docsを使って、入力可能なフォームやオフィスファイル、添付ドキュメントを作成・編集・共同編集できます。"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

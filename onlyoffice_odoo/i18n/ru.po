@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -55,10 +55,22 @@ msgid "About"
 msgstr "О проекте"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Attachment not found"
+msgstr "Вложение не найдено"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-msgid "Back"
-msgstr "Назад"
+msgid "Cancel"
+msgstr "Отменить"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Cannot read attachment"
+msgstr "Не удается прочитать вложение"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -131,6 +143,12 @@ msgstr "Публичный URL сервера документов"
 
 #. module: onlyoffice_odoo
 #. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+msgid "Document conversion service returned status %s"
+msgstr "Служба преобразования документов вернула статус %s"
+
+#. module: onlyoffice_odoo
+#. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
 msgstr ""
@@ -146,6 +164,12 @@ msgstr "Шаблоны документов"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
 msgstr "Ошибка загрузки форм"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Expected JWT token"
+msgstr "Ожидался JWT-токен"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -213,6 +237,12 @@ msgid "Loading forms..."
 msgstr "Загрузка форм..."
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Missing security token"
+msgstr "Отсутствует токен безопасности"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "No forms found"
@@ -251,10 +281,7 @@ msgid ""
 "ONLYOFFICE Templates requires a properly licensed Document Server connected "
 "with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper "
 "license."
-msgstr ""
-"Для шаблонов ONLYOFFICE требуется надлежащим образом лицензированный сервер документов, подключенный "
-"к Odoo. Чтобы получить соответствующую лицензию, свяжитесь с отделом продаж по адресу "
-"sales@onlyoffice.com."
+msgstr "Для шаблонов ONLYOFFICE требуется надлежащим образом лицензированный сервер документов, подключенный к Odoo. Чтобы получить соответствующую лицензию, свяжитесь с отделом продаж по адресу sales@onlyoffice.com."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -332,18 +359,14 @@ msgstr "Электронная таблица"
 msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
-msgstr ""
-"30-дневный тестовый период закончился, вы больше не можете подключиться к демо-серверу ONLYOFFICE"
-" Docs."
+msgstr "30-дневный тестовый период закончился, вы больше не можете подключиться к демо-серверу ONLYOFFICE Docs."
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid ""
 "This app enables creating, editing, and collaborating on fillable forms, "
 "office files, and attached documents in Odoo using ONLYOFFICE Docs."
-msgstr ""
-"Это приложение позволяет создавать, редактировать заполняемые формы, офисные файлы и вложенные документы "
-"и совместно работать над ними в Odoo с помощью ONLYOFFICE Docs."
+msgstr "Это приложение позволяет создавать, редактировать заполняемые формы, офисные файлы и вложенные документы и совместно работать над ними в Odoo с помощью ONLYOFFICE Docs."
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

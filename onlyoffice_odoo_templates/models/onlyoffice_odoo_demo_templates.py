@@ -17,7 +17,7 @@ class OnlyOfficeDemoTemplate(models.Model):
     _name = "onlyoffice.odoo.demo.templates"
     _description = "ONLYOFFICE Demo Templates"
 
-    selected_templates = fields.Text(string="Selected Templates")
+    selected_templates = fields.Text()
 
     def _get_template_structure(self):
         templates_dir = self._get_templates_dir()

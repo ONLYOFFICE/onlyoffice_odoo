@@ -1,0 +1,178 @@
+# Copyright (C) 2026 Ascensio System SIA
+import base64
+import json
+from unittest.mock import MagicMock, patch
+
+from odoo.exceptions import UserError
+from odoo.tests import tagged
+from odoo.tests.common import TransactionCase
+
+from odoo.addons.onlyoffice_odoo.utils import config_constants
+
+# `hr` ships a bundled default template for hr.employee.
+MODEL_NAME = "hr.employee"
+
+
+class OnlyofficeTemplatesModelTestCase(TransactionCase):
+    """Shared setup for tests that need the hr.employee bundled template."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.ir_model = cls.env["ir.model"].search([("model", "=", MODEL_NAME)], limit=1)
+        if not cls.ir_model:
+            return
+
+        cls.demo_record = cls.env[MODEL_NAME].search([], limit=1)
+        if not cls.demo_record:
+            cls.demo_record = cls.env[MODEL_NAME].create({"name": "ONLYOFFICE Test Employee"})
+
+        # Pre-seed the internal JWT secret so `config_utils.get_internal_jwt_secret`
+        # (called by `_render_onlyoffice_pdf`) doesn't lazily generate it and call
+        # `env.cr.commit()` mid-test, which would wipe out this test's own savepoint
+        # and break rollback for this and subsequent tests in the class.
+        cls.env["ir.config_parameter"].sudo().set_param(
+            config_constants.INTERNAL_JWT_SECRET, "test-internal-jwt-secret"
+        )
+
+    def setUp(self):
+        super().setUp()
+        if not self.ir_model:
+            self.skipTest(f"Model {MODEL_NAME} is not installed in this test environment")
+
+    def _create_template_from_first_bundled_file(self):
+        """Exports the first bundled PDF of the model and returns the new template and the PDF's path."""
+        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
+        # "model/File.pdf", as the Settings widget sends it in `selected_templates`.
+        path = demo.get_template_data()["structure"][MODEL_NAME]["files"][0]["path"]
+        demo.selected_templates = json.dumps([path])
+        demo.action_save()
+        # The newest one: demo templates may already exist from the module install.
+        template = self.env["onlyoffice.odoo.templates"].search(
+            [("template_model_model", "=", MODEL_NAME)], order="id desc", limit=1
+        )
+        return template, path
+
+
+@tagged("post_install", "-at_install")
+class TestOnlyofficeOdooDemoTemplates(OnlyofficeTemplatesModelTestCase):
+    """Tests for onlyoffice.odoo.demo.templates — get_template_data and action_save."""
+
+    # -- get_template_data --
+
+    def test_default_template_visible_in_structure(self):
+        """A bundled template shows up in the picker once its module is installed."""
+        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
+        data = demo.get_template_data()
+
+        self.assertIn(MODEL_NAME, data["structure"])
+        files = data["structure"][MODEL_NAME]["files"]
+        self.assertTrue(files, f"Expected at least one bundled PDF template for {MODEL_NAME}")
+        self.assertEqual(data["structure"][MODEL_NAME]["model"], MODEL_NAME)
+
+    def test_structure_excludes_uninstalled_models(self):
+        """Bundled templates for uninstalled models are not exposed to the picker."""
+        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
+        data = demo.get_template_data()
+
+        for model_name in data["structure"]:
+            self.assertTrue(
+                self.env["ir.model"].search([("model", "=", model_name)], limit=1),
+                f"{model_name} appears in the picker but has no matching ir.model",
+            )
+
+    # -- action_save --
+
+    def test_action_save_creates_template_with_attachment(self):
+        """Saving a selected template creates a template record with the exact PDF bytes."""
+        template, path = self._create_template_from_first_bundled_file()
+
+        self.assertEqual(template.template_model_id, self.ir_model)
+        expected = self.env["onlyoffice.odoo.demo.templates"].get_template_content(path)
+        self.assertEqual(base64.b64decode(template.attachment_id.datas), expected)
+
+    def test_action_save_without_selection_is_noop(self):
+        """Saving with an empty selection creates no template."""
+        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
+        demo.selected_templates = json.dumps([])
+
+        before = self.env["onlyoffice.odoo.templates"].search_count([])
+        demo.action_save()
+        after = self.env["onlyoffice.odoo.templates"].search_count([])
+
+        self.assertEqual(before, after)
+
+
+@tagged("post_install", "-at_install")
+class TestOnlyofficeOdooTemplates(OnlyofficeTemplatesModelTestCase):
+    """Tests for onlyoffice.odoo.templates — create_action, unlink_action and printing."""
+
+    # -- create_action / unlink_action --
+
+    def test_create_action_binds_onlyoffice_report(self):
+        """create_action creates a bound onlyoffice-pdf report."""
+        template, _path = self._create_template_from_first_bundled_file()
+        template.create_action()
+
+        self.assertTrue(template.report_id)
+        self.assertEqual(template.report_id.report_type, "onlyoffice-pdf")
+        self.assertEqual(template.report_id.model, MODEL_NAME)
+        self.assertEqual(template.report_id.onlyoffice_template_id, template)
+
+    def test_unlink_action_removes_report(self):
+        """unlink_action removes the bound report and clears the link."""
+        template, _path = self._create_template_from_first_bundled_file()
+        template.create_action()
+        report = template.report_id
+
+        template.unlink_action()
+
+        self.assertFalse(template.report_id)
+        self.assertFalse(report.exists())
+
+    # -- Printing (IrActionsReport._render_onlyoffice_pdf, mocked) --
+
+    def test_print_demo_record_returns_generated_pdf(self):
+        """Printing returns the PDF bytes produced by fill_template."""
+        template, _path = self._create_template_from_first_bundled_file()
+        template.create_action()
+        report = template.report_id
+
+        fake_pdf = b"%PDF-1.4 fake generated content%%EOF"
+        fake_response = MagicMock(status_code=200, content=fake_pdf)
+
+        with (
+            patch(
+                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.IrActionsReport.fill_template",
+                return_value={self.demo_record.id: "http://fake-docserver/result.pdf"},
+            ) as mock_fill,
+            patch(
+                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.onlyoffice_request",
+                return_value=fake_response,
+            ) as mock_request,
+        ):
+            pdf_content, report_type = report.with_context(report_pdf_no_attachment=True)._render_onlyoffice_pdf(
+                report.report_name, res_ids=[self.demo_record.id]
+            )
+
+        self.assertEqual(report_type, "onlyoffice-pdf")
+        self.assertEqual(pdf_content, fake_pdf)
+        mock_fill.assert_called_once()
+        mock_request.assert_called_once()
+
+    def test_print_fails_loudly_when_docbuilder_fails(self):
+        """A record whose document cannot be generated raises instead of silently missing from the output."""
+        template, _path = self._create_template_from_first_bundled_file()
+        template.create_action()
+        report = template.report_id
+
+        with (
+            patch(
+                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.IrActionsReport.fill_template",
+                side_effect=Exception("Document conversion service cannot be reached"),
+            ),
+            self.assertRaises(UserError),
+        ):
+            report.with_context(report_pdf_no_attachment=True)._render_onlyoffice_pdf_prepare_streams(
+                report.report_name, data={}, res_ids=[self.demo_record.id]
+            )

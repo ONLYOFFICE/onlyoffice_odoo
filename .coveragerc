@@ -1,5 +1,6 @@
 [run]
-source = onlyoffice_odoo
+source =
+    onlyoffice_odoo
 omit =
     */tests/*
     */__manifest__.py
@@ -11,7 +12,7 @@ exclude_lines =
     raise NotImplementedError
     if __name__ == .__main__
 show_missing = True
-fail_under = 60
+fail_under = 72
 
 [html]
 directory = htmlcov
