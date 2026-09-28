@@ -15,13 +15,6 @@ class TestOnlyofficeOdooModel(TransactionCase):
 
     # -- get_demo --
 
-    def test_get_demo_returns_json(self):
-        """get_demo returns a valid JSON string."""
-        result = self.env["onlyoffice.odoo"].get_demo()
-        data = json.loads(result)
-        self.assertIn("mode", data)
-        self.assertIn("date", data)
-
     def test_get_demo_mode_reflects_config(self):
         """get_demo mode field matches the configured demo parameter."""
         config_utils.set_demo(self.env, True)
@@ -35,12 +28,6 @@ class TestOnlyofficeOdooModel(TransactionCase):
         self.assertTrue(result["date"])
 
     # -- get_same_tab --
-
-    def test_get_same_tab_returns_json(self):
-        """get_same_tab returns a valid JSON string."""
-        result = self.env["onlyoffice.odoo"].get_same_tab()
-        data = json.loads(result)
-        self.assertIn("same_tab", data)
 
     def test_get_same_tab_reflects_config(self):
         """get_same_tab value matches the configured same_tab parameter."""
@@ -80,21 +67,11 @@ class TestResConfigSettings(TransactionCase):
 
     def test_set_values_updates_same_tab(self):
         """set_values correctly persists same_tab setting."""
-        # Enable demo mode to skip document server validation
-        config_utils.set_demo(self.env, True)
-        settings = self._get_settings()
-        settings.doc_server_public_url = config_utils.get_doc_server_public_url(self.env)
-        settings.doc_server_odoo_url = config_utils.get_base_or_odoo_url(self.env)
-        settings.doc_server_inner_url = config_utils.get_doc_server_inner_url(self.env)
-        settings.doc_server_jwt_secret = config_utils.get_jwt_secret(self.env) or ""
-        settings.doc_server_jwt_header = config_utils.get_jwt_header(self.env)
-        settings.doc_server_demo = True
-        settings.doc_server_disable_certificate = False
+        config_utils.set_demo(self.env, True)  # demo mode skips the Document Server validation
+        settings = self._get_settings()  # defaults come from get_values, i.e. the current config
         settings.same_tab = True
         settings.set_values()
-
-        result = config_utils.get_same_tab(self.env)
-        self.assertTrue(result)
+        self.assertTrue(config_utils.get_same_tab(self.env))
 
     # -- onchange validation --
 

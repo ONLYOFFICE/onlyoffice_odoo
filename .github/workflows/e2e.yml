@@ -18,7 +18,7 @@ on:
 jobs:
   playwright:
     runs-on: ubuntu-22.04
-    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    container: ghcr.io/oca/oca-ci/py3.10-odoo19.0:latest
     timeout-minutes: 45
     services:
       postgres:
@@ -48,8 +48,8 @@ jobs:
       - name: Create stubs for unavailable addons
         run: |
           mkdir -p documents documents_spreadsheet
-          printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
-          printf "{'name': 'Documents Spreadsheet', 'version': '17.0.1.0.0', 'depends': ['documents']}\n" > documents_spreadsheet/__manifest__.py
+          printf "{'name': 'Documents', 'version': '19.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          printf "{'name': 'Documents Spreadsheet', 'version': '19.0.1.0.0', 'depends': ['documents']}\n" > documents_spreadsheet/__manifest__.py
           touch documents/__init__.py documents_spreadsheet/__init__.py
 
       - name: Install addons and dependencies
@@ -59,7 +59,7 @@ jobs:
         run: |
           oca_wait_for_postgres
           # hr first: the templates module creates the "Employee" demo template at install only if hr.employee exists.
-          odoo -d "$PGDATABASE" -i hr --stop-after-init --without-demo=all
+          odoo -d "$PGDATABASE" -i hr --stop-after-init --without-demo
           odoo -d "$PGDATABASE" -i onlyoffice_odoo,onlyoffice_odoo_templates --stop-after-init
           nohup odoo -d "$PGDATABASE" > odoo.log 2>&1 &
           # The Document Server downloads files from and posts callbacks to this container.

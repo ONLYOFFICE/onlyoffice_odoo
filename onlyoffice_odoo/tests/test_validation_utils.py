@@ -16,41 +16,23 @@ class TestValidationUtils(TransactionCase):
 
     # -- valid_url --
 
-    def test_valid_url_http(self):
-        """HTTP URL is recognized as valid."""
-        self.assertTrue(validation_utils.valid_url("http://localhost:8080"))
+    def test_valid_url_accepts_docserver_addresses_and_empty_values(self):
+        for url in (
+            "http://localhost:8080",
+            "https://docs.example.com",
+            "https://example.com/path/to/api",
+            "http://192.168.1.100:8080",
+            "192.168.1.100",
+            "",
+            None,
+        ):
+            with self.subTest(url=url):
+                self.assertTrue(validation_utils.valid_url(url))
 
-    def test_valid_url_https(self):
-        """HTTPS URL is recognized as valid."""
-        self.assertTrue(validation_utils.valid_url("https://docs.example.com"))
-
-    def test_valid_url_with_path(self):
-        """URL with path is recognized as valid."""
-        self.assertTrue(validation_utils.valid_url("https://example.com/path/to/api"))
-
-    def test_valid_url_empty_string_is_valid(self):
-        """Empty string is considered valid (no URL means no validation needed)."""
-        self.assertTrue(validation_utils.valid_url(""))
-
-    def test_valid_url_none_is_valid(self):
-        """None is considered valid (no URL means no validation needed)."""
-        self.assertTrue(validation_utils.valid_url(None))
-
-    def test_valid_url_with_spaces_invalid(self):
-        """URL with spaces is invalid."""
-        self.assertFalse(validation_utils.valid_url("http://doc server.com"))
-
-    def test_valid_url_special_chars_invalid(self):
-        """URL with unsupported special characters is invalid."""
-        self.assertFalse(validation_utils.valid_url("http://server.com/path?query=1&foo=bar"))
-
-    def test_valid_url_ip_with_port(self):
-        """DocServer deployed on a bare IP address with port is a valid URL (common in LAN setups)."""
-        self.assertTrue(validation_utils.valid_url("http://192.168.1.100:8080"))
-
-    def test_valid_url_ip_without_scheme(self):
-        """DocServer on bare IP without http:// prefix is valid (fix_url will add the scheme)."""
-        self.assertTrue(validation_utils.valid_url("192.168.1.100"))
+    def test_valid_url_rejects_spaces_and_query_strings(self):
+        for url in ("http://doc server.com", "http://server.com/path?query=1&foo=bar"):
+            with self.subTest(url=url):
+                self.assertFalse(validation_utils.valid_url(url))
 
     # -- get_conversion_error_message --
 

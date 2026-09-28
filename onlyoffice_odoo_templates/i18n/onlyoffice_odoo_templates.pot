@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 18.0+e-20260217\n"
+"Project-Id-Version: Odoo Server 19.0+e-20251121\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-10 11:52+0000\n"
-"PO-Revision-Date: 2026-07-10 11:52+0000\n"
+"POT-Creation-Date: 2026-09-28 08:58+0000\n"
+"PO-Revision-Date: 2026-09-28 08:58+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -50,6 +50,7 @@ msgid "Administrator"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model,name:onlyoffice_odoo_templates.model_ir_attachment
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__attachment_id
 msgid "Attachment"
 msgstr ""
@@ -149,8 +150,11 @@ msgid "Disable form fields after printing PDF form"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__display_name
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_attachment__display_name
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__display_name
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__display_name
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_res_config_settings__display_name
 msgid "Display Name"
 msgstr ""
 
@@ -229,11 +233,6 @@ msgid "Go to the relevant Odoo module (e.g., Sales, Invoices)."
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
-#: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.view_onlyoffice_kanban_search
-msgid "Group By"
-msgstr ""
-
-#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.js:0
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_kanban_controller.xml:0
@@ -246,8 +245,11 @@ msgid "Hide File Field"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__id
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_attachment__id
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_demo_templates__id
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__id
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_res_config_settings__id
 msgid "ID"
 msgstr ""
 
@@ -369,6 +371,7 @@ msgstr ""
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_menu
+#: model:res.groups.privilege,name:onlyoffice_odoo_templates.res_groups_privilege_onlyoffice_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
 msgid "ONLYOFFICE Templates"
 msgstr ""
@@ -540,6 +543,11 @@ msgid "Technical Name"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__template_model_model
+msgid "Technical model name"
+msgstr ""
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.actions.client,name:onlyoffice_odoo_templates.action_onlyoffice_template_editor
 msgid "Template Editor Action"
 msgstr ""
@@ -575,6 +583,13 @@ msgstr ""
 msgid ""
 "The ONLYOFFICE Templates module allows you to create, manage, and use "
 "fillable PDF"
+msgstr ""
+
+#. module: onlyoffice_odoo_templates
+#. odoo-python
+#: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
+msgid ""
+"The document %(report)s could not be generated for %(record)s: %(error)s"
 msgstr ""
 
 #. module: onlyoffice_odoo_templates

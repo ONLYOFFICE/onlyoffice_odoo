@@ -13,7 +13,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Plural-Forms: nplurals=2; plural=(n != 1);"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -55,10 +55,22 @@ msgid "About"
 msgstr "Info"
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Attachment not found"
+msgstr "Anhang nicht gefunden"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-msgid "Back"
-msgstr "Zurück"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Cannot read attachment"
+msgstr "Anhang kann nicht gelesen werden"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -100,6 +112,7 @@ msgstr "Zertifikatsüberprüfung deaktivieren"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__display_name
 msgid "Display Name"
 msgstr "Anzeigename"
 
@@ -131,9 +144,15 @@ msgstr "Öffentliche URL von Document Server"
 
 #. module: onlyoffice_odoo
 #. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+msgid "Document conversion service returned status %s"
+msgstr "Der Dokumentkonvertierungsdienst hat den Status %s zurückgegeben"
+
+#. module: onlyoffice_odoo
+#. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
-msgstr ""
+msgstr "Dokument bearbeitet von %(user)s"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -146,6 +165,12 @@ msgstr "Dokumentvorlagen"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
 msgstr "Fehler beim Laden der Formulare"
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Expected JWT token"
+msgstr "JWT-Token erwartet"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -177,6 +202,7 @@ msgstr "Allgemeine Einstellungen"
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__id
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__id
 msgid "ID"
 msgstr "ID"
 
@@ -211,6 +237,12 @@ msgstr "Zuletzt aktualisiert am"
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Loading forms..."
 msgstr "Formulare werden geladen..."
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Missing security token"
+msgstr "Sicherheitstoken fehlt"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -287,7 +319,7 @@ msgstr "In ONLYOFFICE öffnen"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr ""
+msgstr "Sonstiges"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

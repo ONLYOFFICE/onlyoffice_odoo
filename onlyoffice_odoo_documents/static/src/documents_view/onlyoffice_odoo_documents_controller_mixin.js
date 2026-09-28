@@ -12,7 +12,8 @@ import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"
 
 const { DateTime } = luxon
 
-const getFilenameTimestamp = () => formatDateTime(DateTime.now()).replace(/[\\/:*?"<>|\s]+/g, "_")
+// "/" is written as \x2F: babel's JS lexer ends the regex at "[\\/", and no string of this file gets into the .pot.
+const getFilenameTimestamp = () => formatDateTime(DateTime.now()).replace(/[\\\x2F:*?"<>|\s]+/g, "_")
 
 export const OnlyofficeDocumentsControllerMixin = () => ({
   setup() {
@@ -126,7 +127,7 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
    * @param {Object} doc the selected documents.document record
    */
   async convertSpreadsheetViaDocBuilder(doc) {
-    this.ui.block({ message: _t("Converting spreadsheet to XLSX via DocBuilder...") })
+    this.ui.block({ message: _t("Converting spreadsheet to XLSX via ONLYOFFICE...") })
     try {
       // Native export keeps charts/formatting; the server then patches the
       // ODOO.* cells into it. There is no fallback: if the native export
@@ -149,7 +150,7 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
         await this._openDocumentInOnlyoffice(result.xlsx_id)
       }
     } catch (error) {
-      console.error("Failed to convert spreadsheet via DocBuilder:", error)
+      console.error("Failed to convert spreadsheet via ONLYOFFICE:", error)
       this.notification.add(_t("Conversion failed: ") + error.message, { type: "danger" })
     } finally {
       this.ui.unblock()

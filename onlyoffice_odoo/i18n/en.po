@@ -48,9 +48,21 @@ msgid "About"
 msgstr ""
 
 #. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Attachment not found"
+msgstr ""
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
-msgid "Back"
+msgid "Cancel"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Cannot read attachment"
 msgstr ""
 
 #. module: onlyoffice_odoo
@@ -93,6 +105,7 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__display_name
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__display_name
 msgid "Display Name"
 msgstr ""
 
@@ -124,6 +137,12 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #. odoo-python
+#: code:addons/onlyoffice_odoo/utils/conversion_utils.py:0
+msgid "Document conversion service returned status %s"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
 msgstr ""
@@ -138,6 +157,12 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Expected JWT token"
 msgstr ""
 
 #. module: onlyoffice_odoo
@@ -170,6 +195,7 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #: model:ir.model.fields,field_description:onlyoffice_odoo.field_onlyoffice_odoo__id
+#: model:ir.model.fields,field_description:onlyoffice_odoo.field_res_config_settings__id
 msgid "ID"
 msgstr ""
 
@@ -203,6 +229,12 @@ msgstr ""
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.xml:0
 msgid "Loading forms..."
+msgstr ""
+
+#. module: onlyoffice_odoo
+#. odoo-python
+#: code:addons/onlyoffice_odoo/controllers/main.py:0
+msgid "Missing security token"
 msgstr ""
 
 #. module: onlyoffice_odoo
