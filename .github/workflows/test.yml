@@ -70,9 +70,12 @@ jobs:
       - name: Install modules needed by the tests
         if: matrix.preinstall
         run: odoo -d "$PGDATABASE" -i "${{ matrix.preinstall }}" --stop-after-init
-      # The Document Server boots while the addons install; by now it is usually ready.
+      # The Document Server boots while the addons install. Its start ends with a restart of docservice (502 meanwhile),
+      # after which the gzipped static files are made: AllFonts.js.gz marks the end, see e2e/scripts/wait-for-stack.mjs.
       - name: Wait for the Document Server
-        run: timeout 300 sh -c 'until curl -fsS http://documentserver/healthcheck; do sleep 5; done'
+        run: >-
+          timeout 600 sh -c 'until curl -fsS -o /dev/null http://documentserver/sdkjs/common/AllFonts.js.gz
+          && curl -fsS http://documentserver/healthcheck; do sleep 5; done'
       # oca_run_tests, plus the live Document Server tests: they are tagged external_docserver instead of standard,
       # and oca_run_tests cannot select extra tags.
       - name: Run tests

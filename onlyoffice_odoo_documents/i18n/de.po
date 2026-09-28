@@ -60,7 +60,7 @@ msgstr "Konvertierungsfehler"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Conversion failed: "
-msgstr ""
+msgstr "Konvertierung fehlgeschlagen: "
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -103,13 +103,13 @@ msgstr "Mit ONLYOFFICE konvertieren"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Converting spreadsheet to XLSX via ONLYOFFICE..."
-msgstr ""
+msgstr "Tabelle wird über ONLYOFFICE in XLSX konvertiert..."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Converting spreadsheet to XLSX..."
-msgstr ""
+msgstr "Tabelle wird in XLSX konvertiert..."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -207,7 +207,7 @@ msgstr "Dokument erfolgreich konvertiert"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 msgid "Document edited by %(user)s"
-msgstr ""
+msgstr "Dokument bearbeitet von %(user)s"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -271,7 +271,7 @@ msgstr "Dokument konnte nicht konvertiert werden"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Failed to convert spreadsheet: "
-msgstr ""
+msgstr "Tabelle konnte nicht konvertiert werden: "
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -556,7 +556,7 @@ msgstr "Tabellenquelle"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Spreadsheet converted to XLSX for editing in ONLYOFFICE"
-msgstr ""
+msgstr "Tabelle wurde zur Bearbeitung in ONLYOFFICE in XLSX konvertiert"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -568,7 +568,7 @@ msgstr "Die Tabelle enthält keine Daten oder hat eine ungültige Struktur"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Spreadsheet successfully converted to XLSX with formulas!"
-msgstr ""
+msgstr "Tabelle wurde erfolgreich mit Formeln in XLSX konvertiert!"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -629,7 +629,7 @@ msgstr "Benutzer"
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/controllers/controllers.py:0
 msgid "User has no read access rights to open this document"
-msgstr ""
+msgstr "Der Benutzer hat keine Leserechte zum Öffnen dieses Dokuments"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python

@@ -150,7 +150,7 @@ msgstr "文档转换服务返回状态 %s"
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
-msgstr ""
+msgstr "文档已由 %(user)s 编辑"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript
@@ -316,7 +316,7 @@ msgstr "用 ONLYOFFICE 打开"
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "Other"
-msgstr ""
+msgstr "其他"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

@@ -571,7 +571,7 @@ msgstr "Chargement du modèle"
 #. module: onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
 msgid "Templates"
-msgstr ""
+msgstr "Modèles"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form

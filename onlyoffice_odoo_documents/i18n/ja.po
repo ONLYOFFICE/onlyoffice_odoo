@@ -60,7 +60,7 @@ msgstr "変換エラー"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Conversion failed: "
-msgstr ""
+msgstr "変換に失敗しました："
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -103,13 +103,13 @@ msgstr "ONLYOFFICEで変換"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Converting spreadsheet to XLSX via ONLYOFFICE..."
-msgstr ""
+msgstr "ONLYOFFICEでスプレッドシートをXLSXに変換中..."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Converting spreadsheet to XLSX..."
-msgstr ""
+msgstr "スプレッドシートをXLSXに変換中..."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript
@@ -271,7 +271,7 @@ msgstr "文書の変換に失敗しました"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Failed to convert spreadsheet: "
-msgstr ""
+msgstr "スプレッドシートの変換に失敗しました："
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -556,7 +556,7 @@ msgstr "スプレッドシートのソース"
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Spreadsheet converted to XLSX for editing in ONLYOFFICE"
-msgstr ""
+msgstr "ONLYOFFICEで編集できるようにスプレッドシートをXLSXに変換しました"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
@@ -568,7 +568,7 @@ msgstr "スプレッドシートにデータがないか、構造が無効です
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/models/documents_inspector_onlyoffice.js:0
 msgid "Spreadsheet successfully converted to XLSX with formulas!"
-msgstr ""
+msgstr "スプレッドシートを数式付きのXLSXに正常に変換しました！"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-javascript

@@ -569,7 +569,7 @@ msgstr "模板上传"
 #. module: onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
 msgid "Templates"
-msgstr ""
+msgstr "模板"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form

@@ -301,6 +301,9 @@ msgid ""
 "                fields in the ONLYOFFICE editor and the corresponding data fields from the selected\n"
 "                Odoo model."
 msgstr ""
+"Individua il modello appena creato e configura i collegamenti tra i campi del modulo\n"
+"                nell'editor ONLYOFFICE e i campi dati corrispondenti del modello\n"
+"                Odoo selezionato."
 
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_demo_templates
@@ -568,7 +571,7 @@ msgstr "Caricamento del modello"
 #. module: onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_submenu
 msgid "Templates"
-msgstr ""
+msgstr "Modelli"
 
 #. module: onlyoffice_odoo_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form

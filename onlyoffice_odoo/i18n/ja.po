@@ -150,7 +150,7 @@ msgstr "ドキュメント変換サービスがステータス %s を返しま�
 #. odoo-python
 #: code:addons/onlyoffice_odoo/controllers/main.py:0
 msgid "Document edited by %(user)s"
-msgstr ""
+msgstr "%(user)sによって編集されたドキュメント"
 
 #. module: onlyoffice_odoo
 #. odoo-javascript

@@ -11,6 +11,7 @@ import { patch } from "@web/core/utils/patch"
 
 const { DateTime } = luxon
 
+// "/" is written as \x2F: babel's JS lexer ends the regex at "[\\/", and no string of this file gets into the .pot.
 const getFilenameTimestamp = () => formatDateTime(DateTime.now()).replace(/[\\\x2F:*?"<>|\s]+/g, "_")
 
 let formats = []
