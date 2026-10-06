@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
-<t t-name="onlyoffice_odoo.FormGallery" owl="1">
-    <Dialog title="title" size="'xl'" footer="true">
+<t t-name="onlyoffice_odoo.FormGallery">
+    <Dialog title="this.title" size="'xl'" footer="true">
       <div class="container-fluid">
-        <div class="row mb-3" t-if="!state.loading and !state.error and state.total > state.limit">
+        <div class="row mb-3" t-if="!this.state.loading and !this.state.error and this.state.total > this.state.limit">
           <div class="col text-center o-pager">
-            <Pager offset="state.offset" limit="state.limit" total="state.total" onUpdate.bind="onPageChange" />
+            <Pager offset="this.state.offset" limit="this.state.limit" total="this.state.total" onUpdate.bind="this.onPageChange" />
           </div>
         </div>
-        <div class="row mb-3 justify-content-end" t-if="!state.loading and !state.error">
-          <div t-att-class="props.showType ? 'col-md-2' : 'col-md-3'">
+        <div class="row mb-3 justify-content-end" t-if="!this.state.loading and !this.state.error">
+          <div t-att-class="this.props.showType ? 'col-md-2' : 'col-md-3'">
             <Dropdown>
               <button class="btn btn-light">
                 <i class="me-1 fa fa-filter me-1" />
@@ -21,24 +21,24 @@
                     View all templates
                 </DropdownItem>
                 <div role="separator" class="dropdown-divider" />
-                <t t-foreach="state.categories" t-as="category" t-key="category.id">
-                  <Dropdown t-props="dropdownProps">
+                <t t-foreach="this.state.categories" t-as="category" t-key="category.id">
+                  <Dropdown t-props="this.dropdownProps">
                     <button class="btn btn-light">
                       <span class="o_dropdown_title" t-out="category.name" />
                     </button>
                     <t t-set-slot="content">
-                      <t t-foreach="state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
+                    <t t-foreach="this.state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
                         <DropdownItem onSelected="() => this.onSubcategorySelect(subcat)">
-                          <span t-esc="subcat.name" />
+                          <span t-out="subcat.name" />
                         </DropdownItem>
-                      </t>
+                    </t>
                     </t>
                   </Dropdown>
                 </t>
               </t>
             </Dropdown>
           </div>
-          <t t-if="props.showType">
+          <t t-if="this.props.showType">
             <div class="col-md-2">
               <Dropdown>
                 <button class="btn btn-light">
@@ -62,16 +62,16 @@
               </Dropdown>
             </div>
           </t>
-          <div t-att-class="props.showType ? 'col-md-2' : 'col-md-3'">
+          <div t-att-class="this.props.showType ? 'col-md-2' : 'col-md-3'">
             <Dropdown>
               <button class="btn btn-light">
                 <i class="me-1 fa fa-language me-1" />
                 <span class="o_dropdown_title">Language</span>
               </button>
               <t t-set-slot="content">
-                <t t-foreach="state.locales" t-as="locale" t-key="locale.code">
+                <t t-foreach="this.state.locales" t-as="locale" t-key="locale.code">
                   <DropdownItem onSelected="() => this.onLocaleChange(locale)">
-                    <t t-esc="locale.name" />
+                    <t t-out="locale.name" />
                   </DropdownItem>
                 </t>
               </t>
@@ -96,7 +96,7 @@
                   placeholder="Search..."
                   role="searchbox"
                   data-hotkey="Q"
-                  t-att-value="state.search"
+                  t-att-value="this.state.search"
                   t-on-input="(ev) => this.onSearch(ev.target.value)"
                 />
               </div>
@@ -104,23 +104,23 @@
           </div>
         </div>
 
-        <t t-if="state.loading">
+        <t t-if="this.state.loading">
           <div class="text-center py-5">
             <i class="fa fa-refresh fa-spin fa-3x" />
             <p>Loading forms...</p>
           </div>
         </t>
 
-        <t t-if="state.error">
-          <div class="alert alert-danger" t-esc="state.error" />
+        <t t-if="this.state.error">
+          <div class="alert alert-danger" t-out="this.state.error" />
         </t>
 
-        <div t-if="!state.loading and !state.error" class="o_onlyoffice_kanban_renderer d-flex flex-wrap">
-          <t t-foreach="state.forms" t-as="form" t-key="form.id">
+        <div t-if="!this.state.loading and !this.state.error" class="o_onlyoffice_kanban_renderer d-flex flex-wrap">
+          <t t-foreach="this.state.forms" t-as="form" t-key="form.id">
             <div class="o_onlyoffice_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0 m-0">
               <div
                 class="position-relative d-flex flex-column h-100"
-                t-attf-class="{{ state.form and form.id == state.form.id ? 'o_onlyoffice_record_selected' : '' }}"
+                t-attf-class="{{ this.state.form and form.id == this.state.form.id ? 'o_onlyoffice_record_selected' : '' }}"
               >
                 <i
                   class="o_onlyoffice_record_selector fa fa-circle-thin"
@@ -131,7 +131,7 @@
                   <div>
                     <img
                       class="o_onlyoffice_kanban_image"
-                      t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
+                      t-att-src="this.getPreviewUrl(form) || this.getImageUrl(form) || '/web/static/img/placeholder.png'"
                       t-att-alt="form.attributes.name_form"
                       t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form, form.attributes.file_oform.data[0].attributes.name )"
                     />
@@ -139,16 +139,16 @@
                 </div>
                 <div class="d-flex justify-content-between">
                   <div class="o_onlyoffice_kanban_details_wrapper w-100 justify-content-between d-flex m-2">
-                    <span t-esc="form.attributes.name_form" />
+                    <span t-out="form.attributes.name_form" />
                     <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
                   </div>
                 </div>
               </div>
             </div>
           </t>
-          <t t-if="state.ghost">
+          <t t-if="this.state.ghost">
             <div
-              t-foreach="state.ghost"
+              t-foreach="this.state.ghost"
               t-as="i"
               t-key="i_index"
               class="o_kanban_ghost o_kanban_record d-flex flex-grow-1 flex-md-shrink-1 flex-shrink-0 m-0"
@@ -157,7 +157,7 @@
           </t>
         </div>
 
-        <t t-if="!state.loading and !state.error and state.forms.length === 0">
+        <t t-if="!this.state.loading and !this.state.error and this.state.forms.length === 0">
           <div class="text-center py-5">
             <i class="fa fa-file-text-o fa-4x text-muted" />
             <h4 class="mt-3">No forms found</h4>
@@ -167,8 +167,8 @@
       </div>
 
       <t t-set-slot="footer">
-        <button class="btn btn-primary" t-on-click="download" t-att-disabled="!state.form">Create</button>
-        <button class="btn btn-secondary" t-on-click="props.close">Cancel</button>
+        <button class="btn btn-primary" t-on-click="this.download" t-att-disabled="!this.state.form">Create</button>
+        <button class="btn btn-secondary" t-on-click="this.props.close">Cancel</button>
       </t>
     </Dialog>
   </t>

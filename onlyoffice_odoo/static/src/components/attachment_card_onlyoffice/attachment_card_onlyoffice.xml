@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
-    <t t-inherit="mail.AttachmentList" t-inherit-mode="extension" owl="1">
+    <t t-inherit="mail.AttachmentList" t-inherit-mode="extension">
     <xpath expr="//div[hasclass('o-mail-AttachmentButtons')]" position="inside">
       <button
-        t-if="onlyofficeCanOpen(attachment)"
+        t-if="this.onlyofficeCanOpen(attachment)"
         t-on-click.stop="() => this.openOnlyoffice(attachment)"
         class="btn bg-500 w-100 h-100 o-p-1_5 d-flex justify-content-center align-items-center shadow-sm ms-2"
         title="Open in ONLYOFFICE"
