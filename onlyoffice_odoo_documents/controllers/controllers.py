@@ -13,6 +13,7 @@ from werkzeug.exceptions import Forbidden
 from odoo import http
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.http.dispatcher import serialize_exception
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
@@ -342,7 +343,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
         except Exception as ex:
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = serialize_exception(ex)
 
         return request.make_response(
             data=json.dumps(response_json),

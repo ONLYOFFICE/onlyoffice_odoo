@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
-    <t t-name="onlyoffice_odoo_documents.CreateDialog" owl="1">
+    <t t-name="onlyoffice_odoo_documents.CreateDialog">
     <div>
       <Dialog
-        t-if="state.isOpen"
-        title="dialogTitle"
+        t-if="this.state.isOpen"
+        title="this.dialogTitle"
         contentClass="'o-onlyoffice-create-templates-dialog'"
         footer="true"
       >
@@ -19,10 +19,10 @@
                 <input
                   class="o_input"
                   id="title"
-                  t-model.trim="state.title"
+                  t-model.proxy.trim="this.state.title"
                   type="text"
                   autocomplete="off"
-                  t-ref="autofocus"
+                  t-ref="this.inputRef"
                 />
               </div>
             </div>
@@ -33,7 +33,7 @@
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('docx')"
             t-on-dblclick="() => this._createFile(false)"
-            t-att-class="_isSelected('docx') ? 'o-template-selected': ''"
+            t-att-class="this._isSelected('docx') ? 'o-template-selected': ''"
           >
             <img
               class="o-onlyoffice-create-icon"
@@ -46,7 +46,7 @@
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('xlsx')"
             t-on-dblclick="() => this._createFile(false)"
-            t-att-class="_isSelected('xlsx') ? 'o-template-selected': ''"
+            t-att-class="this._isSelected('xlsx') ? 'o-template-selected': ''"
           >
             <img
               class="o-onlyoffice-create-icon"
@@ -59,7 +59,7 @@
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('pptx')"
             t-on-dblclick="() => this._createFile(false)"
-            t-att-class="_isSelected('pptx') ? 'o-template-selected': ''"
+            t-att-class="this._isSelected('pptx') ? 'o-template-selected': ''"
           >
             <img
               class="o-onlyoffice-create-icon"
@@ -72,7 +72,7 @@
             class="o-onlyoffice-create-template"
             t-on-click="() => this._selectedFormat('pdf')"
             t-on-dblclick="() => this._createFile(false)"
-            t-att-class="_isSelected('pdf') ? 'o-template-selected': ''"
+            t-att-class="this._isSelected('pdf') ? 'o-template-selected': ''"
           >
             <img
               class="o-onlyoffice-create-icon"
@@ -85,19 +85,19 @@
         <t t-set-slot="footer">
           <button
             class="btn btn-primary o-onlyoffice-create-ok-button"
-            t-att-disabled="_buttonDisabled()"
+            t-att-disabled="this._buttonDisabled()"
             t-on-click="() => this._createFile(false)"
           >
             <t>Create</t>
           </button>
           <button
             class="btn btn-secondary o-onlyoffice-create-ok-button"
-            t-att-disabled="_buttonDisabled()"
+            t-att-disabled="this._buttonDisabled()"
             t-on-click="() => this._createFile(true)"
           >
             <t>Create&amp;Set Permissions</t>
           </button>
-          <button class="btn btn-secondary" t-on-click="data.close">
+          <button class="btn btn-secondary" t-on-click="this.data.close">
             <t>Cancel</t>
           </button>
         </t>

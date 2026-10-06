@@ -16,6 +16,7 @@ from werkzeug.exceptions import Forbidden
 from odoo import _, fields, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
+from odoo.http.dispatcher import serialize_exception
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
@@ -255,7 +256,7 @@ class Onlyoffice_Connector(http.Controller):
         except Exception as ex:
             _logger.error("POST /onlyoffice/editor/callback/%s - error: %s", attachment_id, str(ex))
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = serialize_exception(ex)
 
         return request.make_response(
             data=json.dumps(response_json),
