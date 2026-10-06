@@ -24,7 +24,7 @@ New files must match an existing glob or be added to the manifest explicitly. Af
 
 ## Component pattern
 
-Base skeleton (works on 17/18/19; version deltas are in the table below):
+Base skeleton for 17/18/19 (Odoo 20 uses Owl 3 — see "Owl 3 (Odoo 20)" below; other deltas are in the version table):
 
 ```javascript
 /** @odoo-module **/ // required on 17, optional on 18/19
@@ -64,13 +64,67 @@ Existing code uses both `import { Component } from "@odoo/owl"` and `const { Com
 should import from `@odoo/owl` and declare `static template` / `static props` / `static components` (older files set
 `MyComponent.template = ...` after the class — either is accepted by lint, but do not mix styles inside one file).
 
+## Owl 3 (Odoo 20)
+
+Odoo 20 ships Owl 3 with a thin compatibility layer (`web/static/src/owl2/owl3_compatibility_layer.js`: `useEnv`,
+`useSubEnv`, `useLayoutEffect`, `onWillRender`, portals). Everything else must be written the Owl 3 way:
+
+```javascript
+import { Component, onWillStart, proxy, signal, t, useProps } from "@odoo/owl"
+import { useService } from "@web/core/utils/hooks"
+
+export class MyComponent extends Component {
+  static template = "onlyoffice_odoo.MyComponent"
+  props = useProps({ attachmentId: t.number(), close: t.function().optional() }) // or useProps() for "any props"
+
+  setup() {
+    this.orm = useService("orm")
+    this.state = proxy({ loading: true }) // was useState
+    this.inputRef = signal.ref() // was useRef("input"); read it as this.inputRef(), not .el
+    onWillStart(async () => await this.load())
+  }
+}
+```
+
+```xml
+<t t-name="onlyoffice_odoo.MyComponent">
+  <input t-ref="this.inputRef" t-att-value="this.state.name" t-on-input="(ev) => this.state.name = ev.target.value" />
+  <span t-out="this.props.attachmentId" />
+</t>
+```
+
+- No `useState`, `useRef`, `useChildSubEnv` (use `useSubEnv`); `static props` / `static defaultProps` **throw**. A
+  component without `useProps` has no `this.props`. Inherited props come from the parent class's `useProps`.
+- Templates have no implicit component scope: every member is `this.xxx` (state, props, methods, getters). Bare names
+  are loop variables (`t-as`), `t-set` values, slot scope or globals (`Object`, `Math`). Prop bindings keep `.bind`:
+  `onUpdate.bind="this.onPageChange"`.
+- `t-esc` is deprecated → `t-out`. `t-model` only accepts a signal (`signal("")` with `.set`); for `proxy` state use
+  `t-att-value` + `t-on-input`, as core does. `t-foreach` over a number throws.
+- xpath anchors of inherited core/Enterprise templates contain `this.` too (`//DropdownItem[@onSelected='this.onX']`). A
+  non-matching xpath breaks the whole view with an unrelated-looking error
+  (`Cannot read properties of undefined (reading 'push')` in `initiateRender`).
+- `useAutofocus({ ref: signal.ref() })` needs an explicit ref. Services can still be used through `useService`; the
+  legacy `registry.category("services")` and `env.services` keep working, but `env.debug` / `env.isSmall` throw.
+- Notifications validate `type`: only `info`, `success`, `warning`, `danger` (`"error"` throws).
+- Renders are scheduled with `requestAnimationFrame`: in a hidden/background browser nothing re-renders (headless test
+  runs are fine).
+
+## Icons (Odoo 20)
+
+Font Awesome is not loaded anymore: `fa fa-*` classes render nothing. Use Material Symbols through the `oi` class —
+`<i class="oi" data-icon="folder"/>`, sizes `oi-2x`/`oi-3x`/`oi-4x`, `oi-fw`, `oi-spin` (spinner:
+`data-icon="autorenew"`), `oi-filled`. View buttons and action menu items take the bare name (`icon="edit"`,
+`icon: "print"`). The font is a **subset**: check that a name renders (e.g. `language` does not — use `translate`). CSS
+that swapped a glyph with a Font Awesome code point (`content: "\f058"`) must use the ligature name
+(`content: "check_circle"`).
+
 ## Common services and calls
 
 - `orm` — model calls: `this.orm.call("onlyoffice.odoo", "get_same_tab")`, `advanced_share_data`,
   `get_fields_for_model`, `join_spreadsheet_session`, ...
 - rpc for custom JSON routes (`/onlyoffice/editor/get_config`, `/onlyoffice/documents/file/create`, ...):
   - 17: `this.rpc = useService("rpc")` (or `this.env.services.rpc`)
-  - 18/19: `import { rpc } from "@web/core/network/rpc"` (no service)
+  - 18/19/20: `import { rpc } from "@web/core/network/rpc"` (no service)
   - Several routes return a JSON string — the client does `JSON.parse(json)`; keep that when touching either side.
 - `action` — open the editor:
   `doAction({ type: "ir.actions.client", tag: "onlyoffice_editor", target: "current", params: { attachment_id | document_id } })`
@@ -105,15 +159,17 @@ during 18/19 ports, so keep each patch in its own file with the patched componen
 
 ## Version notes (for ports)
 
-| Topic                         | 17                                                                     | 18                                                                | 19                                                                        |
-| ----------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| OWL                           | 2.x                                                                    | 2.x                                                               | 3.x (stricter props, check breaking changes)                              |
-| `/** @odoo-module **/` header | required                                                               | optional                                                          | optional                                                                  |
-| rpc                           | `useService("rpc")`                                                    | `rpc` import from `@web/core/network/rpc`                         | same as 18                                                                |
-| Documents app JS              | `DocumentsInspector`, kanban/list controllers, `ShareRoute`            | reworked (access model, no `documents.share`, inspector replaced) | reworked again — re-check every patch                                     |
-| Spreadsheet selector          | `@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/*` | verify paths and API                                              | verify paths and API                                                      |
-| Chatter attachments           | `@mail/core/common/attachment_list`                                    | verify module path and template name                              | verify                                                                    |
-| Props declarations            | plain or object form                                                   | same                                                              | object form expected (`{ type, required/optional }`), stricter validation |
+| Topic                         | 17                                                                     | 18                                                                | 19                                                                        | 20                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| OWL                           | 2.x                                                                    | 2.x                                                               | 2.x (stricter props, check breaking changes)                              | 3.x + compat layer — see "Owl 3 (Odoo 20)"                                      |
+| `/** @odoo-module **/` header | required                                                               | optional                                                          | optional                                                                  | optional                                                                        |
+| rpc                           | `useService("rpc")`                                                    | `rpc` import from `@web/core/network/rpc`                         | same as 18                                                                | same as 18                                                                      |
+| Documents app JS              | `DocumentsInspector`, kanban/list controllers, `ShareRoute`            | reworked (access model, no `documents.share`, inspector replaced) | reworked again — re-check every patch                                     | templates use `this.`; "All" section (`getSelectedFolderId()` is `false`)       |
+| Spreadsheet selector          | `@spreadsheet_edition/assets/components/spreadsheet_selector_dialog/*` | verify paths and API                                              | verify paths and API                                                      | panel uses `this.domain`, `get_spreadsheets` → `{records, total}`, `model` prop |
+| Chatter attachments           | `@mail/core/common/attachment_list`                                    | verify module path and template name                              | verify                                                                    | loops over `attachmentGroups`; `attachment` is a `t-set`                        |
+| Props declarations            | plain or object form                                                   | same                                                              | object form expected (`{ type, required/optional }`), stricter validation | `props = useProps({...})` with `t.*`; `static props` throws                     |
+| Kanban "New" button           | in `web.KanbanView`                                                    | same                                                              | same                                                                      | separate `web.KanbanView.Buttons`, set via the view's `buttonTemplate`          |
+| Icons                         | Font Awesome                                                           | Font Awesome                                                      | Font Awesome                                                              | Material Symbols (`oi` + `data-icon`), see "Icons (Odoo 20)"                    |
 
 On every branch, open the same-version source of the patched component before changing a patch; do not assume a
 selector/method from another version still exists.
@@ -123,7 +179,8 @@ selector/method from another version still exists.
 - [ ] File covered by a manifest asset glob (or intentionally excluded and loaded by `<script>`/`loadScript`, with a
       comment saying why)
 - [ ] Template name prefixed with the module name
-- [ ] Props declared with types; no implicit props
+- [ ] Props declared with types; no implicit props (20: `useProps`, members prefixed with `this.` in templates)
+- [ ] Icons exist in the target version's icon font
 - [ ] Services via `useService`, no global imports of legacy widgets
 - [ ] Patches isolated per file and documented
 - [ ] `same_tab` and Desktop Editors behavior respected when opening the editor

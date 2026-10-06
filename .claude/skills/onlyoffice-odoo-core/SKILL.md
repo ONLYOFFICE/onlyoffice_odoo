@@ -13,8 +13,8 @@ Base skill for this repository. Read it before any change, then load the skill f
 
 ## First move (every task)
 
-1. Read `__manifest__.py` of the module you touch. The version prefix (`17.0.x` / `18.0.x` / `19.0.x`) is the source of
-   truth for which Odoo APIs to use. Branch names are only a hint.
+1. Read `__manifest__.py` of the module you touch. The version prefix (`17.0.x` / `18.0.x` / `19.0.x` / `20.0.x`) is the
+   source of truth for which Odoo APIs to use. Branch names are only a hint.
 2. Identify the owning module and load its skill (table below). Anything touching two modules: load both.
 3. Check whether Odoo core / Enterprise sources are available: this repo does not contain them, but a parent workspace
    often does (look for sibling folders such as `enterprise-<version>/`, `addons-<version>/`, or an `$ODOO_SOURCE` /
@@ -59,15 +59,20 @@ Base skill for this repository. Read it before any change, then load the skill f
   `onlyoffice_odoo_templates/controllers/controllers.py` and `models/ir_actions_report.py`; the save callback exists in
   the base module and in the documents share callback). When you change one copy, check the others.
 - `onlyoffice_odoo_documents` is the most version-specific module — the Enterprise `documents` app was reworked in 18
-  and again in 19. `onlyoffice_odoo_templates` is version-sensitive through its Documents integration
-  (`documents.folder` on 17), `<tree>` views and access-check APIs.
+  and again in 19 (20 changed its templates and selector API again). `onlyoffice_odoo_templates` is version-sensitive
+  through its Documents integration (`documents.folder` on 17), `<tree>` views and access-check APIs.
+- Odoo 20 is the largest break so far: `ir.access` instead of `ir.model.access`, typed system parameters, no `datas`
+  (binary values are `BinaryValue`), Owl 3 on the frontend and Material Symbols instead of Font Awesome. Read the "19 →
+  20" section of `odoo-migration-17-18-19` before touching a `20.0.x` module.
 
 ## Rules that always apply
 
 - Use only the manifest version's APIs; the per-version differences live in `odoo-migration-17-18-19`. Version-sensitive
   APIs used across this repo: access checks (17: `check_access_rights`/`check_access_rule`; 18+:
   `has_access`/`check_access`), Documents models (17: `documents.folder`/`documents.share`; 18+: folders are documents,
-  no share model), view tags (17: `<tree>`; 18+: `<list>`).
+  no share model), view tags (17: `<tree>`; 18+: `<list>`), ACL files (17-19: `ir.model.access.csv`; 20:
+  `ir.access.csv`), system parameters (17-19: `get_param`/`set_param`; 20: `get_str`/`get_bool`/`set_*`), binary content
+  (17-19: `datas`/`raw`; 20: `raw` only), frontend (17-19: Owl 2; 20: Owl 3).
 - Never call `requests`/`urlopen` directly for Document Server traffic — use `onlyoffice_request` / `onlyoffice_urlopen`
   from `onlyoffice_odoo.controllers.main` so certificate settings and public→inner URL replacement work. Direct
   `requests` is only acceptable for non-Document-Server hosts (the oforms gallery API) and for the settings validation
@@ -95,8 +100,10 @@ Base skill for this repository. Read it before any change, then load the skill f
   stub `documents`/`documents_spreadsheet` manifests and the coverage thresholds of `.coveragerc*`); the documents
   module is tested locally only. `.github/workflows/e2e.yml` runs the Playwright suite in `e2e/` against a live Document
   Server on every push / pull request; `lint.yml` runs pre-commit and a strict pylint. Details in `odoo-testing`.
-- A local Odoo 17 + Enterprise usually runs from a `docker-compose.yml` in the parent workspace (repo mounted as
-  `/mnt/extra-addons`).
+- A local Odoo + Enterprise of the branch's version usually runs from a `docker-compose.yml` in the parent workspace
+  (repo mounted as `/mnt/extra-addons`). Odoo 20 listens on `127.0.0.1` by default: the compose/config needs
+  `http_interface = 0.0.0.0`, and PostgreSQL must be 16+. With more than one database and no `dbfilter`, requests
+  without a session (Document Server downloads, callbacks) get 404 — keep one database or set `dbfilter`.
 
 ## Task workflows
 
@@ -117,7 +124,7 @@ Base skill for this repository. Read it before any change, then load the skill f
 3. Add security entries for any new model; add route auth checks; add manifest asset globs for new JS.
 4. Update changelog and, if user-visible, `doc/index.rst` / `static/description/index.html`.
 
-### Working on any Odoo-version code line (17/18/19)
+### Working on any Odoo-version code line (17/18/19/20)
 
 Use the bug-fix/feature workflows above with that version's APIs from the start (see the version tables in
 `odoo-migration-17-18-19`). Verify the Enterprise `documents` integration against sources of that same version. If a fix

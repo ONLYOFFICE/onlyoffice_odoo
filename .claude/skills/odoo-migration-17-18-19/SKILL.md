@@ -1,21 +1,22 @@
 ---
 name: odoo-migration-17-18-19
 description:
-  Porting ONLYOFFICE module changes between Odoo 17, 18 and 19 code lines via merge, plus a reference of framework and
-  Enterprise Documents differences between the versions and the exact places in this repo that depend on them. Use for
-  any port, merge, version-compatibility question, or when writing version-correct code on any branch whose manifest
-  version is 18.0.x or 19.0.x.
+  Porting ONLYOFFICE module changes between Odoo 17, 18, 19 and 20 code lines via merge, plus a reference of framework
+  and Enterprise Documents differences between the versions and the exact places in this repo that depend on them. Use
+  for any port, merge, version-compatibility question, or when writing version-correct code on any branch whose manifest
+  version is 18.0.x, 19.0.x or 20.0.x.
 ---
 
-# Porting 17 → 18 → 19
+# Porting 17 → 18 → 19 → 20
 
 This skill has two uses:
 
 1. **Port workflow** — moving changes forward through merges.
 2. **Version reference** — the difference tables below tell you which API to use in the code you are editing right now.
-   Pick the column by the `__manifest__.py` version prefix (`17.0.x` / `18.0.x` / `19.0.x`), never by the branch name —
-   work branches forked from the integration branches (`feature/18.0`, `feature/19.0`) can be named anything. If the
-   manifest prefix does not match the version you expected to work on, stop and ask before changing anything.
+   Pick the column by the `__manifest__.py` version prefix (`17.0.x` / `18.0.x` / `19.0.x` / `20.0.x`), never by the
+   branch name — work branches forked from the integration branches (`feature/18.0`, `feature/19.0`, `feature/20.0`) can
+   be named anything. If the manifest prefix does not match the version you expected to work on, stop and ask before
+   changing anything.
 
 ## Workflow
 
@@ -88,7 +89,7 @@ Port checklist (18):
 | Area               | 18                         | 19                                                                              | Affects                        |
 | ------------------ | -------------------------- | ------------------------------------------------------------------------------- | ------------------------------ |
 | SQL constraints    | `_sql_constraints` list    | `models.Constraint()` class attributes                                          | any model with SQL constraints |
-| OWL                | 2.x                        | 3.x — stricter props validation                                                 | all components and patches     |
+| OWL                | 2.x                        | 2.8 — stricter props validation (Owl 3 arrives in 20)                           | all components and patches     |
 | `res.users` create | `groups_id` in vals worked | `groups_id` ignored in `create()`; add via `group.write({"users": [(4, uid)]})` | test setUp code                |
 | Raw SQL            | discouraged                | `SQL()` builder required                                                        | any raw SQL                    |
 | Python             | 3.10+                      | 3.12+                                                                           | dependency checks              |
@@ -102,6 +103,41 @@ Port checklist (19):
 - [ ] Wrap any raw SQL in `SQL()`
 - [ ] Re-verify all Enterprise `documents` and `spreadsheet` touch points
 - [ ] Run tests (do not bump the manifest version)
+
+## 19 → 20: changes that hit these modules
+
+Found while porting this repo to 20 (Odoo 20.0, Enterprise 20.0). A module with a `19.0.x` manifest is simply
+`installable=False` on 20 (log: "has an incompatible version") — nothing below is reported until the prefix is `20.0.`.
+
+| Area               | 19                                                        | 20                                                                                                                                         | Affects                                                             |
+| ------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| Access rights      | `ir.model.access` (+ `ir.rule`)                           | one model `ir.access`; `security/ir.access.csv` (`id,name,model_id,group_id/id,operation,domain`), see `odoo-security`                     | all three `security/` folders, templates security XML               |
+| Model access check | `check_access_rights(op, raise_exception=False)`          | removed — `records.browse().has_access(op)`                                                                                                | base `get_config`                                                   |
+| System parameters  | `get_param` / `set_param` (strings, `False` deletes)      | typed `get_str/get_bool/get_int/get_float`, `set_str/set_bool/...`; read flags with `get_bool`, a stored `"False"` is truthy for `get_str` | `config_utils` (both modules), `onlyoffice.odoo`, tests, e2e        |
+| Binary content     | `datas` (base64), values are base64 `bytes`               | `datas` removed (writes **silently ignored**); values are `BinaryValue`; `read()` gives `{content, size}`; see `odoo-attachments-files`    | save callbacks, docbuilder, templates model, thumbnails             |
+| `read_group`       | `read_group(domain, fields, groupby, lazy=False)` → dicts | `read_group(domain, groupby, aggregates)` → tuples; dicts via `formatted_read_group`                                                       | documents `_safe_read_group` (compat wrapper `_read_group_dicts`)   |
+| `odoo.http`        | module with `content_disposition`, `serialize_exception`  | package: `odoo.http.stream.content_disposition`, `odoo.http.dispatcher.serialize_exception`                                                | templates `report_controller.py`, callback error handlers           |
+| `odoo.tools`       | `ustr`                                                    | removed                                                                                                                                    | templates `get_fields_for_model`                                    |
+| JSON in templates  | `scriptsafe.dumps(session_info)`                          | session info holds `mappingproxy` → `scriptsafe.dumps(x, default=json_default)`                                                            | editor pages (base, documents)                                      |
+| Static selection   | `field.selection` is a list                               | tuple                                                                                                                                      | templates field formatting                                          |
+| Postcommit hooks   | ORM usable                                                | transaction is reset after commit → open a new cursor (`registry.cursor()`), tests use `registry_test_mode()`                              | templates `ir_attachment.py`                                        |
+| Frontend           | Owl 2.8                                                   | Owl 3 (`useProps`, `proxy`, `signal.ref`, `this.` in templates, `t-out`) — see `odoo-owl-assets`                                           | every component, template and patch                                 |
+| Icons              | Font Awesome                                              | Material Symbols (`oi` + `data-icon`, subset font)                                                                                         | all XML/JS/SCSS with `fa`                                           |
+| Documents app      | 19 templates without `this.`                              | xpath anchors with `this.`; "All" section (`folder_id` false); selector panel API; kanban `buttonTemplate`                                 | documents controller mixin, file create, selector, templates kanban |
+| Server/runtime     | listens on all interfaces; PostgreSQL 12+                 | `http_interface` defaults to `127.0.0.1` (set `0.0.0.0` in Docker); PostgreSQL 16+ (`any_value()`)                                         | docker compose, CI, e2e                                             |
+| Access error text  | `... User: <login> (id=<id>)`                             | `... User: <id>`                                                                                                                           | e2e `access.spec.ts`                                                |
+
+Port checklist (20):
+
+- [ ] Manifest prefix `20.0.` (a release decision — ask first), `.pylintrc` `valid-odoo-versions=20.0`
+- [ ] `ir.model.access.csv` → `ir.access.csv`; drop the duplicated `ir.model.access` XML records
+- [ ] grep `get_param`, `set_param`, `datas`, `check_access_rights`, `read_group(`, `tools.ustr`,
+      `from odoo.http import`
+- [ ] Owl 3: grep `useState`, `useRef`, `static props`, `t-esc`, `t-model`, bare names in templates, xpath anchors
+- [ ] Icons: grep `fa-` / `"fa ` and check each Material Symbol name renders
+- [ ] Run unit tests, e2e (`postgres:16`, `odoo:20.0`, `--http-interface=0.0.0.0`) and open every dialog in a browser
+- [ ] Unit tests in a second database on a shared server make routes without a session answer 404 (no `dbfilter`): drop
+      the test database afterwards or use a separate PostgreSQL
 
 ## Merge conflict rules
 

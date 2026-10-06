@@ -69,6 +69,16 @@ class TestSomething(HttpCase):
   `groups_id` with `base.group_user` + `base.group_system`).
 - Version note: on Odoo 19, `groups_id` passed to `res.users.create()` is ignored — create the user first, then add
   groups via `group.write({"users": [(4, user.id)]})`. On 17/18 the `groups_id` key in create vals still works.
+- Odoo 20 notes:
+  - set system parameters with the typed API (`set_str` for strings, `set_bool` for flags); `set_param` is gone;
+  - attachments in fixtures use `raw` (`{"raw": b"..."}`), and assertions read `attachment.raw.content` (a `BinaryValue`
+    never equals `bytes`); a non-`raw` binary field takes a base64 `str`, not base64 `bytes`;
+  - code that opens its own cursor (postcommit hooks) sees nothing of the test transaction: run it inside
+    `with self.registry_test_mode():` and `self.env.invalidate_all()` afterwards;
+  - `HttpCase` starts a server on the configured port; when running next to a live Odoo pass another `--http-port`,
+    otherwise the tests fail with "Address already in use";
+  - a second database on the developer's server breaks routes without a session (Document Server downloads give 404)
+    unless `dbfilter` is set — run tests on a separate PostgreSQL (e.g. the e2e stack) or drop the database after.
 - Disable JWT in setup unless the test targets JWT itself: `config_utils.set_jwt_secret(self.env, "")`.
 - Public routes: test both the happy path (valid `oo_security_token`) and rejection without a token. Callback routes
   answer JSON `{"error": 1}` with HTTP 500 on rejection — assert both.
@@ -124,7 +134,9 @@ OCA Odoo image as the job container, `postgres` and `onlyoffice/documentserver-d
 editor needs the Automation API) as `services`; `onlyoffice_odoo`, `onlyoffice_odoo_templates` and `hr` are installed;
 Odoo is started in the background inside the job container and the browser runs there too, so the Document Server
 address is `http://documentserver/` for both sides and Odoo is reached at the job container IP. `e2e/docker-compose.yml`
-(`odoo:17` + `pyjwt`, `postgres:13`, Document Server) is for local runs only.
+(the branch's `odoo:<version>` image + `pyjwt`, PostgreSQL, Document Server) is for local runs only. On 20 it needs
+`postgres:16` and `--http-interface=0.0.0.0`; the e2e RPC helper (`helpers/odoo.ts`) reads binary fields as `{content}`
+and uses `get_str`/`set_bool`.
 
 Layout: `fixtures.ts` (`odoo` worker fixture = JSON-RPC client, `AUTH_FILE`), `helpers/env.ts` (URLs, JWT secret,
 `SAVE_GRACE_MS`, template dir, config keys), `helpers/odoo.ts`, `helpers/discuss.ts` (post a template to a new channel),

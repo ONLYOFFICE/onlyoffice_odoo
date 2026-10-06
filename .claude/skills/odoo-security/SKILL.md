@@ -1,16 +1,17 @@
 ---
 name: odoo-security
 description:
-  Odoo security for the ONLYOFFICE modules - access rights (ir.model.access.csv and XML), groups, sudo discipline, route
-  authentication for every public route, the document role model, and input handling for docbuilder scripts and
-  spreadsheet formulas. Use whenever models, routes, or permissions change, and as a final checklist for any change.
+  Odoo security for the ONLYOFFICE modules - access rights (ir.model.access.csv / ir.access.csv on 20), groups, sudo
+  discipline, route authentication for every public route, the document role model, and input handling for docbuilder
+  scripts and spreadsheet formulas. Use whenever models, routes, or permissions change, and as a final checklist for any
+  change.
 ---
 
 # Security
 
 ## Access rights (ACL)
 
-Every model needs at least one line in `security/ir.model.access.csv`:
+Every model needs at least one access line. On 17/18/19 it goes to `security/ir.model.access.csv`:
 
 ```csv
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
@@ -19,6 +20,20 @@ access_my_model_user,my.model user,model_my_model,base.group_user,1,1,1,0
 
 - No `group_id` = applies to everyone (including portal/public via server code). Avoid unless intended.
 - Model reference name: `model_` + model name with dots as underscores.
+
+**Odoo 20** replaced `ir.model.access` and `ir.rule` with one model, `ir.access`; the file is `security/ir.access.csv`
+(the file name selects the model) with the format of the core addons:
+
+```csv
+id,name,model_id,group_id/id,operation,domain
+access_my_model_user,my.model user,my.model,base.group_user,cru,
+```
+
+- `model_id` is the model's technical name; `operation` is a subset of `crud` (`r`, `cru`, `crud`, ...).
+- A line **with** a group is a permission: permissions are OR-ed, and `domain` limits the records they grant.
+- A line **without** a group is a restriction (the old global record rule): restrictions are AND-ed. The old "no group,
+  0/0/0/0" ACL has no `ir.access` equivalent and is dropped.
+- Model-level check in code: `records.browse().has_access(op)` (`check_access_rights` is removed).
 
 Current ACLs:
 
@@ -31,8 +46,10 @@ Current ACLs:
 | templates | `onlyoffice.odoo.templates`                                                                              | (none)                                  | 0/0/0/0                                                  |
 | templates | `onlyoffice.odoo.demo.templates`                                                                         | `base.group_system`                     | full CRUD                                                |
 
-The templates user/admin ACLs are declared twice — in `ir.model.access.csv` **and** as `ir.model.access` records in
-`security/onlyoffice_templates_security.xml`. Change both together.
+On 17/18/19 the templates user/admin ACLs are declared twice — in `ir.model.access.csv` **and** as `ir.model.access`
+records in `security/onlyoffice_templates_security.xml`; change both together. On 20 they live only in
+`security/ir.access.csv` (the XML keeps the category, privilege and groups). The empty "no group" line of the table
+above does not exist on 20.
 
 ## Groups
 

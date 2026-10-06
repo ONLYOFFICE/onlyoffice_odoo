@@ -1,11 +1,11 @@
 # ONLYOFFICE Modules for Odoo
 
 This repository contains three Odoo addons that connect Odoo with ONLYOFFICE Docs (Document Server). The same modules
-exist for Odoo 17, 18, and 19 on separate code lines.
+exist for Odoo 17, 18, 19 and 20 on separate code lines.
 
 **Source of truth for the version is the manifest.** Read the version prefix in `__manifest__.py` (`17.0.x`, `18.0.x`,
-`19.0.x`) — for example in `onlyoffice_odoo/__manifest__.py` — and apply only patterns valid for that version (see the
-version tables in the skills and `.claude/skills/odoo-migration-17-18-19/SKILL.md`).
+`19.0.x`, `20.0.x`) — for example in `onlyoffice_odoo/__manifest__.py` — and apply only patterns valid for that version
+(see the version tables in the skills and `.claude/skills/odoo-migration-17-18-19/SKILL.md`).
 
 Never guess the version from a branch name alone; if the manifest prefix and the expected target disagree, stop and ask.
 
@@ -37,8 +37,8 @@ rather than duplicating routes.
 ### `onlyoffice_odoo_documents` — Enterprise Documents integration
 
 Open/create/share files from the Enterprise `documents` app, per-document access roles, attachment versioning. Depends
-on `onlyoffice_odoo`, `documents`. The `documents` app differs a lot between 17/18/19 — **this module differs the most
-between Odoo-version code lines.**
+on `onlyoffice_odoo`, `documents`. The `documents` app differs a lot between 17/18/19/20 — **this module differs the
+most between Odoo-version code lines.**
 
 - Key code: `onlyoffice_odoo_documents/controllers/controllers.py` (documents
   - share routes, access roles), `models/onlyoffice_documents_access*.py`.
@@ -71,7 +71,7 @@ Always start with the core skill, then load the skill for the module you are act
 | OWL components, assets, JS/XML frontend         | `.claude/skills/odoo-owl-assets/SKILL.md`           |
 | Access rights, groups, record rules, route auth | `.claude/skills/odoo-security/SKILL.md`             |
 | Writing or fixing tests                         | `.claude/skills/odoo-testing/SKILL.md`              |
-| Porting changes to 18.0 / 19.0 branches         | `.claude/skills/odoo-migration-17-18-19/SKILL.md`   |
+| Porting changes to 18.0 / 19.0 / 20.0 branches  | `.claude/skills/odoo-migration-17-18-19/SKILL.md`   |
 | Reviewing a change before merge                 | `.claude/skills/odoo-code-review/SKILL.md`          |
 
 ## Workflow rules

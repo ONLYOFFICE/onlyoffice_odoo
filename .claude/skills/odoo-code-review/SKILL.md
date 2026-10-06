@@ -11,9 +11,10 @@ description:
 ## First move
 
 1. Identify the target: whole module, diff, PR, commit range, or files. Read the manifest version of every touched
-   module (17/18/19) and load the module skill (`onlyoffice-odoo-base` / `-documents` / `-templates`).
-2. Note whether the branch is a release line (`17.0`, `18.0`, `19.0`, `feature/18.0`, `feature/19.0`) or a work branch.
-   On release lines do not ask for unrelated restyling; existing file style wins over generic preferences.
+   module (17/18/19/20) and load the module skill (`onlyoffice-odoo-base` / `-documents` / `-templates`).
+2. Note whether the branch is a release line (`17.0`, `18.0`, `19.0`, `20.0`, `feature/18.0`, `feature/19.0`,
+   `feature/20.0`) or a work branch. On release lines do not ask for unrelated restyling; existing file style wins over
+   generic preferences.
 3. Read the whole file for every touched controller/model, not only the hunk — duplicated flows (base callback vs share
    callback, controller `fill_template` vs report `fill_template`) are easy to miss from a diff.
 
@@ -88,12 +89,15 @@ Review in the order below. Stop and report blockers first.
 - Changes in `onlyoffice_odoo_documents` / `onlyoffice_odoo_templates` (not run in CI): manual verification steps
   described in the PR.
 
-## 7. Portability (17 → 18 → 19)
+## 7. Portability (17 → 18 → 19 → 20)
 
 - Does the change use APIs known to be renamed/removed in 18 or 19 (`check_access_rights`, `documents.share`,
   `documents.folder`, `ShareRoute`, `DocumentsInspector`, `<tree>`, `_sql_constraints`, `useService("rpc")`)? If yes,
   note it for the port and prefer forward-compatible options when they exist on 17.
 - Will porting this into another Odoo-version code line conflict with the Documents rework there? Flag it.
+- On a `20.0.x` module: no `ir.model.access`, `get_param`/`set_param`, `datas`, `check_access_rights`, old-style
+  `read_group`, `tools.ustr`, `http.serialize_exception`; frontend in Owl 3 style (`useProps`, `proxy`, `this.` in
+  templates, `t-out`) with Material Symbols icons. Flags are read with `get_bool`.
 
 ## Report format
 

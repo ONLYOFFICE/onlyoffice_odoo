@@ -8,7 +8,13 @@ description:
 
 # Controllers, Routes and JWT
 
-## Route basics (valid for 17/18/19)
+## Route basics (valid for 17/18/19/20)
+
+On 20 `odoo.http` is a package: `request`, `route`, `Controller`, `Response` are still exported, but
+`content_disposition` is in `odoo.http.stream` and `serialize_exception` in `odoo.http.dispatcher`
+(`http.serialize_exception` raises `AttributeError` — inside an `except` block that turns a handled error into a 500).
+JSON for QWeb pages: `scriptsafe.dumps(value, default=json_default)` (`from odoo.tools import json_default`), because
+session info contains `mappingproxy` values.
 
 ```python
 from odoo import http
@@ -154,7 +160,7 @@ overriding an existing route.
 - [ ] Public route validates `oo_security_token` (or the formula token) and, when enabled, the Document Server JWT
 - [ ] ORM calls run as the resolved user (`with_user`), sudo only with a reason
 - [ ] Attachment access checked: `validate_access` + the version's access API (17:
-      `check_access_rights`/`check_access_rule`; 18/19: `has_access`/`check_access`)
+      `check_access_rights`/`check_access_rule`; 18/19/20: `has_access`/`check_access`)
 - [ ] URLs given to the Document Server built from `get_base_or_odoo_url` and reachable from its network
 - [ ] Errors logged (`_logger.warning` for expected rejections, `_logger.error` for aborts), safe responses returned
 - [ ] Works when Odoo and Document Server are in Docker (inner URLs) and with JWT on and off

@@ -51,6 +51,7 @@ demo templates installed per model and exportable from Settings; setting "Disabl
 - `ir_attachment.py` — `create`/`write` register `_refresh_template_field_keys` in `env.cr.postcommit` when content
   fields (`datas`, `raw`, `db_datas`, `store_fname`) change on template attachments; skipped with context
   `skip_field_keys_refresh`. Single point where the `field_keys` cache is refreshed (upload, conversion, editor save).
+  The hook runs after the commit; on 20 it opens its own cursor because the committed transaction is reset.
 - `res_config_settings.py` — `editable_form_fields` ↔ `onlyoffice_connector.editable_form_fields` (own
   `utils/config_constants.py` / `config_utils.py`).
 
@@ -108,8 +109,9 @@ Field mapping and value formatting are **not** in `utils/` — they live in `con
 ### `security/`
 
 Two groups, `group_onlyoffice_odoo_templates_user` (read/print; given to `base.default_user`) and
-`group_onlyoffice_odoo_templates_admin` (CRUD + editor write access; implies user). The user/admin ACLs exist twice — in
-`onlyoffice_templates_security.xml` and in `ir.model.access.csv` — keep them in sync. Details: `odoo-security`.
+`group_onlyoffice_odoo_templates_admin` (CRUD + editor write access; implies user). On 17-19 the user/admin ACLs exist
+twice — in `onlyoffice_templates_security.xml` and in `ir.model.access.csv` — keep them in sync. On 20 they are only in
+`ir.access.csv`. Details: `odoo-security`.
 
 ### `views/`
 

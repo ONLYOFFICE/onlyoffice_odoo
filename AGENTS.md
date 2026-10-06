@@ -5,8 +5,8 @@ file. This file only routes tasks.
 
 ## Environment
 
-- **Version detection: the `__manifest__.py` version prefix is the source of truth** (`17.0.x` / `18.0.x` / `19.0.x`).
-  Check the manifest before anything version-sensitive.
+- **Version detection: the `__manifest__.py` version prefix is the source of truth** (`17.0.x` / `18.0.x` / `19.0.x` /
+  `20.0.x`). Check the manifest before anything version-sensitive.
 
 ## Skill Routing
 

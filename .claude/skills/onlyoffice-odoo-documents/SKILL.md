@@ -70,7 +70,10 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   `evaluate_single_formula(snapshot, "=ODOO_X(...)")`, `evaluate_odoo_formulas_in_snapshot`, `parse_and_resolve_domain`
   (`safe_eval` + `uid` substitution), `get_pivot_column_formats`/`get_list_column_formats`. Handlers: `LIST`,
   `LIST_HEADER`, `PIVOT`, `PIVOT_HEADER`, `PIVOT_TABLE`, `FILTER_VALUE`, `CURRENCY_RATE`. `read_group` calls run inside
-  a savepoint and are cached on `request._rg_cache` for the batch.
+  a savepoint and are cached on `request._rg_cache` for the batch. On 20 `read_group` returns tuples, so
+  `_safe_read_group` goes through `_read_group_dicts` (built on `_read_group` + the web group-by formatter), which
+  rebuilds the old dict shape: group-by values (`(id, name)` for relational fields, a label for dates with the period
+  start in `__range`), measures keyed by field name, `__count`.
 - `SpreadsheetDocBuilder` — `convert_spreadsheet_to_xlsx`, `insert_list`, `insert_pivot`, `build_callback_script`,
   `get_cached_file`. The module also defines `XLSX_MIMETYPE` (imported by `controllers.py` and `models/documents.py`;
   set explicitly because Odoo may sniff a rebuilt workbook as `application/zip`). Payloads for the docbuilder callback
@@ -103,7 +106,7 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   `advanced_share_save(vals)` used by the Advanced Share dialog (owner or `base.group_system` only; single document;
   only docx/xlsx/pptx/pdf), `_get_available_roles(filename)`.
 
-### `security/ir.model.access.csv`
+### `security/ir.model.access.csv` (20: `security/ir.access.csv`)
 
 `onlyoffice.odoo.documents`, `onlyoffice.odoo.documents.access`, `onlyoffice.odoo.documents.access.user` — full CRUD for
 `base.group_user`. Owner/admin restrictions are enforced in the model methods and controllers, not by ACL.
@@ -159,9 +162,9 @@ Assets are listed explicitly in the manifest (desktop scripts first, then `model
 ## Versioning
 
 Implemented in the base module's `editor_callback` (branch `attachment.res_model == "documents.document"`): the document
-is written through `document.write({"datas"})`, `oo_attachment_version` is bumped and the previous attachment is renamed
-to `"name (N).ext"`; history attachments open read-only. Exact steps and invariants: `odoo-attachments-files`. The
-share-link callback in this module writes the document without this bookkeeping.
+is written through `document.write({"datas"})` (20: `{"raw"}`), `oo_attachment_version` is bumped and the previous
+attachment is renamed to `"name (N).ext"`; history attachments open read-only. Exact steps and invariants:
+`odoo-attachments-files`. The share-link callback in this module writes the document without this bookkeeping.
 
 ## Workflow notes
 
