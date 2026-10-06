@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
-import base64
 import json
 import logging
 import re
@@ -17,6 +16,8 @@ from werkzeug.exceptions import Forbidden
 from odoo import _, fields, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
+from odoo.http.dispatcher import serialize_exception
+from odoo.tools import json_default
 from odoo.tools.json import scriptsafe
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
@@ -122,13 +123,13 @@ class OnlyofficeConnector(http.Controller):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
 
-        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
+        can_read = attachment.browse().has_access("read") and file_utils.can_view(filename)
 
         if not can_read:
             _logger.warning("POST /onlyoffice/editor/get_config - no read access: %s", attachment_id)
             raise AccessError(_("Cannot read attachment"))
 
-        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+        can_write = attachment.browse().has_access("write") and file_utils.can_edit(filename)
 
         config = self.prepare_editor_values(attachment, access_token, can_write)
         _logger.info("POST /onlyoffice/editor/get_config - success: %s", attachment_id)
@@ -147,12 +148,13 @@ class OnlyofficeConnector(http.Controller):
         return response
 
     @http.route("/onlyoffice/file/content/<int:attachment_id>", auth="public")
-    def get_file_content(self, attachment_id, oo_security_token=None, access_token=None):
+    # shardkey: sent back by the Document Server (it is part of the URLs we give it), only used for its routing.
+    def get_file_content(self, attachment_id, oo_security_token=None, access_token=None, shardkey=None):
         _logger.info("GET /onlyoffice/file/content/%s", attachment_id)
         attachment = self.get_attachment(attachment_id, self.get_user_from_token(oo_security_token))
         if not attachment:
             _logger.warning("GET /onlyoffice/file/content/%s - attachment not found", attachment_id)
-            return request.not_found()
+            raise request.not_found()
 
         attachment._can_return_content(access_token=access_token)
         attachment.has_access("read")
@@ -168,7 +170,7 @@ class OnlyofficeConnector(http.Controller):
 
             jwt_utils.decode_token(request.env, token)
 
-        stream = request.env["ir.binary"]._get_stream_from(attachment, "datas", None, "name", None)
+        stream = request.env["ir.binary"]._get_stream_from(attachment, "raw", None, "name", None)
 
         send_file_kwargs = {"as_attachment": True, "max_age": None}
 
@@ -181,7 +183,7 @@ class OnlyofficeConnector(http.Controller):
         attachment = self.get_attachment(attachment_id)
         if not attachment:
             _logger.warning("GET /onlyoffice/editor/%s - attachment not found", attachment_id)
-            return request.not_found()
+            raise request.not_found()
 
         attachment._can_return_content(access_token=access_token)
 
@@ -202,13 +204,13 @@ class OnlyofficeConnector(http.Controller):
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
         values = self.prepare_editor_values(attachment, access_token, can_write)
         values["editorConfig"] = scriptsafe.dumps(values["editorConfig"])
-        values["session_info"] = scriptsafe.dumps(values["session_info"])
+        values["session_info"] = scriptsafe.dumps(values["session_info"], default=json_default)
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
         "/onlyoffice/editor/callback/<int:attachment_id>", auth="public", methods=["POST"], type="http", csrf=False
     )
-    def editor_callback(self, attachment_id, oo_security_token=None, access_token=None):
+    def editor_callback(self, attachment_id, oo_security_token=None, access_token=None, shardkey=None):
         _logger.info("POST /onlyoffice/editor/callback/%s", attachment_id)
         response_json = {"error": 0}
 
@@ -246,13 +248,12 @@ class OnlyofficeConnector(http.Controller):
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 datas = onlyoffice_urlopen(file_url).read()
                 if attachment.res_model == "documents.document":
-                    datas = base64.encodebytes(datas)
                     document = request.env["documents.document"].browse(int(attachment.res_id))
 
                     document.with_user(user).write(
                         {
                             "name": attachment.name,
-                            "datas": datas,
+                            "raw": datas,
                             "mimetype": guess_type(file_url)[0],
                         }
                     )
@@ -266,7 +267,7 @@ class OnlyofficeConnector(http.Controller):
         except Exception as ex:
             _logger.error("POST /onlyoffice/editor/callback/%s - error: %s", attachment_id, str(ex))
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = serialize_exception(ex)
 
         return request.make_response(
             data=json.dumps(response_json),
@@ -522,7 +523,7 @@ class OnlyofficeConnector(http.Controller):
                 "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
                 "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
                 "editorConfig": scriptsafe.dumps(root_config),
-                "session_info": scriptsafe.dumps(session_info),
+                "session_info": scriptsafe.dumps(session_info, default=json_default),
             },
         )
 

@@ -1,5 +1,4 @@
 # Copyright (C) 2026 Ascensio System SIA
-import base64
 import io
 import json
 import logging
@@ -7,6 +6,8 @@ import re
 import zipfile
 from datetime import datetime
 from urllib.parse import quote
+
+from werkzeug.exceptions import HTTPException
 
 from odoo import http
 from odoo.http import request
@@ -37,7 +38,7 @@ class Onlyoffice_Inherited_Connector(OnlyofficeConnector):
                 ],
             )
         except Exception as e:
-            return request.not_found(f"Error: {str(e)}")
+            raise request.not_found(f"Error: {str(e)}") from e
 
     @http.route("/onlyoffice/template/editor", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def override_render_editor(self, attachment_id, access_token=None):
@@ -63,7 +64,8 @@ class Onlyoffice_Inherited_Connector(OnlyofficeConnector):
 
 class OnlyofficeTemplate_Connector(http.Controller):
     @http.route("/onlyoffice/template/fill", auth="user", type="http")
-    def main(self, template_id, record_ids):
+    # token: added by the web client's download() helper (like for /report/download), not used here.
+    def main(self, template_id, record_ids, token=None):
         logger.info("GET /onlyoffice/template/fill - template: %s, records: %s", template_id, record_ids)
         internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
         oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
@@ -89,7 +91,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 else:
                     e = f"error while downloading the document file, status = {response.status_code}"
                     logger.warning(e)
-                    return request.not_found()
+                    raise request.not_found()
             elif len(templates) > 1:
                 logger.info("GET /onlyoffice/template/fill - creating ZIP with %s files", len(templates))
                 stream = io.BytesIO()
@@ -101,7 +103,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                         else:
                             e = f"error while downloading the document file to be generated zip, status = {response.status_code}"  # noqa: E501
                             logger.warning(e)
-                            return request.not_found()
+                            raise request.not_found()
                 stream.seek(0)
                 content = stream.read()
                 stream.flush()
@@ -118,12 +120,12 @@ class OnlyofficeTemplate_Connector(http.Controller):
             else:
                 logger.warning("no templates found")
                 logger.debug(templates)
-                return request.not_found()
+                raise request.not_found()
+        except HTTPException:
+            raise
         except Exception as e:
             logger.warning(e)
-            return request.not_found()
-
-        return request.not_found()
+            raise request.not_found() from e
 
     def fill_template(self, oo_security_token, record_ids, template_id):
         logger.info("fill_template - template: %s, records: %s", template_id, record_ids)
@@ -189,27 +191,27 @@ class OnlyofficeTemplate_Connector(http.Controller):
         )
         if not oo_security_token or not record_ids or not template_id:
             logger.warning("oo_security_token or record_ids or template_id not found")
-            return request.not_found()
+            raise request.not_found()
 
         user = self.get_user_from_token(oo_security_token)
         if not user:
             logger.warning("user not found")
-            return request.not_found()
+            raise request.not_found()
 
         template = self.get_record("onlyoffice.odoo.templates", template_id, user)
         if not template:
             logger.warning("template not found: %s", template_id)
-            return request.not_found()
+            raise request.not_found()
 
         attachment_id = template.attachment_id.id
         if not attachment_id:
             logger.warning("attachment_id of the template was not found")
-            return request.not_found()
+            raise request.not_found()
 
         model = template.template_model_model
         if not model:
             logger.warning("model of the template was not found")
-            return request.not_found()
+            raise request.not_found()
 
         try:
             record_ids = [int(x) for x in record_ids.split(",")]
@@ -272,7 +274,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
 
         except Exception as e:
             logger.warning(e)
-            return request.not_found()
+            raise request.not_found() from e
 
     def _get_cached_keys(self, template, oo_security_token):
         """Return the template's PDF Form field keys.
@@ -312,7 +314,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         logger.info("GET /onlyoffice/template/callback/docbuilder/get_keys - attachment: %s", attachment_id)
         if not attachment_id or not oo_security_token:
             logger.warning("attachment_id or oo_security_token not found")
-            return request.not_found()
+            raise request.not_found()
 
         url = f"{config_utils.get_base_or_odoo_url(http.request.env)}onlyoffice/template/download/{attachment_id}?oo_security_token={oo_security_token}"  # noqa: E501
         docbuilder_content = f"""
@@ -335,11 +337,11 @@ class OnlyofficeTemplate_Connector(http.Controller):
         logger.info("GET /onlyoffice/template/download - attachment: %s", attachment_id)
         if not attachment_id or not oo_security_token:
             logger.warning("attachment_id or oo_security_token not found")
-            return request.not_found()
+            raise request.not_found()
 
         attachment = self.get_record("ir.attachment", attachment_id, self.get_user_from_token(oo_security_token))
         if attachment:
-            content = base64.b64decode(attachment.datas)
+            content = attachment.raw.content
             headers = {
                 "Content-Type": "application/pdf",
                 "Content-Disposition": "attachment; filename=template.pdf",
@@ -348,7 +350,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
             return request.make_response(content, headers)
         else:
             logger.warning("attachment not found: %s", attachment_id)
-            return request.not_found()
+            raise request.not_found()
 
     def get_fields(self, keys, model, record_id, user):  # noqa: C901
         logger.info("get_fields - model: %s, record: %s", model, record_id)
@@ -447,7 +449,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 )
                             elif field_type == "selection":
                                 selection = record._fields[field].selection
-                                if isinstance(selection, list):
+                                if isinstance(selection, list | tuple):
                                     result[field] = str(dict(selection).get(data))
                                 else:
                                     result[field] = str(data)
@@ -548,7 +550,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 attachment = request.env["ir.attachment"].create(
                     {
                         "name": filename,
-                        "datas": base64.b64encode(response.content),
+                        "raw": response.content,
                         "mimetype": "application/pdf",
                     }
                 )

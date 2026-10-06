@@ -36,12 +36,19 @@ class TestFieldKeysCache(TransactionCase):
             patch.object(self.env.cr, "commit"),
         ):
             yield fetch_keys
-            self.env.cr.postcommit.run()
+            # The refresh opens its own cursor (see IrAttachment._refresh_template_field_keys): keep it on the test one.
+            with self.registry_test_mode():
+                self.env.cr.postcommit.run()
+            self.env.invalidate_all()
 
     def _create_template(self, is_pdf_form=True, keys=()):
         with self._pdf(is_pdf_form, list(keys)) as fetch_keys:
             template = self.env["onlyoffice.odoo.templates"].create(
-                {"name": "Test template", "template_model_id": self.model.id, "file": base64.b64encode(b"%PDF-1.4")}
+                {
+                    "name": "Test template",
+                    "template_model_id": self.model.id,
+                    "file": base64.b64encode(b"%PDF-1.4").decode(),
+                }
             )
         return template, fetch_keys
 
@@ -58,7 +65,7 @@ class TestFieldKeysCache(TransactionCase):
     def test_keys_are_refreshed_when_attachment_content_changes(self):
         template, _fetch_keys = self._create_template(keys=["a"])
         with self._pdf(True, ["a", "c"]) as fetch_keys:
-            template.attachment_id.write({"datas": base64.b64encode(b"%PDF-1.4 different contents")})
+            template.attachment_id.write({"raw": b"%PDF-1.4 different contents"})
         fetch_keys.assert_called_once()
         self.assertEqual(json.loads(template.field_keys), ["a", "c"])
 

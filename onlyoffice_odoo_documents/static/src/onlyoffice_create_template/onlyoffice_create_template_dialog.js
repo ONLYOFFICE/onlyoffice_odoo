@@ -10,23 +10,25 @@ import { KeepLast } from "@web/core/utils/concurrency"
 import { useService, useAutofocus } from "@web/core/utils/hooks"
 import { getDefaultConfig } from "@web/views/view"
 
-const { Component, useState, useSubEnv } = owl
+const { Component, proxy, signal, useProps, useSubEnv } = owl
 
 export class CreateDialog extends Component {
+  props = useProps()
+
   setup() {
     this.orm = useService("orm")
     this.rpc = rpc
     this.viewService = useService("view")
     this.notificationService = useService("notification")
     this.actionService = useService("action")
-    this.inputRef = useAutofocus()
+    this.inputRef = useAutofocus({ ref: signal.ref() })
     this.documentService = useService("document.document")
 
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 
     this.dialogTitle = _t("Create with ONLYOFFICE")
-    this.state = useState({
+    this.state = proxy({
       isCreating: false,
       isOpen: true,
       selectedFormat: "docx",
@@ -35,8 +37,8 @@ export class CreateDialog extends Component {
     useSubEnv({ config: { ...getDefaultConfig() } })
     this.keepLast = new KeepLast()
 
-    if (this.inputRef.el) {
-      this.inputRef.el.focus()
+    if (this.inputRef()) {
+      this.inputRef().focus()
     }
   }
 
@@ -62,7 +64,7 @@ export class CreateDialog extends Component {
     if (result.error) {
       this.notificationService.add(result.error, {
         sticky: false,
-        type: "error",
+        type: "danger",
       })
     } else {
       this.notificationService.add(_t("New document created in Documents"), {

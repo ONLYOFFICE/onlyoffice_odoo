@@ -24,10 +24,10 @@
                 href="https://api.onlyoffice.com/docs/docs-api/get-started/ready-to-use-connectors/odoo-integration/"
                 target="_blank"
               >
-                <i class="fa fa-arrow-right" /> Learn more </a>
+                <i class="oi" data-icon="east" /> Learn more </a>
               <br />
               <a href="https://community.onlyoffice.com/c/suggestions/integrations/56" target="_blank">
-                <i class="fa fa-arrow-right" /> Suggest a feature </a>
+                <i class="oi" data-icon="east" /> Suggest a feature </a>
             </setting>
           </block>
           <block title="General Settings" name="onlyoffice_odoo">
@@ -70,7 +70,7 @@
                     title="ONLYOFFICE Templates requires a properly licensed Document Server connected with Odoo. Contact sales at sales@onlyoffice.com to acquire the proper license."
                     class="o_doc_link"
                   >
-                    <i class="fa fa-question-circle" />
+                    <i class="oi" data-icon="help" />
                     <span />
                   </a>
                 </div>

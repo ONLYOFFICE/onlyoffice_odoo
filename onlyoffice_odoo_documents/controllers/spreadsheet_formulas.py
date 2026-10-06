@@ -13,6 +13,7 @@ from datetime import date as date_cls
 from datetime import datetime, timedelta
 
 from odoo.http import request
+from odoo.orm.utils import READ_GROUP_TIME_GRANULARITY
 from odoo.tools import misc
 from odoo.tools.safe_eval import safe_eval
 
@@ -96,7 +97,7 @@ def load_metadata_for_document(document):
         except Exception as e:
             _logger.debug("Could not load spreadsheet metadata: %s", e)
     if document.onlyoffice_spreadsheet_source_id:
-        # documents.document / spreadsheet.mixin has no join_spreadsheet_session in Odoo 19;
+        # documents.document / spreadsheet.mixin has no join_spreadsheet_session since Odoo 19;
         # read the current serialized snapshot (falls back to spreadsheet_data) instead.
         try:
             return json.loads(document.onlyoffice_spreadsheet_source_id._get_spreadsheet_serialized_snapshot())
@@ -564,7 +565,7 @@ class SpreadsheetFormulaEvaluator:
         cr = request.env.cr
         try:
             cr.execute("SAVEPOINT pivot_rg")
-            result = model.read_group(domain, fields, group_bys, lazy=False)
+            result = SpreadsheetFormulaEvaluator._read_group_dicts(model, domain, fields, group_bys)
             cr.execute("RELEASE SAVEPOINT pivot_rg")
         except Exception as e:
             _logger.warning("read_group error: %s", e)
@@ -573,6 +574,53 @@ class SpreadsheetFormulaEvaluator:
         if cache is not None:
             cache[cache_key] = result
         return result
+
+    @staticmethod
+    def _read_group_dicts(model, domain, fields, group_bys):
+        """Group records and return one dict per group, like the pre-20 ``read_group(..., lazy=False)``.
+
+        Since Odoo 20 ``read_group`` returns tuples, so the groups are built from ``_read_group``:
+        a group-by spec maps to its value (``(id, display_name)`` for relational fields, a label
+        for dates, with the period start in ``__range``), a measure maps to its field name, and
+        ``__count`` is always set.
+        """
+        aggregates = {}
+        for spec in fields:
+            fname, _sep, func = spec.partition(":")
+            func = func or getattr(model._fields.get(fname), "aggregator", None)
+            if func:
+                aggregates[fname] = f"{fname}:{func}"
+
+        # Date fields need a granularity since 20; read_group used month by default.
+        query_group_bys = []
+        for spec in group_bys:
+            field = model._fields.get(spec)
+            query_group_bys.append(f"{spec}:month" if field and field.type in ("date", "datetime") else spec)
+
+        rows = model._read_group(domain, query_group_bys, ["__count", *aggregates.values()])
+
+        groups = [{"__range": {}} for _row in rows]
+        for index, (spec, query_spec) in enumerate(zip(group_bys, query_group_bys, strict=True)):
+            values = [row[index] for row in rows]
+            formatter = model._web_read_group_groupby_formatter(query_spec, values)
+            granularity = query_spec.partition(":")[2]
+            is_period = model._fields[query_spec.split(":")[0]].type in ("date", "datetime") and granularity in (
+                READ_GROUP_TIME_GRANULARITY
+            )
+            for value, group in zip(values, groups, strict=True):
+                formatted = formatter(value)[0]
+                if is_period and formatted:
+                    start, label = formatted
+                    group[spec] = label
+                    group["__range"][spec] = {"from": start}
+                else:
+                    group[spec] = formatted
+
+        for row, group in zip(rows, groups, strict=True):
+            group["__count"] = row[len(group_bys)]
+            for fname, value in zip(aggregates, row[len(group_bys) + 1 :], strict=True):
+                group[fname] = value
+        return groups
 
     @staticmethod
     def _order_string(order_by):

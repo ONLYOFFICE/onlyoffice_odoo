@@ -15,9 +15,11 @@ import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
 import { FolderSelectionDialog } from "./folder_selection_dialog"
 
-const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
+const { Component, proxy, useProps, useSubEnv, onWillStart } = owl
 
 export class TemplateDialog extends Component {
+  props = useProps()
+
   setup() {
     this.orm = useService("orm")
     this.rpc = rpc
@@ -30,7 +32,7 @@ export class TemplateDialog extends Component {
 
     this.dialogTitle = _t("Print from template")
     this.limit = 8
-    this.state = useState({
+    this.state = proxy({
       currentOffset: 0,
       documentsAvailable: false,
       isOpen: true,
@@ -47,7 +49,7 @@ export class TemplateDialog extends Component {
       view: useService("view"),
     })
 
-    useChildSubEnv({ searchModel: this.model })
+    useSubEnv({ searchModel: this.model })
 
     this.dp = new KeepLast()
 

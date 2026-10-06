@@ -8,7 +8,7 @@
     "author": "ONLYOFFICE",
     "website": "https://www.onlyoffice.com/office-for-odoo?utm_source=odoo_market",
     "category": "Productivity",
-    "version": "19.0.6.4.0",
+    "version": "20.0.6.4.0",
     "license": "LGPL-3",
     "development_status": "Production/Stable",
     "maintainers": ["ONLYOFFICE"],
@@ -16,7 +16,7 @@
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},
     "data": [
-        "security/ir.model.access.csv",
+        "security/ir.access.csv",
         "views/templates.xml",
         "views/res_config_settings_views.xml",
     ],

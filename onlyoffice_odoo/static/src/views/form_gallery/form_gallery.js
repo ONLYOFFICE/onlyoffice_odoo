@@ -10,7 +10,7 @@ import { rpc } from "@web/core/network/rpc"
 import { Pager } from "@web/core/pager/pager"
 import { useService } from "@web/core/utils/hooks"
 
-const { Component, useState, onWillStart, onWillUnmount } = owl
+const { Component, proxy, useProps, onWillStart, onWillUnmount } = owl
 
 export class FormGallery extends Component {
   static template = "onlyoffice_odoo.FormGallery"
@@ -22,6 +22,8 @@ export class FormGallery extends Component {
     Pager,
   }
 
+  props = useProps()
+
   setup() {
     this.title = _t("Document templates")
     this.action = useService("action")
@@ -31,7 +33,7 @@ export class FormGallery extends Component {
 
     this.searchTimeout = null
 
-    this.state = useState({
+    this.state = proxy({
       categories: [],
       error: null,
       form: null,

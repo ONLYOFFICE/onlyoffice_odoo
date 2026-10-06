@@ -8,38 +8,38 @@ from odoo.addons.onlyoffice_odoo.utils import config_constants
 
 
 def get_base_or_odoo_url(env):
-    url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_ODOO_URL)
-    return fix_url(url or env["ir.config_parameter"].sudo().get_param("web.base.url"))
+    url = env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_ODOO_URL, False)
+    return fix_url(url or env["ir.config_parameter"].sudo().get_str("web.base.url", False))
 
 
 def get_doc_server_public_url(env):
-    url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_PUBLIC_URL)
+    url = env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_PUBLIC_URL, False)
     if not url:
         url = "http://documentserver/"
     return fix_url(url)
 
 
 def get_doc_server_inner_url(env):
-    url = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_INNER_URL)
+    url = env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_INNER_URL, False)
     return fix_url(url or get_doc_server_public_url(env))
 
 
 def get_jwt_header(env):
-    header = env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_JWT_HEADER)
+    header = env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_JWT_HEADER, False)
     if not header:
         header = "Authorization"
     return header
 
 
 def get_jwt_secret(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_JWT_SECRET)
+    return env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_JWT_SECRET, False)
 
 
 def get_internal_jwt_secret(env):
-    secret = env["ir.config_parameter"].sudo().get_param(config_constants.INTERNAL_JWT_SECRET)
+    secret = env["ir.config_parameter"].sudo().get_str(config_constants.INTERNAL_JWT_SECRET, False)
     if not secret:
         secret = uuid.uuid4().hex
-        env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, secret)
+        env["ir.config_parameter"].sudo().set_str(config_constants.INTERNAL_JWT_SECRET, secret)
         # Save the new secret to the database right now, before anything else can fail.
         # Odoo wraps each request in a transaction that can be rolled back on error,
         # which would delete the secret we just created. By committing here we make sure
@@ -50,41 +50,41 @@ def get_internal_jwt_secret(env):
 
 
 def get_demo(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DEMO)
+    return env["ir.config_parameter"].sudo().get_bool(config_constants.DOC_SERVER_DEMO)
 
 
 def get_demo_date(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DEMO_DATE)
+    return env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_DEMO_DATE, False)
 
 
 def get_same_tab(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.SAME_TAB)
+    return env["ir.config_parameter"].sudo().get_bool(config_constants.SAME_TAB)
 
 
 def get_certificate_verify_disabled(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DISABLE_CERTIFICATE)
+    return env["ir.config_parameter"].sudo().get_bool(config_constants.DOC_SERVER_DISABLE_CERTIFICATE)
 
 
 def set_doc_server_public_url(env, url):
     if not url:
         url = "http://documentserver/"
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_PUBLIC_URL, fix_url(url))
+    env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_PUBLIC_URL, fix_url(url))
 
 
 def set_doc_server_odoo_url(env, url):
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_ODOO_URL, fix_url(url))
+    env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_ODOO_URL, fix_url(url))
 
 
 def set_doc_server_inner_url(env, url):
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_INNER_URL, fix_url(url))
+    env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_INNER_URL, fix_url(url))
 
 
 def set_jwt_header(env, header):
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_HEADER, header)
+    env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_JWT_HEADER, header)
 
 
 def set_jwt_secret(env, secret):
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_SECRET, secret)
+    env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_JWT_SECRET, secret)
 
 
 def set_demo(env, param):
@@ -104,20 +104,20 @@ def set_demo(env, param):
         set_doc_server_inner_url(env, "")
         set_jwt_header(env, "Authorization")
         set_jwt_secret(env, "")
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DEMO, param)
+    env["ir.config_parameter"].sudo().set_bool(config_constants.DOC_SERVER_DEMO, param)
 
 
 def set_demo_date(env):
     demo_date = date.today()
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DEMO_DATE, demo_date)
+    env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_DEMO_DATE, demo_date)
 
 
 def set_same_tab(env, param):
-    env["ir.config_parameter"].sudo().set_param(config_constants.SAME_TAB, param)
+    env["ir.config_parameter"].sudo().set_bool(config_constants.SAME_TAB, param)
 
 
 def set_certificate_verify_disabled(env, param):
-    env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_DISABLE_CERTIFICATE, param)
+    env["ir.config_parameter"].sudo().set_bool(config_constants.DOC_SERVER_DISABLE_CERTIFICATE, param)
 
 
 def fix_url(url):

@@ -2,12 +2,12 @@
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
   <t t-name="onlyoffice_odoo_documents.ConvertDialog" owl="1">
-    <Dialog title="dialogTitle" size="'md'" contentClass="'o-onlyoffice-convert-dialog'" footer="true">
+    <Dialog title="this.dialogTitle" size="'md'" contentClass="'o-onlyoffice-convert-dialog'" footer="true">
       <div class="o-onlyoffice-convert-container">
         <div class="mb-3">
           <label class="form-label" for="onlyoffice-convert-format">Convert to</label>
-          <select id="onlyoffice-convert-format" class="form-select" t-on-change="onFormatChange">
-            <t t-foreach="state.formats" t-as="format" t-key="format">
+          <select id="onlyoffice-convert-format" class="form-select" t-on-change="this.onFormatChange">
+            <t t-foreach="this.state.formats" t-as="format" t-key="format">
               <option t-att-value="format" t-esc="format.toUpperCase()" />
             </t>
           </select>
@@ -17,8 +17,8 @@
             type="checkbox"
             class="form-check-input"
             id="onlyoffice-convert-save"
-            t-att-checked="state.saveToDocuments"
-            t-on-change="onSaveToDocumentsChange"
+            t-att-checked="this.state.saveToDocuments"
+            t-on-change="this.onSaveToDocumentsChange"
           />
           <label class="form-check-label" for="onlyoffice-convert-save">
             Save to Documents
@@ -28,13 +28,13 @@
       <t t-set-slot="footer">
         <button
           class="btn btn-primary o-onlyoffice-convert-ok-button"
-          t-att-disabled="confirmDisabled"
-          t-on-click="onConvert"
+          t-att-disabled="this.confirmDisabled"
+          t-on-click="this.onConvert"
         >
-          <t t-if="state.converting">Converting...</t>
+          <t t-if="this.state.converting">Converting...</t>
           <t t-else="">Convert</t>
         </button>
-        <button class="btn btn-secondary" t-on-click="() => props.close()">
+        <button class="btn btn-secondary" t-on-click="() => this.props.close()">
           Cancel
         </button>
       </t>

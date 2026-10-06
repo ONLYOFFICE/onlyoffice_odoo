@@ -72,7 +72,7 @@ class IrActionsReport(models.Model):
                 if (
                     not has_duplicated_ids
                     and report_sudo.attachment
-                    and not self._context.get("report_pdf_no_attachment")
+                    and not self.env.context.get("report_pdf_no_attachment")
                 ):
                     attachment = report_sudo.retrieve_attachment(record)
 
@@ -169,7 +169,7 @@ class IrActionsReport(models.Model):
         report_sudo = self._get_report(report_ref)
 
         # Generate the ir.attachment if needed.
-        if not has_duplicated_ids and report_sudo.attachment and not self._context.get("report_pdf_no_attachment"):
+        if not has_duplicated_ids and report_sudo.attachment and not self.env.context.get("report_pdf_no_attachment"):
             attachment_vals_list = self._prepare_pdf_report_attachment_vals_list(report_sudo, collected_streams)
             if attachment_vals_list:
                 for vals in attachment_vals_list:

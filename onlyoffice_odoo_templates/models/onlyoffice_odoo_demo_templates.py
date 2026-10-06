@@ -1,6 +1,5 @@
 # Copyright (C) 2026 Ascensio System SIA
 
-import base64
 import json
 import logging
 import os
@@ -9,6 +8,7 @@ from pathlib import Path
 from odoo import api, fields, models
 from odoo.modules import get_module_path
 from odoo.tools import file_open
+from odoo.tools.binary import BinaryBytes
 
 _logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class OnlyOfficeDemoTemplate(models.Model):
                     {
                         "name": os.path.splitext(filename)[0],
                         "template_model_id": model.id,
-                        "file": base64.b64encode(content),
+                        "file": BinaryBytes(content),
                         "mimetype": "application/pdf",
                     }
                 )

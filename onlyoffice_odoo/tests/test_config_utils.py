@@ -17,7 +17,7 @@ class TestConfigUtils(TransactionCase):
 
     def test_get_doc_server_public_url_default(self):
         """Default public URL is 'http://documentserver/' when no custom URL is configured."""
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_PUBLIC_URL, "")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_PUBLIC_URL, "")
         url = config_utils.get_doc_server_public_url(self.env)
         self.assertEqual(url, "http://documentserver/")
 
@@ -36,7 +36,7 @@ class TestConfigUtils(TransactionCase):
     def test_get_doc_server_inner_url_fallback(self):
         """Inner URL falls back to public URL when not configured."""
         config_utils.set_doc_server_public_url(self.env, "https://public.example.com")
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_INNER_URL, "")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_INNER_URL, "")
         inner_url = config_utils.get_doc_server_inner_url(self.env)
         self.assertEqual(inner_url, "https://public.example.com/")
 
@@ -48,8 +48,8 @@ class TestConfigUtils(TransactionCase):
 
     def test_get_base_or_odoo_url_falls_back_to_web_base_url(self):
         """get_base_or_odoo_url falls back to web.base.url when no custom Odoo URL is set."""
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_ODOO_URL, "")
-        web_base = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_ODOO_URL, "")
+        web_base = self.env["ir.config_parameter"].sudo().get_str("web.base.url")
         result = config_utils.get_base_or_odoo_url(self.env)
         self.assertEqual(result, config_utils.fix_url(web_base))
 
@@ -63,7 +63,7 @@ class TestConfigUtils(TransactionCase):
 
     def test_get_jwt_secret_empty_by_default(self):
         """JWT secret is empty (falsy) by default."""
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_SECRET, "")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_JWT_SECRET, "")
         secret = config_utils.get_jwt_secret(self.env)
         self.assertFalse(secret)
 
@@ -75,7 +75,7 @@ class TestConfigUtils(TransactionCase):
 
     def test_get_jwt_header_default(self):
         """Default JWT header is 'Authorization'."""
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_JWT_HEADER, "")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_JWT_HEADER, "")
         header = config_utils.get_jwt_header(self.env)
         self.assertEqual(header, "Authorization")
 
@@ -89,7 +89,7 @@ class TestConfigUtils(TransactionCase):
 
     def test_get_internal_jwt_secret_generates_if_missing(self):
         """Internal JWT secret is auto-generated when not set."""
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, "")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.INTERNAL_JWT_SECRET, "")
         with patch.object(self.env.cr, "commit"):
             secret = config_utils.get_internal_jwt_secret(self.env)
         self.assertIsInstance(secret, str)

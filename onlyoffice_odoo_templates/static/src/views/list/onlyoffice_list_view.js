@@ -25,7 +25,7 @@ patch(ListController.prototype, {
         })
       },
       description: _t("Print with ONLYOFFICE"),
-      icon: "fa fa-print",
+      icon: "print",
       skipSave: true,
     }
     return menuItems

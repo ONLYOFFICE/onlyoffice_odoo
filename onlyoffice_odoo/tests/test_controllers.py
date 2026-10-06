@@ -1,7 +1,6 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
-import base64
 import json
 from unittest.mock import MagicMock, patch
 
@@ -37,13 +36,13 @@ class TestOnlyofficeControllers(HttpCase):
         # No DS JWT, so file-content and callback requests need no JWT header. A preset internal secret keeps
         # get_internal_jwt_secret from generating one and committing the test transaction.
         config_utils.set_jwt_secret(self.env, "")
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, "test-internal-secret")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.INTERNAL_JWT_SECRET, "test-internal-secret")
         self.security_token = jwt_utils.encode_payload(
             self.env, {"id": self.http_user.id}, config_utils.get_internal_jwt_secret(self.env)
         )
 
     def _attachment(self, name):
-        return self.env["ir.attachment"].sudo().create({"name": name, "datas": base64.b64encode(b"content")})
+        return self.env["ir.attachment"].sudo().create({"name": name, "raw": b"content"})
 
     def _get_config(self, attachment_id):
         body = {"jsonrpc": "2.0", "method": "call", "params": {"attachment_id": attachment_id}}
@@ -143,7 +142,7 @@ class TestOnlyofficeControllers(HttpCase):
 
         self.assertEqual(response.json(), {"error": 0})
         self.attachment.invalidate_recordset()
-        self.assertEqual(self.attachment.raw, b"edited content")
+        self.assertEqual(self.attachment.raw.content, b"edited content")
 
     def test_callback_with_jwt_enabled_rejects_unsigned_body(self):
         config_utils.set_jwt_secret(self.env, "ds-secret")

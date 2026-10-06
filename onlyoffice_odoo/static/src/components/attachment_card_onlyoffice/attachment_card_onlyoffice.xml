@@ -4,9 +4,9 @@
     <t t-inherit="mail.AttachmentList" t-inherit-mode="extension" owl="1">
     <xpath expr="//div[hasclass('o-mail-AttachmentButtons')]" position="inside">
       <button
-        t-if="onlyofficeCanOpen(attachment)"
+        t-if="this.onlyofficeCanOpen(attachment)"
         t-on-click.stop="() => this.openOnlyoffice(attachment)"
-        class="btn bg-500 w-100 h-100 o-p-1_5 d-flex justify-content-center align-items-center shadow-sm ms-2"
+        class="btn btn-secondary"
         title="Open in ONLYOFFICE"
       >
         <img src="/onlyoffice_odoo/static/svg/edit.svg" role="img" width="16" height="16" />

@@ -7,9 +7,11 @@ import { rpc } from "@web/core/network/rpc"
 import { registry } from "@web/core/registry"
 import { useService } from "@web/core/utils/hooks"
 
-const { Component, onMounted } = owl
+const { Component, onMounted, useProps } = owl
 
 export class DocumentsAction extends Component {
+  props = useProps()
+
   setup() {
     super.setup()
     this.rpc = rpc

@@ -16,27 +16,22 @@ export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
    * @override
    */
   async _fetchSpreadsheets() {
-    const domain = []
-    if (this.currentSearch !== "") {
-      domain.push(["name", "ilike", this.currentSearch])
-    }
+    // this.domain holds the search filter of the parent panel
     const { limit, offset } = this.state.pagerProps
-    this.state.spreadsheets = await this.keepLast.add(
-      this.orm.call("documents.document", "get_onlyoffice_spreadsheets_to_display", [domain], {
-        limit,
-        offset,
-      }),
+    const [records, total] = await this.keepLast.add(
+      Promise.all([
+        this.orm.call("documents.document", "get_onlyoffice_spreadsheets_to_display", [this.domain], {
+          limit,
+          offset,
+        }),
+        this.orm.call("documents.document", "get_onlyoffice_spreadsheets_count", [this.domain]),
+      ]),
     )
+    this.state.spreadsheets = records
+    this.state.pagerProps.total = total
     if (this.state.spreadsheets.length) {
       this._selectItem(this.state.spreadsheets[0].id)
     }
-  }
-
-  /**
-   * @override
-   */
-  async _fetchPagerTotal() {
-    return this.orm.call("documents.document", "get_onlyoffice_spreadsheets_count", [[]])
   }
 
   /**
@@ -87,6 +82,7 @@ patch(SpreadsheetSelectorDialog.prototype, {
             Component: OnlyofficeSelectorPanel,
             id: "onlyoffice",
             props: {
+              model: "documents.document",
               onSpreadsheetDblClicked: this._onInsert.bind(this),
               onSpreadsheetSelected: this.onSpreadsheetSelected.bind(this),
             },

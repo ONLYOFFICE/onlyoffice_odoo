@@ -45,8 +45,12 @@ class IrAttachment(models.Model):
         """
         if not attachments:
             return
-        templates = self.env["onlyoffice.odoo.templates"]
-        for attachment in attachments:
-            template = templates.browse(attachment.res_id).exists()
-            if template:
-                template._update_field_keys(attachment)
+        # This runs as a postcommit hook: since Odoo 20 the committed transaction is reset, so the ORM needs a new cursor.
+        attachment_ids = attachments.ids
+        with self.env.registry.cursor() as cr:
+            env = self.env(cr=cr)
+            templates = env["onlyoffice.odoo.templates"]
+            for attachment in env["ir.attachment"].browse(attachment_ids):
+                template = templates.browse(attachment.res_id).exists()
+                if template:
+                    template._update_field_keys(attachment)

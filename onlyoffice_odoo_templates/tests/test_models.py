@@ -1,5 +1,4 @@
 # Copyright (C) 2026 Ascensio System SIA
-import base64
 import json
 from unittest.mock import MagicMock, patch
 
@@ -31,9 +30,7 @@ class OnlyofficeTemplatesModelTestCase(TransactionCase):
         # (called by `_render_onlyoffice_pdf`) doesn't lazily generate it and call
         # `env.cr.commit()` mid-test, which would wipe out this test's own savepoint
         # and break rollback for this and subsequent tests in the class.
-        cls.env["ir.config_parameter"].sudo().set_param(
-            config_constants.INTERNAL_JWT_SECRET, "test-internal-jwt-secret"
-        )
+        cls.env["ir.config_parameter"].sudo().set_str(config_constants.INTERNAL_JWT_SECRET, "test-internal-jwt-secret")
 
     def setUp(self):
         super().setUp()
@@ -89,7 +86,7 @@ class TestOnlyofficeOdooDemoTemplates(OnlyofficeTemplatesModelTestCase):
 
         self.assertEqual(template.template_model_id, self.ir_model)
         expected = self.env["onlyoffice.odoo.demo.templates"].get_template_content(path)
-        self.assertEqual(base64.b64decode(template.attachment_id.datas), expected)
+        self.assertEqual(template.attachment_id.raw.content, expected)
 
     def test_action_save_without_selection_is_noop(self):
         """Saving with an empty selection creates no template."""

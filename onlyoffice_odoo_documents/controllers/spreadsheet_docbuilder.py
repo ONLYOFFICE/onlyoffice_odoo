@@ -23,7 +23,7 @@ import pytz
 from odoo import fields
 from odoo.exceptions import AccessError
 from odoo.http import request
-from odoo.tools.misc import file_open, get_lang
+from odoo.tools.misc import file_open, get_lang, mute_logger
 from odoo.tools.translate import _
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
@@ -79,7 +79,7 @@ def _store_docbuilder_data(token, data):
 def _load_docbuilder_data(token):
     """Load a previously stored DocBuilder payload. Returns dict or None."""
     attachment = request.env["ir.attachment"].sudo().search([("name", "=", _DOCBUILDER_CACHE_PREFIX + token)], limit=1)
-    return json.loads(attachment.raw) if attachment else None
+    return json.loads(attachment.raw.content) if attachment else None
 
 
 def _delete_docbuilder_data(token):
@@ -90,7 +90,8 @@ def _delete_docbuilder_data(token):
     can safely try to delete it.
     """
     try:
-        with request.env.cr.savepoint():
+        # The concurrent delete is expected: keep the SQL layer from logging it as an error.
+        with mute_logger("odoo.sql_db"), request.env.cr.savepoint():
             request.env["ir.attachment"].sudo().search([("name", "=", _DOCBUILDER_CACHE_PREFIX + token)]).unlink()
     except Exception:
         _logger.debug("DocBuilder cache for token %s already deleted concurrently", token)
@@ -247,7 +248,7 @@ class SpreadsheetDocBuilder:
                 result["error"] = _("Document is not a spreadsheet")
                 return result
 
-            # documents.document / spreadsheet.mixin has no join_spreadsheet_session in Odoo 19;
+            # documents.document / spreadsheet.mixin has no join_spreadsheet_session since Odoo 19;
             # read the current serialized snapshot (falls back to spreadsheet_data) instead.
             snapshot = json.loads(document._get_spreadsheet_serialized_snapshot() or "{}")
 
@@ -520,7 +521,7 @@ class SpreadsheetDocBuilder:
             {
                 "name": output_filename,
                 "folder_id": document.folder_id.id,
-                "datas": base64.b64encode(xlsx_content),
+                "raw": xlsx_content,
                 "mimetype": XLSX_MIMETYPE,
                 "onlyoffice_spreadsheet_source_id": document_id,
                 "onlyoffice_spreadsheet_metadata": metadata_json,
@@ -684,7 +685,7 @@ class SpreadsheetDocBuilder:
         # XLSX sheet names are limited to 31 chars and cannot contain []:*?/\
         sheet_name = re.sub(r"[\[\]:*?/\\]", " ", name or "Sheet").strip()[:31] or "Sheet"
         try:
-            xlsx_data = base64.b64decode(document.attachment_id.datas)
+            xlsx_data = document.attachment_id.raw.content
             with zipfile.ZipFile(BytesIO(xlsx_data), "r") as zf:
                 wb_xml = ET.fromstring(zf.read("xl/workbook.xml"))
                 ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
@@ -714,7 +715,7 @@ class SpreadsheetDocBuilder:
             {
                 "mode": "insert_sheet",
                 "document_id": document.id,
-                "xlsx_base64": document.attachment_id.datas.decode(),
+                "xlsx_base64": document.attachment_id.raw.to_base64(),
                 "sheet_name": sheet_name,
                 "cells_json": json.dumps(cells, cls=_DateTimeEncoder),
                 "metadata_json": metadata_json,
@@ -729,7 +730,7 @@ class SpreadsheetDocBuilder:
             return {"error": f"DocBuilder error: {error}"}
 
         # Update the document's attachment with the rebuilt XLSX and save metadata
-        document.attachment_id.write({"datas": base64.b64encode(xlsx_content), "mimetype": XLSX_MIMETYPE})
+        document.attachment_id.write({"raw": xlsx_content, "mimetype": XLSX_MIMETYPE})
         document.write({"onlyoffice_spreadsheet_metadata": metadata_json})
 
         _logger.info("Inserted sheet '%s' (id=%s) into document %s via ONLYOFFICE", sheet_name, new_id, document.id)

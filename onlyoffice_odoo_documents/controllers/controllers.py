@@ -14,6 +14,8 @@ from werkzeug.exceptions import Forbidden
 from odoo import http
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.http.dispatcher import serialize_exception
+from odoo.tools import json_default
 from odoo.tools.json import scriptsafe
 from odoo.tools.translate import _
 
@@ -120,7 +122,8 @@ class OnlyofficeDocuments_Connector(http.Controller):
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
-            if folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
+            # No folder is selected in the "All" section (Odoo 20+): create in My Drive.
+            if not folder_id or folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
                 folder_id_value = False
                 if folder_id == "COMPANY":
                     owner_id = request.env.ref("base.user_root").id
@@ -313,19 +316,19 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
                 session_info = request.env["ir.http"].get_frontend_session_info()
             except Exception:
                 session_info = {}
-            values["session_info"] = scriptsafe.dumps(session_info)
+            values["session_info"] = scriptsafe.dumps(session_info, default=json_default)
             return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
         except Exception as ex:
             _logger.error("Failed to open shared document: %s", ex)
 
-        return request.not_found()
+        raise request.not_found()
 
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
         values = self.prepare_document_editor(document_id, access_token)
         values["editorConfig"] = scriptsafe.dumps(values["editorConfig"])
-        values["session_info"] = scriptsafe.dumps(values["session_info"])
+        values["session_info"] = scriptsafe.dumps(values["session_info"], default=json_default)
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     def prepare_document_editor(self, document_id, access_token):
@@ -566,12 +569,12 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                datas = base64.encodebytes(urlopen(file_url, timeout=120).read())
+                datas = urlopen(file_url, timeout=120).read()
                 document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
                 document.with_user(user).sudo().write(
                     {
                         "name": attachment.name,
-                        "datas": datas,
+                        "raw": datas,
                         "mimetype": guess_type(file_url)[0],
                     }
                 )
@@ -579,7 +582,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
         except Exception as ex:
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = serialize_exception(ex)
 
         return request.make_response(
             data=json.dumps(response_json),

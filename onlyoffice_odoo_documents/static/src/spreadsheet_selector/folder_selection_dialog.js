@@ -6,20 +6,22 @@ import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 
-const { Component, onWillStart, useState } = owl
+const { Component, onWillStart, proxy, useProps } = owl
 
 /**
  * Asks for a workspace and a file name before a blank ONLYOFFICE spreadsheet is created.
  * The choice is reported through the onConfirmed prop; nothing is reported on cancel.
  */
 export class FolderSelectionDialog extends Component {
+  props = useProps()
+
   setup() {
     this.rpc = rpc
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 
     this.dialogTitle = _t("New ONLYOFFICE spreadsheet")
-    this.state = useState({
+    this.state = proxy({
       folders: [],
       isLoading: true,
       name: this.props.defaultName || _t("Untitled spreadsheet"),

@@ -36,7 +36,7 @@ class TestUrlUtils(TransactionCase):
 
     def test_no_replace_when_inner_url_not_configured(self):
         """URL is unchanged when inner URL is not configured (falls back to public)."""
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.DOC_SERVER_INNER_URL, "")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.DOC_SERVER_INNER_URL, "")
         input_url = "https://docs.example.com/some/path"
         result = url_utils.replace_public_url_to_internal(self.env, input_url)
         self.assertEqual(result, input_url)

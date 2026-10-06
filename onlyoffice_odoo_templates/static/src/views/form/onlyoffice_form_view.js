@@ -23,7 +23,7 @@ patch(FormController.prototype, {
         })
       },
       description: _t("Print with ONLYOFFICE"),
-      icon: "fa fa-print",
+      icon: "print",
       isAvailable: () => activeActions.type === "view",
       sequence: 60,
       skipSave: true,

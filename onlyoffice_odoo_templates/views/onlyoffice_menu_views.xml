@@ -12,24 +12,12 @@
       <form string="Create template">
         <sheet>
           <div class="oe_button_box" name="button_box" groups="base.group_system">
-            <button
-              name="associated_report"
-              type="object"
-              invisible="not report_id"
-              icon='fa-code'
-              class="oe_stat_button"
-            >
+            <button name="associated_report" type="object" invisible="not report_id" icon='code' class="oe_stat_button">
               <div class="o_field_widget o_stat_info">
                 <span class="o_stat_text">Report</span>
               </div>
             </button>
-            <button
-              name="create_action"
-              type="object"
-              invisible="report_id"
-              icon="fa-plus-square"
-              class="oe_stat_button"
-            >
+            <button name="create_action" type="object" invisible="report_id" icon="add_box" class="oe_stat_button">
               <div class="o_field_widget o_stat_info">
                 <span class="o_stat_text">Create associated report</span>
               </div>
@@ -38,7 +26,7 @@
               name="unlink_action"
               type="object"
               invisible="not report_id"
-              icon="fa-minus-square"
+              icon="indeterminate_check_box"
               class="oe_stat_button"
             >
               <div class="o_field_widget o_stat_info">
@@ -127,7 +115,7 @@
             <a t-if="widget.editable" type="open" class="dropdown-item">Edit</a>
             <a t-if="widget.deletable" type="delete" class="dropdown-item">Delete</a>
             <a
-              t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/datas?download=true"
+              t-attf-href="/web/content/ir.attachment/#{record.attachment_id.raw_value}/raw?download=true"
               download=""
               class="dropdown-item"
             >Download</a>
@@ -179,7 +167,7 @@
         <field name="attachment_id" />
         <field name="create_uid" />
         <field name="create_date" />
-        <button name="open_template_editor" type="object" string="Edit Template" icon="fa-edit" class="btn-primary" />
+        <button name="open_template_editor" type="object" string="Edit Template" icon="edit" class="btn-primary" />
       </list>
     </field>
   </record>

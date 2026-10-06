@@ -9,9 +9,11 @@ import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 
-const { Component, useState } = owl
+const { Component, proxy, useProps } = owl
 
 export class CreateModeDialog extends Component {
+  props = useProps()
+
   setup() {
     this.orm = useService("orm")
     this.rpc = rpc
@@ -19,7 +21,7 @@ export class CreateModeDialog extends Component {
     useHotkey("escape", () => this.data.close())
 
     this.dialogTitle = _t("Create with ONLYOFFICE")
-    this.state = useState({
+    this.state = proxy({
       isChosen: false,
       selectedMode: null,
     })
@@ -64,7 +66,7 @@ export class CreateModeDialog extends Component {
       if (result.error) {
         this.notification.add(result.error, {
           sticky: false,
-          type: "error",
+          type: "danger",
         })
       } else {
         this.props.model.load()

@@ -232,7 +232,7 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
         const uniqueSuffix = getFilenameTimestamp()
         openDocumentId = await this.orm.create("documents.document", [
           {
-            datas: base64,
+            raw: base64,
             folder_id: doc.data.folder_id.id,
             mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             name: `${name}_${uniqueSuffix}.xlsx`,

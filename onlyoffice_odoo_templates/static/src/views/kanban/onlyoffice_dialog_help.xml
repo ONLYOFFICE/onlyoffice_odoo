@@ -3,7 +3,7 @@
 <templates xml:space="preserve">
     <t t-name="onlyoffice_odoo_templates.HelpDialog" owl="1">
     <div>
-      <Dialog title="title" footer="true" size="'md'">
+      <Dialog title="this.title" footer="true" size="'md'">
         <span class="fw-bolder">
           ONLYOFFICE Templates module
         </span>
@@ -27,7 +27,7 @@
         <p
         >This will generate a PDF document with your template, automatically filled with the corresponding record's data.</p>
         <t t-set-slot="footer">
-          <button class="btn btn-primary" t-on-click="props.close">
+          <button class="btn btn-primary" t-on-click="this.props.close">
             <t>Ok</t>
           </button>
         </t>

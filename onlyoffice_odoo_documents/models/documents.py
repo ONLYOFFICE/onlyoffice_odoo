@@ -120,7 +120,7 @@ class Document(models.Model):
             return
 
         try:
-            metadata = _extract_odoo_metadata_from_xlsx(self.attachment_id.raw)
+            metadata = _extract_odoo_metadata_from_xlsx(self.attachment_id.raw.content)
         except Exception as ex:
             _logger.debug("Could not extract embedded ODOO metadata from %s: %s", self.name, ex)
             metadata = None
@@ -158,7 +158,7 @@ class Document(models.Model):
                 "id": rec.id,
                 "name": rec.name,
                 "display_name": rec.display_name,
-                "thumbnail": rec.thumbnail or False,
+                "thumbnail": rec.thumbnail.to_base64() if rec.thumbnail else False,
             }
             for rec in records
         ]

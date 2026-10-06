@@ -25,7 +25,7 @@ class TestFillTemplateScript(HttpCase):
     def setUp(self):
         super().setUp()
         # A preset internal secret keeps get_internal_jwt_secret from generating one and committing the test.
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.INTERNAL_JWT_SECRET, "test-internal-secret")
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.INTERNAL_JWT_SECRET, "test-internal-secret")
         self.token = jwt_utils.encode_payload(
             self.env, {"id": self.env.ref("base.user_admin").id}, config_utils.get_internal_jwt_secret(self.env)
         )

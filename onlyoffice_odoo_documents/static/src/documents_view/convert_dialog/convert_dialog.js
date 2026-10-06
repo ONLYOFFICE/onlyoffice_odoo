@@ -6,12 +6,14 @@ import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 
-const { Component, useState, onWillStart } = owl
+const { Component, proxy, useProps, onWillStart } = owl
 
 export class ConvertDialog extends Component {
   static components = { Dialog }
 
   static template = "onlyoffice_odoo_documents.ConvertDialog"
+
+  props = useProps()
 
   setup() {
     this.rpc = rpc
@@ -21,7 +23,7 @@ export class ConvertDialog extends Component {
     this.dialogTitle = _t("Convert with ONLYOFFICE")
     this.sourceExt = (this.props.filename.split(".").pop() || "").toLowerCase()
 
-    this.state = useState({
+    this.state = proxy({
       converting: false,
       formats: [],
       saveToDocuments: true,

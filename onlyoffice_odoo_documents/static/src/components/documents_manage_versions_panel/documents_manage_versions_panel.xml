@@ -4,7 +4,7 @@
   <t t-name="documents.ManageVersions" t-inherit="documents.ManageVersions" t-inherit-mode="extension">
     <xpath expr="//button[@t-on-click='() => this.onDownload(version.id)']" position="before">
       <button type="button" class="btn btn-secondary mx-1" t-on-click="() => this.onOpenInOnlyoffice(version.id)">
-        <i class="fa fa-external-link me-1" />Open </button>
+        <i class="oi me-1" data-icon="open_in_new" />Open </button>
     </xpath>
   </t>
 </templates>

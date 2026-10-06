@@ -43,7 +43,7 @@
               name="%(action_onlyoffice_demo_templates)d"
               string="Manage templates"
               class="btn-link"
-              icon="fa-arrow-right"
+              icon="east"
             />
           </setting>
           <setting

@@ -3,33 +3,39 @@
 <templates xml:space="preserve">
   <t t-name="onlyoffice_odoo_templates.ExportDataItem" owl="1">
     <div
-      t-att-data-field_id="props.field.id"
-      t-attf-class="o-onlyoffice-list-field list-group {{ state.subfields.length ? 'o-onlyoffice-list-field_expanded mb-2' : '' }} {{ props.field.parent ? 'o-onlyoffice-list-field_children' : ''}}"
+      t-att-data-field_id="this.props.field.id"
+      t-attf-class="o-onlyoffice-list-field list-group {{ this.state.subfields.length ? 'o-onlyoffice-list-field_expanded mb-2' : '' }} {{ this.props.field.parent ? 'o-onlyoffice-list-field_children' : ''}}"
       role="treeitem"
-      t-on-click.stop="() => this.toggleItem(props.field, true)"
-      t-attf-data-tooltip="{{ props.isTechnicalName ? props.field.string : props.field.id }}"
+      t-on-click.stop="() => this.toggleItem(this.props.field, true)"
+      t-attf-data-tooltip="{{ this.props.isTechnicalName ? this.props.field.string : this.props.field.id }}"
     >
       <div
-        t-attf-class="o-onlyoffice-field list-group-item-action {{ state.subfields.length ? 'o-onlyoffice-field_expanded list-group-item active' : '' }}"
+        t-attf-class="o-onlyoffice-field list-group-item-action {{ this.state.subfields.length ? 'o-onlyoffice-field_expanded list-group-item active' : '' }}"
       >
         <span
-          t-if="props.isFieldExpandable(props.field.id)"
-          t-attf-class="o-onlyoffice-field-caret fa {{ state.subfields.length ? 'fa-caret-down' : 'fa-caret-right' }}"
+          t-if="this.props.isFieldExpandable(this.props.field.id)"
+          class="o-onlyoffice-field-caret oi"
+          t-attf-data-icon="{{ this.state.subfields.length ? 'keyboard_arrow_down' : 'chevron_forward' }}"
           role="img"
           aria-label="Show sub-fields"
           title="Show sub-fields"
         />
-        <span t-if="props.isTechnicalName" class="o-onlyoffice-field-title text-900" t-esc="props.field.formattedId" />
-        <span t-else="" class="o-onlyoffice-field-title text-900" t-esc="props.field.formattedString" />
+        <span
+          t-if="this.props.isTechnicalName"
+          class="o-onlyoffice-field-title text-900"
+          t-esc="this.props.field.formattedId"
+        />
+        <span t-else="" class="o-onlyoffice-field-title text-900" t-esc="this.props.field.formattedString" />
         <!--<span
-          t-if="props.field.field_type === 'binary'"
+          t-if="this.props.field.field_type === 'binary'"
           title="Image"
-          t-attf-class="o-onlyoffice-field-type fa fa-picture-o float-end m-1"
+          class="o-onlyoffice-field-type oi float-end m-1"
+          data-icon="image"
         />-->
       </div>
-      <t t-foreach="state.subfields" t-as="field" t-key="field.id">
-        <ExportDataItem t-props="props" field="field" />
-        <t t-if="field_index === state.subfields.length-1">
+      <t t-foreach="this.state.subfields" t-as="field" t-key="field.id">
+        <ExportDataItem t-props="this.props" field="field" />
+        <t t-if="field_index === this.state.subfields.length-1">
           <hr class="o-onlyoffice-template-separator" />
         </t>
       </t>
@@ -39,7 +45,7 @@
   <t t-name="onlyoffice_odoo_templates.ExportData" owl="1">
     <div class="o-onlyoffice-fields-options">
       <div class="o-onlyoffice-options-help">
-        <span t-if="props.hasLicense"> Choose the field below to paste selected parameter to the cursor </span>
+        <span t-if="this.props.hasLicense"> Choose the field below to paste selected parameter to the cursor </span>
         <span t-else=""> Select a field below to copy its parameter to your clipboard. </span>
       </div>
       <div class="o-onlyoffice-options-title">
@@ -48,13 +54,13 @@
       <div class="o-onlyoffice-options-search">
         <div class="o-onlyoffice-search-field o_searchview">
           <input
-            t-ref="search"
+            t-ref="this.searchRef"
             class="o-onlyoffice-search-input o_searchview_input form-control"
             id="o-export-search-filter"
-            t-attf-placeholder="{{ state.isTechnicalName ? 'Search technical name' : 'Search field' }}"
-            t-on-input="onSearch"
+            t-attf-placeholder="{{ this.state.isTechnicalName ? 'Search technical name' : 'Search field' }}"
+            t-on-input="this.onSearch"
           />
-          <button t-if="this.searchRef.el and this.searchRef.el.value" t-on-click="onCleanSearch">
+          <button t-if="this.searchRef() and this.searchRef().value" t-on-click="this.onCleanSearch">
             <svg width="12" height="11" viewBox="0 0 12 11" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path
                 fill-rule="evenodd"
@@ -77,22 +83,26 @@
         </div>
       </div>
       <div class="o-onlyoffice-options-technical-name">
-        <CheckBox id="'o-display-option'" value="state.isTechnicalName" onChange.bind="onToggleDisplayOption">
+        <CheckBox id="'o-display-option'" value="this.state.isTechnicalName" onChange.bind="this.onToggleDisplayOption">
           Use a technical name
         </CheckBox>
       </div>
       <hr class="o-onlyoffice-template-separator" />
     </div>
     <div class="o-onlyoffice-fields-list">
-      <t t-if="fieldsAvailable">
-        <t t-foreach="rootFields" t-as="field" t-key="field.id + '_' + state.search.length + '_' + state.isCompatible">
+      <t t-if="this.fieldsAvailable">
+        <t
+          t-foreach="this.rootFields"
+          t-as="field"
+          t-key="field.id + '_' + this.state.search.length + '_' + this.state.isCompatible"
+        >
           <ExportDataItem
             field="field"
-            filterSubfields.bind="filterSubfields"
-            isExpanded="state.search.length > 0"
-            isFieldExpandable.bind="isFieldExpandable"
-            isTechnicalName="state.isTechnicalName"
-            loadFields.bind="loadFields"
+            filterSubfields.bind="this.filterSubfields"
+            isExpanded="this.state.search.length > 0"
+            isFieldExpandable.bind="this.isFieldExpandable"
+            isTechnicalName="this.state.isTechnicalName"
+            loadFields.bind="this.loadFields"
           />
         </t>
       </t>
