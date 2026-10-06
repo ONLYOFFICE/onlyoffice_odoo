@@ -305,7 +305,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
     @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
     def render_shared_document_editor(self, access_token=None, folder_token=None):
         try:
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+            document = request.env["documents.document"]._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
@@ -380,7 +380,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         Returns None if the token is invalid, the document is not a direct child of that folder,
         or the folder itself grants no link access.
         """
-        folder = ShareRoute._from_access_token(folder_token, skip_log=True)
+        folder = request.env["documents.document"]._from_access_token(folder_token, skip_log=True)
         if not folder or not folder.exists() or folder.type != "folder":
             return None
         if document.folder_id.id != folder.id:
@@ -515,7 +515,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         try:
             body = request.get_json_data()
             user = self.get_user_from_token(oo_security_token)
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+            document = request.env["documents.document"]._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
@@ -592,11 +592,11 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
 
 class OnlyOfficeShareRoute(ShareRoute):
-    @http.route("/documents/<access_token>", type="http", auth="public")
-    def documents_home(self, access_token):
-        response = super(OnlyOfficeShareRoute, self).documents_home(access_token)  # noqa: UP008
+    @http.route(["/my/documents", "/documents/<access_token>"], type="http", auth="public")
+    def documents_home(self, access_token="", member_signup_token=None, member_id=None):
+        response = super().documents_home(access_token, member_signup_token=member_signup_token, member_id=member_id)
 
-        document_sudo = self._from_access_token(access_token)
+        document_sudo = request.env["documents.document"]._from_access_token(access_token)
 
         if not request.env.user._is_public() or not hasattr(response, "qcontext"):
             return response
