@@ -1,7 +1,7 @@
 /** @odoo-module **/
 // Copyright (C) 2026 Ascensio System SIA
 
-import { Component, useRef, useState, onWillStart } from "@odoo/owl"
+import { Component, onWillStart, proxy, signal, t, useProps } from "@odoo/owl"
 import { CheckBox } from "@web/core/checkbox/checkbox"
 import { rpc } from "@web/core/network/rpc"
 import { unique } from "@web/core/utils/arrays"
@@ -9,8 +9,17 @@ import { useBus, useService } from "@web/core/utils/hooks"
 import { fuzzyLookup } from "@web/core/utils/search"
 
 class ExportDataItem extends Component {
+  props = useProps({
+    field: t.object().optional(),
+    filterSubfields: t.function(),
+    isExpanded: t.boolean(),
+    isFieldExpandable: t.function(),
+    isTechnicalName: t.boolean(),
+    loadFields: t.function(),
+  })
+
   setup() {
-    this.state = useState({ subfields: [] })
+    this.state = proxy({ subfields: [] })
     onWillStart(() => {
       if (this.props.isExpanded) {
         return this.toggleItem(this.props.field, false)
@@ -39,30 +48,25 @@ class ExportDataItem extends Component {
 
 ExportDataItem.template = "onlyoffice_odoo_templates.ExportDataItem"
 ExportDataItem.components = { ExportDataItem }
-ExportDataItem.props = {
-  field: {
-    optional: true,
-    type: Object,
-  },
-  filterSubfields: Function,
-  isExpanded: Boolean,
-  isFieldExpandable: Function,
-  isTechnicalName: Boolean,
-  loadFields: Function,
-}
 
 export class ExportData extends Component {
+  props = useProps({
+    hasLicense: t.boolean(),
+    resModel: t.string(),
+  })
+
+  searchRef = signal.ref()
+
   setup() {
     this.dialog = useService("dialog")
     this.notification = useService("notification")
     this.orm = useService("orm")
     this.rpc = rpc
-    this.searchRef = useRef("search")
 
     this.knownFields = {}
     this.expandedFields = {}
 
-    this.state = useState({
+    this.state = proxy({
       exportList: [],
       isTechnicalName: false,
       search: [],
@@ -160,14 +164,14 @@ export class ExportData extends Component {
   }
 
   get fieldsAvailable() {
-    if (this.searchRef.el && this.searchRef.el.value) {
+    if (this.searchRef() && this.searchRef().value) {
       return this.state.search.length && Object.values(this.state.search)
     }
     return Object.values(this.knownFields)
   }
 
   get rootFields() {
-    if (this.searchRef.el && this.searchRef.el.value) {
+    if (this.searchRef() && this.searchRef().value) {
       const rootFromSearchResults = this.fieldsAvailable.map((f) => {
         if (f.parent) {
           const parentEl = this.knownFields[f.parent.id]
@@ -184,11 +188,11 @@ export class ExportData extends Component {
   filterSubfields(subfields) {
     let subfieldsFromSearchResults = []
     let searchResults = null
-    if (this.searchRef.el && this.searchRef.el.value) {
-      searchResults = this.lookup(this.searchRef.el.value)
+    if (this.searchRef() && this.searchRef().value) {
+      searchResults = this.lookup(this.searchRef().value)
     }
     const fieldsAvailable = Object.values(searchResults || this.knownFields)
-    if (this.searchRef.el && this.searchRef.el.value) {
+    if (this.searchRef() && this.searchRef().value) {
       subfieldsFromSearchResults = fieldsAvailable
         .filter((f) => f.parent && this.knownFields[f.parent.id].parent)
         .map((f) => f.parent)
@@ -202,8 +206,8 @@ export class ExportData extends Component {
     this.knownFields = {}
     this.expandedFields = {}
     await this.loadFields()
-    if (this.searchRef.el) {
-      this.searchRef.el.value = ""
+    if (this.searchRef()) {
+      this.searchRef().value = ""
     }
   }
 
@@ -261,7 +265,7 @@ export class ExportData extends Component {
   }
 
   onCleanSearch() {
-    this.searchRef.el.value = ""
+    this.searchRef().value = ""
     this.state.search = []
   }
 
@@ -283,9 +287,5 @@ export class ExportData extends Component {
 ExportData.components = {
   CheckBox,
   ExportDataItem,
-}
-ExportData.props = {
-  hasLicense: Boolean,
-  resModel: String,
 }
 ExportData.template = "onlyoffice_odoo_templates.ExportData"

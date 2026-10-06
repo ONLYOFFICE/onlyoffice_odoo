@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
-    <t t-name="onlyoffice_odoo_templates.TemplateDialog" owl="1">
+    <t t-name="onlyoffice_odoo_templates.TemplateDialog">
     <div>
       <Dialog
-        t-if="state.isOpen"
-        title="dialogTitle"
+        t-if="this.state.isOpen"
+        title="this.dialogTitle"
         contentClass="'o-spreadsheet-templates-dialog'"
         footer="true"
-        modalRef="modalRef"
+        modalRef="this.modalRef"
       >
         <div class="o-pager">
           <Pager
-            t-if="state.totalTemplates"
-            total="state.totalTemplates"
-            offset="state.currentOffset"
-            limit="limit"
+            t-if="this.state.totalTemplates"
+            total="this.state.totalTemplates"
+            offset="this.state.currentOffset"
+            limit="this.limit"
             isEditable="false"
-            onUpdate.bind="onPagerChange"
+            onUpdate.bind="this.onPagerChange"
           />
         </div>
         <div
           class="o_kanban_renderer o_renderer d-flex o_kanban_ungrouped align-content-start flex-wrap justify-content-start"
         >
-          <t t-foreach="state.templates" t-as="template" t-key="template.id">
+          <t t-foreach="this.state.templates" t-as="template" t-key="template.id">
             <article
               role="link"
               class="o_kanban_record d-flex cursor-pointer flex-grow-1 flex-md-shrink-1 flex-shrink-0 o_kanban_attachment flex-row"
               tabindex="0"
-              t-att-class="isSelected(template.id) ? 'o_onlyoffice_kanban_record_selected': ''"
+              t-att-class="this.isSelected(template.id) ? 'o_onlyoffice_kanban_record_selected': ''"
               t-on-click="() => this.selectTemplate(template.id)"
-              t-on-dblclick="fillTemplate"
+              t-on-dblclick="this.fillTemplate"
             >
               <aside class="o_kanban_image m-1">
                 <div class="o_kanban_image_wrapper d-flex align-items-center justify-content-center">
@@ -39,10 +39,10 @@
               </aside>
               <main class="ms-1">
                 <div class="o_kanban_details_wrapper d-flex flex-column">
-                  <span class="text-truncate fw-bold fs-5" t-att-title="template.name" t-esc="template.name" />
+                  <span class="text-truncate fw-bold fs-5" t-att-title="template.name" t-out="template.name" />
                   <div class="d-flex flex-grow-1 align-items-center" />
                   <div class="d-flex">
-                    <span t-esc="template.create_date" />
+                    <span t-out="template.create_date" />
                     <div
                       class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user ms-auto o_field_many2one_avatar_kanban o_field_many2one_avatar"
                     >
@@ -63,22 +63,22 @@
           </t>
         </div>
         <t t-set-slot="footer">
-          <button class="btn btn-primary o-template-fill" t-att-disabled="isButtonDisabled()" t-on-click="fillTemplate">
+          <button class="btn btn-primary o-template-fill" t-att-disabled="this.isButtonDisabled()" t-on-click="this.fillTemplate">
             <t>Print</t>
           </button>
           <button
-            t-if="state.documentsAvailable"
+            t-if="this.state.documentsAvailable"
             class="btn btn-primary"
-            t-att-disabled="isButtonDisabled()"
-            t-on-click="addToDocuments"
+            t-att-disabled="this.isButtonDisabled()"
+            t-on-click="this.addToDocuments"
           >
             <i class="fa fa-folder-o me-1" />
             <t>Add to Documents</t>
           </button>
-          <button class="btn btn-secondary" t-att-disabled="isButtonDisabled()" t-on-click="previewTemplate">
+          <button class="btn btn-secondary" t-att-disabled="this.isButtonDisabled()" t-on-click="this.previewTemplate">
             <t>Preview</t>
           </button>
-          <button class="btn btn-secondary" t-on-click="data.close">
+          <button class="btn btn-secondary" t-on-click="this.data.close">
             <t>Cancel</t>
           </button>
         </t>

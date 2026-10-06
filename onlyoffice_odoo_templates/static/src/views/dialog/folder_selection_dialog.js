@@ -1,20 +1,24 @@
 /** @odoo-module **/
 // Copyright (C) 2026 Ascensio System SIA
 
+import { Component, onWillStart, proxy, t, useProps } from "@odoo/owl"
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 
-const { Component, useState, onWillStart } = owl
-
 export class FolderSelectionDialog extends Component {
+  props = useProps({
+    close: t.function().optional(),
+    onFolderSelected: t.function().optional(),
+  })
+
   setup() {
     this.rpc = rpc
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 
-    this.state = useState({
+    this.state = proxy({
       folders: [],
       selectedFolderId: null,
       isLoading: true,
