@@ -74,7 +74,7 @@ class IrActionsReport(models.Model):
                 if (
                     not has_duplicated_ids
                     and report_sudo.attachment
-                    and not self._context.get("report_pdf_no_attachment")
+                    and not self.env.context.get("report_pdf_no_attachment")
                 ):
                     attachment = report_sudo.retrieve_attachment(record)
 
@@ -97,7 +97,9 @@ class IrActionsReport(models.Model):
 
         # Call 'onlyoffice' to generate the missing streams.
         res_ids_wo_stream = [res_id for res_id, stream_data in collected_streams.items() if not stream_data["stream"]]
-        all_res_ids_wo_stream = res_ids if has_duplicated_ids else res_ids_wo_stream
+        # has_duplicated_ids is truthy only when res_ids is a non-empty list;
+        # the `or []` guard only narrows the type for the loop below
+        all_res_ids_wo_stream = (res_ids or []) if has_duplicated_ids else res_ids_wo_stream
         is_onlyoffice_needed = not res_ids or res_ids_wo_stream
 
         if is_onlyoffice_needed:
@@ -154,7 +156,7 @@ class IrActionsReport(models.Model):
         report_sudo = self._get_report(report_ref)
 
         # Generate the ir.attachment if needed.
-        if not has_duplicated_ids and report_sudo.attachment and not self._context.get("report_pdf_no_attachment"):
+        if not has_duplicated_ids and report_sudo.attachment and not self.env.context.get("report_pdf_no_attachment"):
             attachment_vals_list = self._prepare_pdf_report_attachment_vals_list(report_sudo, collected_streams)
             if attachment_vals_list:
                 for vals in attachment_vals_list:

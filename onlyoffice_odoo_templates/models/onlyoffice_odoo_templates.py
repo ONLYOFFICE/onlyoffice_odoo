@@ -54,7 +54,7 @@ class OnlyOfficeTemplate(models.Model):
     @api.onchange("file")
     def _onchange_file(self):
         if self.file and self.create_date:  # if file exist
-            decode_file = base64.b64decode(self.file)
+            decode_file = bytes(self.file)  # Binary fields expose raw bytes (BinaryValue) in Odoo 20
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
             old_datas = self.attachment_id.datas
             self.attachment_id.write({"datas": self.file})
@@ -115,7 +115,7 @@ class OnlyOfficeTemplate(models.Model):
         for vals in vals_list:
             vals_copy = vals.copy()
 
-            url = self._context.get("url", None)
+            url = self.env.context.get("url", None)
             if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
                 try:
                     response = onlyoffice_request(
@@ -131,7 +131,10 @@ class OnlyOfficeTemplate(models.Model):
             is_pdf_form = None
             if "file" in vals_copy and vals_copy["file"]:
                 try:
-                    decode_file = base64.b64decode(vals_copy["file"])
+                    raw_file = vals_copy["file"]
+                    # create() receives unconverted values: base64 str from the RPC
+                    # layer, but raw bytes/BinaryValue when called from code
+                    decode_file = base64.b64decode(raw_file) if isinstance(raw_file, str) else bytes(raw_file)
                     is_pdf_form = pdf_utils.is_pdf_form(decode_file)
                 except Exception as e:
                     raise UserError(_("Invalid file format.")) from e

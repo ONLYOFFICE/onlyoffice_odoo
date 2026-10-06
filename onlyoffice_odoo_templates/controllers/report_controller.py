@@ -6,14 +6,9 @@ import logging
 
 from werkzeug.urls import url_decode
 
-from odoo.http import (
-    content_disposition,
-    request,
-    route,
-)
-from odoo.http import (
-    serialize_exception as _serialize_exception,
-)
+from odoo.http import request, route
+from odoo.http.dispatcher import serialize_exception as _serialize_exception
+from odoo.http.stream import content_disposition
 from odoo.tools import html_escape
 from odoo.tools.safe_eval import safe_eval, time
 
@@ -22,7 +17,7 @@ from odoo.addons.web.controllers.report import ReportController
 _logger = logging.getLogger(__name__)
 
 
-class ReportController(ReportController):
+class ReportController(ReportController):  # noqa: pylint shadowing is Odoo's controller-override idiom
     @route()
     def report_routes(self, reportname, docids=None, converter=None, **data):
         if converter == "onlyoffice-pdf":
@@ -30,11 +25,17 @@ class ReportController(ReportController):
             context = dict(request.env.context)
             if docids:
                 docids = [int(i) for i in docids.split(",")]
-            if data.get("options"):
-                data.update(json.loads(data.pop("options")))
-            if data.get("context"):
-                data["context"] = json.loads(data["context"])
-                context.update(data["context"])
+            try:
+                if data.get("options"):
+                    data.update(json.loads(data.pop("options")))
+                if data.get("context"):
+                    data["context"] = json.loads(data["context"])
+                    context.update(data["context"])
+            except (ValueError, TypeError) as e:
+                return request.make_response(
+                    html_escape(json.dumps({"code": 400, "message": f"Invalid report payload: {e}"})),
+                    status=400,
+                )
             pdf = report.with_context(**context)._render_onlyoffice_pdf(reportname, docids, data=data)[0]
             pdfhttpheaders = [
                 (
@@ -48,9 +49,16 @@ class ReportController(ReportController):
 
     @route()
     def report_download(self, data, context=None, token=None, readonly=True):
-        requestcontent = json.loads(data)
+        try:
+            requestcontent = json.loads(data)
+        except ValueError as e:
+            return request.make_response(
+                html_escape(json.dumps({"code": 400, "message": f"Invalid download payload: {e}"})),
+                status=400,
+            )
         url, report_type = requestcontent[0], requestcontent[1]
         if report_type == "onlyoffice-pdf":
+            reportname = None
             try:
                 reportname = url.split("/report/onlyoffice-pdf/")[1].split("?")[0]
                 docids = None
@@ -85,7 +93,7 @@ class ReportController(ReportController):
                     response.headers.add("Content-Disposition", content_disposition(filename))
                 return response
             except Exception as e:
-                _logger.exception("Error while generating report %s", reportname)
+                _logger.exception("Error while generating report %s", reportname or report_type)
                 se = _serialize_exception(e)
                 error = {"code": 200, "message": "Odoo Server Error", "data": se}
                 return request.make_response(html_escape(json.dumps(error)))
