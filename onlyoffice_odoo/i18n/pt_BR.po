@@ -17,13 +17,13 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<i class=\"fa fa-arrow-right\"/> Learn more"
-msgstr "<i class=\"fa fa-arrow-right\"/> Saiba mais"
+msgid "<i class=\"oi\" data-icon=\"east\"/> Learn more"
+msgstr "<i class=\"oi\" data-icon=\"east\"/> Saiba mais"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<i class=\"fa fa-arrow-right\"/> Suggest a feature"
-msgstr "<i class=\"fa fa-arrow-right\"/> Sugerir um recurso"
+msgid "<i class=\"oi\" data-icon=\"east\"/> Suggest a feature"
+msgstr "<i class=\"oi\" data-icon=\"east\"/> Sugerir um recurso"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -160,6 +160,11 @@ msgid "Document templates"
 msgstr "Modelos de documento"
 
 #. module: onlyoffice_odoo
+#: model:ir.module.module,summary:base.module_onlyoffice_odoo
+msgid "Edit and collaborate on office files within Odoo Documents."
+msgstr "Edite e colabore em arquivos de escritório no Odoo Documentos."
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
@@ -251,6 +256,7 @@ msgstr "Nenhum formulário encontrado"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_onlyoffice_odoo
+#: model:ir.module.module,shortdesc:base.module_onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "ONLYOFFICE"
 msgstr "ONLYOFFICE"
@@ -361,6 +367,16 @@ msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
 msgstr "O período de teste de 30 dias acabou, você não pode mais se conectar ao ONLYOFFICE de demonstração Servidor Docs"
+
+#. module: onlyoffice_odoo
+#: model:ir.module.module,description:base.module_onlyoffice_odoo
+msgid ""
+"The ONLYOFFICE app allows users to edit and collaborate on office files "
+"within Odoo Documents using ONLYOFFICE Docs. You can work with text "
+"documents, spreadsheets, and presentations, co-author documents in real time"
+" using two co-editing modes (Fast and Strict), Track Changes, comments, and "
+"built-in chat."
+msgstr "O aplicativo ONLYOFFICE permite que os usuários editem arquivos de escritório e colaborem neles no Odoo Documentos usando o ONLYOFFICE Docs. Você pode trabalhar com documentos de texto, planilhas e apresentações e coeditar documentos em tempo real usando dois modos de coedição (Rápido e Estrito), controle de alterações, comentários e chat integrado."
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form

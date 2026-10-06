@@ -56,6 +56,11 @@ msgid "Attachment"
 msgstr "附件"
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.module.module,summary:base.module_onlyoffice_odoo_templates
+msgid "Automate form creation with inserting fields from Odoo in templates."
+msgstr "通过在模板中插入 Odoo 字段，自动创建表单。"
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__field_keys
 msgid "Cached form field keys"
 msgstr "已缓存的表单字段密钥"
@@ -230,6 +235,11 @@ msgid ""
 msgstr "如果字段没有通过 Odoo 数据自动填写，则无法手动填写。"
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid "Format"
+msgstr "格式"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Go to the relevant Odoo module (e.g., Sales, Invoices)."
@@ -342,6 +352,11 @@ msgid "Module/ section"
 msgstr "模块/部分"
 
 #. module: onlyoffice_odoo_templates
+#: model:res.groups.privilege,placeholder:onlyoffice_odoo_templates.res_groups_privilege_onlyoffice_templates
+msgid "No"
+msgstr "否"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 msgid "No available folders found."
@@ -376,6 +391,7 @@ msgstr "ONLYOFFICE PDF"
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_templates
+#: model:ir.module.module,shortdesc:base.module_onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_menu
 #: model:res.groups.privilege,name:onlyoffice_odoo_templates.res_groups_privilege_onlyoffice_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
@@ -498,11 +514,6 @@ msgid "Report Action"
 msgstr "报表动作"
 
 #. module: onlyoffice_odoo_templates
-#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
-msgid "Report Type"
-msgstr "报表类型"
-
-#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 msgid "Save"
@@ -603,9 +614,8 @@ msgstr "无法为 %(record)s 生成文档 %(report)s: %(error)s"
 msgid ""
 "The type of the report that will be rendered, each one having its own "
 "rendering method. HTML means the report will be opened directly in your "
-"browser PDF means the report will be rendered using Wkhtmltopdf and "
-"downloaded by the user."
-msgstr "将生成的报表类型，每个类型都有自己的渲染方式。HTML 表示报表将在您的浏览器中直接打开，PDF 表示报表将使用 Wkhtmltopdf 渲染并由用户下载。"
+"browser, PDF means the report will be generated and downloaded by the user."
+msgstr "将生成的报表类型，每个类型都有自己的渲染方式。HTML 表示报表将在您的浏览器中直接打开，PDF 表示报表将被生成并由用户下载。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -653,6 +663,14 @@ msgstr "用户"
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
 msgid "View Problematic Record(s)"
 msgstr "查看有问题的记录"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.module.module,description:base.module_onlyoffice_odoo_templates
+msgid ""
+"Work with fillable templates in Odoo using ONLYOFFICE. Create templates "
+"based on the data and fields available in Odoo, fill them out and print with"
+" several clicks."
+msgstr "使用 ONLYOFFICE 在 Odoo 中处理可填写模板。基于 Odoo 中可用的数据和字段创建模板，只需几次点击即可填写并打印。"
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript

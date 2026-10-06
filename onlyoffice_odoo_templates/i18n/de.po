@@ -56,6 +56,11 @@ msgid "Attachment"
 msgstr "Anhang"
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.module.module,summary:base.module_onlyoffice_odoo_templates
+msgid "Automate form creation with inserting fields from Odoo in templates."
+msgstr "Automatisieren Sie die Formularerstellung, indem Sie Felder aus Odoo in Vorlagen einfügen."
+
+#. module: onlyoffice_odoo_templates
 #: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_onlyoffice_odoo_templates__field_keys
 msgid "Cached form field keys"
 msgstr "Zwischengespeicherte Formularfeldschlüssel"
@@ -230,6 +235,11 @@ msgid ""
 msgstr "Formularfelder können nicht manuell ausgefüllt werden, wenn sie nicht automatisch mit Daten aus Odoo ausgefüllt wurden"
 
 #. module: onlyoffice_odoo_templates
+#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
+msgid "Format"
+msgstr "Format"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/kanban/onlyoffice_dialog_help.xml:0
 msgid "Go to the relevant Odoo module (e.g., Sales, Invoices)."
@@ -344,6 +354,11 @@ msgid "Module/ section"
 msgstr "Modul/Sektion"
 
 #. module: onlyoffice_odoo_templates
+#: model:res.groups.privilege,placeholder:onlyoffice_odoo_templates.res_groups_privilege_onlyoffice_templates
+msgid "No"
+msgstr "Nein"
+
+#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 msgid "No available folders found."
@@ -378,6 +393,7 @@ msgstr "ONLYOFFICE PDF"
 #. module: onlyoffice_odoo_templates
 #: model:ir.actions.act_window,name:onlyoffice_odoo_templates.action_onlyoffice_odoo_templates
 #: model:ir.model,name:onlyoffice_odoo_templates.model_onlyoffice_odoo_templates
+#: model:ir.module.module,shortdesc:base.module_onlyoffice_odoo_templates
 #: model:ir.ui.menu,name:onlyoffice_odoo_templates.onlyoffice_menu
 #: model:res.groups.privilege,name:onlyoffice_odoo_templates.res_groups_privilege_onlyoffice_templates
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo_templates.res_config_settings_view_form
@@ -500,11 +516,6 @@ msgid "Report Action"
 msgstr "Berichtsaktion"
 
 #. module: onlyoffice_odoo_templates
-#: model:ir.model.fields,field_description:onlyoffice_odoo_templates.field_ir_actions_report__report_type
-msgid "Report Type"
-msgstr "Berichtstyp"
-
-#. module: onlyoffice_odoo_templates
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_templates/static/src/views/dialog/folder_selection_dialog.xml:0
 msgid "Save"
@@ -605,9 +616,8 @@ msgstr "Das Dokument %(report)s konnte für %(record)s nicht erzeugt werden: %(e
 msgid ""
 "The type of the report that will be rendered, each one having its own "
 "rendering method. HTML means the report will be opened directly in your "
-"browser PDF means the report will be rendered using Wkhtmltopdf and "
-"downloaded by the user."
-msgstr "Der Typ des zu erzeugenden Berichts, jeder mit seiner eigenen Rendering-Methode. HTML bedeutet, dass der Bericht direkt in Ihrem Browser geöffnet wird, PDF bedeutet, dass der Bericht mit Wkhtmltopdf gerendert und vom Benutzer heruntergeladen wird."
+"browser, PDF means the report will be generated and downloaded by the user."
+msgstr "Der Typ des zu erzeugenden Berichts, jeder mit seiner eigenen Rendering-Methode. HTML bedeutet, dass der Bericht direkt in Ihrem Browser geöffnet wird, PDF bedeutet, dass der Bericht generiert und vom Benutzer heruntergeladen wird."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript
@@ -655,6 +665,14 @@ msgstr "Benutzer"
 #: code:addons/onlyoffice_odoo_templates/models/ir_actions_report.py:0
 msgid "View Problematic Record(s)"
 msgstr "Problematische Datensätze anzeigen"
+
+#. module: onlyoffice_odoo_templates
+#: model:ir.module.module,description:base.module_onlyoffice_odoo_templates
+msgid ""
+"Work with fillable templates in Odoo using ONLYOFFICE. Create templates "
+"based on the data and fields available in Odoo, fill them out and print with"
+" several clicks."
+msgstr "Arbeiten Sie mit ausfüllbaren Vorlagen in Odoo mit ONLYOFFICE. Erstellen Sie Vorlagen auf Basis der in Odoo verfügbaren Daten und Felder, füllen Sie sie aus und drucken Sie sie mit wenigen Klicks."
 
 #. module: onlyoffice_odoo_templates
 #. odoo-javascript

@@ -242,6 +242,11 @@ msgid "Documents share access"
 msgstr "Accesso condiviso ai documenti"
 
 #. module: onlyoffice_odoo_documents
+#: model:ir.module.module,summary:base.module_onlyoffice_odoo_documents
+msgid "Edit and collaborate on office files within Odoo Documents."
+msgstr "Modifica e collabora sui file d'ufficio in Odoo Documenti."
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__edit
@@ -477,6 +482,7 @@ msgstr "Server ONLYOFFICE Docs"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents
+#: model:ir.module.module,shortdesc:base.module_onlyoffice_odoo_documents
 msgid "ONLYOFFICE Documents"
 msgstr "ONLYOFFICE Documents"
 
@@ -503,6 +509,7 @@ msgstr "Metadati del foglio di calcolo Onlyoffice verificati"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_product_document__oo_attachment_version
 msgid "Oo Attachment Version"
 msgstr "Versione allegato Oo"
 
@@ -652,6 +659,16 @@ msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
 msgstr "Il periodo di prova di 30 giorni è terminato, non puoi più connetterti alla demo ONLYOFFICE Docs Server"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.module.module,description:base.module_onlyoffice_odoo_documents
+msgid ""
+"The ONLYOFFICE app allows users to edit and collaborate on office files "
+"within Odoo Documents using ONLYOFFICE Docs. You can work with text "
+"documents, spreadsheets, and presentations, co-author documents in real time"
+" using two co-editing modes (Fast and Strict), Track Changes, comments, and "
+"built-in chat."
+msgstr "L'app ONLYOFFICE consente agli utenti di modificare i file d'ufficio e di collaborare su di essi in Odoo Documenti con ONLYOFFICE Docs. Puoi lavorare con documenti di testo, fogli di calcolo e presentazioni e co-modificare i documenti in tempo reale con due modalità di co-editing (Veloce e Rigorosa), il rilevamento delle modifiche, i commenti e la chat integrata."
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python

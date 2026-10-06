@@ -17,13 +17,13 @@ msgstr ""
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<i class=\"fa fa-arrow-right\"/> Learn more"
-msgstr "<i class=\"fa fa-arrow-right\"/> 了解更多"
+msgid "<i class=\"oi\" data-icon=\"east\"/> Learn more"
+msgstr "<i class=\"oi\" data-icon=\"east\"/> 了解更多"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
-msgid "<i class=\"fa fa-arrow-right\"/> Suggest a feature"
-msgstr "<i class=\"fa fa-arrow-right\"/> 建议功能"
+msgid "<i class=\"oi\" data-icon=\"east\"/> Suggest a feature"
+msgstr "<i class=\"oi\" data-icon=\"east\"/> 建议功能"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
@@ -160,6 +160,11 @@ msgid "Document templates"
 msgstr "文档模板"
 
 #. module: onlyoffice_odoo
+#: model:ir.module.module,summary:base.module_onlyoffice_odoo
+msgid "Edit and collaborate on office files within Odoo Documents."
+msgstr "在 Odoo 文档中编辑和协作处理办公文件。"
+
+#. module: onlyoffice_odoo
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo/static/src/views/form_gallery/form_gallery.js:0
 msgid "Error loading forms"
@@ -251,6 +256,7 @@ msgstr "未找到表单"
 
 #. module: onlyoffice_odoo
 #: model:ir.model,name:onlyoffice_odoo.model_onlyoffice_odoo
+#: model:ir.module.module,shortdesc:base.module_onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form
 msgid "ONLYOFFICE"
 msgstr "ONLYOFFICE"
@@ -361,6 +367,16 @@ msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
 msgstr "30 天测试期结束后，您将无法再访问 ONLYOFFICE文档服务器演示版"
+
+#. module: onlyoffice_odoo
+#: model:ir.module.module,description:base.module_onlyoffice_odoo
+msgid ""
+"The ONLYOFFICE app allows users to edit and collaborate on office files "
+"within Odoo Documents using ONLYOFFICE Docs. You can work with text "
+"documents, spreadsheets, and presentations, co-author documents in real time"
+" using two co-editing modes (Fast and Strict), Track Changes, comments, and "
+"built-in chat."
+msgstr "ONLYOFFICE 应用允许用户使用 ONLYOFFICE 文档在 Odoo 文档中编辑办公文件并进行协作。您可以处理文本文档、电子表格和演示文稿，通过两种协作编辑模式（快速和严格）、修订、批注和内置聊天实时协作编辑文档。"
 
 #. module: onlyoffice_odoo
 #: model_terms:ir.ui.view,arch_db:onlyoffice_odoo.res_config_settings_view_form

@@ -242,6 +242,11 @@ msgid "Documents share access"
 msgstr "文档共享访问权限"
 
 #. module: onlyoffice_odoo_documents
+#: model:ir.module.module,summary:base.module_onlyoffice_odoo_documents
+msgid "Edit and collaborate on office files within Odoo Documents."
+msgstr "在 Odoo 文档中编辑和协作处理办公文件。"
+
+#. module: onlyoffice_odoo_documents
 #. odoo-python
 #: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
 #: model:ir.model.fields.selection,name:onlyoffice_odoo_documents.selection__onlyoffice_odoo_documents_access__internal_users__edit
@@ -477,6 +482,7 @@ msgstr "ONLYOFFICE 文档服务器"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model,name:onlyoffice_odoo_documents.model_onlyoffice_odoo_documents
+#: model:ir.module.module,shortdesc:base.module_onlyoffice_odoo_documents
 msgid "ONLYOFFICE Documents"
 msgstr "ONLYOFFICE 文档"
 
@@ -503,6 +509,7 @@ msgstr "已检查 Onlyoffice 电子表格元数据"
 
 #. module: onlyoffice_odoo_documents
 #: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_ir_attachment__oo_attachment_version
+#: model:ir.model.fields,field_description:onlyoffice_odoo_documents.field_product_document__oo_attachment_version
 msgid "Oo Attachment Version"
 msgstr "Oo 附件版本"
 
@@ -652,6 +659,16 @@ msgid ""
 "The 30-day test period is over, you can no longer connect to demo ONLYOFFICE"
 " Docs server"
 msgstr "30 天测试期结束后，您将无法再访问 ONLYOFFICE文档服务器演示版"
+
+#. module: onlyoffice_odoo_documents
+#: model:ir.module.module,description:base.module_onlyoffice_odoo_documents
+msgid ""
+"The ONLYOFFICE app allows users to edit and collaborate on office files "
+"within Odoo Documents using ONLYOFFICE Docs. You can work with text "
+"documents, spreadsheets, and presentations, co-author documents in real time"
+" using two co-editing modes (Fast and Strict), Track Changes, comments, and "
+"built-in chat."
+msgstr "ONLYOFFICE 应用允许用户使用 ONLYOFFICE 文档在 Odoo 文档中编辑办公文件并进行协作。您可以处理文本文档、电子表格和演示文稿，通过两种协作编辑模式（快速和严格）、修订、批注和内置聊天实时协作编辑文档。"
 
 #. module: onlyoffice_odoo_documents
 #. odoo-python
