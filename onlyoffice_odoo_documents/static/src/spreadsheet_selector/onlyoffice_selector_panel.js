@@ -16,7 +16,7 @@ export class OnlyofficeSelectorPanel extends SpreadsheetSelectorPanel {
    * @override
    */
   async _fetchSpreadsheets() {
-    // this.domain holds the search filter of the parent panel
+    // The search filter of the parent panel is kept in this.domain
     const { limit, offset } = this.state.pagerProps
     const [records, total] = await this.keepLast.add(
       Promise.all([

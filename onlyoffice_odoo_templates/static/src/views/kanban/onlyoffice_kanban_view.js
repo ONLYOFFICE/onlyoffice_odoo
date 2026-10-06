@@ -8,10 +8,10 @@ import { OnlyofficeKanbanRenderer } from "./onlyoffice_kanban_renderer"
 
 export const onlyofficeKanbanView = {
   ...kanbanView,
-  // Since Odoo 20 the "New" button lives in a separate template, set through buttonTemplate.
-  buttonTemplate: "onlyoffice_odoo_templates.KanbanView.Buttons",
   Controller: OnlyofficeKanbanController,
   Renderer: OnlyofficeKanbanRenderer,
+  // Since Odoo 20 the "New" button lives in a separate template, set through buttonTemplate.
+  buttonTemplate: "onlyoffice_odoo_templates.KanbanView.Buttons",
 }
 
 registry.category("views").add("onlyoffice_kanban", onlyofficeKanbanView)

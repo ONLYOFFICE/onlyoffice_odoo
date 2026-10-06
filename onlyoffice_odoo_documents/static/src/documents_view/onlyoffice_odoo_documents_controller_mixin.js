@@ -232,11 +232,11 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
         const uniqueSuffix = getFilenameTimestamp()
         openDocumentId = await this.orm.create("documents.document", [
           {
-            raw: base64,
             folder_id: doc.data.folder_id.id,
             mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             name: `${name}_${uniqueSuffix}.xlsx`,
             onlyoffice_spreadsheet_source_id: doc.data.id,
+            raw: base64,
           },
         ])
         this.notification.add(_t("Spreadsheet converted to XLSX for editing in ONLYOFFICE"), { type: "success" })

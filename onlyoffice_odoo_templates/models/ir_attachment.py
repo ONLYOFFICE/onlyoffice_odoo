@@ -45,7 +45,7 @@ class IrAttachment(models.Model):
         """
         if not attachments:
             return
-        # This runs as a postcommit hook: since Odoo 20 the committed transaction is reset, so the ORM needs a new cursor.
+        # Runs as a postcommit hook: since Odoo 20 the committed transaction is reset, so open a new cursor.
         attachment_ids = attachments.ids
         with self.env.registry.cursor() as cr:
             env = self.env(cr=cr)

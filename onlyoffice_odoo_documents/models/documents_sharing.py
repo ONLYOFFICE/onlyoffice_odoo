@@ -65,10 +65,12 @@ class DocumentsSharing(models.TransientModel):
                 original_user_roles[std_access.partner_id] = std_access.role
 
         modified_custom_or_standard_access = self.share_access_ids.filtered(
-            lambda a: not a.role.startswith(self.WRITE_VALUE_PREFIX)
-            and not a.is_deleted
-            and (self._is_custom_role(a.role) or a.role in ["view", "edit"])
-            and original_user_roles.get(a.partner_id) != a.role
+            lambda a: (
+                not a.role.startswith(self.WRITE_VALUE_PREFIX)
+                and not a.is_deleted
+                and (self._is_custom_role(a.role) or a.role in ["view", "edit"])
+                and original_user_roles.get(a.partner_id) != a.role
+            )
         )
 
         if modified_custom_or_standard_access:
