@@ -68,7 +68,7 @@ export class CreateModeDialog extends Component {
       if (result.error) {
         this.notification.add(result.error, {
           sticky: false,
-          type: "error",
+          type: "danger",
         })
       } else {
         this.props.model.load()
@@ -119,7 +119,7 @@ export class CreateModeDialog extends Component {
     try {
       return JSON.parse(payload)
     } catch {
-      this.notification.add(_t("Unexpected server response"), { type: "error" })
+      this.notification.add(_t("Unexpected server response"), { type: "danger" })
       return null
     }
   }
@@ -127,12 +127,12 @@ export class CreateModeDialog extends Component {
   _openEditorTab(documentId) {
     documentId = Number(documentId)
     if (!Number.isInteger(documentId) || documentId <= 0) {
-      this.notification.add(_t("Invalid document reference returned by the server"), { type: "error" })
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
       return
     }
     const target = new URL(`/onlyoffice/editor/document/${documentId}`, window.location.origin)
     if (target.origin !== window.location.origin) {
-      this.notification.add(_t("Invalid document reference returned by the server"), { type: "error" })
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
       return
     }
     return this.actionService.doAction({

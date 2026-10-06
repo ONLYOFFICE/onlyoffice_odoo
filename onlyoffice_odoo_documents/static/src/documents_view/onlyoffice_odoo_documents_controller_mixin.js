@@ -64,7 +64,7 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     try {
       return JSON.parse(payload)
     } catch {
-      this.notification.add(_t("Unexpected server response"), { type: "error" })
+      this.notification.add(_t("Unexpected server response"), { type: "danger" })
       return null
     }
   },
@@ -72,12 +72,12 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
   _openEditorTab(documentId) {
     documentId = Number(documentId)
     if (!Number.isInteger(documentId) || documentId <= 0) {
-      this.notification.add(_t("Invalid document reference returned by the server"), { type: "error" })
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
       return
     }
     const target = new URL(`/onlyoffice/editor/document/${documentId}`, window.location.origin)
     if (target.origin !== window.location.origin) {
-      this.notification.add(_t("Invalid document reference returned by the server"), { type: "error" })
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
       return
     }
     return this.actionService.doAction({

@@ -3,6 +3,7 @@ import base64
 import json
 import logging
 import re
+import types
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -25,6 +26,20 @@ _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fenne
 
 
 class OnlyofficeDocuments_Connector(http.Controller):
+    @staticmethod
+    def _dumps_for_qweb(payload):
+        """JSON for inline <script> payloads: session_info may carry Odoo 20
+        objects (mappingproxy, sets) that plain json.dumps rejects."""
+
+        def _default(obj):
+            if isinstance(obj, types.MappingProxyType):
+                return dict(obj)
+            if isinstance(obj, (set, frozenset)):
+                return sorted(obj, key=str)
+            return str(obj)
+
+        return json.dumps(payload, default=_default)
+
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="jsonrpc")
     def post_file_create(self, folder_id, supported_format, title, url=None):
         result = {"error": None, "file_id": None, "document_id": None}
@@ -42,14 +57,21 @@ class OnlyofficeDocuments_Connector(http.Controller):
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
-            if folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
+            if not folder_id or str(folder_id) in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
                 folder_id_value = False
                 if folder_id == "COMPANY":
                     owner_id = request.env.ref("base.user_root").id
                 else:
                     owner_id = request.env.user.id
             else:
-                folder_id_value = int(folder_id)
+                try:
+                    folder_id_value = int(folder_id)
+                except (TypeError, ValueError):
+                    folder_id_value = False
+                if not folder_id_value or folder_id_value <= 0:
+                    # an invalid/zero folder id must not become browse(0)
+                    # (crashes enterprise shortcut constraints at create time)
+                    folder_id_value = False
                 owner_id = request.env.user.id
 
             data = {
@@ -95,12 +117,12 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
                 raise request.not_found()
 
             values = self.prepare_share_editor(document, access_token, folder_token=folder_token)
-            values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+            values["editorConfig"] = markupsafe.Markup(self._dumps_for_qweb(values["editorConfig"]))
             try:
                 session_info = request.env["ir.http"].get_frontend_session_info()
             except Exception:
                 session_info = {}
-            values["session_info"] = markupsafe.Markup(json.dumps(session_info))
+            values["session_info"] = markupsafe.Markup(self._dumps_for_qweb(session_info))
             return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
         except Exception as ex:
@@ -111,8 +133,8 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
         values = self.prepare_document_editor(document_id, access_token)
-        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
-        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        values["editorConfig"] = markupsafe.Markup(self._dumps_for_qweb(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(self._dumps_for_qweb(values["session_info"]))
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     def prepare_document_editor(self, document_id, access_token):

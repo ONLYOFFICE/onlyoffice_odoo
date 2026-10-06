@@ -6,6 +6,7 @@ import logging
 import re
 import string
 import time
+import types
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -88,6 +89,19 @@ def onlyoffice_request(url, method, opts=None):
 
 
 class Onlyoffice_Connector(http.Controller):
+    @staticmethod
+    def _dumps_for_qweb(payload):
+        """JSON for inline <script> payloads: session_info may carry Odoo 20
+        objects (mappingproxy, sets) that plain json.dumps rejects."""
+
+        def _default(obj):
+            if isinstance(obj, types.MappingProxyType):
+                return dict(obj)
+            if isinstance(obj, (set, frozenset)):
+                return sorted(obj, key=str)
+            return str(obj)
+
+        return json.dumps(payload, default=_default)
     @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         _logger.info("POST /onlyoffice/editor/get_config - document: %s, attachment: %s", document_id, attachment_id)
@@ -191,8 +205,8 @@ class Onlyoffice_Connector(http.Controller):
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
         values = self.prepare_editor_values(attachment, access_token, can_write)
-        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
-        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        values["editorConfig"] = markupsafe.Markup(self._dumps_for_qweb(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(self._dumps_for_qweb(values["session_info"]))
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
