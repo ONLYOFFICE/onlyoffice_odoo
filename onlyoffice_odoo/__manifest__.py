@@ -13,7 +13,7 @@
     "depends": ["base", "mail"],
     "external_dependencies": {"python": ["pyjwt"]},
     "data": [
-        "security/ir.model.access.csv",
+        "security/ir.access.csv",
         "views/templates.xml",
         "views/res_config_settings_views.xml",
     ],

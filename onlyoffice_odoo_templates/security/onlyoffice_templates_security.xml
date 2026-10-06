@@ -31,24 +31,18 @@
 
   <!-- Access control rules -->
   <data noupdate="1">
-    <record id="access_onlyoffice_odoo_templates_user" model="ir.model.access">
+    <record id="access_onlyoffice_odoo_templates_user" model="ir.access">
       <field name="name">User Access</field>
       <field name="model_id" ref="onlyoffice_odoo_templates.model_onlyoffice_odoo_templates" />
       <field name="group_id" ref="group_onlyoffice_odoo_templates_user" />
-      <field name="perm_read" eval="1" />
-      <field name="perm_write" eval="0" />
-      <field name="perm_create" eval="0" />
-      <field name="perm_unlink" eval="0" />
+      <field name="operation">r</field>
     </record>
 
-    <record id="access_onlyoffice_odoo_templates_admin" model="ir.model.access">
+    <record id="access_onlyoffice_odoo_templates_admin" model="ir.access">
       <field name="name">Administrator Access</field>
       <field name="model_id" ref="onlyoffice_odoo_templates.model_onlyoffice_odoo_templates" />
       <field name="group_id" ref="group_onlyoffice_odoo_templates_admin" />
-      <field name="perm_read" eval="1" />
-      <field name="perm_write" eval="1" />
-      <field name="perm_create" eval="1" />
-      <field name="perm_unlink" eval="1" />
+      <field name="operation">crud</field>
     </record>
   </data>
 </odoo>
