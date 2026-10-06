@@ -37,13 +37,13 @@
     t-inherit="documents.DocumentsViews.ControlPanel"
     t-inherit-mode="extension"
   >
-    <xpath expr="//DropdownItem[@onSelected='onClickDocumentsAddUrl']" position="after">
+    <xpath expr="//DropdownItem[@onSelected='this.onClickDocumentsAddUrl']" position="after">
       <DropdownItem
         tag="'button'"
         class="'btn btn-link o_documents_kanban_onlyoffice_odoo_documents'"
-        t-if="userIsInternal"
+        t-if="this.userIsInternal"
         onSelected="() => this.onClickCreateOnlyoffice()"
-        attrs="{disabled: !canUploadInFolder(folder)}"
+        attrs="{disabled: !this.canUploadInFolder(folder)}"
       >
         <i class="me-2">
           <t t-call="onlyoffice_odoo_documents.OnlyofficeIcon" />

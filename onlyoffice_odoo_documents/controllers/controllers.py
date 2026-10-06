@@ -18,7 +18,7 @@ from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils, validation_utils
 
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
@@ -33,6 +33,9 @@ class OnlyofficeDocuments_Connector(http.Controller):
             _logger.info(f"Getting new file template {request.env.user.lang} {supported_format}")
 
             if url:
+                if not validation_utils.valid_url(url) or not url.startswith(("http://", "https://")):
+                    result["error"] = _("Invalid template URL")
+                    return result
                 response = requests.get(url, stream=True, timeout=30)
                 response.raise_for_status()
                 file_data = response.content
@@ -86,7 +89,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
     def render_shared_document_editor(self, access_token=None, folder_token=None):
         try:
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+            document = request.env["documents.document"]._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
@@ -141,7 +144,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         Returns None if the token is invalid, the document is not a direct child of that folder,
         or the folder itself grants no link access.
         """
-        folder = ShareRoute._from_access_token(folder_token, skip_log=True)
+        folder = request.env["documents.document"]._from_access_token(folder_token, skip_log=True)
         if not folder or not folder.exists() or folder.type != "folder":
             return None
         if document.folder_id.id != folder.id:
@@ -276,7 +279,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         try:
             body = request.get_json_data()
             user = self.get_user_from_token(oo_security_token)
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+            document = request.env["documents.document"]._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
@@ -353,11 +356,11 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
 
 class OnlyOfficeShareRoute(ShareRoute):
-    @http.route("/documents/<access_token>", type="http", auth="public")
-    def documents_home(self, access_token):
-        response = super(OnlyOfficeShareRoute, self).documents_home(access_token)  # noqa: UP008
+    @http.route(["/my/documents", "/documents/<access_token>"], type="http", auth="public")
+    def documents_home(self, access_token="", member_signup_token=None, member_id=None):
+        response = super().documents_home(access_token, member_signup_token=member_signup_token, member_id=member_id)
 
-        document_sudo = self._from_access_token(access_token)
+        document_sudo = request.env["documents.document"]._from_access_token(access_token)
 
         if not request.env.user._is_public() or not hasattr(response, "qcontext"):
             return response
