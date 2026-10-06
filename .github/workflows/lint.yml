@@ -3,7 +3,7 @@ name: Lint
 on:
   workflow_dispatch:
   push:
-    branches: [develop, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
+    branches: [develop, 20.0, feature/20.0, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
     paths-ignore:
       - '**/*.md'
       - 'LICENSE'

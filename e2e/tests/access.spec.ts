@@ -21,13 +21,13 @@ test("open the editor link of a file in someone else's private chat → 403, no 
   const attachmentId = await odoo.call<number>("ir.attachment", "create", [
     {
       name: "private.docx",
-      datas: readFileSync(template("docx")).toString("base64"),
+      raw: readFileSync(template("docx")).toString("base64"),
       res_model: "discuss.channel",
       res_id: channelId,
     },
   ])
   const login = `e2e-outsider-${Date.now()}`
-  await odoo.call("res.users", "create", [{ name: login, login, password: login }])
+  const userId = await odoo.call<number>("res.users", "create", [{ name: login, login, password: login }])
 
   // An empty storage state: otherwise the context inherits (and the login would take over) the admin session.
   const outsider = await browser.newContext({ storageState: { cookies: [], origins: [] } })
@@ -38,6 +38,7 @@ test("open the editor link of a file in someone else's private chat → 403, no 
 
   const response = await page.goto(`/onlyoffice/editor/${attachmentId}`)
   expect(response?.status()).toBe(403)
-  await expect(page.locator("body")).toContainText(`${login} (id=`) // denied as this user, not as a visitor
+  // Denied as this user, not as a visitor (Odoo 20 names the user by id in the access error).
+  await expect(page.locator("body")).toContainText(`User: ${userId}`)
   await outsider.close()
 })

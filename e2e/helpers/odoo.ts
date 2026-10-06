@@ -19,12 +19,18 @@ export class Odoo {
     return record[field]
   }
 
+  /** Content of a binary field: since Odoo 20 `read` returns it as `{ content: <base64>, size, filename? }`. */
+  async readFile(model: string, id: number, field: string): Promise<Buffer> {
+    const value = await this.read<{ content: string } | false>(model, id, field)
+    return Buffer.from(value ? value.content : "", "base64")
+  }
+
   getParam(key: string) {
-    return this.call<string | false>("ir.config_parameter", "get_param", [key])
+    return this.call<string | false>("ir.config_parameter", "get_str", [key, false])
   }
 
   setParam(key: string, value: boolean) {
-    return this.call("ir.config_parameter", "set_param", [key, value])
+    return this.call("ir.config_parameter", "set_bool", [key, value])
   }
 
   private async rpc<T>(service: string, method: string, args: unknown[]): Promise<T> {

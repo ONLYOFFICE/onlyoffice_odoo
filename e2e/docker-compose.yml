@@ -1,11 +1,12 @@
 # Copyright (C) 2026 Ascensio System SIA
-# Local stack for the Playwright tests: Odoo 19 (onlyoffice_odoo, onlyoffice_odoo_templates, hr) + PostgreSQL + ONLYOFFICE Docs.
+# Local stack for the Playwright tests: Odoo 20 (onlyoffice_odoo, onlyoffice_odoo_templates, hr) + PostgreSQL + ONLYOFFICE Docs.
 #   browser         -> http://localhost:8069  Odoo,            http://localhost:8080  Document Server
 #   Odoo container  -> http://documentserver/ Document Server (inner URL)
 #   Document Server -> http://web:8069/       Odoo (Odoo URL for internal requests)
 services:
   db:
-    image: postgres:15
+    # Odoo 20 needs PostgreSQL 16+ (any_value()).
+    image: postgres:16
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo
@@ -19,7 +20,8 @@ services:
       - ../onlyoffice_odoo_templates:/mnt/extra-addons/onlyoffice_odoo_templates:ro
       # The database is initialised with `docker compose run --rm web`; keep its filestore.
       - odoo-data:/var/lib/odoo
-    command: ["odoo", "-d", "e2e"]
+    # Odoo 20 listens on 127.0.0.1 by default, which is unreachable from the host and the Document Server.
+    command: ["odoo", "-d", "e2e", "--http-interface=0.0.0.0"]
 
   documentserver:
     # Developer Edition: the template editor needs the Automation API (see onlyoffice_odoo_templates).

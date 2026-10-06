@@ -23,7 +23,7 @@ async function openPrintDialog(page: Page, menu: Locator) {
   await menu.click()
   await page.getByRole("menuitem", { name: "Print with ONLYOFFICE" }).click()
   const dialog = page.getByRole("dialog")
-  // The card of the template: its name is an element titled with it (a span in 19.0, a title div in 17.0/18.0).
+  // The card of the template: its name is an element titled with it (a span in 19.0/20.0, a title div in 17.0/18.0).
   await dialog
     .locator(".o_kanban_record")
     .filter({ has: page.locator('[title="Employee"]') })
@@ -73,7 +73,7 @@ async function createTemplate(page: Page, name: string, file?: FilePayload) {
 
 async function templatePdf(odoo: Odoo, templateId: number) {
   const [attachmentId] = await odoo.read<[number, string]>("onlyoffice.odoo.templates", templateId, "attachment_id")
-  return Buffer.from(await odoo.read("ir.attachment", attachmentId, "datas"), "base64")
+  return odoo.readFile("ir.attachment", attachmentId, "raw")
 }
 
 test("print an employee from its form → a PDF with the employee's data in the form", async ({ page, odoo }) => {

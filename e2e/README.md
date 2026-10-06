@@ -35,12 +35,12 @@ npm run setup   # once: npm ci + Chromium for Playwright (Linux: also `npx playw
 npm run e2e     # starts the stack, runs the tests, stops the stack
 ```
 
-`npm run e2e` = `npm run stack:up` (PostgreSQL, Document Server, Odoo 19 with `hr`, then `onlyoffice_odoo` and
+`npm run e2e` = `npm run stack:up` (PostgreSQL, Document Server, Odoo 20 with `hr`, then `onlyoffice_odoo` and
 `onlyoffice_odoo_templates` installed in database `e2e`; `hr` goes first so that the "Employee" demo template is
 created) → `npm test` → `npm run stack:down`. When a test fails the stack stays up for debugging: `npm run report` opens
 the HTML report with traces, `docker compose logs web` shows Odoo, `npm run stack:down` removes everything.
 
-The local stack (`docker-compose.yml`): `postgres:15`, `odoo:19.0` + `pyjwt` (`odoo/Dockerfile`) on port 8069 with
+The local stack (`docker-compose.yml`): `postgres:16`, `odoo:20.0` + `pyjwt` (`odoo/Dockerfile`) on port 8069 with
 `onlyoffice_odoo`, `onlyoffice_odoo_templates` and `hr` installed, and `onlyoffice/documentserver-de` (JWT enabled) on
 port 8080. The settings test stores: Docs address `http://localhost:8080/`, inner address `http://documentserver/`, Odoo
 address for Docs `http://web:8069/`. Fixtures are the blank templates in
@@ -50,6 +50,6 @@ To run against your own Odoo + Document Server instead, skip the `stack:*` scrip
 `E2E_DS_PUBLIC_URL`, `E2E_DS_INNER_URL`, `E2E_ODOO_INNER_URL` (`helpers/env.ts`); the Document Server must use the JWT
 secret from `helpers/env.ts`, and the tests overwrite the ONLYOFFICE settings of that database.
 
-Selectors come from Odoo 19 `mail` (`.o-mail-Composer`, `.o-mail-Message`, `.o-mail-AttachmentCard`) and from the
+Selectors come from Odoo 20 `mail` (`.o-mail-Composer`, `.o-mail-Message`, `.o-mail-AttachmentCard`) and from the
 Document Server (`iframe[name="frameEditor"]`, `#toolbar`, `#editor_sdk`); typing goes through the editor canvas at
 fixed points of the 1440×900 viewport (`helpers/editor.ts`).

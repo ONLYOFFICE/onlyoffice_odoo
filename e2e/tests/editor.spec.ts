@@ -13,7 +13,7 @@ async function expectSaved(odoo: Odoo, { attachment }: PostedFile, text: string)
     .poll(() => odoo.read("ir.attachment", attachment.id, "checksum"), { timeout: 5_000 + SAVE_GRACE_MS })
     .not.toBe(attachment.checksum)
   test.info().annotations.push({ type: "save-latency", description: `${Date.now() - leftAt} ms` })
-  const file = Buffer.from(await odoo.read("ir.attachment", attachment.id, "datas"), "base64")
+  const file = await odoo.readFile("ir.attachment", attachment.id, "raw")
   expect(await officeText(file)).toContain(text)
 }
 
