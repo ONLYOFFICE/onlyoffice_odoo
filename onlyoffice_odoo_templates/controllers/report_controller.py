@@ -12,12 +12,12 @@ from odoo.http.stream import content_disposition
 from odoo.tools import html_escape
 from odoo.tools.safe_eval import safe_eval, time
 
-from odoo.addons.web.controllers.report import ReportController
+from odoo.addons.web.controllers.report import ReportController as ReportControllerBase
 
 _logger = logging.getLogger(__name__)
 
 
-class ReportController(ReportController):  # noqa: pylint shadowing is Odoo's controller-override idiom
+class ReportController(ReportControllerBase):
     @route()
     def report_routes(self, reportname, docids=None, converter=None, **data):
         if converter == "onlyoffice-pdf":

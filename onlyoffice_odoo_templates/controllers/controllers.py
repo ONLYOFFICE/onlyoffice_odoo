@@ -1,5 +1,4 @@
 # Copyright (C) 2026 Ascensio System SIA
-import base64
 import codecs
 import io
 import json
@@ -110,7 +109,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 headers = [
                     ("Content-Type", "application/zip"),
                     ("X-Content-Type-Options", "nosniff"),
-                    ("Content-Length", str(len(response.content))),
+                    ("Content-Length", str(len(content))),
                     ("Content-Disposition", f'attachment; filename="{filename}"'),
                 ]
                 logger.info("GET /onlyoffice/template/fill - returning ZIP: %s", filename)
@@ -561,7 +560,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 attachment = request.env["ir.attachment"].create(
                     {
                         "name": filename,
-                        "datas": base64.b64encode(response.content),
+                        "raw": response.content,
                         "mimetype": "application/pdf",
                     }
                 )

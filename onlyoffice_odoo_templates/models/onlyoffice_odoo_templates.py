@@ -56,8 +56,8 @@ class OnlyOfficeTemplate(models.Model):
         if self.file and self.create_date:  # if file exist
             decode_file = bytes(self.file)  # Binary fields expose raw bytes (BinaryValue) in Odoo 20
             is_pdf_form = pdf_utils.is_pdf_form(decode_file)
-            old_datas = self.attachment_id.datas
-            self.attachment_id.write({"datas": self.file})
+            old_datas = self.attachment_id.raw
+            self.attachment_id.write({"raw": self.file})
             self.file = False
 
             if not is_pdf_form:
@@ -166,7 +166,7 @@ class OnlyOfficeTemplate(models.Model):
                     "name": vals_copy.get("name", record.name) + ".pdf",
                     "display_name": vals_copy.get("name", record.name),
                     "mimetype": vals_copy.get("mimetype"),
-                    "datas": datas,
+                    "raw": datas,
                     "res_model": self._name,
                     "res_id": record.id,
                 }

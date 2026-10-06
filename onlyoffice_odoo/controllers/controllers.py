@@ -158,7 +158,7 @@ class Onlyoffice_Connector(http.Controller):
 
             jwt_utils.decode_token(request.env, token)
 
-        stream = request.env["ir.binary"]._get_stream_from(attachment, "datas", None, "name", None)
+        stream = request.env["ir.binary"]._get_stream_from(attachment, "raw", None, "name", None)
 
         send_file_kwargs = {"as_attachment": True, "max_age": None}
 

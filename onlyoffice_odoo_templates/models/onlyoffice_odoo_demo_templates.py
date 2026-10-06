@@ -60,12 +60,18 @@ class OnlyOfficeDemoTemplate(models.Model):
     @api.model
     def get_template_data(self):
         structure = self._get_template_structure()
-        selected = json.loads(self.selected_templates or "[]")
+        selected = self._parse_selected_templates()
 
         return {"structure": structure, "selected": selected}
 
+    def _parse_selected_templates(self):
+        try:
+            return json.loads(self.selected_templates or "[]")
+        except ValueError:
+            return []
+
     def action_save(self):
-        selected_templates = json.loads(self.selected_templates or "[]")
+        selected_templates = self._parse_selected_templates()
         if len(selected_templates) == 0:
             return
         template_model = self.env["onlyoffice.odoo.templates"]
