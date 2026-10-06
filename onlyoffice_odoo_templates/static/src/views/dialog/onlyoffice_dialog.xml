@@ -63,7 +63,11 @@
           </t>
         </div>
         <t t-set-slot="footer">
-          <button class="btn btn-primary o-template-fill" t-att-disabled="this.isButtonDisabled()" t-on-click="this.fillTemplate">
+          <button
+            class="btn btn-primary o-template-fill"
+            t-att-disabled="this.isButtonDisabled()"
+            t-on-click="this.fillTemplate"
+          >
             <t>Print</t>
           </button>
           <button

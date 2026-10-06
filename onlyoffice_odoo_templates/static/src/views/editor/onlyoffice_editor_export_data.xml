@@ -19,7 +19,11 @@
           aria-label="Show sub-fields"
           title="Show sub-fields"
         />
-        <span t-if="this.props.isTechnicalName" class="o-onlyoffice-field-title text-900" t-out="this.props.field.formattedId" />
+        <span
+          t-if="this.props.isTechnicalName"
+          class="o-onlyoffice-field-title text-900"
+          t-out="this.props.field.formattedId"
+        />
         <span t-else="" class="o-onlyoffice-field-title text-900" t-out="this.props.field.formattedString" />
         <!--<span
           t-if="props.field.field_type === 'binary'"
@@ -85,7 +89,11 @@
     </div>
     <div class="o-onlyoffice-fields-list">
       <t t-if="this.fieldsAvailable">
-        <t t-foreach="this.rootFields" t-as="field" t-key="field.id + '_' + this.state.search.length + '_' + this.state.isCompatible">
+        <t
+          t-foreach="this.rootFields"
+          t-as="field"
+          t-key="field.id + '_' + this.state.search.length + '_' + this.state.isCompatible"
+        >
           <ExportDataItem
             field="field"
             filterSubfields.bind="this.filterSubfields"

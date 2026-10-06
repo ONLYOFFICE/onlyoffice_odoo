@@ -6,7 +6,12 @@
       <div class="container-fluid">
         <div class="row mb-3" t-if="!this.state.loading and !this.state.error and this.state.total > this.state.limit">
           <div class="col text-center o-pager">
-            <Pager offset="this.state.offset" limit="this.state.limit" total="this.state.total" onUpdate.bind="this.onPageChange" />
+            <Pager
+              offset="this.state.offset"
+              limit="this.state.limit"
+              total="this.state.total"
+              onUpdate.bind="this.onPageChange"
+            />
           </div>
         </div>
         <div class="row mb-3 justify-content-end" t-if="!this.state.loading and !this.state.error">
@@ -27,11 +32,11 @@
                       <span class="o_dropdown_title" t-out="category.name" />
                     </button>
                     <t t-set-slot="content">
-                    <t t-foreach="this.state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
+                      <t t-foreach="this.state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
                         <DropdownItem onSelected="() => this.onSubcategorySelect(subcat)">
                           <span t-out="subcat.name" />
                         </DropdownItem>
-                    </t>
+                      </t>
                     </t>
                   </Dropdown>
                 </t>
