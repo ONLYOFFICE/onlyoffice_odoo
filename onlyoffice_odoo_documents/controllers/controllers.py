@@ -1,5 +1,4 @@
 # Copyright (C) 2026 Ascensio System SIA
-import base64
 import json
 import logging
 import re
@@ -355,12 +354,14 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                datas = base64.encodebytes(urlopen(file_url, timeout=120).read())
+                datas = urlopen(file_url, timeout=120).read()
                 document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
                 document.with_user(user).sudo().write(
                     {
                         "name": attachment.name,
-                        "datas": datas,
+                        # documents.document exposes 'raw' (related to its
+                        # attachment) in Odoo 20; 'datas' no longer exists
+                        "raw": datas,
                         "mimetype": guess_type(file_url)[0],
                     }
                 )

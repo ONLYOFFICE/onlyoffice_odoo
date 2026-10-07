@@ -1,6 +1,5 @@
 # Copyright (C) 2026 Ascensio System SIA
 
-import base64
 import json
 import logging
 import re
@@ -102,6 +101,7 @@ class Onlyoffice_Connector(http.Controller):
             return str(obj)
 
         return json.dumps(payload, default=_default)
+
     @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         _logger.info("POST /onlyoffice/editor/get_config - document: %s, attachment: %s", document_id, attachment_id)
@@ -250,13 +250,14 @@ class Onlyoffice_Connector(http.Controller):
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 datas = onlyoffice_urlopen(file_url).read()
                 if attachment.res_model == "documents.document":
-                    datas = base64.encodebytes(datas)
                     document = request.env["documents.document"].browse(int(attachment.res_id))
 
                     document.with_user(user).write(
                         {
                             "name": attachment.name,
-                            "datas": datas,
+                            # documents.document exposes 'raw' (related to its
+                            # attachment) in Odoo 20; 'datas' no longer exists
+                            "raw": datas,
                             "mimetype": guess_type(file_url)[0],
                         }
                     )

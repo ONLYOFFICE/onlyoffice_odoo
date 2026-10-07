@@ -64,7 +64,7 @@ class OnlyOfficeTemplate(models.Model):
                 self.env.cr.commit()
                 converted_result = self._convert_to_form(self.attachment_id)
                 if converted_result.get("error"):
-                    self.attachment_id.write({"datas": old_datas})
+                    self.attachment_id.write({"raw": old_datas})
                     self.env.cr.commit()
                     raise UserError(converted_result.get("message"))
                 if converted_result.get("fileUrl"):
@@ -73,12 +73,11 @@ class OnlyOfficeTemplate(models.Model):
                             url=converted_result["fileUrl"],
                             method="get",
                         )
-                        new_datas = base64.b64encode(response.content)
-                        self.attachment_id.write({"datas": new_datas})
+                        self.attachment_id.write({"raw": response.content})
                         self.env.cr.commit()
                     except Exception as e:
                         logger.error("Failed to download and update PDF form: %s", str(e))
-                        self.attachment_id.write({"datas": old_datas})
+                        self.attachment_id.write({"raw": old_datas})
                         self.env.cr.commit()
                         raise UserError(_("Failed to download converted PDF form")) from e
 
@@ -188,8 +187,7 @@ class OnlyOfficeTemplate(models.Model):
                             url=converted_result["fileUrl"],
                             method="get",
                         )
-                        new_datas = base64.b64encode(response.content)
-                        attachment.write({"datas": new_datas, "mimetype": vals_copy.get("mimetype")})
+                        attachment.write({"raw": response.content, "mimetype": vals_copy.get("mimetype")})
                         self.env.cr.commit()
                     except Exception as e:
                         logger.error("Failed to download and update PDF form: %s", str(e))
