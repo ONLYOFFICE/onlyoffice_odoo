@@ -1,6 +1,7 @@
 /** @odoo-module **/
 // Copyright (C) 2026 Ascensio System SIA
 
+import { Component, onWillStart, proxy, t, useProps } from "@odoo/owl"
 import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_preview"
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
@@ -11,13 +12,19 @@ import { rpc } from "@web/core/network/rpc"
 import { Pager } from "@web/core/pager/pager"
 import { KeepLast } from "@web/core/utils/concurrency"
 import { useService } from "@web/core/utils/hooks"
+import { useSubEnv } from "@web/owl2/utils"
 import { SearchModel } from "@web/search/search_model"
 import { getDefaultConfig } from "@web/views/view"
 import { FolderSelectionDialog } from "./folder_selection_dialog"
 
-const { Component, useState, useSubEnv, useChildSubEnv, onWillStart } = owl
-
 export class TemplateDialog extends Component {
+  props = useProps({
+    close: t.function().optional(),
+    context: t.object().optional(),
+    resId: t.any(),
+    resModel: t.string(),
+  })
+
   setup() {
     this.orm = useService("orm")
     this.rpc = rpc
@@ -30,7 +37,7 @@ export class TemplateDialog extends Component {
 
     this.dialogTitle = _t("Print from template")
     this.limit = 8
-    this.state = useState({
+    this.state = proxy({
       currentOffset: 0,
       documentsAvailable: false,
       isOpen: true,
@@ -47,7 +54,7 @@ export class TemplateDialog extends Component {
       view: useService("view"),
     })
 
-    useChildSubEnv({ searchModel: this.model })
+    useSubEnv({ searchModel: this.model })
 
     this.dp = new KeepLast()
 

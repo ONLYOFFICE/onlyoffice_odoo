@@ -37,6 +37,7 @@ class Document(models.Model):
         access_via_link=None,
         is_access_via_link_hidden=None,
         partners=None,
+        groups=None,
         no_propagation=False,
     ):
         """Synchronize roles between documents and ONLYOFFICE modules."""
@@ -66,6 +67,7 @@ class Document(models.Model):
             access_via_link,
             is_access_via_link_hidden,
             partners_with_standard_roles,
+            groups,
             no_propagation,
         )
 
@@ -91,7 +93,7 @@ class Document(models.Model):
                         else:
                             role = role_data
 
-                        if role is False:
+                        if isinstance(role, bool) and not role:
                             users_to_remove.append(partner.id)
                         else:
                             user_accesses.append(

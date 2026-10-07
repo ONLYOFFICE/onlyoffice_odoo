@@ -1,8 +1,8 @@
 # Copyright (C) 2026 Ascensio System SIA
-import base64
 import json
 import logging
 import re
+import types
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -13,17 +13,32 @@ from werkzeug.exceptions import Forbidden
 from odoo import http
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.http.dispatcher import serialize_exception
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
 from odoo.addons.onlyoffice_odoo.controllers.controllers import Onlyoffice_Connector
-from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils, validation_utils
 
 _logger = logging.getLogger(__name__)
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
 
 class OnlyofficeDocuments_Connector(http.Controller):
+    @staticmethod
+    def _dumps_for_qweb(payload):
+        """JSON for inline <script> payloads: session_info may carry Odoo 20
+        objects (mappingproxy, sets) that plain json.dumps rejects."""
+
+        def _default(obj):
+            if isinstance(obj, types.MappingProxyType):
+                return dict(obj)
+            if isinstance(obj, (set, frozenset)):
+                return sorted(obj, key=str)
+            return str(obj)
+
+        return json.dumps(payload, default=_default)
+
     @http.route("/onlyoffice/documents/file/create", auth="user", methods=["POST"], type="jsonrpc")
     def post_file_create(self, folder_id, supported_format, title, url=None):
         result = {"error": None, "file_id": None, "document_id": None}
@@ -32,20 +47,30 @@ class OnlyofficeDocuments_Connector(http.Controller):
             _logger.info(f"Getting new file template {request.env.user.lang} {supported_format}")
 
             if url:
+                if not validation_utils.valid_url(url) or not url.startswith(("http://", "https://")):
+                    result["error"] = _("Invalid template URL")
+                    return result
                 response = requests.get(url, stream=True, timeout=30)
                 response.raise_for_status()
                 file_data = response.content
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
-            if folder_id in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
+            if not folder_id or str(folder_id) in ["MY", "COMPANY", "SHARED", "TRASH", "RECENT"]:
                 folder_id_value = False
                 if folder_id == "COMPANY":
                     owner_id = request.env.ref("base.user_root").id
                 else:
                     owner_id = request.env.user.id
             else:
-                folder_id_value = int(folder_id)
+                try:
+                    folder_id_value = int(folder_id)
+                except (TypeError, ValueError):
+                    folder_id_value = False
+                if not folder_id_value or folder_id_value <= 0:
+                    # an invalid/zero folder id must not become browse(0)
+                    # (crashes enterprise shortcut constraints at create time)
+                    folder_id_value = False
                 owner_id = request.env.user.id
 
             data = {
@@ -85,18 +110,18 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route(["/onlyoffice/documents/share/<access_token>/"], type="http", auth="public")
     def render_shared_document_editor(self, access_token=None, folder_token=None):
         try:
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+            document = request.env["documents.document"]._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
 
             values = self.prepare_share_editor(document, access_token, folder_token=folder_token)
-            values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
+            values["editorConfig"] = markupsafe.Markup(self._dumps_for_qweb(values["editorConfig"]))
             try:
                 session_info = request.env["ir.http"].get_frontend_session_info()
             except Exception:
                 session_info = {}
-            values["session_info"] = markupsafe.Markup(json.dumps(session_info))
+            values["session_info"] = markupsafe.Markup(self._dumps_for_qweb(session_info))
             return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
         except Exception as ex:
@@ -107,8 +132,8 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
     @http.route("/onlyoffice/editor/document/<int:document_id>", auth="public", type="http", website=True)
     def render_document_editor(self, document_id, access_token=None):
         values = self.prepare_document_editor(document_id, access_token)
-        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
-        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        values["editorConfig"] = markupsafe.Markup(self._dumps_for_qweb(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(self._dumps_for_qweb(values["session_info"]))
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     def prepare_document_editor(self, document_id, access_token):
@@ -140,7 +165,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         Returns None if the token is invalid, the document is not a direct child of that folder,
         or the folder itself grants no link access.
         """
-        folder = ShareRoute._from_access_token(folder_token, skip_log=True)
+        folder = request.env["documents.document"]._from_access_token(folder_token, skip_log=True)
         if not folder or not folder.exists() or folder.type != "folder":
             return None
         if document.folder_id.id != folder.id:
@@ -275,7 +300,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
         try:
             body = request.get_json_data()
             user = self.get_user_from_token(oo_security_token)
-            document = ShareRoute._from_access_token(access_token, skip_log=True)
+            document = request.env["documents.document"]._from_access_token(access_token, skip_log=True)
 
             if not document or not document.exists():
                 raise request.not_found()
@@ -329,12 +354,14 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                datas = base64.encodebytes(urlopen(file_url, timeout=120).read())
+                datas = urlopen(file_url, timeout=120).read()
                 document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
                 document.with_user(user).sudo().write(
                     {
                         "name": attachment.name,
-                        "datas": datas,
+                        # documents.document exposes 'raw' (related to its
+                        # attachment) in Odoo 20; 'datas' no longer exists
+                        "raw": datas,
                         "mimetype": guess_type(file_url)[0],
                     }
                 )
@@ -342,7 +369,7 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
         except Exception as ex:
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = serialize_exception(ex)
 
         return request.make_response(
             data=json.dumps(response_json),
@@ -352,11 +379,11 @@ class OnlyofficeDocuments_Inherited_Connector(Onlyoffice_Connector):
 
 
 class OnlyOfficeShareRoute(ShareRoute):
-    @http.route("/documents/<access_token>", type="http", auth="public")
-    def documents_home(self, access_token):
-        response = super(OnlyOfficeShareRoute, self).documents_home(access_token)  # noqa: UP008
+    @http.route(["/my/documents", "/documents/<access_token>"], type="http", auth="public")
+    def documents_home(self, access_token="", member_signup_token=None, member_id=None):
+        response = super().documents_home(access_token, member_signup_token=member_signup_token, member_id=member_id)
 
-        document_sudo = self._from_access_token(access_token)
+        document_sudo = request.env["documents.document"]._from_access_token(access_token)
 
         if not request.env.user._is_public() or not hasattr(response, "qcontext"):
             return response

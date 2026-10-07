@@ -1,6 +1,7 @@
 /** @odoo-module **/
 // Copyright (C) 2026 Ascensio System SIA
 
+import { Component, onMounted, onWillUnmount, proxy, useProps } from "@odoo/owl"
 import { cookie } from "@web/core/browser/cookie"
 import { router } from "@web/core/browser/router"
 import { _t } from "@web/core/l10n/translation"
@@ -9,9 +10,9 @@ import { registry } from "@web/core/registry"
 import { useBus, useService } from "@web/core/utils/hooks"
 import { ExportData } from "./onlyoffice_editor_export_data"
 
-const { Component, useState, onMounted, onWillUnmount } = owl
-
 class TemplateEditor extends Component {
+  props = useProps()
+
   setup() {
     super.setup(...arguments)
     this.orm = useService("orm")
@@ -20,7 +21,7 @@ class TemplateEditor extends Component {
     this.notificationService = useService("notification")
     this.router = router
 
-    this.state = useState({
+    this.state = proxy({
       resModel: "",
       hasLicense: false,
     })

@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_onlyoffice_odoo_documents,onlyoffice.odoo.documents,onlyoffice.odoo.documents,base.group_user,crud,
+access_onlyoffice_odoo_documents_access_user,onlyoffice.odoo.documents.access.user,onlyoffice.odoo.documents.access.user,base.group_user,crud,
+access_onlyoffice_odoo_documents_access,onlyoffice.odoo.documents.access,onlyoffice.odoo.documents.access,base.group_user,crud,

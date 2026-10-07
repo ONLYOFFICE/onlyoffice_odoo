@@ -46,7 +46,7 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       context: this.props.context,
       folderId: this.env.searchModel.getSelectedFolderId(),
       model: this.env.model,
-      onShare: (document_id) => this.onClickAdvancedShare(document_id, true),
+      onShare: (document_id) => this.documentService.openSharingDialog([document_id]),
     })
   },
 
@@ -60,8 +60,38 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     return format && format.actions && (format.actions.includes("view") || format.actions.includes("edit"))
   },
 
+  _parseJsonOrNotify(payload) {
+    try {
+      return JSON.parse(payload)
+    } catch {
+      this.notification.add(_t("Unexpected server response"), { type: "danger" })
+      return null
+    }
+  },
+
+  _openEditorTab(documentId) {
+    documentId = Number(documentId)
+    if (!Number.isInteger(documentId) || documentId <= 0) {
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
+      return
+    }
+    const target = new URL(`/onlyoffice/editor/document/${documentId}`, window.location.origin)
+    if (target.origin !== window.location.origin) {
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
+      return
+    }
+    return this.actionService.doAction({
+      type: "ir.actions.act_url",
+      target: "new",
+      url: target.href,
+    })
+  },
+
   async onlyofficeEditorUrl(doc) {
-    const demo = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_demo"))
+    const demo = this._parseJsonOrNotify(await this.orm.call("onlyoffice.odoo", "get_demo"))
+    if (!demo) {
+      return
+    }
     if (demo && demo.mode && demo.date) {
       const isValidDate = (d) => d instanceof Date && !isNaN(d)
       demo.date = new Date(Date.parse(demo.date))
@@ -81,7 +111,11 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       }
     }
     const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
-    const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+    const sameTabPayload = this._parseJsonOrNotify(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+    if (!sameTabPayload) {
+      return
+    }
+    const { same_tab } = sameTabPayload
     if (same_tab && !isDesktopEditor) {
       const action = {
         params: { document_id: doc.data.id },
@@ -91,7 +125,7 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       }
       return this.actionService.doAction(action)
     }
-    window.open(`/onlyoffice/editor/document/${doc.data.id}`, "_blank")
+    return this._openEditorTab(doc.data.id)
   },
 
   showOnlyofficeButton(records) {

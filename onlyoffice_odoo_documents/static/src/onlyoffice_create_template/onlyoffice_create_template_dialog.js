@@ -1,32 +1,36 @@
 /** @odoo-module **/
 // Copyright (C) 2026 Ascensio System SIA
 
+import { Component, proxy, signal, useProps } from "@odoo/owl"
 import { Dialog } from "@web/core/dialog/dialog"
 
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { KeepLast } from "@web/core/utils/concurrency"
-import { useService, useAutofocus } from "@web/core/utils/hooks"
+import { useAutofocus, useService } from "@web/core/utils/hooks"
+import { useSubEnv } from "@web/owl2/utils"
 import { getDefaultConfig } from "@web/views/view"
 
-const { Component, useState, useSubEnv } = owl
-
 export class CreateDialog extends Component {
+  inputRef = signal.ref()
+
+  props = useProps()
+
   setup() {
     this.orm = useService("orm")
     this.rpc = rpc
     this.viewService = useService("view")
     this.notificationService = useService("notification")
     this.actionService = useService("action")
-    this.inputRef = useAutofocus()
+    useAutofocus({ ref: this.inputRef })
     this.documentService = useService("document.document")
 
     this.data = this.env.dialogData
     useHotkey("escape", () => this.data.close())
 
     this.dialogTitle = _t("Create with ONLYOFFICE")
-    this.state = useState({
+    this.state = proxy({
       isCreating: false,
       isOpen: true,
       selectedFormat: "docx",
@@ -35,8 +39,8 @@ export class CreateDialog extends Component {
     useSubEnv({ config: { ...getDefaultConfig() } })
     this.keepLast = new KeepLast()
 
-    if (this.inputRef.el) {
-      this.inputRef.el.focus()
+    if (this.inputRef()) {
+      this.inputRef().focus()
     }
   }
 
@@ -54,7 +58,10 @@ export class CreateDialog extends Component {
       title: title,
     })
 
-    const result = JSON.parse(json)
+    const result = this._parseJsonOrNotify(json)
+    if (!result) {
+      return
+    }
 
     this.props.model.load()
     this.props.model.notify()
@@ -62,7 +69,7 @@ export class CreateDialog extends Component {
     if (result.error) {
       this.notificationService.add(result.error, {
         sticky: false,
-        type: "error",
+        type: "danger",
       })
     } else {
       this.notificationService.add(_t("New document created in Documents"), {
@@ -76,7 +83,11 @@ export class CreateDialog extends Component {
         await this.documentService.openSharingDialog(result.document_id)
       } else {
         const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
-        const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        const sameTabPayload = this._parseJsonOrNotify(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        if (!sameTabPayload) {
+          return
+        }
+        const { same_tab } = sameTabPayload
         this.data.close()
         if (same_tab && !isDesktopEditor) {
           const action = {
@@ -87,7 +98,7 @@ export class CreateDialog extends Component {
           }
           return this.actionService.doAction(action)
         }
-        return window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
+        return this._openEditorTab(result.document_id)
       }
     }
   }
@@ -101,8 +112,34 @@ export class CreateDialog extends Component {
   }
 
   _hasSelection() {
-    // eslint-disable-next-line no-constant-binary-expression, no-implicit-coercion
-    return !!this.state.selectedFormat !== null
+    return Boolean(this.state.selectedFormat)
+  }
+
+  _parseJsonOrNotify(payload) {
+    try {
+      return JSON.parse(payload)
+    } catch {
+      this.notificationService.add(_t("Unexpected server response"), { type: "danger" })
+      return null
+    }
+  }
+
+  _openEditorTab(documentId) {
+    documentId = Number(documentId)
+    if (!Number.isInteger(documentId) || documentId <= 0) {
+      this.notificationService.add(_t("Invalid document reference returned by the server"), { type: "danger" })
+      return
+    }
+    const target = new URL(`/onlyoffice/editor/document/${documentId}`, window.location.origin)
+    if (target.origin !== window.location.origin) {
+      this.notificationService.add(_t("Invalid document reference returned by the server"), { type: "danger" })
+      return
+    }
+    return this.actionService.doAction({
+      type: "ir.actions.act_url",
+      target: "new",
+      url: target.href,
+    })
   }
 
   _buttonDisabled() {

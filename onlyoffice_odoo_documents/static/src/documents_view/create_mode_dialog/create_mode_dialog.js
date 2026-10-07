@@ -1,6 +1,7 @@
 /** @odoo-module **/
 // Copyright (C) 2026 Ascensio System SIA
 
+import { Component, proxy, useProps } from "@odoo/owl"
 import { FormGallery } from "@onlyoffice_odoo/views/form_gallery/form_gallery"
 import { CreateDialog } from "@onlyoffice_odoo_documents/onlyoffice_create_template/onlyoffice_create_template_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
@@ -9,9 +10,9 @@ import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 
-const { Component, useState } = owl
-
 export class CreateModeDialog extends Component {
+  props = useProps()
+
   setup() {
     this.orm = useService("orm")
     this.rpc = rpc
@@ -19,7 +20,7 @@ export class CreateModeDialog extends Component {
     useHotkey("escape", () => this.data.close())
 
     this.dialogTitle = _t("Create with ONLYOFFICE")
-    this.state = useState({
+    this.state = proxy({
       isChosen: false,
       selectedMode: null,
     })
@@ -60,11 +61,14 @@ export class CreateModeDialog extends Component {
         title: form.attributes.name_form,
         url: form.attributes.file_oform.data[0].attributes.url,
       })
-      const result = JSON.parse(json)
+      const result = this._parseJsonOrNotify(json)
+      if (!result) {
+        return
+      }
       if (result.error) {
         this.notification.add(result.error, {
           sticky: false,
-          type: "error",
+          type: "danger",
         })
       } else {
         this.props.model.load()
@@ -74,7 +78,11 @@ export class CreateModeDialog extends Component {
           type: "info",
         })
         const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")
-        const { same_tab } = JSON.parse(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        const sameTabPayload = this._parseJsonOrNotify(await this.orm.call("onlyoffice.odoo", "get_same_tab"))
+        if (!sameTabPayload) {
+          return
+        }
+        const { same_tab } = sameTabPayload
         if (same_tab && !isDesktopEditor) {
           this.data.close()
           const action = {
@@ -85,7 +93,7 @@ export class CreateModeDialog extends Component {
           }
           await this.actionService.doAction(action)
         } else {
-          window.open(`/onlyoffice/editor/document/${result.document_id}`, "_blank")
+          this._openEditorTab(result.document_id)
         }
       }
     }
@@ -105,6 +113,33 @@ export class CreateModeDialog extends Component {
 
   _selectedMode(format) {
     this.state.selectedMode = format
+  }
+
+  _parseJsonOrNotify(payload) {
+    try {
+      return JSON.parse(payload)
+    } catch {
+      this.notification.add(_t("Unexpected server response"), { type: "danger" })
+      return null
+    }
+  }
+
+  _openEditorTab(documentId) {
+    documentId = Number(documentId)
+    if (!Number.isInteger(documentId) || documentId <= 0) {
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
+      return
+    }
+    const target = new URL(`/onlyoffice/editor/document/${documentId}`, window.location.origin)
+    if (target.origin !== window.location.origin) {
+      this.notification.add(_t("Invalid document reference returned by the server"), { type: "danger" })
+      return
+    }
+    return this.actionService.doAction({
+      type: "ir.actions.act_url",
+      target: "new",
+      url: target.href,
+    })
   }
 
   _isSelected(format) {

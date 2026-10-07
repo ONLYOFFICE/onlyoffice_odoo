@@ -3,16 +3,16 @@ name: test
 on:
   workflow_dispatch:
   push:
-    branches: [develop, 19.0, feature/19.0, 18.0, feature/18.0, 17.0]
+    branches: [develop, 20.0, 19.0, feature/20.0]
   pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-22.04
-    container: ghcr.io/oca/oca-ci/py3.10-odoo17.0:latest
+    container: ghcr.io/oca/oca-ci/py3.12-odoo20.0:latest
     services:
       postgres:
-        image: postgres:12
+        image: postgres:16
         env:
           POSTGRES_USER: odoo
           POSTGRES_PASSWORD: odoo
@@ -29,7 +29,7 @@ jobs:
       - name: Create stubs for unavailable addons
         run: |
           mkdir -p documents
-          printf "{'name': 'Documents', 'version': '17.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
+          printf "{'name': 'Documents', 'version': '20.0.1.0.0', 'depends': ['base']}\n" > documents/__manifest__.py
           touch documents/__init__.py
       - name: Install addons and dependencies
         run: oca_install_addons

@@ -1,11 +1,11 @@
 # Copyright (C) 2026 Ascensio System SIA
 
-import base64
 import json
 import logging
 import re
 import string
 import time
+import types
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -16,6 +16,7 @@ from werkzeug.exceptions import Forbidden
 from odoo import _, fields, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
+from odoo.http.dispatcher import serialize_exception
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
@@ -45,14 +46,13 @@ def onlyoffice_request(url, method, opts=None):
     if url.startswith("https://") and cert_verify_disabled and "verify" not in opts:
         opts["verify"] = False
 
-    if "timeout" not in opts and "timeout" not in url:
-        opts["timeout"] = 120
+    timeout = opts.pop("timeout", 120)
 
     try:
         if method.lower() == "post":
-            response = requests.post(url, **opts)
+            response = requests.post(url, timeout=timeout, **opts)
         else:
-            response = requests.get(url, **opts)
+            response = requests.get(url, timeout=timeout, **opts)
 
         _logger.info("External request completed: %s %s - status: %s", method.upper(), url, response.status_code)
         response.raise_for_status()
@@ -88,6 +88,20 @@ def onlyoffice_request(url, method, opts=None):
 
 
 class Onlyoffice_Connector(http.Controller):
+    @staticmethod
+    def _dumps_for_qweb(payload):
+        """JSON for inline <script> payloads: session_info may carry Odoo 20
+        objects (mappingproxy, sets) that plain json.dumps rejects."""
+
+        def _default(obj):
+            if isinstance(obj, types.MappingProxyType):
+                return dict(obj)
+            if isinstance(obj, (set, frozenset)):
+                return sorted(obj, key=str)
+            return str(obj)
+
+        return json.dumps(payload, default=_default)
+
     @http.route("/onlyoffice/editor/get_config", auth="user", methods=["POST"], type="jsonrpc", csrf=False)
     def get_config(self, document_id=None, attachment_id=None, access_token=None):
         _logger.info("POST /onlyoffice/editor/get_config - document: %s, attachment: %s", document_id, attachment_id)
@@ -112,13 +126,13 @@ class Onlyoffice_Connector(http.Controller):
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         filename = data["name"]
 
-        can_read = attachment.check_access_rights("read", raise_exception=False) and file_utils.can_view(filename)
+        can_read = attachment.has_access("read") and file_utils.can_view(filename)
 
         if not can_read:
             _logger.warning("POST /onlyoffice/editor/get_config - no read access: %s", attachment_id)
             raise Exception("cant read")
 
-        can_write = attachment.check_access_rights("write", raise_exception=False) and file_utils.can_edit(filename)
+        can_write = attachment.has_access("write") and file_utils.can_edit(filename)
 
         config = self.prepare_editor_values(attachment, access_token, can_write)
         _logger.info("POST /onlyoffice/editor/get_config - success: %s", attachment_id)
@@ -158,7 +172,7 @@ class Onlyoffice_Connector(http.Controller):
 
             jwt_utils.decode_token(request.env, token)
 
-        stream = request.env["ir.binary"]._get_stream_from(attachment, "datas", None, "name", None)
+        stream = request.env["ir.binary"]._get_stream_from(attachment, "raw", None, "name", None)
 
         send_file_kwargs = {"as_attachment": True, "max_age": None}
 
@@ -191,8 +205,8 @@ class Onlyoffice_Connector(http.Controller):
 
         _logger.info("GET /onlyoffice/editor/%s - success", attachment_id)
         values = self.prepare_editor_values(attachment, access_token, can_write)
-        values["editorConfig"] = markupsafe.Markup(json.dumps(values["editorConfig"]))
-        values["session_info"] = markupsafe.Markup(json.dumps(values["session_info"]))
+        values["editorConfig"] = markupsafe.Markup(self._dumps_for_qweb(values["editorConfig"]))
+        values["session_info"] = markupsafe.Markup(self._dumps_for_qweb(values["session_info"]))
         return request.render("onlyoffice_odoo.onlyoffice_editor", values)
 
     @http.route(
@@ -236,13 +250,14 @@ class Onlyoffice_Connector(http.Controller):
                 file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
                 datas = onlyoffice_urlopen(file_url).read()
                 if attachment.res_model == "documents.document":
-                    datas = base64.encodebytes(datas)
                     document = request.env["documents.document"].browse(int(attachment.res_id))
 
                     document.with_user(user).write(
                         {
                             "name": attachment.name,
-                            "datas": datas,
+                            # documents.document exposes 'raw' (related to its
+                            # attachment) in Odoo 20; 'datas' no longer exists
+                            "raw": datas,
                             "mimetype": guess_type(file_url)[0],
                         }
                     )
@@ -256,7 +271,7 @@ class Onlyoffice_Connector(http.Controller):
         except Exception as ex:
             _logger.error("POST /onlyoffice/editor/callback/%s - error: %s", attachment_id, str(ex))
             response_json["error"] = 1
-            response_json["message"] = http.serialize_exception(ex)
+            response_json["message"] = serialize_exception(ex)
 
         return request.make_response(
             data=json.dumps(response_json),

@@ -36,12 +36,9 @@ registry.category("ir.actions.report handlers").add("onlyoffice-pdf_handler", as
     } finally {
       env.services.ui.unblock()
     }
-    const onClose = options.onClose
-    if (action.close_on_report_download) {
-      return env.services.action.doAction({ type: "ir.actions.act_window_close" }, { onClose })
-    } else if (onClose) {
-      onClose()
-    }
+    // In Odoo 20, the action plugin handles `close_on_report_download`/`onClose`
+    // itself once a handler returns a truthy result:
+    // addons/web/static/src/webclient/actions/action_plugin.js (_executeReportAction)
     return Promise.resolve(true)
   }
   return Promise.resolve(false)

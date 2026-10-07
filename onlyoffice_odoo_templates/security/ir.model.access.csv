@@ -1,5 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_onlyoffice_odoo_templates_user,OnlyOffice Template User Access,onlyoffice_odoo_templates.model_onlyoffice_odoo_templates,group_onlyoffice_odoo_templates_user,1,0,0,0
-access_onlyoffice_odoo_templates_admin,OnlyOffice Template Admin Access,onlyoffice_odoo_templates.model_onlyoffice_odoo_templates,group_onlyoffice_odoo_templates_admin,1,1,1,1
-access_onlyoffice_odoo_templates,OnlyOffice Template,onlyoffice_odoo_templates.model_onlyoffice_odoo_templates,,0,0,0,0
-access_onlyoffice_demo_templates,onlyoffice.demo.templates.access,model_onlyoffice_odoo_demo_templates,base.group_system,1,1,1,1

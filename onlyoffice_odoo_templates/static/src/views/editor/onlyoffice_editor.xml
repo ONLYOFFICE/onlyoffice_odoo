@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <templates xml:space="preserve">
-    <t t-name="onlyoffice_odoo_templates.TemplateEditor" owl="1">
+    <t t-name="onlyoffice_odoo_templates.TemplateEditor">
     <html>
       <head>
         <meta charset="UTF-8" />
@@ -18,8 +18,8 @@
             <span> Fields </span>
           </div>
           <hr class="o-onlyoffice-template-separator" />
-          <t t-if="state.resModel">
-            <ExportData resModel="state.resModel" hasLicense="state.hasLicense" />
+          <t t-if="this.state.resModel">
+            <ExportData resModel="this.state.resModel" hasLicense="this.state.hasLicense" />
           </t>
         </div>
         <div class="o-onlyoffice-template-editor">
