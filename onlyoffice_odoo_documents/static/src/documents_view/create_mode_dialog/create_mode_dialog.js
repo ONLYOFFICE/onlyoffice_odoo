@@ -56,9 +56,9 @@ export class CreateModeDialog extends Component {
     const download = async (form) => {
       const json = await this.rpc("/onlyoffice/documents/file/create", {
         folder_id: this.props.folderId,
-        supported_format: form.attributes.file_oform.data[0].attributes.url.split(".").pop(),
-        title: form.attributes.name_form,
-        url: form.attributes.file_oform.data[0].attributes.url,
+        supported_format: form.file_oform[0].url.split(".").pop(),
+        title: form.name_form,
+        url: form.file_oform[0].url,
       })
       const result = JSON.parse(json)
       if (result.error) {

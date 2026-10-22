@@ -14,26 +14,37 @@
             <Dropdown>
               <button class="btn btn-light">
                 <i class="me-1 fa fa-filter me-1" />
-                <span class="o_dropdown_title">Categories</span>
+                <span class="o_dropdown_title" t-if="state.filter" t-esc="state.filter.name" />
+                <span class="o_dropdown_title" t-else="">Categories</span>
               </button>
               <t t-set-slot="content">
-                <DropdownItem onSelected="() => this.onAllSubcategorySelect()">
+                <DropdownItem onSelected="() => this.onFilterSelect(null)">
                     View all templates
                 </DropdownItem>
-                <div role="separator" class="dropdown-divider" />
-                <t t-foreach="state.categories" t-as="category" t-key="category.id">
-                  <Dropdown t-props="dropdownProps">
-                    <button class="btn btn-light">
-                      <span class="o_dropdown_title" t-out="category.name" />
-                    </button>
-                    <t t-set-slot="content">
-                      <t t-foreach="state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
-                        <DropdownItem onSelected="() => this.onSubcategorySelect(subcat)">
-                          <span t-esc="subcat.name" />
-                        </DropdownItem>
+                <t t-foreach="state.purposes" t-as="purpose" t-key="purpose.key">
+                  <div role="separator" class="dropdown-divider" />
+                  <DropdownItem
+                    class="'fw-bold'"
+                    onSelected="() => this.onFilterSelect({ name: purpose.name, purpose: purpose.key })"
+                  >
+                    <t t-esc="purpose.name" />
+                  </DropdownItem>
+                  <t t-foreach="purpose.categories" t-as="category" t-key="category.id">
+                    <Dropdown>
+                      <button class="btn btn-light">
+                        <span class="o_dropdown_title" t-esc="category.name" />
+                      </button>
+                      <t t-set-slot="content">
+                        <t t-foreach="category.subcategories" t-as="subcategory" t-key="subcategory.id">
+                          <DropdownItem
+                            onSelected="() => this.onFilterSelect({ name: subcategory.name, subcategory: subcategory.id })"
+                          >
+                            <t t-esc="subcategory.name" />
+                          </DropdownItem>
+                        </t>
                       </t>
-                    </t>
-                  </Dropdown>
+                    </Dropdown>
+                  </t>
                 </t>
               </t>
             </Dropdown>
@@ -131,16 +142,16 @@
                   <div>
                     <img
                       class="o_onlyoffice_kanban_image"
-                      t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
-                      t-att-alt="form.attributes.name_form"
-                      t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form, form.attributes.file_oform.data[0].attributes.name )"
+                      t-att-src="form.card_prewiew?.url || '/web/static/img/placeholder.png'"
+                      t-att-alt="form.name_form"
+                      t-on-click="() => this.previewForm(form.file_oform[0].url, form.name_form, form.file_oform[0].ext)"
                     />
                   </div>
                 </div>
                 <div class="d-flex justify-content-between">
                   <div class="o_onlyoffice_kanban_details_wrapper w-100 justify-content-between d-flex m-2">
-                    <span t-esc="form.attributes.name_form" />
-                    <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
+                    <span t-esc="form.name_form" />
+                    <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.description_card}}" />
                   </div>
                 </div>
               </div>

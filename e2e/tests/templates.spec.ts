@@ -157,29 +157,25 @@ test("upload a plain PDF as a template → it is converted into a PDF form", asy
 })
 
 test("create a template from the form gallery → it holds the chosen form", async ({ page, odoo }) => {
-  // The gallery API (oforms.onlyoffice.com, proxied by /onlyoffice/oforms*) is stubbed; the chosen form points to a
-  // bundled PDF that this Odoo serves itself, so the server-side download needs no internet. The proxy routes are
+  // The gallery API (templates-cms.onlyoffice.com, proxied by /onlyoffice/oforms*) is stubbed; the chosen form points
+  // to a bundled PDF that this Odoo serves itself, so the server-side download needs no internet. The proxy routes are
   // unit-tested in onlyoffice_odoo/tests/test_oforms.py.
   const form = {
     id: 1,
-    attributes: {
-      name_form: "E2E gallery form",
-      file_oform: {
-        data: [
-          {
-            attributes: {
-              url: "http://localhost:8069/onlyoffice/template/template_content/hr.employee_Employee.pdf",
-              ext: ".pdf",
-            },
-          },
-        ],
+    documentId: "e2e",
+    name_form: "E2E gallery form",
+    file_oform: [
+      {
+        url: "http://localhost:8069/onlyoffice/template/template_content/hr.employee_Employee.pdf",
+        name: "hr.employee_Employee.pdf",
+        ext: ".pdf",
       },
-    },
+    ],
   }
   const reply = (result: unknown) => (route: Route) =>
     route.fulfill({ json: { jsonrpc: "2.0", id: route.request().postDataJSON().id, result } })
   await page.route("**/onlyoffice/oforms/locales", reply({ data: [{ code: "en", name: "English" }] }))
-  await page.route("**/onlyoffice/oforms/category-types", reply({ data: [] }))
+  await page.route("**/onlyoffice/oforms/categories", reply({ data: [] }))
   await page.route("**/onlyoffice/oforms", reply({ data: [form], meta: { pagination: { total: 1 } } }))
 
   await page.goto(TEMPLATES)

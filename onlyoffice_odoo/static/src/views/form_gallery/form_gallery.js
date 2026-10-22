@@ -32,8 +32,8 @@ export class FormGallery extends Component {
     this.searchTimeout = null
 
     this.state = useState({
-      categories: [],
       error: null,
+      filter: null,
       form: null,
       forms: [],
       ghost: 0,
@@ -50,12 +50,8 @@ export class FormGallery extends Component {
         },
       ],
       offset: 0,
+      purposes: [],
       search: "",
-      subcategories: {},
-      subcategory: {
-        category_type: "category",
-        id: "all",
-      },
       total: 0,
       type: "pdf",
     })
@@ -63,8 +59,7 @@ export class FormGallery extends Component {
     onWillStart(async () => {
       this.state.loading = true
       await this.fetchLocales()
-      await this.fetchCategoryTypes()
-      await this.fetchOforms()
+      await Promise.all([this.fetchCategories(), this.fetchOforms()])
       this.state.loading = false
     })
 
@@ -77,20 +72,10 @@ export class FormGallery extends Component {
 
   async fetchLocales() {
     try {
-      const url = "/onlyoffice/oforms/locales"
-      const response = await this.rpc(url)
-
-      let localesData = []
-      if (Array.isArray(response)) {
-        localesData = response.map((item) => ({
-          code: item.code,
-          name: item.name || item.code,
-        }))
-      } else if (response && response.data) {
-        localesData = response.data
+      const response = await this.rpc("/onlyoffice/oforms/locales")
+      if (response.data?.length) {
+        this.state.locales = response.data
       }
-
-      this.state.locales = localesData
     } catch (_error) {
       this.state.locales = [
         {
@@ -101,29 +86,16 @@ export class FormGallery extends Component {
     }
   }
 
-  async fetchCategoryTypes() {
+  async fetchCategories() {
     try {
-      const response = await this.rpc("/onlyoffice/oforms/category-types", { locale: this.state.locale.code })
-      this.state.categories = response.data || []
-      for (const categoryTypes of response.data) {
-        await this.fetchSubcategories(categoryTypes.categoryId)
-      }
-    } catch (_error) {
-      this.notification.add(_t("Failed to load categories"), { type: "danger" })
-    }
-  }
-
-  async fetchSubcategories(categoryId) {
-    try {
-      const category = this.state.categories.find((c) => c.categoryId === categoryId)
-      const response = await this.rpc("/onlyoffice/oforms/subcategories", {
-        category_type: category.type,
+      const response = await this.rpc("/onlyoffice/oforms/categories", {
+        ext: this.state.type,
         locale: this.state.locale.code,
       })
-
-      this.state.subcategories[categoryId] = response.data || []
+      this.state.purposes = response.data || []
     } catch (_error) {
-      this.state.subcategories[categoryId] = []
+      this.state.purposes = []
+      this.notification.add(_t("Failed to load categories"), { type: "danger" })
     }
   }
 
@@ -134,20 +106,19 @@ export class FormGallery extends Component {
 
     try {
       const params = {
-        ["filters[" + this.state.subcategory.category_type + "][$eq]"]: this.state.subcategory.id,
+        ext: this.state.type,
         locale: this.state.locale.code,
-        "pagination[pageSize]": this.state.limit,
-        "pagination[page]": Math.floor(this.state.offset / this.state.limit) + 1,
-        type: this.state.type,
+        page: Math.floor(this.state.offset / this.state.limit) + 1,
+        page_size: this.state.limit,
+        purpose: this.state.filter?.purpose,
+        search: this.state.search,
+        subcategory: this.state.filter?.subcategory,
       }
 
-      if (this.state.search) {
-        params["filters[name_form][$containsi]"] = this.state.search
-      }
+      const response = await this.rpc("/onlyoffice/oforms", params)
 
-      const response = await this.rpc("/onlyoffice/oforms", { params: params })
-
-      this.state.forms = response.data || []
+      // A form without a file of the chosen type cannot be previewed or created.
+      this.state.forms = (response.data || []).filter((form) => form.file_oform?.length)
 
       const oKanbanGhost = 4 - (this.state.forms.length % 4)
       if (oKanbanGhost === 4) {
@@ -166,26 +137,13 @@ export class FormGallery extends Component {
 
   async onChangeType(type) {
     this.state.type = type
-    this.state.subcategory = {
-      category_type: "category",
-      id: "all",
-    }
+    this.state.filter = null
     this.state.offset = 0
-    await this.fetchOforms()
+    await Promise.all([this.fetchCategories(), this.fetchOforms()])
   }
 
-  async onSubcategorySelect(subcategory) {
-    this.state.subcategory = subcategory
-    this.state.type = "pdf"
-    this.state.offset = 0
-    await this.fetchOforms()
-  }
-
-  async onAllSubcategorySelect() {
-    this.state.subcategory = {
-      category_type: "category",
-      id: "all",
-    }
+  async onFilterSelect(filter) {
+    this.state.filter = filter
     this.state.offset = 0
     await this.fetchOforms()
   }
@@ -207,13 +165,9 @@ export class FormGallery extends Component {
     this.state.loading = true
 
     this.state.locale = locale
-    this.state.subcategory = {
-      category_type: "category",
-      id: "all",
-    }
+    this.state.filter = null
     this.state.offset = 0
-    await this.fetchCategoryTypes()
-    await this.fetchOforms()
+    await Promise.all([this.fetchCategories(), this.fetchOforms()])
 
     this.state.loading = false
   }
@@ -221,22 +175,6 @@ export class FormGallery extends Component {
   async onPageChange({ offset }) {
     this.state.offset = offset
     await this.fetchOforms()
-  }
-
-  getImageUrl(form) {
-    const imageData = form.attributes?.template_image?.data
-    if (!imageData) {
-      return null
-    }
-    return (
-      imageData.attributes.formats.medium?.url ||
-      imageData.attributes.formats.small?.url ||
-      imageData.attributes.formats.thumbnail?.url
-    )
-  }
-
-  getPreviewUrl(form) {
-    return form.attributes?.card_prewiew?.data?.attributes?.url
   }
 
   previewForm(url, title, ext) {

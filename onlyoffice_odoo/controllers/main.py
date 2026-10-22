@@ -79,9 +79,7 @@ def onlyoffice_request(url, method, opts=None, env=None):
         }
 
         _logger.error("ONLYOFFICE request failed: %s", error_details)
-        raise requests.exceptions.RequestException(
-            f"ONLYOFFICE request failed to {method.upper()} {url}: {str(e)}"
-        ) from e
+        raise requests.exceptions.RequestException(f"ONLYOFFICE request failed to {method.upper()} {url}: {e!s}") from e
 
     except Exception as e:
         error_details = {
@@ -94,7 +92,7 @@ def onlyoffice_request(url, method, opts=None, env=None):
 
         _logger.error("Unexpected error in ONLYOFFICE request: %s", error_details)
         raise requests.exceptions.RequestException(
-            f"Unexpected error in ONLYOFFICE request to {method.upper()} {url}: {str(e)}"
+            f"Unexpected error in ONLYOFFICE request to {method.upper()} {url}: {e!s}"
         ) from e
 
 
@@ -547,31 +545,22 @@ class OnlyofficeConnector(http.Controller):
 
 
 class OnlyOfficeOFormsDocumentsController(http.Controller):
-    CMSOFORMS_URL = "https://cmsoforms.onlyoffice.com/api"
-    OFORMS_URL = "https://oforms.onlyoffice.com/dashboard/api"
+    OFORMS_URL = "https://templates.onlyoffice.com/dashboard/v2/api"
     TIMEOUT = 20  # seconds
 
-    def _make_api_request(self, url, endpoint, params=None, method="GET", data=None, files=None):
-        url = f"{url}/{endpoint}"
+    def _make_api_request(self, endpoint, params=None):
+        url = f"{self.OFORMS_URL}/{endpoint}"
         try:
-            if method == "GET":
-                response = requests.get(url, params=params, timeout=self.TIMEOUT)
-            elif method == "POST":
-                response = requests.post(url, data=data, files=files, timeout=self.TIMEOUT)
-            else:
-                raise ValueError(f"Unsupported HTTP method: {method}")
-
+            response = requests.get(url, params=params, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
             _logger.error("API request failed to %s: %s", url, e)
-            raise UserError(f"Failed to connect to Forms API: {str(e)}") from e
+            raise UserError(f"Failed to connect to Forms API: {e!s}") from e
 
     @http.route("/onlyoffice/oforms/locales", type="json", auth="user")
     def get_oform_locales(self):
-        url = self.OFORMS_URL
-        endpoint = "i18n/locales"
-        response = self._make_api_request(url, endpoint)
+        response = self._make_api_request("i18n/locales")
         locales = response if isinstance(response, list) else []
         return {
             "data": [
@@ -583,102 +572,66 @@ class OnlyOfficeOFormsDocumentsController(http.Controller):
             ]
         }
 
-    @http.route("/onlyoffice/oforms/category-types", type="json", auth="user")
-    def get_category_types(self, locale="en"):
-        url = self.OFORMS_URL
-        endpoint = "menu-translations"
-        params = {"populate": "*", "locale": locale}
-        response = self._make_api_request(url, endpoint, params=params)
+    @http.route("/onlyoffice/oforms/categories", type="json", auth="user")
+    def get_categories(self, ext="pdf", locale="en"):
+        """Category tree: purposes (Business / Personal) -> categories -> subcategories with forms of this type."""
+        subcategories = "populate[parent_categories][populate][subcategories]"
+        params = {
+            "fields[0]": "name",
+            "fields[1]": "key",
+            "populate[parent_categories][fields][0]": "name",
+            f"{subcategories}[fields][0]": "name",
+            f"{subcategories}[populate][oforms][count]": "true",
+            f"{subcategories}[populate][oforms][filters][form_exts][ext][$eq]": ext,
+            "locale": locale,
+        }
+        response = self._make_api_request("purposes", params=params)
 
-        categories = []
-        for item in response.get("data", []):
-            attrs = item.get("attributes", {})
-            localized_name = next(
-                (
-                    loc["attributes"]["name"]
-                    for loc in attrs.get("localizations", {}).get("data", [])
-                    if loc["attributes"]["locale"] == locale
-                ),
-                None,
-            ) or attrs.get("name", "")
+        purposes = []
+        for purpose in response.get("data", []):
+            categories = []
+            for category in purpose.get("parent_categories") or []:
+                # Category ids differ between locales, the documentId is shared.
+                subcategories = [
+                    {"id": subcategory["documentId"], "name": subcategory.get("name", "")}
+                    for subcategory in category.get("subcategories") or []
+                    if (subcategory.get("oforms") or {}).get("count")
+                ]
+                if subcategories:
+                    categories.append(
+                        {
+                            "id": category["documentId"],
+                            "name": category.get("name", ""),
+                            "subcategories": subcategories,
+                        }
+                    )
+            if categories:
+                purposes.append({"key": purpose.get("key"), "name": purpose.get("name", ""), "categories": categories})
 
-            categories.append(
-                {
-                    "id": item["id"],
-                    "categoryId": attrs.get("categoryId"),
-                    "name": localized_name,
-                    "type": attrs.get("categoryTitle"),
-                }
-            )
-
-        return {"data": categories}
-
-    @http.route("/onlyoffice/oforms/subcategories", type="json", auth="user")
-    def get_subcategories(self, category_type, locale="en"):
-        url = self.OFORMS_URL
-        endpoint_map = {"categorie": "categories", "type": "types", "compilation": "compilations"}
-
-        if category_type not in endpoint_map:
-            return {"data": []}
-
-        endpoint = f"{endpoint_map[category_type]}"
-        params = {"populate": "*", "locale": locale}
-        response = self._make_api_request(url, endpoint, params=params)
-
-        subcategories = []
-        for item in response.get("data", []):
-            attrs = item.get("attributes", {})
-            localized_name = next(
-                (
-                    loc["attributes"][category_type]
-                    for loc in attrs.get("localizations", {}).get("data", [])
-                    if loc["attributes"]["locale"] == locale
-                ),
-                None,
-            ) or attrs.get(category_type, "")
-
-            subcategories.append(
-                {
-                    "id": item["id"],
-                    "name": localized_name,
-                    "category_type": endpoint_map[category_type],
-                }
-            )
-
-        return {"data": subcategories}
+        return {"data": purposes}
 
     @http.route("/onlyoffice/oforms", type="json", auth="user")
-    def get_oforms(self, params=None, **kwargs):
-        url = self.CMSOFORMS_URL
-        if params is None:
-            params = {}
-
+    def get_oforms(self, ext="pdf", locale="en", page=1, page_size=12, search=None, purpose=None, subcategory=None):
         api_params = {
             "fields[0]": "name_form",
-            "fields[1]": "updatedAt",
-            "fields[2]": "description_card",
-            "fields[3]": "template_desc",
-            "filters[form_exts][ext][$eq]": params.get("type", "pdf"),
-            "locale": params.get("locale", "en"),
-            "pagination[page]": params.get("pagination[page]", 1),
-            "pagination[pageSize]": params.get("pagination[pageSize]", 12),
+            "fields[1]": "description_card",
             "populate[card_prewiew][fields][0]": "url",
-            "populate[template_image][fields][0]": "formats",
             "populate[file_oform][fields][0]": "url",
             "populate[file_oform][fields][1]": "name",
             "populate[file_oform][fields][2]": "ext",
-            "populate[file_oform][filters][url][$endsWith]": "." + params.get("type", "pdf"),
+            "populate[file_oform][filters][url][$endsWith]": f".{ext}",
+            "filters[form_exts][ext][$eq]": ext,
+            "locale": locale,
+            "pagination[page]": page,
+            "pagination[pageSize]": page_size,
+            "sort[0]": "name_form:asc",
         }
 
-        if "filters[name_form][$containsi]" in params:
-            api_params["filters[name_form][$containsi]"] = params["filters[name_form][$containsi]"]
+        if search:
+            api_params["filters[name_form][$containsi]"] = search
+        if subcategory:
+            api_params["filters[subcategories][documentId][$eq]"] = subcategory
+        if purpose:
+            api_params["filters[subcategories][parent_categories][purpose][key][$eq]"] = purpose
 
-        if "filters[categories][$eq]" in params:
-            api_params["filters[categories][id][$eq]"] = params["filters[categories][$eq]"]
-        elif "filters[types][$eq]" in params:
-            api_params["filters[types][id][$eq]"] = params["filters[types][$eq]"]
-        elif "filters[compilations][$eq]" in params:
-            api_params["filters[compilations][id][$eq]"] = params["filters[compilations][$eq]"]
-
-        response = self._make_api_request(url, "oforms", params=api_params)
-        return response
+        return self._make_api_request("oforms", params=api_params)

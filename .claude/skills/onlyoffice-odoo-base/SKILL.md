@@ -63,10 +63,12 @@ to view mode; see `onlyoffice-odoo-documents`), `get_attachment(attachment_id, u
 `_check_document_access(document)` (lock + `check_access_rule("read")`).
 
 `OnlyOfficeOFormsDocumentsController(http.Controller)` — JSON proxies for the form-template gallery
-(`/onlyoffice/oforms/locales`, `/onlyoffice/oforms/category-types`, `/onlyoffice/oforms/subcategories`,
-`/onlyoffice/oforms`, all `auth="user"`). They call `oforms.onlyoffice.com` / `cmsoforms.onlyoffice.com` with plain
-`requests` (timeout 20 s) — this is not Document Server traffic, so `onlyoffice_request` is not used here. Consumed by
-the `FormGallery` component.
+(`/onlyoffice/oforms/locales`, `/onlyoffice/oforms/categories`, `/onlyoffice/oforms`, all `auth="user"`). They call the
+Strapi v5 CMS `templates-cms.onlyoffice.com/dashboard/api` (`i18n/locales`, `purposes`, `oforms`) with plain `requests`
+(timeout 20 s) — this is not Document Server traffic, so `onlyoffice_request` is not used here. Forms come back in the
+flat v5 shape (`form.name_form`, `form.file_oform[0].url`, `form.card_prewiew.url`); categories are a Business /
+Personal tree filtered by subcategory `documentId` (numeric ids differ per locale). Consumed by the `FormGallery`
+component and, through its `onDownload` callback, by `onlyoffice_odoo_documents` and `onlyoffice_odoo_templates`.
 
 ### `models/`
 

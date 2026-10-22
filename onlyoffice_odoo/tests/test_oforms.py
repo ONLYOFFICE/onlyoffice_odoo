@@ -29,41 +29,66 @@ class TestOformsProxy(HttpCase):
             response = self.url_open(route, data=json.dumps(body), headers={"Content-Type": "application/json"})
         return response.json(), get
 
-    def test_category_types_take_the_localized_name(self):
-        localized = {"data": [{"attributes": {"locale": "de", "name": "Formulare"}}]}
+    def test_categories_keep_only_subcategories_with_forms(self):
+        def subcategory(document_id, name, count):
+            return {"id": 1, "documentId": document_id, "name": name, "oforms": {"count": count}}
+
         api = {
             "data": [
-                {"id": 1, "attributes": {"categoryId": 7, "categoryTitle": "categorie", "name": "Forms"}},
-                {"id": 2, "attributes": {"categoryTitle": "type", "name": "Letters", "localizations": localized}},
+                {
+                    "key": "business",
+                    "name": "Geschäftlich",
+                    "parent_categories": [
+                        {
+                            "documentId": "c1",
+                            "name": "Integrations",
+                            "subcategories": [subcategory("s1", "Odoo", 24), subcategory("s2", "Empty", 0)],
+                        },
+                        {"documentId": "c2", "name": "Empty group", "subcategories": [subcategory("s3", "Empty", 0)]},
+                    ],
+                },
+                {"key": "personal", "name": "Privat", "parent_categories": []},
             ]
         }
-        data, _get = self._call("/onlyoffice/oforms/category-types", api, locale="de")
+        data, get = self._call("/onlyoffice/oforms/categories", api, ext="docx", locale="de")
         self.assertEqual(
             data["result"]["data"],
             [
-                {"id": 1, "categoryId": 7, "name": "Forms", "type": "categorie"},
-                {"id": 2, "categoryId": None, "name": "Formulare", "type": "type"},
+                {
+                    "key": "business",
+                    "name": "Geschäftlich",
+                    "categories": [
+                        {"id": "c1", "name": "Integrations", "subcategories": [{"id": "s1", "name": "Odoo"}]}
+                    ],
+                }
             ],
         )
-
-    def test_subcategories_of_an_unknown_type_are_empty_without_calling_the_api(self):
-        data, get = self._call("/onlyoffice/oforms/subcategories", {}, category_type="unknown")
-        self.assertEqual(data["result"], {"data": []})
-        get.assert_not_called()
-
-    def test_subcategories_are_mapped_to_their_endpoint(self):
-        api = {"data": [{"id": 5, "attributes": {"categorie": "HR"}}]}
-        data, get = self._call("/onlyoffice/oforms/subcategories", api, category_type="categorie")
-        self.assertEqual(data["result"]["data"], [{"id": 5, "name": "HR", "category_type": "categories"}])
-        self.assertTrue(get.call_args.args[0].endswith("/categories"))
+        self.assertTrue(get.call_args.args[0].endswith("/purposes"))
+        api_params = get.call_args.kwargs["params"]
+        self.assertEqual(api_params["locale"], "de")
+        ext_filter = (
+            "populate[parent_categories][populate][subcategories][populate][oforms][filters][form_exts][ext][$eq]"
+        )
+        self.assertEqual(api_params[ext_filter], "docx")
 
     def test_forms_request_maps_the_gallery_filters(self):
-        params = {"filters[categories][$eq]": 5, "type": "pdf", "filters[name_form][$containsi]": "lease"}
-        _data, get = self._call("/onlyoffice/oforms", {"data": []}, params=params)
+        params = {"ext": "docx", "search": "lease", "subcategory": "s1", "purpose": "business", "page": 2}
+        _data, get = self._call("/onlyoffice/oforms", {"data": []}, **params)
+        self.assertTrue(get.call_args.args[0].endswith("/oforms"))
         api_params = get.call_args.kwargs["params"]
-        self.assertEqual(api_params["filters[categories][id][$eq]"], 5)
-        self.assertEqual(api_params["filters[form_exts][ext][$eq]"], "pdf")
+        self.assertEqual(api_params["filters[form_exts][ext][$eq]"], "docx")
+        self.assertEqual(api_params["populate[file_oform][filters][url][$endsWith]"], ".docx")
         self.assertEqual(api_params["filters[name_form][$containsi]"], "lease")
+        self.assertEqual(api_params["filters[subcategories][documentId][$eq]"], "s1")
+        self.assertEqual(api_params["filters[subcategories][parent_categories][purpose][key][$eq]"], "business")
+        self.assertEqual(api_params["pagination[page]"], 2)
+
+    def test_forms_request_without_filters(self):
+        _data, get = self._call("/onlyoffice/oforms", {"data": []})
+        api_params = get.call_args.kwargs["params"]
+        self.assertEqual(api_params["filters[form_exts][ext][$eq]"], "pdf")
+        self.assertEqual(api_params["locale"], "en")
+        self.assertFalse([key for key in api_params if "name_form][$containsi" in key or "subcategories" in key])
 
     def test_api_failure_is_reported_to_the_gallery(self):
         data, _get = self._call("/onlyoffice/oforms/locales", side_effect=requests.exceptions.ConnectionError("down"))
