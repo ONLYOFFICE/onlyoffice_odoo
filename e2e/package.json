@@ -5,7 +5,7 @@
   "scripts": {
     "setup": "npm ci && npx playwright install chromium",
     "e2e": "npm run stack:up && npm test && npm run stack:down",
-    "stack:up": "docker compose up -d db documentserver && docker compose run --build --rm web odoo -d e2e -i hr --stop-after-init --without-demo=all && docker compose run --rm web odoo -d e2e -i onlyoffice_odoo,onlyoffice_odoo_templates --stop-after-init && docker compose up -d web && node scripts/wait-for-stack.mjs",
+    "stack:up": "docker compose up -d db documentserver && docker compose run --build --rm web odoo -d e2e -i hr --stop-after-init --without-demo=all && docker compose run --rm web odoo -d e2e -i onlyoffice_odoo,onlyoffice_odoo_templates,onlyoffice_odoo_documents --stop-after-init && docker compose up -d web && node scripts/wait-for-stack.mjs",
     "stack:down": "docker compose down -v --remove-orphans",
     "test": "playwright test",
     "report": "playwright show-report"

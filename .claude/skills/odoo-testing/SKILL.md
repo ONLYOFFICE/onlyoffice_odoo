@@ -10,12 +10,12 @@ description:
 
 ## State of the test suites
 
-| Module                      | Tests                                                                                                                                                                                                                                                                                                                                                                 | In CI                         |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `onlyoffice_odoo`           | `tests/test_config_utils.py`, `test_jwt_utils.py`, `test_url_utils.py`, `test_file_utils.py`, `test_validation_utils.py`, `test_models.py` (`onlyoffice.odoo`, `res.config.settings`), `test_controllers.py` (`HttpCase`: all base routes incl. the save callback), `test_oforms.py` (form gallery proxy, `requests.get` mocked), `test_document_server.py` (live DS) | yes, coverage `fail_under=72` |
-| `onlyoffice_odoo_documents` | none                                                                                                                                                                                                                                                                                                                                                                  | excluded (needs Enterprise)   |
-| `onlyoffice_odoo_templates` | `tests/test_controllers.py` (field keys cache), `test_fill_template.py` (`HttpCase` on the docbuilder `fill_template` callback: field formatting by type, one PDF per record, script-safe file names, the "Disable form fields" flag), `test_models.py` (demo export, report actions, mocked printing); live DS printing is covered by e2e                            | yes, coverage `fail_under=47` |
-| Playwright e2e (`e2e/`)     | `tests/settings.spec.ts`, `tests/editor.spec.ts`, `tests/access.spec.ts`, `tests/templates.spec.ts` against a live DS (see below)                                                                                                                                                                                                                                     | yes, `e2e.yml` (push / PR)    |
+| Module                      | Tests                                                                                                                                                                                                                                                                                                                                                                                                                     | In CI                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `onlyoffice_odoo`           | `tests/test_config_utils.py`, `test_jwt_utils.py`, `test_url_utils.py`, `test_file_utils.py`, `test_validation_utils.py`, `test_models.py` (`onlyoffice.odoo`, `res.config.settings`), `test_controllers.py` (`HttpCase`: all base routes incl. the save callback), `test_oforms.py` (form gallery proxy, `requests.get` mocked), `test_document_server.py` (live DS)                                                     | yes, coverage `fail_under=72`            |
+| `onlyoffice_odoo_documents` | `tests/test_models.py` (roles, Advanced Share, permission panel, `_OdooMetadata` recovery), `test_spreadsheet_formulas.py` (`ODOO_*` evaluator with `common.fake_request`), `test_spreadsheet_docbuilder.py` (cells, scripts, cache, docbuilder call mocked), `test_controllers.py` / `test_share.py` / `test_spreadsheet_routes.py` (`HttpCase` on every route, versioning on save); shared fixture in `tests/common.py` | yes, coverage `fail_under=80`, see below |
+| `onlyoffice_odoo_templates` | `tests/test_controllers.py` (field keys cache), `test_fill_template.py` (`HttpCase` on the docbuilder `fill_template` callback: field formatting by type, one PDF per record, script-safe file names, the "Disable form fields" flag), `test_models.py` (demo export, report actions, mocked printing); live DS printing is covered by e2e                                                                                | yes, coverage `fail_under=47`            |
+| Playwright e2e (`e2e/`)     | `tests/settings.spec.ts`, `tests/editor.spec.ts`, `tests/access.spec.ts`, `tests/templates.spec.ts`, `tests/documents.spec.ts` against a live DS (see below)                                                                                                                                                                                                                                                              | yes, `e2e.yml` (push / PR)               |
 
 Every new `test_*.py` must be imported from the module's `tests/__init__.py` or the runner will not see it.
 
@@ -26,7 +26,12 @@ preinstalls `hr` for the templates job (so `hr`'s own tests do not run), then ru
 `coverage run … odoo -i $INCLUDE --test-enable --test-tags standard,external_docserver` instead of `oca_run_tests`: the
 live DS tests are tagged `-standard` (see below). The job has `timeout-minutes: 30`. `coverage report` uses the
 threshold of `.coveragerc` / `.coveragerc-templates` (`COVERAGE_RCFILE`). Lint runs in `lint.yml` (pre-commit, ruff,
-pylint-odoo). Tests for the documents module run only locally — say so in the PR and describe the manual check.
+pylint-odoo). The `onlyoffice_odoo_documents` job (a job of its own) and all of `e2e.yml` run only on Gitea
+(`if: ${{ !startsWith(github.server_url, 'https://github.com') }}`): they check out the `.github` of
+`ONLYOFFICE/onlyoffice_odoo_test` into `.test/` (branch = Odoo series of the manifest) and run its action (`unit`,
+`e2e`) in their job, which keeps the container and the services; the steps of these tests live there. Do not describe in
+this repository what that repository holds or what its actions do. The local e2e stack mounts Odoo Enterprise from
+`../enterprise-18.0` next to the repository instead (`ENTERPRISE_DIR` for another directory; see `e2e/README.md`).
 
 Live DS unit tests (`onlyoffice_odoo/tests/test_document_server.py`) are imported only when
 `ONLYOFFICE_TEST_LIVE_DOCSERVER` is set and are tagged `-standard` + `external_docserver`: `-standard` lifts Odoo's
@@ -121,10 +126,10 @@ of fighting this.
 Browser tests against a real Document Server live in `e2e/` (Playwright + TypeScript) and run in
 `.github/workflows/e2e.yml` on push / pull request (CI is Gitea Actions with GitHub syntax). The job mirrors `test.yml`:
 OCA Odoo image as the job container, `postgres` and `onlyoffice/documentserver-de` (JWT on; DE because the template
-editor needs the Automation API) as `services`; `onlyoffice_odoo`, `onlyoffice_odoo_templates` and `hr` are installed;
-Odoo is started in the background inside the job container and the browser runs there too, so the Document Server
-address is `http://documentserver/` for both sides and Odoo is reached at the job container IP. `e2e/docker-compose.yml`
-(`odoo:17` + `pyjwt`, `postgres:13`, Document Server) is for local runs only.
+editor needs the Automation API) as `services`; its steps are the `e2e` action of `ONLYOFFICE/onlyoffice_odoo_test` (see
+CI above); Odoo is started in the background inside the job container and the browser runs there too, so the Document
+Server address is `http://documentserver/` for both sides and Odoo is reached at the job container IP.
+`e2e/docker-compose.yml` (`odoo:17` + `pyjwt`, `postgres:13`, Document Server) is for local runs only.
 
 Layout: `fixtures.ts` (`odoo` worker fixture = JSON-RPC client, `AUTH_FILE`), `helpers/env.ts` (URLs, JWT secret,
 `SAVE_GRACE_MS`, template dir, config keys), `helpers/odoo.ts`, `helpers/discuss.ts` (post a template to a new channel),
@@ -170,12 +175,14 @@ formula_token = jwt_utils.encode_payload(self.env, {"uid": self.env.user.id, "do
                                          config_utils.get_internal_jwt_secret(self.env))
 ```
 
-## Testing Enterprise-dependent code without Enterprise
+## Testing Enterprise-dependent code
 
-CI has only stub manifests for `documents`/`documents_spreadsheet`, so tests for `onlyoffice_odoo_documents` cannot run
-there. Options: keep pure-Python parts testable in isolation (`conversion_utils`, the formula evaluator with a fake
-snapshot), and run the full module tests locally against a database with Enterprise installed. Do not add `documents` to
-the base module's test dependencies.
+`onlyoffice_odoo_documents` tests run against the real addons it depends on (see CI above); the other jobs keep the stub
+manifests. Do not add `documents` to the base module's test dependencies: code of the base module that only runs for
+Documents files (`get_documents_permissions`, versioning in `editor_callback`) is tested from the documents module.
+`tests/common.py` has the shared fixture (`DocumentsCase`: folder editable by internal users, owner, colleague, preset
+internal secret), `make_xlsx` / `xlsx_with_metadata` for workbooks and `fake_request` to run the formula evaluator and
+docbuilder helpers outside an HTTP request. `_store_docbuilder_data` commits: patch `cr.commit` in a `TransactionCase`.
 
 ## Checklist for a bug fix
 

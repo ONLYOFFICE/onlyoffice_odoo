@@ -16,7 +16,9 @@ on:
   pull_request:
 
 jobs:
+  # On Gitea, all the tests: an action of ONLYOFFICE/onlyoffice_odoo_test (as the documents job of test.yml).
   playwright:
+    if: ${{ !startsWith(github.server_url, 'https://github.com') }}
     runs-on: ubuntu-22.04
     container: ghcr.io/oca/oca-ci/py3.10-odoo18.0:latest
     timeout-minutes: 45
@@ -35,12 +37,67 @@ jobs:
           # Odoo (the job container) has a private address on the job network.
           ALLOW_PRIVATE_IP_ADDRESS: "true"
     env:
-      INCLUDE: onlyoffice_odoo,onlyoffice_odoo_templates
       PGDATABASE: e2e
       # Browser and Odoo share the job network with the Document Server, so both addresses are the same.
       E2E_DS_PUBLIC_URL: http://documentserver/
       E2E_DS_INNER_URL: http://documentserver/
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/onlyoffice_odoo_test
+          ref: "18.0"
+          persist-credentials: false
+          path: .test
+          sparse-checkout: .github
+
+      - uses: ./.test/.github/actions/e2e
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            odoo.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # On GitHub, without onlyoffice_odoo_documents: the specs and tests of the Documents app are left out
+  # (E2E_WITHOUT_DOCUMENTS, see e2e/helpers/env.ts).
+  playwright-without-documents:
+    name: playwright (without Documents)
+    if: ${{ startsWith(github.server_url, 'https://github.com') }}
+    runs-on: ubuntu-22.04
+    container: ghcr.io/oca/oca-ci/py3.10-odoo18.0:latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+      documentserver:
+        image: onlyoffice/documentserver-de:latest
+        env:
+          JWT_SECRET: e2e-secret-0123456789abcdef0123456789
+          ALLOW_PRIVATE_IP_ADDRESS: "true"
+    env:
+      PGDATABASE: e2e
+      E2E_DS_PUBLIC_URL: http://documentserver/
+      E2E_DS_INNER_URL: http://documentserver/
+      E2E_WITHOUT_DOCUMENTS: "1"
+    steps:
+      # npm and Playwright need a newer Node.js than the one of the OCA image.
+      - name: Install Node.js
+        run: >-
+          curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.gz
+          | tar -xz -C /usr/local --strip-components=1
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -65,16 +122,12 @@ jobs:
           # The Document Server downloads files from and posts callbacks to this container.
           echo "E2E_ODOO_INNER_URL=http://$(hostname -i | cut -d' ' -f1):8069/" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: e2e/package-lock.json
-
       - uses: actions/cache@v4
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('e2e/package-lock.json') }}
+          path: |
+            ~/.npm
+            ~/.cache/ms-playwright
+          key: e2e-${{ hashFiles('e2e/package-lock.json') }}
 
       - name: Install Playwright
         working-directory: e2e
@@ -89,7 +142,8 @@ jobs:
         working-directory: e2e
         run: npx playwright test
 
-      - uses: actions/upload-artifact@v3
+      # v4: GitHub fails jobs that use v3 (the job of Gitea above keeps v3, which v4 does not support).
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-report

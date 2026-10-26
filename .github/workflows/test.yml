@@ -20,7 +20,6 @@ on:
 
 jobs:
   # Unit tests of one addon; onlyoffice_odoo also has live Document Server tests (tests/test_document_server.py).
-  # onlyoffice_odoo_documents needs Enterprise and is tested locally only.
   unit:
     name: ${{ matrix.addon }}
     runs-on: ubuntu-22.04
@@ -84,3 +83,38 @@ jobs:
           standard,external_docserver --stop-after-init
       - name: Check coverage threshold
         run: coverage report
+
+  # The unit job of onlyoffice_odoo_documents: an action of ONLYOFFICE/onlyoffice_odoo_test, on Gitea only.
+  documents:
+    name: onlyoffice_odoo_documents
+    if: ${{ !startsWith(github.server_url, 'https://github.com') }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    container: ghcr.io/oca/oca-ci/py3.10-odoo18.0:latest
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: odoo
+      documentserver:
+        image: onlyoffice/documentserver-de:latest
+        env:
+          JWT_ENABLED: "false"
+    steps:
+      - name: Install Node.js for the actions
+        run: >-
+          curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.gz
+          | tar -xz -C /usr/local --strip-components=1
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ONLYOFFICE/onlyoffice_odoo_test
+          ref: "18.0"
+          persist-credentials: false
+          path: .test
+          sparse-checkout: .github
+      - uses: ./.test/.github/actions/unit

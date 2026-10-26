@@ -1,5 +1,6 @@
 # Copyright (C) 2026 Ascensio System SIA
-# Local stack for the Playwright tests: Odoo 18 (onlyoffice_odoo, onlyoffice_odoo_templates, hr) + PostgreSQL + ONLYOFFICE Docs.
+# Local stack for the Playwright tests: Odoo 18 (the three ONLYOFFICE modules, hr, Enterprise Documents) + PostgreSQL +
+# ONLYOFFICE Docs.
 #   browser         -> http://localhost:8069  Odoo,            http://localhost:8080  Document Server
 #   Odoo container  -> http://documentserver/ Document Server (inner URL)
 #   Document Server -> http://web:8069/       Odoo (Odoo URL for internal requests)
@@ -17,12 +18,31 @@ services:
     volumes:
       - ../onlyoffice_odoo:/mnt/extra-addons/onlyoffice_odoo:ro
       - ../onlyoffice_odoo_templates:/mnt/extra-addons/onlyoffice_odoo_templates:ro
+      - ../onlyoffice_odoo_documents:/mnt/extra-addons/onlyoffice_odoo_documents:ro
+      # Odoo Enterprise 18.0 next to the repository (a checkout of the series of the manifests), see README.md.
+      - ${ENTERPRISE_DIR:-../../enterprise-18.0}:/mnt/enterprise:ro
       # The database is initialised with `docker compose run --rm web`; keep its filestore.
       - odoo-data:/var/lib/odoo
+    # Odoo only warns about a module with unmet dependencies and skips it, so stop here when an Enterprise addon of
+    # onlyoffice_odoo_documents is missing. A bind mount of a missing path cannot fail instead: Docker Desktop creates it.
+    entrypoint:
+      - sh
+      - -c
+      - |
+        for addon in documents documents_spreadsheet spreadsheet_edition web_enterprise; do
+          if [ ! -f "/mnt/enterprise/$$addon/__manifest__.py" ]; then
+            echo "Enterprise addon '$$addon' not found: put Odoo Enterprise 18.0 in ../enterprise-18.0 next to the" \
+              "repository or set ENTERPRISE_DIR, see e2e/README.md" >&2
+            exit 1
+          fi
+        done
+        exec /entrypoint.sh "$$@"
+      - entrypoint
     command: ["odoo", "-d", "e2e"]
 
   documentserver:
-    # Developer Edition: the template editor needs the Automation API (see onlyoffice_odoo_templates).
+    # Developer Edition: the template editor needs the Automation API (see onlyoffice_odoo_templates), and the
+    # spreadsheet features of onlyoffice_odoo_documents the docbuilder service.
     image: onlyoffice/documentserver-de:latest
     environment:
       JWT_SECRET: e2e-secret-0123456789abcdef0123456789
