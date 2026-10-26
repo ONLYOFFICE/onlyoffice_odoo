@@ -189,7 +189,6 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       context: this.props.context,
       folderId: this.env.searchModel.getSelectedFolderId(),
       model: this.env.model,
-      onShare: (document_id) => this.onClickAdvancedShare(document_id, true),
     })
   },
 
