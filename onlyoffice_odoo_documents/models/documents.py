@@ -206,6 +206,13 @@ class Document(models.Model):
         original_access_internal = access_internal
         original_access_via_link = access_via_link
         original_partners = partners.copy() if partners else None
+        original_groups = groups.copy() if groups else None
+
+        # The sharing wizard invites with the standard equivalent of a custom role and passes the custom one here
+        invite_role = self.env.context.get("onlyoffice_invite_role")
+        if invite_role:
+            original_partners = self._with_invite_role(original_partners, invite_role)
+            original_groups = self._with_invite_role(original_groups, invite_role)
 
         if access_internal:
             access_internal = self._convert_custom_role_to_standard(access_internal)
@@ -213,23 +220,12 @@ class Document(models.Model):
         if access_via_link:
             access_via_link = self._convert_custom_role_to_standard(access_via_link)
 
-        partners_with_standard_roles = {}
-        if partners:
-            for partner_id, role_data in partners.items():
-                if isinstance(role_data, list | tuple):
-                    role, expiration_date = role_data
-                    converted_role = self._convert_custom_role_to_standard(role) if role else role
-                    partners_with_standard_roles[partner_id] = (converted_role, expiration_date)
-                else:
-                    converted_role = self._convert_custom_role_to_standard(role_data) if role_data else role_data
-                    partners_with_standard_roles[partner_id] = converted_role
-
         result = super().action_update_access_rights(
             access_internal,
             access_via_link,
             is_access_via_link_hidden,
-            partners_with_standard_roles,
-            groups,
+            self._with_standard_roles(partners),
+            self._with_standard_roles(groups),
             no_propagation,
         )
 
@@ -237,11 +233,37 @@ class Document(models.Model):
             original_access_internal,
             original_access_via_link,
             original_partners,
+            original_groups,
         )
 
         return result
 
-    def _save_onlyoffice_roles(self, access_internal, access_via_link, partners):
+    def _with_standard_roles(self, members):
+        """Return the partners/groups dict of action_update_access_rights with custom roles converted."""
+        if not members:
+            return members
+        converted = {}
+        for member, role_data in members.items():
+            if isinstance(role_data, list | tuple):
+                role, expiration_date = role_data
+                converted[member] = (self._convert_custom_role_to_standard(role) if role else role, expiration_date)
+            else:
+                converted[member] = self._convert_custom_role_to_standard(role_data) if role_data else role_data
+        return converted
+
+    def _with_invite_role(self, members, invite_role):
+        """Replace the roles of invited partners/groups with the custom role chosen in the sharing wizard."""
+        if not members:
+            return members
+        invited = {}
+        for member, role_data in members.items():
+            if isinstance(role_data, list | tuple):
+                invited[member] = (invite_role, role_data[1]) if role_data[0] else role_data
+            else:
+                invited[member] = invite_role if role_data else role_data
+        return invited
+
+    def _save_onlyoffice_roles(self, access_internal, access_via_link, partners, groups=None):
         for document in self:
             user_accesses = []
             users_to_remove = []
@@ -265,6 +287,16 @@ class Document(models.Model):
                                 }
                             )
 
+            group_accesses = []
+            groups_to_remove = []
+            for group, role_data in (groups or {}).items():
+                group_id = int(group)
+                role = role_data[0] if isinstance(role_data, list | tuple) else role_data
+                if role is False:
+                    groups_to_remove.append(group_id)
+                else:
+                    group_accesses.append({"group_id": group_id, "role": role})
+
             access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
 
             if access_internal is not None:
@@ -277,12 +309,21 @@ class Document(models.Model):
             else:
                 link_to_save = access.link_access if access else None
 
-            if internal_to_save or link_to_save or user_accesses or users_to_remove:
+            if (
+                internal_to_save
+                or link_to_save
+                or user_accesses
+                or users_to_remove
+                or group_accesses
+                or groups_to_remove
+            ):
                 vals = {
                     "document_id": document.id,
                     "internal_users": internal_to_save or "none",
                     "link_access": link_to_save or "none",
                     "user_accesses": user_accesses,
                     "users_to_remove": users_to_remove,
+                    "group_accesses": group_accesses,
+                    "groups_to_remove": groups_to_remove,
                 }
                 self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)
