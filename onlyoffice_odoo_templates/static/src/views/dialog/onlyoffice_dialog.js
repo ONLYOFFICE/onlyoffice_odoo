@@ -5,6 +5,7 @@ import { OnlyofficePreview } from "@onlyoffice_odoo/views/preview/onlyoffice_pre
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog"
 import { Dialog } from "@web/core/dialog/dialog"
 import { useHotkey } from "@web/core/hotkeys/hotkey_hook"
+import { deserializeDateTime } from "@web/core/l10n/dates"
 import { _t } from "@web/core/l10n/translation"
 import { download } from "@web/core/network/download"
 import { rpc } from "@web/core/network/rpc"
@@ -12,6 +13,7 @@ import { Pager } from "@web/core/pager/pager"
 import { KeepLast } from "@web/core/utils/concurrency"
 import { useService } from "@web/core/utils/hooks"
 import { SearchModel } from "@web/search/search_model"
+import { formatDateTime } from "@web/views/fields/formatters"
 import { getDefaultConfig } from "@web/views/view"
 import { FolderSelectionDialog } from "./folder_selection_dialog"
 
@@ -180,6 +182,11 @@ export class TemplateDialog extends Component {
 
   isSelected(templateId) {
     return this.state.selectedTemplateId === templateId
+  }
+
+  // The searchRead value is the UTC server string: format it like the kanban view does.
+  formatCreateDate(template) {
+    return formatDateTime(deserializeDateTime(template.create_date))
   }
 
   onPagerChange({ offset }) {
