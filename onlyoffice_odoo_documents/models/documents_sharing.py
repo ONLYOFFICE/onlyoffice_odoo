@@ -236,7 +236,7 @@ class DocumentsSharing(models.TransientModel):
                 [("document_id", "=", doc.id)]
             )
             for access in onlyoffice_user_accesses:
-                if access.user_id:
+                if access.user_id and access.user_id != doc.owner_id.partner_id:
                     if doc not in onlyoffice_access_by_partner:
                         onlyoffice_access_by_partner[doc] = {}
                     onlyoffice_access_by_partner[doc][access.user_id] = access.role
