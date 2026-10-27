@@ -54,6 +54,10 @@ jobs:
       ONLYOFFICE_TEST_LIVE_DOCSERVER: "1"
       ONLYOFFICE_TEST_DOCSERVER_URL: "http://documentserver/"
     steps:
+      - name: Install Node.js for the actions
+        run: >-
+          curl -fsSL https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.gz
+          | tar -xz -C /usr/local --strip-components=1
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
