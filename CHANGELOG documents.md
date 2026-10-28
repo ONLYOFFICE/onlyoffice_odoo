@@ -6,6 +6,7 @@
 
 - converting documents to other formats
 - converting "spreadsheet documents" to XLSX format with support for Odoo functions
+- support custom roles for groups in the share dialog
 
 ## 6.3.1
 

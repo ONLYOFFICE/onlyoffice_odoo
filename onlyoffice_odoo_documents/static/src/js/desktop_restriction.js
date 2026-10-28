@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { DocumentsKanbanRecord } from "@documents/views/kanban/documents_kanban_record"
+import { DocumentsKanbanRecord } from "@documents/views/kanban/documents_kanban_model"
 import { patch } from "@web/core/utils/patch"
 
 const isDesktopEditor = navigator.userAgent.includes("AscDesktopEditor")

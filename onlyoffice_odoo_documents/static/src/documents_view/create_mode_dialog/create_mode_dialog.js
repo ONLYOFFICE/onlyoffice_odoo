@@ -49,7 +49,6 @@ export class CreateModeDialog extends Component {
       context: this.props.context,
       folderId: this.props.folderId,
       model: this.props.model,
-      onShare: this.props.onShare,
     })
     this.data.close()
   }

@@ -58,31 +58,39 @@ class DocumentsSharing(models.TransientModel):
         original_user_roles = {}
         for access_user in self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", doc_id)]):
             original_user_roles[access_user.user_id] = access_user.role
+        original_group_roles = {}
+        for access_group in self.env["onlyoffice.odoo.documents.access.group"].search([("document_id", "=", doc_id)]):
+            original_group_roles[access_group.group_id] = access_group.role
 
         standard_accesses = self.env["documents.access"].search([("document_id", "=", doc_id)])
         for std_access in standard_accesses:
-            if std_access.partner_id not in original_user_roles:
+            if std_access.partner_id and std_access.partner_id not in original_user_roles:
                 original_user_roles[std_access.partner_id] = std_access.role
+            if std_access.group_id and std_access.group_id not in original_group_roles:
+                original_group_roles[std_access.group_id] = std_access.role
+
+        def original_role(access):
+            if access.group_id:
+                return original_group_roles.get(access.group_id)
+            return original_user_roles.get(access.partner_id)
 
         modified_custom_or_standard_access = self.share_access_ids.filtered(
             lambda a: (
                 not a.role.startswith(self.WRITE_VALUE_PREFIX)
                 and not a.is_deleted
                 and (self._is_custom_role(a.role) or a.role in ["view", "edit"])
-                and original_user_roles.get(a.partner_id) != a.role
+                and original_role(a) != a.role
             )
         )
 
-        if modified_custom_or_standard_access:
-            if "partners" not in res:
-                res["partners"] = {}
-
-            for access in modified_custom_or_standard_access:
-                if access.partner_id not in res["partners"]:
-                    res["partners"][access.partner_id] = (
-                        access.role,
-                        access.expiration_date if self.is_single else None,
-                    )
+        for access in modified_custom_or_standard_access:
+            key, member = ("groups", access.group_id) if access.group_id else ("partners", access.partner_id)
+            res.setdefault(key, {})
+            if member not in res[key]:
+                res[key][member] = (
+                    access.role,
+                    access.expiration_date if self.is_single else None,
+                )
 
         return res
 
@@ -120,46 +128,17 @@ class DocumentsSharing(models.TransientModel):
         """Override to support custom roles in invite_role."""
         self.ensure_one()
 
+        # Odoo ranks the current members by their standard roles to decide whom to notify
+        for access in self.share_access_ids.filtered(lambda a: self._is_custom_role(a.role)):
+            access.role = self.document_ids._convert_custom_role_to_standard(access.role)
+
         if not self._is_custom_role(self.invite_role):
             return super().action_invite_members()
 
-        if not self.invite_partner_ids:
-            params = {
-                "title": _("No partners"),
-                "message": "",
-                "type": "warning",
-            }
-        elif self.invite_partner_ids.filtered(lambda p: not p.email):
-            params = {
-                "title": _("Some emails are missing"),
-                "message": _("Please fill in the missing email addresses."),
-                "type": "warning",
-            }
-        else:
-            self.document_ids.action_update_access_rights(
-                partners={partner: (self.invite_role, None) for partner in self.invite_partner_ids},
-                no_propagation=not self.is_folder_only,
-            )
-
-            if self.invite_notify:
-                share_template = self.env.ref("documents.mail_template_document_share", raise_if_not_found=False)
-                if share_template:
-                    share_template.with_context(
-                        documents=self.document_ids, message=self.invite_notify_message or ""
-                    ).send_mail_batch(self.invite_partner_ids.ids)
-
-            params = {
-                "title": _("Successfully Shared"),
-                "message": (
-                    _("%s members added.", len(self.invite_partner_ids))
-                    if len(self.invite_partner_ids) > 1
-                    else _("Member added.")
-                ),
-                "type": "success",
-                "next": self.action_open(self.document_ids.ids),
-            }
-
-        return {"type": "ir.actions.client", "tag": "display_notification", "params": params}
+        # Odoo gets the standard equivalent of the custom role, action_update_access_rights keeps the custom one
+        custom_role = self.invite_role
+        self.invite_role = self.document_ids._convert_custom_role_to_standard(custom_role)
+        return super(DocumentsSharing, self.with_context(onlyoffice_invite_role=custom_role)).action_invite_members()
 
     def _get_allowed_roles_for_extension(self, ext):
         return self.ROLES_BY_EXTENSION.get(ext.lower() if ext else "", [])
@@ -208,74 +187,55 @@ class DocumentsSharing(models.TransientModel):
                     record._validate_custom_role_for_documents(access.role, record.document_ids)
 
     @api.model
-    def action_open(self, document_ids):  # noqa: C901
-        """Override to load custom ONLYOFFICE roles."""
-        if not document_ids:
-            raise ValueError("Expected one or more documents.")
+    def action_open(self, document_ids):
+        """Override to show the custom ONLYOFFICE roles instead of their standard equivalents."""
+        action = super().action_open(document_ids)
+        self.browse(action["res_id"])._load_onlyoffice_roles()
+        return action
 
-        documents = (
-            self.env["documents.document"]
-            .browse(document_ids)
-            .mapped(lambda d: d.shortcut_document_id if d.shortcut_document_id else d)
-        )
-        document0 = documents[0]
+    def _load_onlyoffice_roles(self):
+        self.ensure_one()
+        documents = self.document_ids
 
-        is_single_doc = len(documents) == 1
+        user_roles = {doc: {} for doc in documents}
+        for access in self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "in", documents.ids)]):
+            if access.user_id and access.user_id != access.document_id.owner_id.partner_id:
+                user_roles[access.document_id][access.user_id] = access.role
+        group_roles = {doc: {} for doc in documents}
+        for access in self.env["onlyoffice.odoo.documents.access.group"].search([("document_id", "in", documents.ids)]):
+            group_roles[access.document_id][access.group_id] = access.role
 
-        all_partners = self._filtered_relevant_access(documents).partner_id
-        access_by_partner_by_doc = {
-            doc: {access.partner_id: access.role for access in self._filtered_relevant_access(doc)}
-            | ({doc.owner_id.partner_id: "edit"} if doc.owner_id else {})
-            for doc in documents
-        }
+        def member_role(member, custom_roles):
+            """ONLYOFFICE role of a partner/group on the documents, its standard role where it has none."""
+            roles = set()
+            for doc in documents:
+                role = custom_roles[doc].get(member)
+                if not role:
+                    access = self._filtered_relevant_access(doc).filtered(
+                        lambda a, member=member: (a.group_id or a.partner_id) == member
+                    )
+                    role = access[:1].role or ("edit" if member == doc.owner_id.partner_id else False)
+                roles.add(role)
+            return roles.pop() if len(roles) == 1 else "mixed"
 
-        # Load custom roles
-        onlyoffice_access_by_partner = {}
-        for doc in documents:
-            onlyoffice_user_accesses = self.env["onlyoffice.odoo.documents.access.user"].search(
-                [("document_id", "=", doc.id)]
-            )
-            for access in onlyoffice_user_accesses:
-                if access.user_id and access.user_id != doc.owner_id.partner_id:
-                    if doc not in onlyoffice_access_by_partner:
-                        onlyoffice_access_by_partner[doc] = {}
-                    onlyoffice_access_by_partner[doc][access.user_id] = access.role
-                    all_partners |= access.user_id
+        for row in self.share_access_ids:
+            member, custom_roles = (row.group_id, group_roles) if row.group_id else (row.partner_id, user_roles)
+            if any(member in custom_roles[doc] for doc in documents):
+                row.role = member_role(member, custom_roles)
 
-        # Combine standard and custom roles
-        for doc, custom_accesses in onlyoffice_access_by_partner.items():
-            if doc in access_by_partner_by_doc:
-                for partner, role in custom_accesses.items():
-                    access_by_partner_by_doc[doc][partner] = role
-            else:
-                access_by_partner_by_doc[doc] = custom_accesses
-
-        if is_single_doc:
-            expiration_per_partner = {
-                access.partner_id: access.expiration_date for access in self._filtered_relevant_access(documents)
-            }
-
-        access_shares = []
-        if any(d.owner_id != document0.owner_id for d in documents):
-            all_partners |= documents.owner_id.partner_id
-
-        for partner in all_partners:
-            role0 = access_by_partner_by_doc.get(documents[0], {}).get(partner)
-            is_mixed = any(role0 != access_by_partner_by_doc.get(doc, {}).get(partner) for doc in documents[1:])
-            expiration_date = expiration_per_partner.get(partner) if is_single_doc else False
-            access_shares.append(
-                Command.create(
-                    {
-                        "expiration_date": expiration_date,
-                        "original_expiration_date": expiration_date,
-                        "partner_id": partner.id,
-                        "role": "mixed" if is_mixed else role0,
-                    }
-                )
-            )
+        # Members with an ONLYOFFICE role but without a standard access
+        access_shares = [
+            Command.create({"partner_id": partner.id, "role": member_role(partner, user_roles)})
+            for partner in {partner for roles in user_roles.values() for partner in roles}
+            if partner not in self.share_access_ids.partner_id
+        ] + [
+            Command.create({"group_id": group.id, "role": member_role(group, group_roles)})
+            for group in {group for roles in group_roles.values() for group in roles}
+            if group not in self.share_access_ids.group_id
+        ]
 
         # Load roles from ONLYOFFICE module (priority over standard)
-        values = {}
+        values = {"share_access_ids": access_shares} if access_shares else {}
         for field in ("access_internal", "access_via_link"):
             custom_field = "internal_users" if field == "access_internal" else "link_access"
 
@@ -298,38 +258,7 @@ class DocumentsSharing(models.TransientModel):
             else:
                 values[field] = "mixed"
 
-        if len(set(documents.mapped("is_access_via_link_hidden"))) != 1:
-            values["access_via_link_mode"] = "mixed"
-        elif document0.is_access_via_link_hidden:
-            values["access_via_link_mode"] = "link_required"
-        else:
-            values["access_via_link_mode"] = "discoverable"
-
-        wizard_values = {
-            "document_ids": documents.ids,
-            "share_access_ids": access_shares,
-            **values,
-        }
-
-        doc_sharing = self.env["documents.sharing"].create([wizard_values])
-
-        if len(documents) == 1:
-            name = _("Share: %(documentName)s", documentName=documents.name)
-        else:
-            name = _("Share: %(numberOfDocuments)s files", numberOfDocuments=len(documents))
-
-        return {
-            "context": {
-                "dialog_size": "medium",
-            },
-            "name": name,
-            "res_id": doc_sharing.id,
-            "res_model": "documents.sharing",
-            "target": "new",
-            "type": "ir.actions.act_window",
-            "view_mode": "form",
-            "views": [[False, "form"]],
-        }
+        self.write(values)
 
 
 class DocumentsShareAccess(models.TransientModel):

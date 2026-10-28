@@ -67,4 +67,27 @@ class OnlyofficeDocuments(models.Model):
                         }
                     )
 
+        groups_to_remove = vals.get("groups_to_remove", [])
+        if groups_to_remove:
+            self.env["onlyoffice.odoo.documents.access.group"].search(
+                [("document_id", "=", document_id), ("group_id", "in", groups_to_remove)]
+            ).unlink()
+
+        for group_data in vals.get("group_accesses", []):
+            if not group_data.get("role"):
+                continue
+            group_access = self.env["onlyoffice.odoo.documents.access.group"].search(
+                [("document_id", "=", document_id), ("group_id", "=", group_data["group_id"])]
+            )
+            if group_access:
+                group_access.write({"role": group_data["role"]})
+            else:
+                self.env["onlyoffice.odoo.documents.access.group"].create(
+                    {
+                        "document_id": document_id,
+                        "group_id": group_data["group_id"],
+                        "role": group_data["role"],
+                    }
+                )
+
         return True

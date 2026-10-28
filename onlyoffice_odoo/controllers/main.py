@@ -23,6 +23,16 @@ from odoo.tools.json import scriptsafe
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils, url_utils
 
 _logger = logging.getLogger(__name__)
+# From the narrowest to the widest Documents role: picks the role of a user that is in several groups
+_DOCUMENTS_ROLE_RANK = {
+    "none": 0,
+    "view": 1,
+    "form_filling": 2,
+    "commenter": 3,
+    "reviewer": 4,
+    "custom_filter": 5,
+    "edit": 6,
+}
 _mobile_regex = r"android|avantgo|playbook|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od|ad)|iris|kindle|lge |maemo|midp|mmp|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\\/|plucker|pocket|psp|symbian|treo|up\\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino"  # noqa: E501
 
 
@@ -348,6 +358,38 @@ class OnlyofficeConnector(http.Controller):
             "session_info": session_info,
         }
 
+    def get_documents_group_role(self, document, can_write):
+        """Return the widest role the user gets through the functional groups the document is shared with.
+
+        The ONLYOFFICE role of a group is used when stored, its standard Odoo role otherwise.
+        """
+        now = fields.Datetime.now()
+        user_id = request.env.user.id
+        group_accesses = document.access_ids.filtered(
+            lambda a: (
+                a.group_id
+                and a.role
+                and user_id in a.group_id.sudo().user_ids.ids
+                and (not a.expiration_date or a.expiration_date >= now)
+            )
+        )
+        if not group_accesses:
+            return None
+
+        onlyoffice_roles = {
+            access.group_id: access.role
+            for access in request.env["onlyoffice.odoo.documents.access.group"].search(
+                [("document_id", "=", document.id), ("group_id", "in", group_accesses.group_id.ids)]
+            )
+        }
+        roles = [onlyoffice_roles.get(access.group_id, access.role) for access in group_accesses]
+        role = max(roles, key=lambda r: _DOCUMENTS_ROLE_RANK.get(r, 0))
+        if role == "none":
+            raise AccessError(_("User has no read access rights to open this document"))
+        if role == "edit" and not can_write:
+            return "view"
+        return role
+
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         _logger.info("get_documents_permissions - attachment: %s", attachment.id)
         role = None
@@ -381,6 +423,8 @@ class OnlyofficeConnector(http.Controller):
                     role = "edit"
                 else:
                     role = access_user.role
+            if not role:
+                role = self.get_documents_group_role(document, can_write)
             if not role:
                 access = request.env["onlyoffice.odoo.documents.access"].search(
                     [("document_id", "=", document.id)], limit=1

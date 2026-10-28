@@ -6,11 +6,11 @@
       <Dialog
         t-if="this.state.isOpen"
         title="this.dialogTitle"
-        contentClass="'o-spreadsheet-templates-dialog'"
+        contentClass="'o-onlyoffice-templates-dialog'"
         footer="true"
         modalRef="modalRef"
       >
-        <div class="o-pager">
+        <div class="o-pager d-flex justify-content-end mb-3">
           <Pager
             t-if="this.state.totalTemplates"
             total="this.state.totalTemplates"
@@ -26,7 +26,7 @@
           <t t-foreach="this.state.templates" t-as="template" t-key="template.id">
             <article
               role="link"
-              class="o_kanban_record d-flex cursor-pointer flex-grow-1 flex-md-shrink-1 flex-shrink-0 o_kanban_attachment flex-row"
+              class="o_card_record o_kanban_record d-flex cursor-pointer flex-grow-1 flex-md-shrink-1 flex-shrink-0 o_kanban_attachment flex-row"
               tabindex="0"
               t-att-class="this.isSelected(template.id) ? 'o_onlyoffice_kanban_record_selected': ''"
               t-on-click="() => this.selectTemplate(template.id)"
@@ -37,17 +37,17 @@
                   <div class="o_image o_image_thumbnail" t-att-data-mimetype="template.mimetype" />
                 </div>
               </aside>
-              <main class="ms-1">
+              <div class="ms-1 o_record_main">
                 <div class="o_kanban_details_wrapper d-flex flex-column">
-                  <span class="text-truncate fw-bold fs-5" t-att-title="template.name" t-esc="template.name" />
+                  <span class="text-truncate fw-bold fs-5" t-att-title="template.name" t-out="template.name" />
                   <div class="d-flex flex-grow-1 align-items-center" />
-                  <div class="d-flex">
-                    <span t-esc="template.create_date" />
+                  <div class="d-flex justify-content-between">
+                    <span class="text-truncate" t-out="this.formatCreateDate(template)" />
                     <div
-                      class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user ms-auto o_field_many2one_avatar_kanban o_field_many2one_avatar"
+                      class="o_field_widget o_readonly_modifier o_field_many2one_avatar_user o_field_many2one_avatar"
                     >
                       <div>
-                        <div class="o-mail-Avatar o_avatar d-flex align-items-center o_m2o_avatar">
+                        <div class="o-mail-Avatar o_avatar d-flex align-items-center p-0 o_m2o_avatar">
                           <img
                             class="rounded"
                             t-att-src="'/web/image/res.users/' + template.create_uid[0] + '/avatar_128'"
@@ -58,9 +58,16 @@
                     </div>
                   </div>
                 </div>
-              </main>
+              </div>
             </article>
           </t>
+          <!-- kanban ghost cards are used to properly space last elements. -->
+          <div
+            t-foreach="[,,,,,,]"
+            t-as="i"
+            t-key="i_index"
+            class="o_kanban_record o_kanban_ghost flex-grow-1 flex-md-shrink-1 flex-shrink-0 my-0"
+          />
         </div>
         <t t-set-slot="footer">
           <button
