@@ -9,6 +9,7 @@ from . import test_file_utils
 from . import test_jwt_utils
 from . import test_models
 from . import test_oforms
+from . import test_request_helpers
 from . import test_url_utils
 from . import test_validation_utils
 

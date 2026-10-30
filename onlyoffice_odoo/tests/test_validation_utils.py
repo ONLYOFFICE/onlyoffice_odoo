@@ -1,13 +1,16 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import json
 from unittest.mock import MagicMock, patch
 
 from odoo.exceptions import ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
-from odoo.addons.onlyoffice_odoo.utils import conversion_utils, validation_utils
+from odoo.addons.onlyoffice_odoo.utils import conversion_utils, jwt_utils, validation_utils
+
+from .common import known_bug
 
 
 @tagged("post_install", "-at_install")
@@ -108,8 +111,29 @@ class TestValidationUtils(TransactionCase):
         """No error is raised when the healthcheck endpoint responds with a non-empty body."""
         mock_resp = MagicMock()
         mock_resp.read.return_value = b"true"
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp):
+        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp) as urlopen:
             validation_utils.check_doc_serv_url("http://docserver/", False, False)
+        self.assertEqual(urlopen.call_args.args, ("http://docserver/healthcheck",))
+        self.assertIsNone(urlopen.call_args.kwargs["context"])
+
+    @known_bug("the error message repeats the healthcheck path")
+    def test_empty_healthcheck_message_names_the_healthcheck_url(self):
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = b""
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", return_value=mock_resp),
+            self.assertRaises(ValidationError) as error,
+        ):
+            validation_utils.check_doc_serv_url("http://docserver/", False, False)
+        self.assertEqual(str(error.exception), "http://docserver/healthcheck returned false.")
+
+    def test_unreachable_healthcheck_is_reported(self):
+        with (
+            patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.urlopen", side_effect=OSError("refused")),
+            self.assertRaises(ValidationError) as error,
+        ):
+            validation_utils.check_doc_serv_url("http://docserver/", False, False)
+        self.assertEqual(str(error.exception), "ONLYOFFICE cannot be reached")
 
     def test_check_doc_serv_url_raises_when_healthcheck_returns_empty_body(self):
         """ValidationError is raised when the healthcheck endpoint returns an empty body."""
@@ -131,11 +155,14 @@ class TestValidationUtils(TransactionCase):
     # -- check_doc_serv_convert_service --
 
     def test_check_doc_serv_convert_service_passes_when_convert_succeeds(self):
-        """No error is raised when the conversion service responds without an error."""
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.convert", return_value=None):
+        """The conversion check converts the public test.txt of this Odoo, as the Document Server sees it."""
+        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.convert", return_value=None) as convert:
             validation_utils.check_doc_serv_convert_service(
                 self.env, "http://docserver/", "http://odoo/", "", "Authorization", False, False
             )
+        self.assertEqual(
+            convert.call_args.args[1:3], ("http://odoo/onlyoffice/file/content/test.txt", "http://docserver/")
+        )
 
     def test_check_doc_serv_convert_service_raises_when_convert_returns_error(self):
         """ValidationError is raised when the conversion service returns an error message."""
@@ -207,14 +234,24 @@ class TestValidationUtils(TransactionCase):
                 self.env, "http://docserver/", "", "Authorization", False, False
             )
 
-    def test_command_service_passes_with_jwt_secret_and_error_zero(self):
-        """Command service check succeeds when a JWT secret is provided — token is signed and sent."""
+    def test_command_service_request_is_signed_with_the_jwt_secret(self):
+        """With a JWT secret the version command carries a token in the body and in the configured header."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"error": 0}
-        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp):
+        with patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.requests.post", return_value=mock_resp) as post:
             validation_utils.check_doc_serv_command_service(
-                self.env, "http://docserver/", "my_test_jwt_secret_key", "Authorization", False, False
+                self.env, "http://docserver/", "my_test_jwt_secret_key", "X-Custom", False, False
             )
+        self.assertEqual(post.call_args.args, ("http://docserver/coauthoring/CommandService.ashx",))
+        secret = "my_test_jwt_secret_key"
+        body = json.loads(post.call_args.kwargs["data"])
+        self.assertEqual(jwt_utils.decode_token(self.env, body.pop("token"), secret)["c"], "version")
+        self.assertEqual(body["c"], "version")
+        header = post.call_args.kwargs["headers"]["X-Custom"]
+        self.assertTrue(header.startswith("Bearer "))
+        self.assertEqual(
+            jwt_utils.decode_token(self.env, header[len("Bearer ") :], secret)["payload"], {"c": "version"}
+        )
 
     def test_command_service_raises_on_authorization_error_code_six(self):
         """ValidationError mentioning 'Authorization error' is raised when command service returns error 6."""
@@ -236,3 +273,50 @@ class TestValidationUtils(TransactionCase):
                 validation_utils.check_doc_serv_command_service(
                     self.env, "http://docserver/", "", "Authorization", False, False
                 )
+
+    # -- settings_validation --
+
+    def _validate(self, **values):
+        settings = self.env["res.config.settings"].new(
+            {
+                "doc_server_public_url": "https://docs.example.com/",
+                "doc_server_inner_url": False,
+                "doc_server_odoo_url": "https://odoo.example.com/",
+                "doc_server_jwt_secret": "secret",
+                "doc_server_jwt_header": "Authorization",
+                "doc_server_demo": False,
+                "doc_server_disable_certificate": False,
+                **values,
+            }
+        )
+        checks = {}
+        names = ("check_mixed_content", "check_doc_serv_url", "check_doc_serv_command_service")
+        patches = [patch(f"odoo.addons.onlyoffice_odoo.utils.validation_utils.{name}") for name in names]
+        patches.append(patch("odoo.addons.onlyoffice_odoo.utils.validation_utils.check_doc_serv_convert_service"))
+        mocks = [p.start() for p in patches]
+        try:
+            validation_utils.settings_validation(settings)
+        finally:
+            for p in patches:
+                p.stop()
+        for name, mock in zip((*names, "check_doc_serv_convert_service"), mocks, strict=True):
+            checks[name] = mock.call_args.args
+        return checks
+
+    def test_settings_are_checked_against_the_public_address(self):
+        checks = self._validate()
+        self.assertEqual(
+            checks["check_mixed_content"], ("https://odoo.example.com/", "https://docs.example.com/", False)
+        )
+        self.assertEqual(checks["check_doc_serv_url"], ("https://docs.example.com/", False, False))
+        self.assertEqual(
+            checks["check_doc_serv_command_service"][1:4], ("https://docs.example.com/", "secret", "Authorization")
+        )
+        self.assertEqual(
+            checks["check_doc_serv_convert_service"][1:3], ("https://docs.example.com/", "https://odoo.example.com/")
+        )
+
+    def test_settings_are_checked_against_the_inner_address_when_set(self):
+        checks = self._validate(doc_server_inner_url="http://documentserver/", doc_server_demo=True)
+        self.assertEqual(checks["check_doc_serv_url"], ("http://documentserver/", True, False))
+        self.assertEqual(checks["check_doc_serv_convert_service"][1], "http://documentserver/")

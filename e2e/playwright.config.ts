@@ -2,9 +2,10 @@
 import { defineConfig } from "@playwright/test"
 
 import { AUTH_FILE } from "./fixtures"
-import { ODOO_URL } from "./helpers/env"
+import { ODOO_URL, WITHOUT_DOCUMENTS } from "./helpers/env"
 
-// Projects run in a chain: login -> settings (connects the Document Server) -> editor, templates.
+// Projects run in a chain: login -> settings (connects the Document Server) -> editor, templates, documents (left out
+// with E2E_WITHOUT_DOCUMENTS, see helpers/env.ts).
 export default defineConfig({
   testDir: "tests",
   workers: 1,
@@ -27,5 +28,15 @@ export default defineConfig({
       use: { storageState: AUTH_FILE },
     },
     { name: "templates", testMatch: "templates.spec.ts", dependencies: ["settings"], use: { storageState: AUTH_FILE } },
+    ...(WITHOUT_DOCUMENTS
+      ? []
+      : [
+          {
+            name: "documents",
+            testMatch: ["documents.spec.ts", "share.spec.ts"],
+            dependencies: ["settings"],
+            use: { storageState: AUTH_FILE },
+          },
+        ]),
   ],
 })

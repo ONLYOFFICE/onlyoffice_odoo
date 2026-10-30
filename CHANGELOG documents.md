@@ -7,6 +7,11 @@
 - converting documents to other formats
 - converting "spreadsheet documents" to XLSX format with support for Odoo functions
 
+## Fixed
+
+- per-user ONLYOFFICE roles ignored when converting a document and when opening or saving it through a share link
+- creating a document in a folder without write access left the document behind
+
 ## 5.3.1
 
 ## Added

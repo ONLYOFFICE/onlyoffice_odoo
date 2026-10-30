@@ -2,14 +2,16 @@
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 
-import type { FilePayload, Locator, Page, Route } from "@playwright/test"
+import type { FilePayload, Locator, Page } from "@playwright/test"
 import JSZip from "jszip"
 import { PDFDocument } from "pdf-lib"
 
-import { expect, test } from "../fixtures"
+import { expect, knownBug, test } from "../fixtures"
+import { contextOf, documentFile, newFolder } from "../helpers/documents"
 import { waitForEditor } from "../helpers/editor"
-import { PARAM } from "../helpers/env"
-import type { Odoo } from "../helpers/odoo"
+import { pickGalleryForm, stubFormGallery } from "../helpers/gallery"
+import { PARAM, WITHOUT_DOCUMENTS } from "../helpers/env"
+import { type Odoo, rpc } from "../helpers/odoo"
 
 const TEMPLATES = "/web#action=onlyoffice_odoo_templates.action_onlyoffice_odoo_templates"
 const EMPLOYEES = "/web#action=hr.open_view_employee_list_my"
@@ -157,39 +159,11 @@ test("upload a plain PDF as a template → it is converted into a PDF form", asy
 })
 
 test("create a template from the form gallery → it holds the chosen form", async ({ page, odoo }) => {
-  // The gallery API (oforms.onlyoffice.com, proxied by /onlyoffice/oforms*) is stubbed; the chosen form points to a
-  // bundled PDF that this Odoo serves itself, so the server-side download needs no internet. The proxy routes are
-  // unit-tested in onlyoffice_odoo/tests/test_oforms.py.
-  const form = {
-    id: 1,
-    attributes: {
-      name_form: "E2E gallery form",
-      file_oform: {
-        data: [
-          {
-            attributes: {
-              url: "http://localhost:8069/onlyoffice/template/template_content/hr.employee_Employee.pdf",
-              ext: ".pdf",
-            },
-          },
-        ],
-      },
-    },
-  }
-  const reply = (result: unknown) => (route: Route) =>
-    route.fulfill({ json: { jsonrpc: "2.0", id: route.request().postDataJSON().id, result } })
-  await page.route("**/onlyoffice/oforms/locales", reply({ data: [{ code: "en", name: "English" }] }))
-  await page.route("**/onlyoffice/oforms/category-types", reply({ data: [] }))
-  await page.route("**/onlyoffice/oforms", reply({ data: [form], meta: { pagination: { total: 1 } } }))
+  await stubFormGallery(page, "E2E gallery form")
 
   await page.goto(TEMPLATES)
   await page.getByRole("button", { name: "Open Document templates" }).click()
-  const gallery = page.getByRole("dialog")
-  await gallery
-    .locator(".o_onlyoffice_kanban_record", { hasText: "E2E gallery form" })
-    .getByTitle("Select document")
-    .click()
-  await gallery.getByRole("button", { name: "Create" }).click()
+  await pickGalleryForm(page, "E2E gallery form")
 
   await expect(page.locator('[name="name"] input')).toHaveValue("E2E gallery form")
   await expect(page.locator('[name="file"]')).toBeHidden() // the file comes from the gallery
@@ -208,4 +182,79 @@ test("export a demo template in Settings → it is added to the templates", asyn
   await dialog.getByRole("button", { name: "Export" }).click()
 
   await expect.poll(count).toBe(before + 1)
+})
+
+test("add an employee's PDF to a Documents folder → the filled PDF is saved there", async ({ page, odoo }) => {
+  test.skip(WITHOUT_DOCUMENTS, "needs the Documents app")
+  const employee = await newEmployee(odoo)
+  const folderName = `E2E templates ${Date.now()}`
+  const folderId = await newFolder(odoo, folderName)
+
+  const dialog = await openPrintDialogOnForm(page, employee.id)
+  await dialog.getByRole("button", { name: "Add to Documents" }).click()
+  const folders = page.locator(".o-onlyoffice-folder-dialog")
+  await folders.getByText(folderName, { exact: true }).click()
+  await folders.getByRole("button", { name: "Save", exact: true }).click()
+
+  const saved = () => odoo.call<number[]>("documents.document", "search", [[["folder_id", "=", folderId]]])
+  await expect.poll(saved, { timeout: 120_000 }).toHaveLength(1)
+  const [documentId] = await saved()
+  expect(await odoo.read("documents.document", documentId, "name")).toBe(`Employee - ${employee.name}.pdf`)
+  const form = (await PDFDocument.load(await documentFile(odoo, documentId))).getForm()
+  expect(form.getTextField("name").getText()).toBe(employee.name)
+})
+
+test("Add to Documents offers the folders the user can edit, their own private folders too", async ({ page, odoo }) => {
+  test.skip(WITHOUT_DOCUMENTS, "needs the Documents app")
+  knownBug("only folders that every internal user can edit are offered")
+  const shared = await newFolder(odoo, `E2E shared ${Date.now()}`)
+  const own = await newFolder(odoo, `E2E own ${Date.now()}`, { access_internal: "none" })
+
+  const folders = await rpc<{ id: number }[]>(page, "/onlyoffice/template/documents/folders")
+
+  expect(folders.map((folder) => folder.id)).toEqual(expect.arrayContaining([shared, own]))
+})
+
+test("a template user prints an employee but opens the template only to view", async ({ browser, odoo }) => {
+  const user = await odoo.newUser(`e2e-template-user-${Date.now()}`, [
+    "base.group_user",
+    "hr.group_hr_user",
+    "onlyoffice_odoo_templates.group_onlyoffice_odoo_templates_user",
+  ])
+  const employee = await newEmployee(odoo)
+  const context = await contextOf(browser, user.login)
+  const page = await context.newPage()
+
+  const pdf = await print(page, await openPrintDialogOnForm(page, employee.id))
+  expect((await PDFDocument.load(pdf.content)).getForm().getTextField("name").getText()).toBe(employee.name)
+
+  await page.goto(TEMPLATES)
+  const [response] = await Promise.all([
+    page.waitForResponse("**/onlyoffice/template/editor"),
+    page.locator(".o_kanban_record").getByText("Employee", { exact: true }).first().click(),
+  ])
+  const { editorConfig } = (await response.json()).result.editorConfig
+  expect(editorConfig.mode).toBe("view")
+  expect(editorConfig.callbackUrl).toBeUndefined()
+  await waitForEditor(page)
+  await context.close()
+})
+
+test("print two employees through the Print menu of the list → one PDF with both", async ({ page, odoo }) => {
+  const [templateId] = await odoo.call<number[]>("onlyoffice.odoo.templates", "search", [[["name", "=", "Employee"]]])
+  await odoo.call("onlyoffice.odoo.templates", "create_action", [[templateId]])
+  const name = `E2E Merge ${Date.now()}`
+  await odoo.call("hr.employee", "create", [[{ name: `${name} A` }, { name: `${name} B` }]])
+  await page.goto(`${EMPLOYEES}&view_type=list`)
+  await page.locator(".o_searchview_input").fill(name)
+  await page.keyboard.press("Enter")
+  await expect(page.locator(".o_data_row")).toHaveCount(2)
+  await page.locator("thead .o_list_record_selector input").check()
+
+  await page.getByRole("button", { name: "Actions" }).click()
+  await page.getByText("Print", { exact: true }).click()
+  const pdf = await download(page, () => page.getByRole("menuitem", { name: "Employee Print (ONLYOFFICE)" }).click())
+
+  const templatePages = (await PDFDocument.load(await readFile(EMPLOYEE_PDF))).getPageCount()
+  expect((await PDFDocument.load(pdf.content)).getPageCount()).toBe(2 * templatePages)
 })
