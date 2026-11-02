@@ -11,6 +11,7 @@
 
 - per-user ONLYOFFICE roles ignored when converting a document and when opening or saving it through a share link
 - creating a document in a folder without write access left the document behind
+- ODOO.\* formulas of a converted spreadsheet could stay as text in cells formatted as Text
 
 ## 5.3.1
 
