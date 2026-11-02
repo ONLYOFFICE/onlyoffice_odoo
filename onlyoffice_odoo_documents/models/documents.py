@@ -299,15 +299,16 @@ class Document(models.Model):
 
             access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
 
+            # A right left unchanged keeps its ONLYOFFICE role, or the standard one when the document has none yet.
             if access_internal is not None:
                 internal_to_save = access_internal
             else:
-                internal_to_save = access.internal_users if access else None
+                internal_to_save = access.internal_users if access else document.access_internal
 
             if access_via_link is not None:
                 link_to_save = access_via_link
             else:
-                link_to_save = access.link_access if access else None
+                link_to_save = access.link_access if access else document.access_via_link
 
             if (
                 internal_to_save

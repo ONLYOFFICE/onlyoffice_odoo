@@ -1,0 +1,97 @@
+# Copyright (C) 2026 Ascensio System SIA
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
+
+from odoo.exceptions import ValidationError
+from odoo.tests import tagged
+from odoo.tests.common import TransactionCase
+
+from .common import DocumentsCase
+
+
+@tagged("post_install", "-at_install")
+class TestSharingWizard(DocumentsCase, TransactionCase):
+    """documents.sharing, the Share dialog of Odoo 19: the ONLYOFFICE roles next to the standard ones."""
+
+    def _open(self, *documents):
+        action = self.env["documents.sharing"].with_user(self.owner).action_open([d.id for d in documents])
+        return self.env["documents.sharing"].with_user(self.owner).browse(action["res_id"])
+
+    def _role_of(self, wizard, user):
+        return wizard.share_access_ids.filtered(lambda a: a.partner_id == user.partner_id).role
+
+    def test_dialog_shows_the_custom_roles(self):
+        document = self._document()
+        document.with_user(self.owner).action_update_access_rights(
+            access_internal="commenter",
+            access_via_link="view",
+            partners={self.colleague.partner_id.id: ("reviewer", None)},
+        )
+
+        wizard = self._open(document)
+
+        self.assertEqual((wizard.access_internal, wizard.access_via_link), ("commenter", "view"))
+        self.assertEqual(self._role_of(wizard, self.colleague), "reviewer")
+        self.assertEqual(wizard.oo_file_extension, "docx")
+        self.assertEqual(set(wizard.share_access_ids.mapped("oo_file_extension")), {"docx"})
+
+    def test_dialog_of_several_documents(self):
+        report = self._document()
+        sheet = self._document("Sheet.xlsx")
+        self._roles(report, internal_users="commenter", link_access="none")
+        self._roles(sheet, internal_users="custom_filter", link_access="none", colleague="commenter")
+
+        wizard = self._open(report, sheet)
+
+        self.assertEqual(wizard.access_internal, "mixed")
+        self.assertEqual(self._role_of(wizard, self.colleague), "mixed")
+        self.assertEqual(wizard.oo_file_extension, "")
+
+    def test_saving_the_dialog_stores_a_changed_custom_role(self):
+        document = self._document()
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("view", None)}
+        )
+        wizard = self._open(document)
+
+        wizard.share_access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id).role = "commenter"
+        wizard.action_update_rights()
+
+        user_access = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
+        self.assertEqual((user_access.user_id, user_access.role), (self.colleague.partner_id, "commenter"))
+        # Documents itself keeps the standard counterpart of the custom role.
+        self.assertEqual(document.access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id).role, "view")
+
+    def test_invite_with_a_custom_role(self):
+        document = self._document()
+        wizard = self._open(document)
+        wizard.write(
+            {
+                "invite_partner_ids": [(6, 0, self.colleague.partner_id.ids)],
+                "invite_role": "reviewer",
+                "invite_notify": False,
+            }
+        )
+
+        result = wizard.action_invite_members()
+
+        self.assertEqual(result["params"]["type"], "success")
+        user_access = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
+        self.assertEqual((user_access.user_id, user_access.role), (self.colleague.partner_id, "reviewer"))
+
+    def test_invite_needs_partners_with_an_email(self):
+        document = self._document()
+        nobody = self._open(document)
+        nobody.invite_role = "commenter"
+        self.assertEqual(nobody.action_invite_members()["params"]["type"], "warning")
+
+        no_email = self.env["res.partner"].create({"name": "OO Without Email"})
+        wizard = self._open(document)
+        wizard.write({"invite_partner_ids": [(6, 0, no_email.ids)], "invite_role": "commenter"})
+        self.assertEqual(wizard.action_invite_members()["params"]["type"], "warning")
+        self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
+
+    def test_custom_role_must_fit_the_file_type(self):
+        document = self._document()
+        wizard = self._open(document)
+        with self.assertRaises(ValidationError):
+            wizard.access_internal = "form_filling"

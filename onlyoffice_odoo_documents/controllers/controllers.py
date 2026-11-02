@@ -56,7 +56,7 @@ def _get_document_share_role(document):
         return "editor"
 
     access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-        [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
+        [("document_id", "=", document.id), ("user_id", "=", request.env.user.partner_id.id)], limit=1
     )
     if access_user:
         return access_user.role
@@ -141,21 +141,23 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 "owner_id": owner_id,
             }
 
-            document = request.env["documents.document"].create(data)
-            request.env["onlyoffice.odoo.documents.access"].create(
-                {
-                    "document_id": document.id,
-                    "internal_users": "none",
-                    "link_access": "none",
-                }
-            )
-            request.env["onlyoffice.odoo.documents.access.user"].create(
-                {
-                    "document_id": document.id,
-                    "user_id": request.env.user.partner_id.id,
-                    "role": "edit",
-                }
-            )
+            # Record rules are checked after the insert: roll it back when they refuse, the error is swallowed below.
+            with request.env.cr.savepoint():
+                document = request.env["documents.document"].create(data)
+                request.env["onlyoffice.odoo.documents.access"].create(
+                    {
+                        "document_id": document.id,
+                        "internal_users": "none",
+                        "link_access": "none",
+                    }
+                )
+                request.env["onlyoffice.odoo.documents.access.user"].create(
+                    {
+                        "document_id": document.id,
+                        "user_id": request.env.user.partner_id.id,
+                        "role": "edit",
+                    }
+                )
             result["file_id"] = document.attachment_id.id
             result["document_id"] = document.id
 
@@ -419,7 +421,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             access_user = (
                 request.env["onlyoffice.odoo.documents.access.user"]
                 .sudo()
-                .search([("document_id", "=", document.id), ("user_id", "=", current_user.id)], limit=1)
+                .search([("document_id", "=", document.id), ("user_id", "=", current_user.partner_id.id)], limit=1)
             )
             if access_user and access_user.role != "none":
                 role = access_user.role
@@ -540,7 +542,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
                 access_user = (
                     request.env["onlyoffice.odoo.documents.access.user"]
                     .sudo()
-                    .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
+                    .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
                 )
                 if access_user and access_user.role in _callback_roles:
                     can_write = True

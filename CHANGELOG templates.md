@@ -7,6 +7,7 @@
 - cache template form field keys when loading/editing a template
 - report a failed document generation instead of silently omitting the record
 - cap the generated document's file name so a long record name cannot fail the build
+- a failed conversion of an uploaded PDF into a form ended with an internal error instead of its message
 
 ## 4.5.2
 

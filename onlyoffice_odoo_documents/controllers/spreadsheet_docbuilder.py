@@ -308,7 +308,9 @@ class SpreadsheetDocBuilder:
         patches = []
         for sheet in snapshot.get("sheets", []):
             sheet_name = sheet.get("name") or ""
-            for cell_address, content in sheet.get("cells", {}).items():
+            for cell_address, cell in sheet.get("cells", {}).items():
+                # Since Odoo 19 a cell is stored as its content; data saved by older versions as {"content": ...}.
+                content = cell.get("content") if isinstance(cell, dict) else cell
                 if isinstance(content, str) and content.startswith(("=ODOO.", "=-ODOO.")):
                     patches.append(
                         {

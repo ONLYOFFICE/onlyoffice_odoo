@@ -18,6 +18,9 @@ export const DOC_SERVER = {
  */
 export const SAVE_GRACE_MS = Number(process.env.E2E_SAVE_GRACE_MS ?? 55_000)
 
+/** Odoo without the Documents app: its specs are left out (playwright.config.ts) and so are its tests in other specs. */
+export const WITHOUT_DOCUMENTS = Boolean(process.env.E2E_WITHOUT_DOCUMENTS)
+
 /** Blank office file shipped with the module, used as an upload fixture. */
 export const template = (format: string) =>
   path.resolve(__dirname, `../../onlyoffice_odoo/static/assets/document_templates/en-US/new.${format}`)

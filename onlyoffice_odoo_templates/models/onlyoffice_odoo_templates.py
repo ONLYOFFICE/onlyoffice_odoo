@@ -185,7 +185,7 @@ class OnlyOfficeTemplate(models.Model):
                 if converted_result.get("error"):
                     attachment.unlink()
                     record.unlink()
-                    super().unlink([record.id])
+                    super().unlink()
                     self.env.cr.commit()
                     raise UserError(converted_result.get("message"))
                 if converted_result.get("fileUrl"):
@@ -201,7 +201,7 @@ class OnlyOfficeTemplate(models.Model):
                         logger.error("Failed to download and update PDF form: %s", str(e))
                         attachment.unlink()
                         record.unlink()
-                        super().unlink([record.id])
+                        super().unlink()
                         self.env.cr.commit()
                         raise UserError("Failed to download converted PDF form") from e
 

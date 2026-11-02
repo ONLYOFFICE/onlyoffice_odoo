@@ -13,3 +13,11 @@ export const test = base.extend<object, { odoo: Odoo }>({
 })
 
 export { expect } from "@playwright/test"
+
+/**
+ * Marks the running test as expected to fail because of a known bug: it keeps the correct expectations and fails CI
+ * once the bug is fixed, so that the mark is removed. E2E_STRICT=1 runs it as a plain test.
+ */
+export function knownBug(description: string) {
+  test.fail(!process.env.E2E_STRICT, `Known bug: ${description}`)
+}
