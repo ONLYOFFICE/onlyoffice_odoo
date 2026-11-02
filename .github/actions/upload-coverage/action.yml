@@ -1,0 +1,22 @@
+name: Upload the coverage data
+description: >-
+  Uploads .coverage.<addon> for the coverage job of test.yml. A local action because GitHub fails a job
+  that names actions/upload-artifact@v3 in any of its steps, even a skipped one, while v4 refuses servers other than
+  GitHub's; GitHub reads the actions of a local action only when its step runs.
+
+inputs:
+  addon:
+    description: Addon whose data file is uploaded.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # The data file is hidden, which upload-artifact skips by default.
+    - uses: actions/upload-artifact@v3
+      with:
+        name: coverage-${{ inputs.addon }}
+        path: .coverage.${{ inputs.addon }}
+        include-hidden-files: true
+        if-no-files-found: error
+        retention-days: 7

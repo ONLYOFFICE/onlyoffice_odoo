@@ -1,178 +1,306 @@
 # Copyright (C) 2026 Ascensio System SIA
+# License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
+
 import base64
 import json
-from unittest.mock import MagicMock, patch
+import os
+from unittest.mock import patch
 
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
-from odoo.addons.onlyoffice_odoo.utils import config_constants
+from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
+from odoo.addons.onlyoffice_odoo_templates.models.onlyoffice_odoo_templates import OnlyOfficeTemplate
+from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as templates_config_utils
 
-# `hr` ships a bundled default template for hr.employee.
-MODEL_NAME = "hr.employee"
+from .common import INTERNAL_SECRET, PLAIN_PDF, TemplatesCase, bundled_pdf, ds_response
+
+REQUEST = "odoo.addons.onlyoffice_odoo_templates.models.onlyoffice_odoo_templates.onlyoffice_request"
 
 
-class OnlyofficeTemplatesModelTestCase(TransactionCase):
-    """Shared setup for tests that need the hr.employee bundled template."""
+@tagged("post_install", "-at_install")
+class TestDemoTemplates(TransactionCase):
+    """onlyoffice.odoo.demo.templates: the PDFs bundled per model, exported from Settings. Needs `hr` installed
+    (preinstall of the templates job in test.yml)."""
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.ir_model = cls.env["ir.model"].search([("model", "=", MODEL_NAME)], limit=1)
-        if not cls.ir_model:
-            return
+        cls.hr_model = cls.env["ir.model"]._get("hr.employee")
+        assert cls.hr_model, "the templates tests need the hr module (preinstall: hr in .github/workflows/test.yml)"
+        cls.demo = cls.env["onlyoffice.odoo.demo.templates"].create({})
+        cls.hr_files = sorted(os.listdir(os.path.join(cls.demo._get_templates_dir(), "hr.employee")))
 
-        cls.demo_record = cls.env[MODEL_NAME].search([], limit=1)
-        if not cls.demo_record:
-            cls.demo_record = cls.env[MODEL_NAME].create({"name": "ONLYOFFICE Test Employee"})
+    def test_structure_lists_the_files_of_installed_models_only(self):
+        structure = self.demo.get_template_data()["structure"]
 
-        # Pre-seed the internal JWT secret so `config_utils.get_internal_jwt_secret`
-        # (called by `_render_onlyoffice_pdf`) doesn't lazily generate it and call
-        # `env.cr.commit()` mid-test, which would wipe out this test's own savepoint
-        # and break rollback for this and subsequent tests in the class.
-        cls.env["ir.config_parameter"].sudo().set_param(
-            config_constants.INTERNAL_JWT_SECRET, "test-internal-jwt-secret"
+        self.assertEqual(sorted(file["name"] for file in structure["hr.employee"]["files"]), self.hr_files)
+        self.assertEqual(structure["hr.employee"]["name"], self.hr_model.name)
+        for model in structure:
+            with self.subTest(model=model):
+                self.assertTrue(self.env["ir.model"]._get(model))
+
+    def test_install_creates_a_template_per_bundled_file_of_installed_models(self):
+        Template = self.env["onlyoffice.odoo.templates"]
+        before = Template.search([])
+
+        with patch.object(OnlyOfficeTemplate, "_update_field_keys"):
+            Template._create_demo_data()
+
+        created = Template.search([]) - before
+        self.assertEqual(sorted(created.mapped("name")), sorted(os.path.splitext(name)[0] for name in self.hr_files))
+        self.assertEqual(set(created.mapped("template_model_model")), {"hr.employee"})
+
+    def test_export_creates_the_selected_templates_with_their_pdf(self):
+        self.demo.selected_templates = json.dumps(["hr.employee/Employee.pdf", "no-slash", "x.model/Missing.pdf"])
+        before = self.env["onlyoffice.odoo.templates"].search([])
+
+        self.demo.action_save()
+
+        created = self.env["onlyoffice.odoo.templates"].search([]) - before
+        self.assertEqual((created.name, created.template_model_id), ("Employee", self.hr_model))
+        self.assertEqual(created.attachment_id.raw, bundled_pdf("hr.employee/Employee.pdf"))
+
+    def test_export_without_a_selection_creates_nothing(self):
+        before = self.env["onlyoffice.odoo.templates"].search_count([])
+        self.demo.selected_templates = "[]"
+        self.assertIsNone(self.demo.action_save())
+        self.assertEqual(self.env["onlyoffice.odoo.templates"].search_count([]), before)
+
+    def test_only_files_of_the_templates_directory_can_be_read(self):
+        self.assertEqual(self.demo.get_template_content("hr.employee/Employee.pdf"), bundled_pdf())
+        outside = (
+            "../../../onlyoffice_odoo/static/assets/document_templates/en-US/new.pdf",
+            "/etc/passwd",
+            "hr.employee/../../../__manifest__.py",
         )
+        for path in outside:
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                self.demo.get_template_content(path)
+
+
+@tagged("post_install", "-at_install")
+class TestTemplateCreation(TemplatesCase, TransactionCase):
+    """onlyoffice.odoo.templates.create: blank, uploaded, from the form gallery, and plain PDFs converted to forms."""
 
     def setUp(self):
         super().setUp()
-        if not self.ir_model:
-            self.skipTest(f"Model {MODEL_NAME} is not installed in this test environment")
+        # A non-form PDF is converted and committed in create(); the commits are disabled.
+        commit = patch.object(self.env.cr, "commit")
+        commit.start()
+        self.addCleanup(commit.stop)
+        refresh = patch.object(OnlyOfficeTemplate, "_update_field_keys")
+        refresh.start()
+        self.addCleanup(refresh.stop)
+        self.Template = self.env["onlyoffice.odoo.templates"]
 
-    def _create_template_from_first_bundled_file(self):
-        """Exports the first bundled PDF of the model and returns the new template and the PDF's path."""
-        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
-        # "model/File.pdf", as the Settings widget sends it in `selected_templates`.
-        path = demo.get_template_data()["structure"][MODEL_NAME]["files"][0]["path"]
-        demo.selected_templates = json.dumps([path])
-        demo.action_save()
-        # The newest one: demo templates may already exist from the module install.
-        template = self.env["onlyoffice.odoo.templates"].search(
-            [("template_model_model", "=", MODEL_NAME)], order="id desc", limit=1
-        )
-        return template, path
+    def _create(self, name="Partner Card", **vals):
+        return self.Template.create({"name": name, "template_model_id": self.partner_model.id, **vals})
 
+    def _exists(self, name):
+        return bool(self.Template.search([("name", "=", name)]))
 
-@tagged("post_install", "-at_install")
-class TestOnlyofficeOdooDemoTemplates(OnlyofficeTemplatesModelTestCase):
-    """Tests for onlyoffice.odoo.demo.templates — get_template_data and action_save."""
+    def test_template_without_a_file_is_a_blank_pdf_form(self):
+        template = self._create()
 
-    # -- get_template_data --
+        attachment = template.attachment_id
+        self.assertEqual((attachment.name, attachment.mimetype), ("Partner Card.pdf", "application/pdf"))
+        self.assertEqual(attachment.raw, file_utils.get_default_file_template(self.env.user.lang, "pdf"))
+        self.assertEqual((attachment.res_model, attachment.res_id), ("onlyoffice.odoo.templates", template.id))
+        self.assertEqual((template.template_model_model, template.template_model_name), ("res.partner", "Contact"))
 
-    def test_default_template_visible_in_structure(self):
-        """A bundled template shows up in the picker once its module is installed."""
-        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
-        data = demo.get_template_data()
+    def test_uploaded_pdf_form_is_kept_as_is(self):
+        with patch(REQUEST) as request:
+            template = self._create(file=base64.b64encode(bundled_pdf()))
+        self.assertEqual(template.attachment_id.raw, bundled_pdf())
+        request.assert_not_called()
 
-        self.assertIn(MODEL_NAME, data["structure"])
-        files = data["structure"][MODEL_NAME]["files"]
-        self.assertTrue(files, f"Expected at least one bundled PDF template for {MODEL_NAME}")
-        self.assertEqual(data["structure"][MODEL_NAME]["model"], MODEL_NAME)
+    def test_invalid_file_is_refused(self):
+        with self.assertRaises(UserError):
+            self._create(file="abc")
 
-    def test_structure_excludes_uninstalled_models(self):
-        """Bundled templates for uninstalled models are not exposed to the picker."""
-        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
-        data = demo.get_template_data()
+    def test_form_of_the_gallery_is_downloaded(self):
+        with patch(REQUEST, return_value=ds_response(content=bundled_pdf())) as request:
+            template = self.Template.with_context(url="https://forms.example/lease.pdf").create(
+                {"name": "Lease", "template_model_id": self.partner_model.id}
+            )
+        self.assertEqual(request.call_args.kwargs["url"], "https://forms.example/lease.pdf")
+        self.assertEqual(template.attachment_id.raw, bundled_pdf())
 
-        for model_name in data["structure"]:
-            self.assertTrue(
-                self.env["ir.model"].search([("model", "=", model_name)], limit=1),
-                f"{model_name} appears in the picker but has no matching ir.model",
+    def test_failed_gallery_download_is_reported(self):
+        with patch(REQUEST, side_effect=Exception("timeout")), self.assertRaises(UserError):
+            self.Template.with_context(url="https://forms.example/lease.pdf").create(
+                {"name": "Lease", "template_model_id": self.partner_model.id}
             )
 
-    # -- action_save --
-
-    def test_action_save_creates_template_with_attachment(self):
-        """Saving a selected template creates a template record with the exact PDF bytes."""
-        template, path = self._create_template_from_first_bundled_file()
-
-        self.assertEqual(template.template_model_id, self.ir_model)
-        expected = self.env["onlyoffice.odoo.demo.templates"].get_template_content(path)
-        self.assertEqual(base64.b64decode(template.attachment_id.datas), expected)
-
-    def test_action_save_without_selection_is_noop(self):
-        """Saving with an empty selection creates no template."""
-        demo = self.env["onlyoffice.odoo.demo.templates"].create({})
-        demo.selected_templates = json.dumps([])
-
-        before = self.env["onlyoffice.odoo.templates"].search_count([])
-        demo.action_save()
-        after = self.env["onlyoffice.odoo.templates"].search_count([])
-
-        self.assertEqual(before, after)
-
-
-@tagged("post_install", "-at_install")
-class TestOnlyofficeOdooTemplates(OnlyofficeTemplatesModelTestCase):
-    """Tests for onlyoffice.odoo.templates — create_action, unlink_action and printing."""
-
-    # -- create_action / unlink_action --
-
-    def test_create_action_binds_onlyoffice_report(self):
-        """create_action creates a bound onlyoffice-pdf report."""
-        template, _path = self._create_template_from_first_bundled_file()
-        template.create_action()
-
-        self.assertTrue(template.report_id)
-        self.assertEqual(template.report_id.report_type, "onlyoffice-pdf")
-        self.assertEqual(template.report_id.model, MODEL_NAME)
-        self.assertEqual(template.report_id.onlyoffice_template_id, template)
-
-    def test_unlink_action_removes_report(self):
-        """unlink_action removes the bound report and clears the link."""
-        template, _path = self._create_template_from_first_bundled_file()
-        template.create_action()
-        report = template.report_id
-
-        template.unlink_action()
-
-        self.assertFalse(template.report_id)
-        self.assertFalse(report.exists())
-
-    # -- Printing (IrActionsReport._render_onlyoffice_pdf, mocked) --
-
-    def test_print_demo_record_returns_generated_pdf(self):
-        """Printing returns the PDF bytes produced by fill_template."""
-        template, _path = self._create_template_from_first_bundled_file()
-        template.create_action()
-        report = template.report_id
-
-        fake_pdf = b"%PDF-1.4 fake generated content%%EOF"
-        fake_response = MagicMock(status_code=200, content=fake_pdf)
-
+    def test_plain_pdf_is_converted_into_a_form(self):
+        converted = {"endConvert": True, "fileUrl": "http://ds/form.pdf"}
         with (
-            patch(
-                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.IrActionsReport.fill_template",
-                return_value={self.demo_record.id: "http://fake-docserver/result.pdf"},
-            ) as mock_fill,
-            patch(
-                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.onlyoffice_request",
-                return_value=fake_response,
-            ) as mock_request,
+            patch.object(OnlyOfficeTemplate, "_convert_to_form", return_value=converted) as convert,
+            patch(REQUEST, return_value=ds_response(content=b"%PDF converted form")) as request,
         ):
-            pdf_content, report_type = report.with_context(report_pdf_no_attachment=True)._render_onlyoffice_pdf(
-                report.report_name, res_ids=[self.demo_record.id]
-            )
+            template = self._create(file=base64.b64encode(PLAIN_PDF))
 
-        self.assertEqual(report_type, "onlyoffice-pdf")
-        self.assertEqual(pdf_content, fake_pdf)
-        mock_fill.assert_called_once()
-        mock_request.assert_called_once()
+        self.assertEqual(convert.call_args.args[-1], template.attachment_id)
+        self.assertEqual(request.call_args.kwargs["url"], "http://ds/form.pdf")
+        self.assertEqual(template.attachment_id.raw, b"%PDF converted form")
 
-    def test_print_fails_loudly_when_docbuilder_fails(self):
-        """A record whose document cannot be generated raises instead of silently missing from the output."""
-        template, _path = self._create_template_from_first_bundled_file()
-        template.create_action()
-        report = template.report_id
+    def test_failed_conversion_leaves_no_template(self):
+        cases = {
+            "Conversion error": ({"error": -3, "message": "Conversion error"}, None),
+            "Failed to download converted PDF form": ({"fileUrl": "http://ds/form.pdf"}, Exception("gone")),
+        }
+        for message, (converted, download_error) in cases.items():
+            with (
+                self.subTest(message=message),
+                patch.object(OnlyOfficeTemplate, "_convert_to_form", return_value=converted),
+                patch(REQUEST, side_effect=download_error),
+                self.assertRaises(UserError) as error,
+            ):
+                self._create(name=f"Failed {message}", file=base64.b64encode(PLAIN_PDF))
+            self.assertEqual(str(error.exception), message)
+            self.assertFalse(self._exists(f"Failed {message}"))
 
+
+@tagged("post_install", "-at_install")
+class TestTemplateFile(TemplatesCase, TransactionCase):
+    """Conversion request of a plain PDF, a new file uploaded on an existing template, the name of its PDF."""
+
+    def setUp(self):
+        super().setUp()
+        commit = patch.object(self.env.cr, "commit")
+        commit.start()
+        self.addCleanup(commit.stop)
+        self.template = self._template()
+
+    def test_conversion_request_asks_the_document_server_for_a_form(self):
+        config_utils.set_doc_server_public_url(self.env, "http://documentserver/")
+        converted = ds_response({"endConvert": True, "fileUrl": "http://ds/form.pdf"})
+        with patch(REQUEST, return_value=converted) as request:
+            result = self.template._convert_to_form(self.template.attachment_id)
+
+        self.assertEqual(result["fileUrl"], "http://ds/form.pdf")
+        self.assertIn("http://documentserver/converter", request.call_args.kwargs["url"])
+        body = json.loads(request.call_args.kwargs["opts"]["data"])
+        self.assertEqual((body["filetype"], body["outputtype"], body["pdf"]), ("pdf", "pdf", {"form": True}))
+        source = f"/onlyoffice/template/download/{self.template.attachment_id.id}?oo_security_token="
+        self.assertIn(source, body["url"])
+        token = body["url"].split("oo_security_token=")[1]
+        self.assertEqual(jwt_utils.decode_token(self.env, token, INTERNAL_SECRET)["id"], self.env.uid)
+
+    def test_conversion_request_is_signed_when_jwt_is_enabled(self):
+        config_utils.set_jwt_secret(self.env, "ds-secret")
+        with patch(REQUEST, return_value=ds_response({"fileUrl": "u"})) as request:
+            self.template._convert_to_form(self.template.attachment_id)
+        body = json.loads(request.call_args.kwargs["opts"]["data"])
+        self.assertEqual(jwt_utils.decode_token(self.env, body["token"], "ds-secret")["outputtype"], "pdf")
+
+    def test_unreachable_converter_is_an_error_result(self):
+        with patch(REQUEST, side_effect=Exception("refused")):
+            result = self.template._convert_to_form(self.template.attachment_id)
+        self.assertEqual(result, {"error": 1, "message": "Document conversion service cannot be reached"})
+
+    def test_new_pdf_form_replaces_the_file(self):
+        form = bundled_pdf("hr.employee/Certificate.pdf")
+        self.template.file = base64.b64encode(form)
+
+        self.template._onchange_file()
+
+        self.assertEqual(self.template.attachment_id.raw, form)
+        self.assertFalse(self.template.file)
+
+    def test_new_plain_pdf_is_converted(self):
+        self.template.file = base64.b64encode(PLAIN_PDF)
         with (
-            patch(
-                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.IrActionsReport.fill_template",
-                side_effect=Exception("Document conversion service cannot be reached"),
-            ),
+            patch.object(OnlyOfficeTemplate, "_convert_to_form", return_value={"fileUrl": "http://ds/form.pdf"}),
+            patch(REQUEST, return_value=ds_response(content=b"%PDF converted")),
+        ):
+            self.template._onchange_file()
+        self.assertEqual(self.template.attachment_id.raw, b"%PDF converted")
+
+    def test_failed_conversion_restores_the_previous_file(self):
+        self.template.file = base64.b64encode(PLAIN_PDF)
+        with (
+            patch.object(OnlyOfficeTemplate, "_convert_to_form", return_value={"error": -4, "message": "Download"}),
             self.assertRaises(UserError),
         ):
-            report.with_context(report_pdf_no_attachment=True)._render_onlyoffice_pdf_prepare_streams(
-                report.report_name, data={}, res_ids=[self.demo_record.id]
-            )
+            self.template._onchange_file()
+        self.assertEqual(self.template.attachment_id.raw, bundled_pdf())
+
+    def test_renaming_renames_the_pdf(self):
+        self.template.name = "Contact Card"
+        self.template._onchange_name()
+        self.assertEqual(self.template.attachment_id.name, "Contact Card.pdf")
+
+    def test_conversion_error_messages(self):
+        message = self.template._get_conversion_error_message
+        self.assertEqual(message(-5), "Incorrect password")
+        self.assertEqual(message(-99), "Undefined error code")
+
+
+@tagged("post_install", "-at_install")
+class TestTemplateModel(TemplatesCase, TransactionCase):
+    """The model of a template: the field tree of the editor panel, the model link after a module reinstall."""
+
+    def test_field_tree_of_a_model(self):
+        fields = {
+            field["id"]: field for field in self.env["onlyoffice.odoo.templates"].get_fields_for_model("res.partner")
+        }
+
+        self.assertEqual(fields["name"]["field_type"], "char")
+        self.assertFalse(fields["name"]["children"])
+        self.assertNotIn("comment", fields, "html fields cannot be filled into a form")
+        parent = fields["parent_id"]
+        self.assertTrue(parent["children"])
+        self.assertEqual(parent["params"], {"model": "res.partner", "prefix": "parent_id", "name": parent["string"]})
+        self.assertEqual(parent["value"], "parent_id/id")
+        labels = [field["string"].lower() for field in fields.values()]
+        self.assertEqual(labels, sorted(labels))
+
+    def test_nested_field_tree_and_exclusions(self):
+        get_fields = self.env["onlyoffice.odoo.templates"].get_fields_for_model
+        nested = get_fields("res.partner", prefix="parent_id", parent_name="Related Company", exclude=["email"])
+
+        names = {field["id"]: field["string"] for field in nested}
+        self.assertEqual(names["parent_id/name"], "Related Company/Name")
+        self.assertNotIn("parent_id/email", names)
+        deep = get_fields("res.partner", prefix="a/b/c")
+        self.assertFalse(any(field["children"] for field in deep), "no relations below the fourth level")
+        self.assertEqual(get_fields("no.such.model"), [])
+
+    def test_model_link_is_restored_by_model_name(self):
+        template = self._template()
+        users_model = self.env["ir.model"]._get("res.users")
+        template.template_model_id = users_model
+
+        self.env["onlyoffice.odoo.templates"].update_relationship(template.id, "res.partner")
+        self.assertEqual(template.template_model_id, self.partner_model)
+
+        self.env["onlyoffice.odoo.templates"].update_relationship(template.id, "no.such.model")
+        self.assertEqual(template.template_model_id, self.partner_model, "an unknown model changes nothing")
+
+    def test_editor_action_carries_the_template(self):
+        template = self._template()
+        action = template.open_template_editor()
+        self.assertEqual(action["tag"], "onlyoffice_template_editor")
+        self.assertEqual(
+            action["params"],
+            {"attachment_id": template.attachment_id.id, "id": template.id, "template_model_model": "res.partner"},
+        )
+
+
+@tagged("post_install", "-at_install")
+class TestDisableFormFieldsSetting(TransactionCase):
+    """Settings: "Disable form fields after printing PDF form"."""
+
+    def test_setting_is_saved_and_read_back(self):
+        config_utils.set_demo(self.env, True)  # the demo server skips the Document Server checks of set_values
+        settings = self.env["res.config.settings"].create({})
+        self.assertFalse(settings.editable_form_fields)
+
+        settings.editable_form_fields = True
+        settings.set_values()
+
+        self.assertTrue(templates_config_utils.get_editable_form_fields(self.env))
+        self.assertTrue(self.env["res.config.settings"].create({}).editable_form_fields)

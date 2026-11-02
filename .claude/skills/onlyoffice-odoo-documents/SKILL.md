@@ -171,6 +171,8 @@ share-link callback in this module writes the document without this bookkeeping.
   `_HANDLERS` map in `spreadsheet_formulas.py`, and the `.docbuilder` scripts that write formulas into cells.
 - New docbuilder flows: store the payload with the cache helpers (`_store_docbuilder_data`), never in process memory —
   the callback may hit another worker.
-- This module has no automated tests and is excluded from CI (Enterprise is not available there); document manual
-  verification steps in the PR and mock `onlyoffice_request` if you add tests (`odoo-testing`).
+- Tests: `tests/` (unit + `HttpCase`, Document Server mocked) and `e2e/tests/documents.spec.ts` (live DS); CI runs them
+  on Gitea only (`odoo-testing`).
+- `onlyoffice.odoo.documents.access.user.user_id` is a `res.partner`: compare it with `user.partner_id`, never
+  `user.id`.
 - Changelog: `CHANGELOG documents.md`.
