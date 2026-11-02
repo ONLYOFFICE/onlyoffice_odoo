@@ -20,6 +20,8 @@ for (i = 0; i < patches.length; i++) {
   try {
     var ws = Api.GetSheet(patch.sheet)
     var cellRange = ws.GetRange(patch.cell)
+    // The native export marks a cell of text as Text ("@"), which would keep the formula as a string.
+    cellRange.SetNumberFormat("General")
     cellRange.SetValue(patch.formula)
     applyOdooColumnFormat(cellRange, patch.formula, metadata)
   } catch (e) {

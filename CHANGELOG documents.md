@@ -11,6 +11,8 @@
 
 - per-user ONLYOFFICE roles ignored when converting a document and when opening or saving it through a share link
 - creating a document in a folder without write access left the document behind
+- ODOO.\* formulas of a spreadsheet saved by an older version were not converted to ONLYOFFICE functions
+- changing only the link or the members in the Share dialog reset the ONLYOFFICE role of internal users to none
 
 ## 6.3.1
 

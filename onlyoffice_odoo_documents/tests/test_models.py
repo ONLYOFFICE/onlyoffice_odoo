@@ -143,6 +143,15 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
         user_access = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
         self.assertEqual((user_access.user_id, user_access.role), (partner, "reviewer"))
 
+    def test_changing_the_link_keeps_the_right_of_internal_users(self):
+        document = self._document().with_user(self.owner)
+        document.sudo().access_internal = "edit"
+
+        document.action_update_access_rights(access_via_link="commenter")
+
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
+        self.assertEqual((access.internal_users, access.link_access), ("edit", "commenter"))
+
     def test_removing_a_partner_removes_the_custom_role(self):
         document = self._document().with_user(self.owner)
         partner = self.colleague.partner_id

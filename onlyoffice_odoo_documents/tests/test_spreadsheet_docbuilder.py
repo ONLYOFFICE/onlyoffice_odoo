@@ -68,7 +68,9 @@ class TestDocBuilderScripts(TransactionCase):
                         "C1": "ODOO.LIST text",
                         "D1": "",
                     },
-                }
+                },
+                # Data saved by older versions: a cell is {"content": ...}.
+                {"name": "Old", "cells": {"A1": {"content": '=ODOO.LIST(1,2,"name")'}, "B1": {"style": 1}}},
             ]
         }
         self.assertEqual(
@@ -76,6 +78,7 @@ class TestDocBuilderScripts(TransactionCase):
             [
                 {"sheet": "Sales", "cell": "A1", "formula": '=ODOO_LIST(1,1,"name")'},
                 {"sheet": "Sales", "cell": "A2", "formula": '=-ODOO_PIVOT(2,"__count")'},
+                {"sheet": "Old", "cell": "A1", "formula": '=ODOO_LIST(1,2,"name")'},
             ],
         )
 
