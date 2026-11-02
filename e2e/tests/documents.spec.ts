@@ -459,9 +459,13 @@ test("insert a list of contacts into an XLSX from the ONLYOFFICE tab of the spre
   await waitForEditor(page) // the XLSX opens in the editor
   const { sheets } = await xlsxSheets(await documentFile(odoo, documentId))
   const inserted = Object.values(sheets).find((sheet) => sheet.includes("ODOO_LIST("))
-  expect(inserted).toContain('ODOO_LIST_HEADER(1,"complete_name")')
-  expect(inserted).toContain('ODOO_LIST(1,2,"complete_name")')
   const metadata = JSON.parse(await odoo.read("documents.document", documentId, "onlyoffice_spreadsheet_metadata"))
+  // The columns of the Contacts list view differ between builds of Odoo 19 (complete_name, display_name).
+  const [first] = metadata.lists["1"].columns.map((column: string | { name: string }) =>
+    typeof column === "string" ? column : column.name,
+  )
+  expect(inserted).toContain(`ODOO_LIST_HEADER(1,"${first}")`)
+  expect(inserted).toContain(`ODOO_LIST(1,2,"${first}")`)
   expect(metadata.lists["1"].model).toBe("res.partner")
   expect(metadata.lists["1"].domain).toContain(marker) // the search of the list view
 })
