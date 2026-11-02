@@ -68,7 +68,8 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       revisions,
     })
     await waitForDataLoaded(model)
-    const xlsxData = model.exportXLSX()
+    // Asynchronous since Odoo 20.
+    const xlsxData = await model.exportXLSX()
 
     const formData = new URLSearchParams({
       files: JSON.stringify(xlsxData.files),
