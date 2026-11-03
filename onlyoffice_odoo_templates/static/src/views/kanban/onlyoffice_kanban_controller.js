@@ -22,8 +22,8 @@ export class OnlyofficeKanbanController extends KanbanController {
         this.action.doAction({
           context: {
             default_hide_file_field: true,
-            default_name: form.attributes.name_form,
-            url: form.attributes.file_oform.data[0].attributes.url,
+            default_name: form.name_form,
+            url: form.file_oform[0].url,
           },
           res_model: "onlyoffice.odoo.templates",
           target: "current",

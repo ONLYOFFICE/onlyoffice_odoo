@@ -14,30 +14,44 @@
             <Dropdown class="'w-100'" togglerClass="'btn btn-light'">
               <t t-set-slot="toggler">
                 <i class="me-1 fa fa-filter" />
-                <span class="o_dropdown_title">
+                <span class="o_dropdown_title" t-if="state.filter" t-esc="state.filter.name" />
+                <span class="o_dropdown_title" t-else="">
                   Categories
                 </span>
               </t>
               <span
                 class="dropdown-item o_menu_item"
-                t-on-click="() => this.onAllSubcategorySelect()"
+                t-on-click="() => this.onFilterSelect(null)"
                 tabindex="0"
                 aria-checked="false"
               >
                 View all templates
               </span>
-              <div role="separator" class="dropdown-divider" />
-              <t t-foreach="state.categories" t-as="category" t-key="category.id">
-                <Dropdown t-props="dropdownProps">
-                  <t t-set-slot="toggler">
-                    <t t-out="category.name" />
-                  </t>
-                  <t t-foreach="state.subcategories[category.categoryId]" t-as="subcat" t-key="subcat.id">
-                    <div class="dropdown-item o_menu_item" t-on-click="() => this.onSubcategorySelect(subcat)">
-                      <span t-esc="subcat.name" />
-                    </div>
-                  </t>
-                </Dropdown>
+              <t t-foreach="state.purposes" t-as="purpose" t-key="purpose.key">
+                <div role="separator" class="dropdown-divider" />
+                <span
+                  class="dropdown-item o_menu_item fw-bold"
+                  t-on-click="() => this.onFilterSelect({ name: purpose.name, purpose: purpose.key })"
+                  tabindex="0"
+                  aria-checked="false"
+                >
+                  <t t-esc="purpose.name" />
+                </span>
+                <t t-foreach="purpose.categories" t-as="category" t-key="category.id">
+                  <Dropdown>
+                    <t t-set-slot="toggler">
+                      <t t-esc="category.name" />
+                    </t>
+                    <t t-foreach="category.subcategories" t-as="subcategory" t-key="subcategory.id">
+                      <div
+                        class="dropdown-item o_menu_item"
+                        t-on-click="() => this.onFilterSelect({ name: subcategory.name, subcategory: subcategory.id })"
+                      >
+                        <span t-esc="subcategory.name" />
+                      </div>
+                    </t>
+                  </Dropdown>
+                </t>
               </t>
             </Dropdown>
           </div>
@@ -154,16 +168,16 @@
                   <div>
                     <img
                       class="o_onlyoffice_kanban_image"
-                      t-att-src="getPreviewUrl(form) || getImageUrl(form) || '/web/static/img/placeholder.png'"
-                      t-att-alt="form.attributes.name_form"
-                      t-on-click="() => this.previewForm(form.attributes.file_oform.data[0].attributes.url, form.attributes.name_form, form.attributes.file_oform.data[0].attributes.name )"
+                      t-att-src="form.card_prewiew?.url || '/web/static/img/placeholder.png'"
+                      t-att-alt="form.name_form"
+                      t-on-click="() => this.previewForm(form.file_oform[0].url, form.name_form, form.file_oform[0].ext)"
                     />
                   </div>
                 </div>
                 <div class="d-flex justify-content-between">
                   <div class="o_onlyoffice_kanban_details_wrapper w-100 justify-content-between d-flex m-2">
-                    <span t-esc="form.attributes.name_form" />
-                    <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.attributes.description_card}}" />
+                    <span t-esc="form.name_form" />
+                    <i class="fa fa-info-circle" t-attf-data-tooltip="{{form.description_card}}" />
                   </div>
                 </div>
               </div>
