@@ -109,7 +109,7 @@ class OnlyofficeDocuments(models.Model):
 
         is_admin = self.env.user.has_group("base.group_system")
         document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.create_uid != self.env.user:
+        if not is_admin and document.owner_id != self.env.user:
             raise AccessError(_("Only the owner or administrator can share documents."))
 
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
