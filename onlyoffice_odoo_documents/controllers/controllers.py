@@ -116,14 +116,15 @@ class OnlyofficeDocuments_Connector(http.Controller):
             }
 
             document = request.env["documents.document"].create(data)
-            request.env["onlyoffice.odoo.documents.access"].create(
+            # The document is created with the user's rights; its roles are read-only for users.
+            request.env["onlyoffice.odoo.documents.access"].sudo().create(
                 {
                     "document_id": document.id,
                     "internal_users": "none",
                     "link_access": "viewer",
                 }
             )
-            request.env["onlyoffice.odoo.documents.access.user"].create(
+            request.env["onlyoffice.odoo.documents.access.user"].sudo().create(
                 {
                     "document_id": document.id,
                     "user_id": request.env.user.id,
