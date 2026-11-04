@@ -422,30 +422,32 @@ class SpreadsheetDocBuilder:
     # ── Metadata / DocBuilder call helpers ───────────────────────────────────
 
     def _prepare_docbuilder_metadata(self, snapshot):
-        """Build metadata JSON (lists, pivots, filters) with domains resolved for DocBuilder."""
+        """Build metadata JSON (lists, pivots, filters) for DocBuilder.
+
+        Domains are kept as stored by Odoo: the formulas evaluate them on
+        every calculation, so relative dates stay relative.
+        """
         metadata = {}
         if snapshot.get("lists"):
-            lists_with_computed_domain = {}
+            lists_with_formats = {}
             for list_id, list_data in snapshot["lists"].items():
                 list_copy = dict(list_data)
-                list_copy["domain"] = self._formula_evaluator.parse_and_resolve_domain(list_copy.get("domain", []))
                 try:
                     list_copy["columnFormats"] = self._formula_evaluator.get_list_column_formats(list_copy)
                 except Exception as e:
                     _logger.debug("Could not compute column formats for list %s: %s", list_id, e)
-                lists_with_computed_domain[list_id] = list_copy
-            metadata["lists"] = lists_with_computed_domain
+                lists_with_formats[list_id] = list_copy
+            metadata["lists"] = lists_with_formats
         if snapshot.get("pivots"):
-            pivots_with_computed_domain = {}
+            pivots_with_formats = {}
             for pivot_id, pivot_data in snapshot["pivots"].items():
                 pivot_copy = dict(pivot_data)
-                pivot_copy["domain"] = self._formula_evaluator.parse_and_resolve_domain(pivot_copy.get("domain", []))
                 try:
                     pivot_copy["columnFormats"] = self._formula_evaluator.get_pivot_column_formats(pivot_copy)
                 except Exception as e:
                     _logger.debug("Could not compute column formats for pivot %s: %s", pivot_id, e)
-                pivots_with_computed_domain[pivot_id] = pivot_copy
-            metadata["pivots"] = pivots_with_computed_domain
+                pivots_with_formats[pivot_id] = pivot_copy
+            metadata["pivots"] = pivots_with_formats
         if snapshot.get("globalFilters"):
             metadata["globalFilters"] = snapshot["globalFilters"]
         return json.dumps(metadata, cls=_DateTimeEncoder) if metadata else None

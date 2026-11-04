@@ -4,6 +4,7 @@
 import json
 from datetime import datetime
 
+from odoo import fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -132,8 +133,75 @@ class TestFormulaEvaluator(TransactionCase):
             compute_filter_values(self.snapshot), {"Region": "EU", "Year": str(datetime.now().year), "Stage": "3"}
         )
 
-    def test_currency_rate_without_both_currencies_is_one(self):
-        self.assertEqual(self._eval('=ODOO_CURRENCY_RATE("USD")'), 1.0)
+    def test_date_filter_values_are_shown_like_odoo(self):
+        today = fields.Date.context_today(self.env.user)
+        quarter = (today.month - 1) // 3 + 1
+        snapshot = {
+            "globalFilters": [
+                {"label": "Q", "type": "date", "currentValue": {"yearOffset": -1, "period": "third_quarter"}},
+                {"label": "M", "type": "date", "currentValue": {"yearOffset": 0, "period": "march"}},
+                {"label": "Y", "type": "date", "currentValue": {"yearOffset": 1}},
+                {"label": "This month", "type": "date", "defaultValue": "this_month"},
+                {"label": "This quarter", "type": "date", "defaultValue": "this_quarter"},
+                {"label": "Relative", "type": "date", "defaultValue": "last_year"},
+                {"label": "Unknown range", "type": "date", "defaultValue": "next_century"},
+                {"label": "Text", "type": "text", "defaultValue": "last_year"},
+            ]
+        }
+        self.assertEqual(
+            compute_filter_values(snapshot),
+            {
+                "Q": f"Q3/{today.year - 1}",
+                "M": f"03/{today.year}",
+                "Y": str(today.year + 1),
+                "This month": f"{today.month:02d}/{today.year}",
+                "This quarter": f"Q{quarter}/{today.year}",
+                "Relative": "Last 365 Days",
+                "Unknown range": "",
+                "Text": "last_year",
+            },
+        )
+        self.assertEqual(
+            self.evaluator.evaluate_single_formula(snapshot, '=ODOO_FILTER_VALUE("Q")'), f"Q3/{today.year - 1}"
+        )
+
+    def test_currency_rate_is_odoo_rate_for_the_date_and_company(self):
+        currency = self.env["res.currency"].create({"name": "OOX", "symbol": "X", "active": True})
+        company = self.env.company
+        other_company = self.env["res.company"].create({"name": "OO Rates Co", "currency_id": company.currency_id.id})
+        Rate = self.env["res.currency.rate"]
+        for day, rate, rate_company in (("2020-01-01", 2.0, company), (fields.Date.today(), 4.0, company)):
+            Rate.create({"currency_id": currency.id, "name": day, "rate": rate, "company_id": rate_company.id})
+        Rate.create({"currency_id": currency.id, "name": "2020-01-01", "rate": 8.0, "company_id": other_company.id})
+        company_code = self.env.company.currency_id.name
+        expected = Rate._get_rate_for_spreadsheet
+
+        self.assertEqual(self._eval(f'=ODOO_CURRENCY_RATE("{company_code}","OOX")'), expected(company_code, "OOX"))
+        for date_arg in ('"2020-06-01"', '"06/01/2020"', "43983"):
+            with self.subTest(date=date_arg):
+                self.assertEqual(
+                    self._eval(f'=ODOO_CURRENCY_RATE("{company_code}","OOX",{date_arg})'),
+                    expected(company_code, "OOX", "2020-06-01"),
+                )
+        self.assertEqual(
+            self._eval(f'=ODOO_CURRENCY_RATE("{company_code}","OOX","2020-06-01",{other_company.id})'),
+            expected(company_code, "OOX", "2020-06-01", other_company.id),
+        )
+        self.assertNotEqual(expected(company_code, "OOX"), expected(company_code, "OOX", "2020-06-01"))
+        self.assertNotEqual(
+            expected(company_code, "OOX", "2020-06-01"), expected(company_code, "OOX", "2020-06-01", other_company.id)
+        )
+
+    def test_currency_rate_errors(self):
+        cases = {
+            '=ODOO_CURRENCY_RATE("XXX","USD")': "#ERROR: Currency rate unavailable.",
+            '=ODOO_CURRENCY_RATE("","USD")': "#ERROR: Currency rate unavailable.",
+            '=ODOO_CURRENCY_RATE("USD")': "#ERROR: ODOO.CURRENCY.RATE requires at least 2 args",
+            '=ODOO_CURRENCY_RATE("USD","EUR","not a date")': "#ERROR: Invalid date: not a date",
+        }
+        for formula, error in cases.items():
+            with self.subTest(formula=formula):
+                self.assertEqual(self._eval(formula), error)
 
     # -- Errors --
 
@@ -162,8 +230,24 @@ class TestFormulaEvaluator(TransactionCase):
         self.assertEqual(resolve("[('user_id', '=', uid)]"), [["user_id", "=", uid]])
         self.assertEqual(resolve([["user_id", "=", "uid"]]), [["user_id", "=", uid]])
         self.assertEqual(resolve("[]"), [])
-        self.assertEqual(resolve("not a domain("), [])
         self.assertEqual(resolve(42), [])
+        with self.assertRaisesRegex(ValueError, "Invalid domain"):
+            resolve("not a domain(")
+
+    def test_relative_date_domains_are_evaluated_on_each_call(self):
+        """Odoo stores domains like "the last 365 days" as Python expressions; they must not be dropped."""
+        pivot = {"model": "res.partner", "measures": [{"field": "__count"}], "rowGroupBys": [], "colGroupBys": []}
+        since = "(context_today() + relativedelta(days={})).strftime('%Y-%m-%d')"
+        self.snapshot = {
+            "pivots": {
+                "1": {**pivot, "domain": f"[('ref', '=', '{REF}'), ('create_date', '>=', {since.format(-1)})]"},
+                "2": {**pivot, "domain": f"[('ref', '=', '{REF}'), ('create_date', '>=', {since.format(1)})]"},
+                "3": {**pivot, "domain": "[('ref', '=', no_such_name)]"},
+            }
+        }
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"__count")'), 3)
+        self.assertEqual(self._eval('=ODOO_PIVOT(2,"__count")'), 0)
+        self.assertRegex(self._eval('=ODOO_PIVOT(3,"__count")'), "^#ERROR: Invalid domain")
 
     def test_month_and_year_values_become_date_ranges(self):
         model = self.env["res.partner"]

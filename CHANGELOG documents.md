@@ -15,6 +15,7 @@
 - ODOO.\* formulas of a spreadsheet saved by an older version were not converted to ONLYOFFICE functions
 - changing only the link or the members in the Share dialog reset the ONLYOFFICE role of internal users to none
 - converting an Odoo spreadsheet to XLSX and opening it in ONLYOFFICE failed with an export error
+- ODOO.\* formulas of a converted spreadsheet could stay as text in cells formatted as Text
 
 ## 6.3.1
 

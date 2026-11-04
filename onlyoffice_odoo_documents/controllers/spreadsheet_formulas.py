@@ -12,10 +12,15 @@ import re
 from datetime import date as date_cls
 from datetime import datetime, timedelta
 
+from dateutil.relativedelta import relativedelta
+
+from odoo import _, fields
 from odoo.http import request
 from odoo.orm.utils import READ_GROUP_TIME_GRANULARITY
 from odoo.tools import misc
+from odoo.tools.safe_eval import datetime as safe_datetime
 from odoo.tools.safe_eval import safe_eval
+from odoo.tools.safe_eval import time as safe_time
 
 _logger = logging.getLogger(__name__)
 
@@ -23,6 +28,25 @@ _logger = logging.getLogger(__name__)
 def _get_lang_code(env):
     """Return the effective res.lang code for the current request/user."""
     return env.user.lang or env.context.get("lang") or "en_US"
+
+
+def _user_today():
+    """Return today's date in the current user's timezone."""
+    return fields.Date.context_today(request.env.user)
+
+
+def _domain_eval_context():
+    """Return the evaluation context of a domain string, as Odoo uses for action domains."""
+    user = request.env.user
+    return {
+        "uid": user.id,
+        "user": user,
+        "allowed_company_ids": request.env.companies.ids,
+        "context_today": _user_today,
+        "datetime": safe_datetime,
+        "relativedelta": relativedelta,
+        "time": safe_time,
+    }
 
 
 def _format_localized_date(env, value, lang_code, with_time=False):
@@ -85,7 +109,7 @@ def compute_filter_values(metadata):
         label = gf.get("label", "")
         if not label:
             continue
-        result[label] = _resolve_filter_value(gf.get("currentValue") or gf.get("defaultValue"))
+        result[label] = _resolve_filter_value(gf.get("currentValue") or gf.get("defaultValue"), gf.get("type"))
     return result
 
 
@@ -106,21 +130,60 @@ def load_metadata_for_document(document):
     return {}
 
 
-def _resolve_filter_value(value):
+_FILTER_MONTHS = (
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+)
+_FILTER_QUARTERS = ("first_quarter", "second_quarter", "third_quarter", "fourth_quarter")
+
+
+def _relative_date_range_label(value):
+    """Return the label of a relative date filter value ("last_month", ...), as Odoo shows it."""
+    labels = {
+        "year_to_date": _("Year to Date"),
+        "last_week": _("Last 7 Days"),
+        "last_month": _("Last 30 Days"),
+        "last_three_months": _("Last 90 Days"),
+        "last_six_months": _("Last 180 Days"),
+        "last_year": _("Last 365 Days"),
+        "last_three_years": _("Last 3 Years"),
+    }
+    return labels.get(value, "")
+
+
+def _resolve_filter_value(value, filter_type=None):
     """Resolve a global filter's raw value (currentValue/defaultValue) to a display string.
 
     Shared by compute_filter_values (all filters at once) and
     SpreadsheetFormulaEvaluator._eval_filter_value (single filter by name).
+    Date filters are shown like Odoo's getFilterDisplayValue: "Q3/2026",
+    "09/2026", "2026", or the label of a relative range.
     """
     if not value:
         return ""
     if isinstance(value, str):
         value = _resolve_date_shortcut(value)
         if isinstance(value, str):
-            return value
+            return _relative_date_range_label(value) if filter_type == "date" else value
     if isinstance(value, dict):
         if "yearOffset" in value:
-            return str(datetime.now().year + int(value.get("yearOffset", 0)))
+            year = str(_user_today().year + int(value.get("yearOffset") or 0))
+            period = value.get("period")
+            if period in _FILTER_QUARTERS:
+                return f"Q{_FILTER_QUARTERS.index(period) + 1}/{year}"
+            if period in _FILTER_MONTHS:
+                return f"{_FILTER_MONTHS.index(period) + 1:02d}/{year}"
+            return year
         if "value" in value:
             return str(value["value"])
         return ""
@@ -128,15 +191,12 @@ def _resolve_filter_value(value):
 
 
 def _resolve_date_shortcut(value):
-    """Convert a named date shortcut ("this_year", ...) to its filter dict form."""
+    """Convert a default date filter value ("this_year", ...) to its period form, like Odoo."""
+    today = _user_today()
     shortcuts = {
         "this_year": lambda: {"yearOffset": 0},
-        "last_year": lambda: {"yearOffset": -1},
-        "this_month": lambda: {"yearOffset": 0, "period": f"{datetime.now().month:02d}"},
-        "this_quarter": lambda: {
-            "yearOffset": 0,
-            "period": f"q{(datetime.now().month - 1) // 3 + 1}",
-        },
+        "this_month": lambda: {"yearOffset": 0, "period": _FILTER_MONTHS[today.month - 1]},
+        "this_quarter": lambda: {"yearOffset": 0, "period": _FILTER_QUARTERS[(today.month - 1) // 3]},
     }
     fn = shortcuts.get(value)
     return fn() if fn else value
@@ -204,16 +264,22 @@ class SpreadsheetFormulaEvaluator:
         return formats
 
     def parse_and_resolve_domain(self, domain_value):
-        """Parse a domain from the snapshot and resolve the 'uid' placeholder."""
+        """Parse a domain from the snapshot and resolve the 'uid' placeholder.
+
+        A domain stored as a string is evaluated on every call, like Odoo
+        does, so relative dates (context_today(), relativedelta) stay
+        relative. A domain that cannot be evaluated raises instead of
+        silently matching every record.
+        """
         uid = request.env.user.id
         if isinstance(domain_value, str):
             domain_value = domain_value.strip()
             if not domain_value or domain_value == "[]":
                 return []
             try:
-                domain_value = safe_eval(domain_value, {"uid": uid, "user": request.env.user})
-            except Exception:
-                return []
+                domain_value = safe_eval(domain_value, _domain_eval_context())
+            except Exception as e:
+                raise ValueError(f"Invalid domain: {e}") from e
         if not isinstance(domain_value, list | tuple):
             return []
         return [
@@ -456,18 +522,23 @@ class SpreadsheetFormulaEvaluator:
         for f in snapshot.get("globalFilters", []):
             if f.get("label") != name:
                 continue
-            return _resolve_filter_value(f.get("currentValue") or f.get("defaultValue"))
+            return _resolve_filter_value(f.get("currentValue") or f.get("defaultValue"), f.get("type"))
         return ""
 
     def _eval_currency_rate(self, _snapshot, args):
-        """ODOO.CURRENCY.RATE(from, to) — uses Odoo's own currency rate lookup."""
+        """ODOO.CURRENCY.RATE(from, to, [date], [company_id]) — uses Odoo's own currency rate lookup."""
         if len(args) < 2:
-            return 1.0
-        try:
-            rate = request.env["res.currency.rate"].sudo()._get_rate_for_spreadsheet(str(args[0]), str(args[1]))
-            return rate or 1.0
-        except Exception:
-            return 1.0
+            raise ValueError("ODOO.CURRENCY.RATE requires at least 2 args")
+        rate_date = _to_server_date(args[2]) if len(args) > 2 and args[2] not in ("", None) else None
+        company_id = int(float(args[3])) if len(args) > 3 and args[3] not in ("", None) else None
+        rate = (
+            request.env["res.currency.rate"]
+            .sudo()
+            ._get_rate_for_spreadsheet(str(args[0]), str(args[1]), rate_date and rate_date.isoformat(), company_id)
+        )
+        if rate is False:
+            raise ValueError("Currency rate unavailable.")
+        return rate
 
     # ── Domain & date helpers ────────────────────────────────────────────────
 
@@ -737,6 +808,26 @@ def _coerce(arg):
         return float(arg) if "." in arg else int(arg)
     except ValueError:
         return arg
+
+
+def _to_server_date(value):
+    """Convert a spreadsheet date argument (serial number or date text) to a date.
+
+    Accepts what Odoo's toJsDate accepts in practice: an Excel serial
+    number, an ISO date, or a date in the user's language format.
+    """
+    text = str(value).strip()
+    if re.fullmatch(r"\d+(\.\d+)?", text):
+        return date_cls(1899, 12, 30) + timedelta(days=int(float(text)))
+    lang = request.env["res.lang"]._lang_get(_get_lang_code(request.env))
+    for date_format in ("%Y-%m-%d", "%Y/%m/%d", lang.date_format if lang else None):
+        if not date_format:
+            continue
+        try:
+            return datetime.strptime(text, date_format).date()
+        except ValueError:
+            continue
+    raise ValueError(f"Invalid date: {value}")
 
 
 def _infer_date_granularity(value):

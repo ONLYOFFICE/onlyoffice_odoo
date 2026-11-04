@@ -84,7 +84,6 @@ def onlyoffice_request(url, method, opts=None, env=None):
             "error_type": type(e).__name__,
             "url": url,
             "method": method.upper(),
-            "request_options": opts,
             "original_error": str(e),
         }
 
@@ -98,7 +97,6 @@ def onlyoffice_request(url, method, opts=None, env=None):
             "error_type": type(e).__name__,
             "url": url,
             "method": method.upper(),
-            "request_options": opts,
             "original_error": str(e),
         }
 

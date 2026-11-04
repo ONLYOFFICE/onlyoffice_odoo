@@ -53,6 +53,25 @@ class TestAccessRoles(DocumentsCase, TransactionCase):
         document.sudo().unlink()
         self.assertFalse(access.exists())
 
+    def test_users_read_the_roles_but_cannot_change_them_directly(self):
+        """Roles are changed only through advanced_share_save, which checks the right to share first."""
+        document = self._document(access_internal="view")
+        self._roles(document, internal_users="view", owner="edit")
+        Access = self.env["onlyoffice.odoo.documents.access"].with_user(self.colleague)
+        AccessUser = self.env["onlyoffice.odoo.documents.access.user"].with_user(self.colleague)
+        own_role = {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "edit"}
+        attempts = {
+            "create a role": lambda: AccessUser.create(own_role),
+            "raise the internal role": lambda: Access.search([("document_id", "=", document.id)]).write(
+                {"internal_users": "edit"}
+            ),
+            "remove a role": lambda: AccessUser.search([("document_id", "=", document.id)]).unlink(),
+        }
+        for attempt, action in attempts.items():
+            with self.subTest(attempt=attempt), self.assertRaises(AccessError):
+                action()
+        self.assertEqual(AccessUser.search([("document_id", "=", document.id)]).role, "edit")
+
     def test_attachment_version_starts_at_one(self):
         self.assertEqual(self._document().attachment_id.oo_attachment_version, 1)
 
@@ -110,13 +129,20 @@ class TestAdvancedShare(DocumentsCase, TransactionCase):
         )
         self.assertEqual(self._user_roles(), {})
 
-    def test_only_the_owner_or_an_administrator_can_share(self):
+    def test_whoever_can_edit_the_document_can_share_it(self):
+        """The rule of Documents itself: the right to edit the document, not being its owner."""
+        document = self._document(access_internal="view")
+        vals = {"document_id": document.id, "internal_users": "commenter"}
         with self.assertRaises(AccessError):
-            self.share.with_user(self.colleague).advanced_share_save({"document_id": self.document.id})
+            self.share.with_user(self.colleague).advanced_share_save(vals)
 
-        self.share.with_user(self.env.ref("base.user_admin")).advanced_share_save(
-            {"document_id": self.document.id, "internal_users": "view"}
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("edit", None)}
         )
+        self.share.with_user(self.colleague).advanced_share_save(vals)
+        self.share.with_user(self.env.ref("base.user_admin")).advanced_share_save(vals)
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
+        self.assertEqual(access.internal_users, "commenter")
 
     def test_a_document_is_required(self):
         with self.assertRaises(AccessError):
@@ -151,6 +177,21 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
 
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
         self.assertEqual((access.internal_users, access.link_access), ("edit", "commenter"))
+
+    def test_an_editor_invites_a_contact_with_a_custom_role(self):
+        document = self._document(access_internal="view")
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("edit", None)}
+        )
+        contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
+
+        document.with_user(self.colleague).action_update_access_rights(partners={contact.id: ("commenter", None)})
+
+        self.assertEqual(document.access_ids.filtered(lambda a: a.partner_id == contact).role, "view")
+        user_access = self.env["onlyoffice.odoo.documents.access.user"].search(
+            [("document_id", "=", document.id), ("user_id", "=", contact.id)]
+        )
+        self.assertEqual(user_access.role, "commenter")
 
     def test_removing_a_partner_removes_the_custom_role(self):
         document = self._document().with_user(self.owner)

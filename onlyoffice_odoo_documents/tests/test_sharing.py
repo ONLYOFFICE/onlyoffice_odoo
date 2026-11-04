@@ -12,9 +12,9 @@ from .common import DocumentsCase
 class TestSharingWizard(DocumentsCase, TransactionCase):
     """documents.sharing, the Share dialog of Odoo 19: the ONLYOFFICE roles next to the standard ones."""
 
-    def _open(self, *documents):
-        action = self.env["documents.sharing"].with_user(self.owner).action_open([d.id for d in documents])
-        return self.env["documents.sharing"].with_user(self.owner).browse(action["res_id"])
+    def _open(self, *documents, user=None):
+        Sharing = self.env["documents.sharing"].with_user(user or self.owner)
+        return Sharing.browse(Sharing.action_open([d.id for d in documents])["res_id"])
 
     def _role_of(self, wizard, user):
         return wizard.share_access_ids.filtered(lambda a: a.partner_id == user.partner_id).role
@@ -77,6 +77,24 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
         self.assertEqual(result["params"]["type"], "success")
         user_access = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
         self.assertEqual((user_access.user_id, user_access.role), (self.colleague.partner_id, "reviewer"))
+
+    def test_an_editor_invites_a_contact_with_a_custom_role(self):
+        """Whoever can edit the document may share it, as in Documents itself, not only its owner."""
+        document = self._document(access_internal="view")
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("edit", None)}
+        )
+        contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
+        wizard = self._open(document, user=self.colleague)
+        wizard.write({"invite_partner_ids": [(6, 0, contact.ids)], "invite_role": "commenter", "invite_notify": False})
+
+        result = wizard.action_invite_members()
+
+        self.assertEqual(result["params"]["type"], "success")
+        user_access = self.env["onlyoffice.odoo.documents.access.user"].search(
+            [("document_id", "=", document.id), ("user_id", "=", contact.id)]
+        )
+        self.assertEqual(user_access.role, "commenter")
 
     def test_invite_needs_partners_with_an_email(self):
         document = self._document()

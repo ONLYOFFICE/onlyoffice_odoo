@@ -14,14 +14,16 @@ class OnlyofficeDocuments(models.Model):
         if not document_id:
             raise AccessError(_("No document selected for sharing."))
 
-        is_admin = self.env.user.has_group("base.group_system")
-        document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.create_uid != self.env.user:
-            raise AccessError(_("Only the owner or administrator can share documents."))
+        # Same rule as Documents' own sharing: whoever can edit the document can share it.
+        self.env["documents.document"].browse(document_id).check_access("write")
 
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
+        # Roles are read-only for users: they are changed only here, after the check above.
+        Access = self.env["onlyoffice.odoo.documents.access"].sudo()
+        AccessUser = self.env["onlyoffice.odoo.documents.access.user"].sudo()
+
+        access = Access.search([("document_id", "=", document_id)], limit=1)
         if not access:
-            access = self.env["onlyoffice.odoo.documents.access"].create(
+            access = Access.create(
                 {
                     "document_id": document_id,
                     "internal_users": vals.get("internal_users", "none"),
@@ -38,28 +40,22 @@ class OnlyofficeDocuments(models.Model):
 
         users_to_remove = vals.get("users_to_remove", [])
         if users_to_remove:
-            self.env["onlyoffice.odoo.documents.access.user"].search(
-                [("document_id", "=", document_id), ("user_id", "in", users_to_remove)]
-            ).unlink()
+            AccessUser.search([("document_id", "=", document_id), ("user_id", "in", users_to_remove)]).unlink()
 
         user_accesses = vals.get("user_accesses", [])
-        existing_accesses = (
-            self.env["onlyoffice.odoo.documents.access.user"]
-            .search([("document_id", "=", document_id)])
-            .mapped("user_id.id")
-        )
+        existing_accesses = AccessUser.search([("document_id", "=", document_id)]).mapped("user_id.id")
 
         for user_data in user_accesses:
             role = user_data.get("role")
             if not role:
                 continue
             if user_data["user_id"] in existing_accesses:
-                self.env["onlyoffice.odoo.documents.access.user"].search(
-                    [("document_id", "=", document_id), ("user_id", "=", user_data["user_id"])]
-                ).write({"role": user_data["role"]})
+                AccessUser.search([("document_id", "=", document_id), ("user_id", "=", user_data["user_id"])]).write(
+                    {"role": user_data["role"]}
+                )
             else:
                 if self.env["res.partner"].search_count([("id", "=", user_data["user_id"])]):
-                    self.env["onlyoffice.odoo.documents.access.user"].create(
+                    AccessUser.create(
                         {
                             "document_id": document_id,
                             "user_id": user_data["user_id"],
