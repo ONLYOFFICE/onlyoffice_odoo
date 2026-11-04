@@ -137,7 +137,7 @@ class TestAdvancedShare(DocumentsCase, TransactionCase):
             self.share.with_user(self.colleague).advanced_share_save(vals)
 
         document.with_user(self.owner).action_update_access_rights(
-            partners={self.colleague.partner_id.id: ["edit", False]}
+            partners={self.colleague.partner_id.id: ("edit", None)}
         )
         self.share.with_user(self.colleague).advanced_share_save(vals)
         self.share.with_user(self.env.ref("base.user_admin")).advanced_share_save(vals)
@@ -181,11 +181,11 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
     def test_an_editor_invites_a_contact_with_a_custom_role(self):
         document = self._document(access_internal="view")
         document.with_user(self.owner).action_update_access_rights(
-            partners={self.colleague.partner_id.id: ["edit", False]}
+            partners={self.colleague.partner_id.id: ("edit", None)}
         )
         contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
 
-        document.with_user(self.colleague).action_update_access_rights(partners={contact.id: ["commenter", False]})
+        document.with_user(self.colleague).action_update_access_rights(partners={contact.id: ("commenter", None)})
 
         self.assertEqual(document.access_ids.filtered(lambda a: a.partner_id == contact).role, "view")
         user_access = self.env["onlyoffice.odoo.documents.access.user"].search(
