@@ -75,21 +75,16 @@ def _get_share_link_role(document, user):
     return role
 
 
-def _validate_document_for_convert(document, save_to_documents):
+def _validate_document_for_convert(document):
     """Validate access rights for converting a document, returning an error message or None."""
     try:
         document.check_access_rule("read")
     except AccessError:
         return _("You do not have access to this document")
 
-    if document.is_locked and document.lock_uid.id != request.env.user.id:
-        return _("This document is locked by another user")
-
+    # A lock only keeps others from changing the document; converting reads it, as a download does.
     if _get_document_share_role(document) == "none":
         return _("You do not have access to this document")
-
-    if save_to_documents and not document.folder_id.has_write_access:
-        return _("You do not have permission to create documents in this workspace")
 
     return None
 
@@ -124,8 +119,10 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 "folder_id": int(folder_id),
             }
 
-            # No ONLYOFFICE roles: the rights of Odoo decide until the owner sets some.
-            document = request.env["documents.document"].create(data)
+            # No ONLYOFFICE roles: the rights of Odoo decide until the owner sets some. Record rules are checked
+            # after the insert: roll it back when they refuse, the error is swallowed below.
+            with request.env.cr.savepoint():
+                document = request.env["documents.document"].create(data)
             result["file_id"] = document.attachment_id.id
             result["document_id"] = document.id
 
@@ -145,7 +142,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 result["error"] = _("Document not found")
                 return json.dumps(result)
 
-            access_error = _validate_document_for_convert(document, save_to_documents)
+            access_error = _validate_document_for_convert(document)
             if access_error:
                 result["error"] = access_error
                 return json.dumps(result)
@@ -215,15 +212,21 @@ class OnlyofficeDocuments_Connector(http.Controller):
             new_name = f"{title}.{target_format}"
 
             if save_to_documents:
-                new_document = request.env["documents.document"].create(
-                    {
-                        "name": new_name,
-                        "raw": converted_data,
-                        "mimetype": file_utils.get_mime_by_ext(target_format)
-                        or (guess_type(new_name)[0] or "application/octet-stream"),
-                        "folder_id": document.folder_id.id,
-                    }
-                )
+                # The rights of Odoo decide whether the user may create it next to the source.
+                try:
+                    with request.env.cr.savepoint():
+                        new_document = request.env["documents.document"].create(
+                            {
+                                "name": new_name,
+                                "raw": converted_data,
+                                "mimetype": file_utils.get_mime_by_ext(target_format)
+                                or (guess_type(new_name)[0] or "application/octet-stream"),
+                                "folder_id": document.folder_id.id,
+                            }
+                        )
+                except AccessError:
+                    result["error"] = _("You do not have permission to create documents in this workspace")
+                    return json.dumps(result)
 
                 result["saved"] = True
                 result["document_id"] = new_document.id
