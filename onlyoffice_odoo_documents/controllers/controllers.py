@@ -141,14 +141,15 @@ class OnlyofficeDocuments_Connector(http.Controller):
             # Record rules are checked after the insert: roll it back when they refuse, the error is swallowed below.
             with request.env.cr.savepoint():
                 document = request.env["documents.document"].create(data)
-                request.env["onlyoffice.odoo.documents.access"].create(
+                # The document is created with the user's rights; its roles are read-only for users.
+                request.env["onlyoffice.odoo.documents.access"].sudo().create(
                     {
                         "document_id": document.id,
                         "internal_users": "none",
                         "link_access": "none",
                     }
                 )
-                request.env["onlyoffice.odoo.documents.access.user"].create(
+                request.env["onlyoffice.odoo.documents.access.user"].sudo().create(
                     {
                         "document_id": document.id,
                         "user_id": request.env.user.partner_id.id,
