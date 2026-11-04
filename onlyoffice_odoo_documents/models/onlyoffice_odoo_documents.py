@@ -109,12 +109,16 @@ class OnlyofficeDocuments(models.Model):
 
         is_admin = self.env.user.has_group("base.group_system")
         document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.create_uid != self.env.user:
+        if not is_admin and document.owner_id != self.env.user:
             raise AccessError(_("Only the owner or administrator can share documents."))
 
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
+        # Roles are read-only for users: they are changed only here, after the check above.
+        Access = self.env["onlyoffice.odoo.documents.access"].sudo()
+        AccessUser = self.env["onlyoffice.odoo.documents.access.user"].sudo()
+
+        access = Access.search([("document_id", "=", document_id)], limit=1)
         if not access:
-            access = self.env["onlyoffice.odoo.documents.access"].create(
+            access = Access.create(
                 {
                     "document_id": document_id[0],
                     "internal_users": vals.get("internal_users", "none"),
@@ -130,7 +134,7 @@ class OnlyofficeDocuments(models.Model):
             )
 
         user_accesses = vals.get("user_accesses", [])
-        current_accesses = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document_id)])
+        current_accesses = AccessUser.search([("document_id", "=", document_id)])
 
         existing_accesses = {acc.user_id.id: acc for acc in current_accesses}
         new_user_ids = {ua["user_id"] for ua in user_accesses}
@@ -140,7 +144,7 @@ class OnlyofficeDocuments(models.Model):
             if user_id in existing_accesses:
                 existing_accesses[user_id].write({"role": user_data["role"]})
             else:
-                self.env["onlyoffice.odoo.documents.access.user"].create(
+                AccessUser.create(
                     {
                         "document_id": document_id[0],
                         "user_id": user_id,
