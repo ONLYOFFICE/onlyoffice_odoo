@@ -50,10 +50,8 @@ class OnlyofficeDocuments(models.Model):
         if not document_id:
             raise AccessError(_("No document selected for sharing."))
 
-        is_admin = self.env.user.has_group("base.group_system")
-        document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.owner_id != self.env.user:
-            raise AccessError(_("Only the owner or administrator can share documents."))
+        # Same rule as Documents' own sharing: whoever can edit the document can share it.
+        self.env["documents.document"].browse(document_id).check_access("write")
 
         # Roles are read-only for users: they are changed only here, after the check above.
         Access = self.env["onlyoffice.odoo.documents.access"].sudo()
