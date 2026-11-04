@@ -31,6 +31,24 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
 
 from .spreadsheet_formulas import SpreadsheetFormulaEvaluator
 
+# ODOO.LIST( itself, not ODOO.LIST.VALUE( / ODOO.LIST.HEADER(.
+_LIST_FORMULA = re.compile(r"ODOO\.LIST\(")
+# o-spreadsheet data version from which ODOO.LIST is the whole list as an array (Odoo 20 migration step "19.3.10"
+# renames the older one-value ODOO.LIST to ODOO.LIST.VALUE).
+_ARRAY_LIST_VERSION = (19, 3, 10)
+
+
+def _list_is_an_array(data_version):
+    """Whether ODOO.LIST in spreadsheet data of this o-spreadsheet version is the array function of Odoo 20."""
+    # Legacy versions are numbers (and "14.5"); they all come before the rename.
+    if not isinstance(data_version, str) or "." not in data_version or data_version == "14.5":
+        return False
+    try:
+        return tuple(int(part) for part in data_version.split(".")) >= _ARRAY_LIST_VERSION
+    except ValueError:
+        return False
+
+
 _logger = logging.getLogger(__name__)
 
 # ── DocBuilder data cache (DB-backed) ────────────────────────────────────────
@@ -113,7 +131,7 @@ function columnToLetter(column) {
   return letter
 }
 
-// Apply the number format and horizontal alignment for an ODOO_PIVOT/ODOO_LIST
+// Apply the number format and horizontal alignment for an ODOO_PIVOT/ODOO_LIST(_VALUE)
 // value cell, based on the underlying Odoo field's type.
 function applyOdooColumnFormat(oRange, formula, metadata) {
   if (!metadata) return
@@ -128,7 +146,7 @@ function applyOdooColumnFormat(oRange, formula, metadata) {
     }
     return
   }
-  m = formula.match(/^=\\s*-?\\s*ODOO_LIST\\(\\s*"?(\\d+)"?\\s*,\\s*"?\\d+"?\\s*,\\s*"([^"]+)"\\s*\\)/)
+  m = formula.match(/^=\\s*-?\\s*ODOO_LIST(?:_VALUE)?\\(\\s*"?(\\d+)"?\\s*,\\s*"?\\d+"?\\s*,\\s*"([^"]+)"\\s*\\)/)
   if (m) {
     var listMeta = metadata.lists && metadata.lists[m[1]]
     var lInfo = listMeta && listMeta.columnFormats && listMeta.columnFormats[m[2]]
@@ -306,23 +324,28 @@ class SpreadsheetDocBuilder:
     def _build_formula_patches(self, snapshot):
         """Collect {sheet, cell, formula} for every ODOO.* formula cell in the snapshot."""
         patches = []
+        list_is_an_array = _list_is_an_array(snapshot.get("version"))
         for sheet in snapshot.get("sheets", []):
             sheet_name = sheet.get("name") or ""
             for cell_address, cell in sheet.get("cells", {}).items():
                 # Since Odoo 19 a cell is stored as its content; data saved by older versions as {"content": ...}.
                 content = cell.get("content") if isinstance(cell, dict) else cell
-                if isinstance(content, str) and content.startswith(("=ODOO.", "=-ODOO.")):
-                    patches.append(
-                        {
-                            "sheet": sheet_name,
-                            "cell": cell_address,
-                            "formula": self._convert_odoo_formula(content),
-                        }
-                    )
+                if not (isinstance(content, str) and content.startswith(("=ODOO.", "=-ODOO."))):
+                    continue
+                if list_is_an_array and _LIST_FORMULA.search(content):
+                    # ODOO.LIST of Odoo 20 returns the whole list as an array: no ONLYOFFICE function for it, the
+                    # value of the native export stays.
+                    continue
+                if not list_is_an_array:
+                    # Data saved before Odoo 20: its one-value ODOO.LIST is ODOO.LIST.VALUE now, as Odoo migrates.
+                    content = _LIST_FORMULA.sub("ODOO.LIST.VALUE(", content)
+                patches.append(
+                    {"sheet": sheet_name, "cell": cell_address, "formula": self._convert_odoo_formula(content)}
+                )
         return patches
 
     def insert_list(self, document_id, list_data, threshold, name):
-        """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
+        """Insert an Odoo list as ODOO_LIST_VALUE formulas into an existing XLSX document.
 
         Rebuilds the XLSX via ONLYOFFICE: opens the existing file, adds a new
         sheet with formulas, and updates the _OdooMetadata hidden sheet.
@@ -602,10 +625,12 @@ class SpreadsheetDocBuilder:
 
     @staticmethod
     def _build_list_cells(list_id, columns, threshold):
-        """Build the 2D cell grid (ODOO_LIST formulas) for a list sheet."""
+        """Build the 2D cell grid (ODOO_LIST_VALUE formulas, the Odoo 20 name) for a list sheet."""
         field_names = [col.get("name") if isinstance(col, dict) else str(col) for col in columns]
         header = [f'=ODOO_LIST_HEADER({list_id},"{fn}")' for fn in field_names]
-        rows = [[f'=ODOO_LIST({list_id},{index},"{fn}")' for fn in field_names] for index in range(1, threshold + 1)]
+        rows = [
+            [f'=ODOO_LIST_VALUE({list_id},{index},"{fn}")' for fn in field_names] for index in range(1, threshold + 1)
+        ]
         return [header] + rows
 
     def _build_pivot_cells(self, pivot_id, pivot_data, measures, row_group_bys, col_group_bys):

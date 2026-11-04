@@ -138,8 +138,8 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
             json.loads(payloads[0]["cells_json"]),
             [
                 ['=ODOO_LIST_HEADER(1,"name")', '=ODOO_LIST_HEADER(1,"color")'],
-                ['=ODOO_LIST(1,1,"name")', '=ODOO_LIST(1,1,"color")'],
-                ['=ODOO_LIST(1,2,"name")', '=ODOO_LIST(1,2,"color")'],
+                ['=ODOO_LIST_VALUE(1,1,"name")', '=ODOO_LIST_VALUE(1,1,"color")'],
+                ['=ODOO_LIST_VALUE(1,2,"name")', '=ODOO_LIST_VALUE(1,2,"color")'],
             ],
         )
         self.env.invalidate_all()
@@ -250,7 +250,7 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
         self.assertEqual((payloads[0]["mode"], payloads[0]["xlsx_base64"]), ("patch_formulas", native))
         self.assertEqual(
             json.loads(payloads[0]["patches_json"]),
-            [{"sheet": "Sheet1", "cell": "A1", "formula": '=ODOO_LIST(1,1,"name")'}],
+            [{"sheet": "Sheet1", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'}],
         )
         # Domains are kept as Odoo stores them: the formulas evaluate them for whoever opens the file.
         metadata = json.loads(xlsx.onlyoffice_spreadsheet_metadata)

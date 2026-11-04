@@ -737,7 +737,7 @@ class OnlyOfficeShareRoute(ShareRoute):
         csrf=False,
     )
     def insert_list_in_xlsx(self, document_id, list_data, threshold=10, name="List"):
-        """Insert an Odoo list as ODOO_LIST formulas into an existing XLSX document.
+        """Insert an Odoo list as ODOO_LIST_VALUE formulas into an existing XLSX document.
 
         Rebuilds the XLSX via ONLYOFFICE: opens the existing file, adds a new
         sheet with formulas, and updates the _OdooMetadata hidden sheet.

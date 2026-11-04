@@ -295,6 +295,8 @@ class SpreadsheetFormulaEvaluator:
 
     _HANDLERS = {
         "LIST": "_eval_list",
+        # Odoo 20 name of the same function; ODOO.LIST of Odoo 20 is the whole list as an array.
+        "LIST_VALUE": "_eval_list",
         "LIST_HEADER": "_eval_list_header",
         "PIVOT": "_eval_pivot",
         "PIVOT_HEADER": "_eval_pivot_header",

@@ -107,6 +107,61 @@
         }
 
         /**
+         * Get the value from an Odoo list (the name Odoo 20 uses; same as ODOO_LIST).
+         * @customfunction
+         * @param {number} listId ID of the list.
+         * @param {number} index Position of the record in the list (1-based).
+         * @param {string} fieldName Name of the field.
+         * @returns {string} The value from the list.
+         */
+        async function ODOO_LIST_VALUE(listId, index, fieldName) {
+          var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var formula = "=ODOO_LIST_VALUE(" + listId + "," + index + ',"' + escapedFieldName + '")'
+          return new Promise(function (resolve) {
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
+            if (_flushTimer === null) {
+              _flushTimer = setTimeout(function () {
+                var batch = _pendingFormulas.splice(0)
+                _flushTimer = null
+                fetch(serverUrl + "/onlyoffice/documents/evaluate_formulas_batch", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "call",
+                    params: {
+                      document_id: documentId,
+                      formulas: batch.map(function (b) {
+                        return b.formula
+                      }),
+                      jwt_token: jwtToken,
+                    },
+                  }),
+                })
+                  .then(function (r) {
+                    return r.json()
+                  })
+                  .then(function (data) {
+                    var v = data.result && data.result.values ? data.result.values : {}
+                    for (var i = 0; i < batch.length; i++) {
+                      var val = v[batch[i].formula]
+                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                    }
+                  })
+                  .catch(function (e) {
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve("#ERROR: " + e.message)
+                    }
+                  })
+              }, 50)
+            }
+          })
+        }
+
+        /**
          * Get the header of a list.
          * @customfunction
          * @param {number} listId ID of the list.
@@ -569,6 +624,7 @@
         }
 
         Api.AddCustomFunction(ODOO_LIST)
+        Api.AddCustomFunction(ODOO_LIST_VALUE)
         Api.AddCustomFunction(ODOO_LIST_HEADER)
         Api.AddCustomFunction(ODOO_PIVOT)
         Api.AddCustomFunction(ODOO_PIVOT_HEADER)

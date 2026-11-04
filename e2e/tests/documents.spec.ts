@@ -191,7 +191,7 @@ test("convert a docx with ONLYOFFICE → the PDF is saved in the same folder", a
   expect(pdf.subarray(0, 5).toString()).toBe("%PDF-")
 })
 
-test("convert an Odoo spreadsheet to XLSX with formulas → ODOO_LIST cells evaluated by Odoo in the editor", async ({
+test("convert an Odoo spreadsheet to XLSX with formulas → ODOO_LIST_VALUE cells evaluated by Odoo in the editor", async ({
   page,
   context,
   odoo,
@@ -199,8 +199,8 @@ test("convert an Odoo spreadsheet to XLSX with formulas → ODOO_LIST cells eval
   const marker = `e2e-sheet-${Date.now()}`
   await odoo.call("res.partner", "create", [{ name: `${marker} partner`, ref: marker }])
   const folderId = await newFolder(odoo, marker)
-  // Version 1 data: the browser migrates it like any new spreadsheet; ODOO.LIST keeps its name in 19. A list needs
-  // its orderBy, as in the spreadsheets Odoo makes.
+  // Version 1 data: its one-value ODOO.LIST is ODOO.LIST.VALUE in Odoo 20, so it becomes ODOO_LIST_VALUE. A list
+  // needs its orderBy, as in the spreadsheets Odoo makes.
   const data = {
     version: 1,
     sheets: [{ id: "sheet1", name: "Sheet1", cells: { A1: { content: '=ODOO.LIST(1,1,"name")' } } }],
@@ -240,13 +240,13 @@ test("convert an Odoo spreadsheet to XLSX with formulas → ODOO_LIST cells eval
     [["onlyoffice_spreadsheet_source_id", "=", spreadsheetId]],
   ])
   const { workbook, sheets } = await xlsxSheets(await documentFile(odoo, xlsxId))
-  expect(sheets.Sheet1).toContain('ODOO_LIST(1,1,"name")')
+  expect(sheets.Sheet1).toContain('ODOO_LIST_VALUE(1,1,"name")')
   expect(workbook).toContain('name="_OdooMetadata"')
   const values = (await (await evaluated).json()).result.values
   expect(Object.values(values)).toContain(`${marker} partner`)
 })
 
-test("insert an Odoo list into an XLSX → a new sheet of ODOO_LIST formulas", async ({ page, odoo }) => {
+test("insert an Odoo list into an XLSX → a new sheet of ODOO_LIST_VALUE formulas", async ({ page, odoo }) => {
   const marker = `e2e-insert-${Date.now()}`
   await odoo.call("res.partner", "create", [
     [
@@ -268,7 +268,7 @@ test("insert an Odoo list into an XLSX → a new sheet of ODOO_LIST formulas", a
   expect(result).toMatchObject({ success: true, id: "1", sheet_name: "E2E Partners" })
   const { workbook, sheets } = await xlsxSheets(await documentFile(odoo, documentId))
   expect(sheets["E2E Partners"]).toContain('ODOO_LIST_HEADER(1,"name")')
-  expect(sheets["E2E Partners"]).toContain('ODOO_LIST(1,2,"name")')
+  expect(sheets["E2E Partners"]).toContain('ODOO_LIST_VALUE(1,2,"name")')
   expect(workbook).toContain('name="_OdooMetadata"')
   const metadata = JSON.parse(await odoo.read("documents.document", documentId, "onlyoffice_spreadsheet_metadata"))
   expect(metadata.lists["1"].model).toBe("res.partner")
@@ -461,14 +461,14 @@ test("insert a list of contacts into an XLSX from the ONLYOFFICE tab of the spre
 
   await waitForEditor(page) // the XLSX opens in the editor
   const { sheets } = await xlsxSheets(await documentFile(odoo, documentId))
-  const inserted = Object.values(sheets).find((sheet) => sheet.includes("ODOO_LIST("))
+  const inserted = Object.values(sheets).find((sheet) => sheet.includes("ODOO_LIST_VALUE("))
   const metadata = JSON.parse(await odoo.read("documents.document", documentId, "onlyoffice_spreadsheet_metadata"))
   // The columns of the Contacts list view differ between builds of Odoo 19 (complete_name, display_name).
   const [first] = metadata.lists["1"].columns.map((column: string | { name: string }) =>
     typeof column === "string" ? column : column.name,
   )
   expect(inserted).toContain(`ODOO_LIST_HEADER(1,"${first}")`)
-  expect(inserted).toContain(`ODOO_LIST(1,2,"${first}")`)
+  expect(inserted).toContain(`ODOO_LIST_VALUE(1,2,"${first}")`)
   expect(metadata.lists["1"].model).toBe("res.partner")
   expect(metadata.lists["1"].domain).toContain(marker) // the search of the list view
 })

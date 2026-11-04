@@ -76,6 +76,8 @@ class TestFormulaEvaluator(TransactionCase):
         self.assertEqual(self._eval('=ODOO_LIST(1,1,"name")'), "Alpha Corp")
         self.assertEqual(self._eval('=ODOO_LIST(1,3,"name")'), "Carol")
         self.assertEqual(self._eval('=ODOO_LIST(1,4,"name")'), "", "past the end of the list")
+        # ODOO_LIST_VALUE is the Odoo 20 name of the same function.
+        self.assertEqual(self._eval('=ODOO_LIST_VALUE(1,3,"name")'), "Carol")
 
     def test_list_formats_relations_and_selections(self):
         self.assertEqual(self._eval('=ODOO_LIST(1,3,"parent_id")'), "Alpha Corp")

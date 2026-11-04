@@ -54,6 +54,7 @@ class TestDocBuilderScripts(TransactionCase):
         self.assertEqual(
             convert('=-ODOO.LIST(1,2,"name")+ODOO.LIST(1,3,"name")'), '=-ODOO_LIST(1,2,"name")+ODOO_LIST(1,3,"name")'
         )
+        self.assertEqual(convert('=ODOO.LIST.VALUE(1,2,"name")'), '=ODOO_LIST_VALUE(1,2,"name")')
 
     def test_patches_cover_only_odoo_formula_cells(self):
         snapshot = {
@@ -76,11 +77,38 @@ class TestDocBuilderScripts(TransactionCase):
         self.assertEqual(
             self.builder._build_formula_patches(snapshot),
             [
-                {"sheet": "Sales", "cell": "A1", "formula": '=ODOO_LIST(1,1,"name")'},
+                # Data without a version comes before Odoo 20: its one-value ODOO.LIST is ODOO.LIST.VALUE now.
+                {"sheet": "Sales", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'},
                 {"sheet": "Sales", "cell": "A2", "formula": '=-ODOO_PIVOT(2,"__count")'},
-                {"sheet": "Old", "cell": "A1", "formula": '=ODOO_LIST(1,2,"name")'},
+                {"sheet": "Old", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,2,"name")'},
             ],
         )
+
+    def test_odoo_20_list_functions(self):
+        """Since o-spreadsheet data 19.3.10 a list value is ODOO.LIST.VALUE and ODOO.LIST is the whole list."""
+        cells = {
+            "A1": '=ODOO.LIST.VALUE(1,1,"name")',
+            "A2": '=ODOO.LIST.HEADER(1,"name")',
+            "A3": "=ODOO.LIST(1)",
+            "A4": '=ODOO.LIST.VALUE(1,1,"name")&ODOO.LIST(1)',
+        }
+        for version in ("19.3.10", "20.0.1"):
+            with self.subTest(version=version):
+                self.assertEqual(
+                    self.builder._build_formula_patches(
+                        {"version": version, "sheets": [{"name": "S", "cells": cells}]}
+                    ),
+                    [
+                        {"sheet": "S", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'},
+                        {"sheet": "S", "cell": "A2", "formula": '=ODOO_LIST_HEADER(1,"name")'},
+                    ],
+                )
+        for version in (22, "14.5", "18.5.10", "19.3.9", None):
+            with self.subTest(version=version):
+                patches = self.builder._build_formula_patches(
+                    {"version": version, "sheets": [{"name": "S", "cells": {"A1": '=ODOO.LIST(1,1,"name")'}}]}
+                )
+                self.assertEqual(patches, [{"sheet": "S", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'}])
 
     # -- Inserted sheets --
 
@@ -90,8 +118,8 @@ class TestDocBuilderScripts(TransactionCase):
             cells,
             [
                 ['=ODOO_LIST_HEADER(3,"name")', '=ODOO_LIST_HEADER(3,"email")'],
-                ['=ODOO_LIST(3,1,"name")', '=ODOO_LIST(3,1,"email")'],
-                ['=ODOO_LIST(3,2,"name")', '=ODOO_LIST(3,2,"email")'],
+                ['=ODOO_LIST_VALUE(3,1,"name")', '=ODOO_LIST_VALUE(3,1,"email")'],
+                ['=ODOO_LIST_VALUE(3,2,"name")', '=ODOO_LIST_VALUE(3,2,"email")'],
             ],
         )
 
