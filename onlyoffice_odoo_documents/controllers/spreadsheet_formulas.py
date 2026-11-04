@@ -521,14 +521,15 @@ class SpreadsheetFormulaEvaluator:
         return ""
 
     def _eval_currency_rate(self, _snapshot, args):
-        """ODOO.CURRENCY.RATE(from, to, [date]) — uses Odoo's own currency rate lookup."""
+        """ODOO.CURRENCY.RATE(from, to, [date], [company_id]) — uses Odoo's own currency rate lookup."""
         if len(args) < 2:
             raise ValueError("ODOO.CURRENCY.RATE requires at least 2 args")
         rate_date = _to_server_date(args[2]) if len(args) > 2 and args[2] not in ("", None) else None
+        company_id = int(float(args[3])) if len(args) > 3 and args[3] not in ("", None) else None
         rate = (
             request.env["res.currency.rate"]
             .sudo()
-            ._get_rate_for_spreadsheet(str(args[0]), str(args[1]), rate_date and rate_date.isoformat())
+            ._get_rate_for_spreadsheet(str(args[0]), str(args[1]), rate_date and rate_date.isoformat(), company_id)
         )
         if rate is False:
             raise ValueError("Currency rate unavailable.")
