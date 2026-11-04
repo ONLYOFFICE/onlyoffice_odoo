@@ -252,9 +252,9 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
             json.loads(payloads[0]["patches_json"]),
             [{"sheet": "Sheet1", "cell": "A1", "formula": '=ODOO_LIST(1,1,"name")'}],
         )
-        # Domains are resolved once, as the converting user.
+        # Domains are kept as Odoo stores them: the formulas evaluate them for whoever opens the file.
         metadata = json.loads(xlsx.onlyoffice_spreadsheet_metadata)
-        self.assertEqual(metadata["lists"]["1"]["domain"], [["create_uid", "=", self.owner.id]])
+        self.assertEqual(metadata["lists"]["1"]["domain"], "[('create_uid', '=', uid)]")
         self.assertEqual(metadata["globalFilters"], [{"label": "Region", "defaultValue": "EU"}])
 
     def test_spreadsheet_conversion_errors(self):
