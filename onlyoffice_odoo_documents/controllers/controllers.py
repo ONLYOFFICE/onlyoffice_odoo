@@ -75,7 +75,7 @@ def _get_share_link_role(document, user):
     return role
 
 
-def _validate_document_for_convert(document):
+def _validate_document_for_convert(document, save_to_documents=False):
     """Validate access rights for converting a document, returning an error message or None."""
     try:
         document.check_access_rule("read")
@@ -85,6 +85,10 @@ def _validate_document_for_convert(document):
     # A lock only keeps others from changing the document; converting reads it, as a download does.
     if _get_document_share_role(document) == "none":
         return _("You do not have access to this document")
+
+    # Refused before the conversion runs; creating the copy still checks the rights of Odoo.
+    if save_to_documents and not document.folder_id.has_write_access:
+        return _("You do not have permission to create documents in this workspace")
 
     return None
 
@@ -142,7 +146,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 result["error"] = _("Document not found")
                 return json.dumps(result)
 
-            access_error = _validate_document_for_convert(document)
+            access_error = _validate_document_for_convert(document, save_to_documents)
             if access_error:
                 result["error"] = access_error
                 return json.dumps(result)
@@ -389,7 +393,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             },
         }
 
-        if not role or role == "viewer":
+        if role == "viewer":
             root_config["editorConfig"]["mode"] = "view"
             root_config["document"]["permissions"]["edit"] = False
         elif role == "commenter":

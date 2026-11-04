@@ -705,6 +705,8 @@ class SpreadsheetFormulaEvaluator:
             return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, val, None, lang_code)
         if fobj and fobj.type == "many2one":
             # As Odoo reads a many2one: its name is shown whatever the rights on the related record.
+            if not val:
+                return ""
             return val.sudo().display_name or str(val)
         if hasattr(val, "_name"):
             if not val:

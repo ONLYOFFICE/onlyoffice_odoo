@@ -197,7 +197,7 @@
                                 t-att-disabled="state.saving"
                                 t-on-change="onLinkAccessChange"
                               >
-                                <!-- Not set: the rights of Odoo decide. -->
+                                <!-- Not set: whoever opens the link is a viewer. -->
                                 <option value="" t-att-selected="!state.linkAccess">Default</option>
                                 <t
                                   t-foreach="state.linkAccessRoles"
