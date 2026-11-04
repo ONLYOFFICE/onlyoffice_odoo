@@ -28,6 +28,7 @@ from odoo.addons.onlyoffice_odoo.utils import (
     url_utils,
 )
 
+from ..models.onlyoffice_odoo_documents import SAVING_ROLES
 from .spreadsheet_docbuilder import XLSX_MIMETYPE, SpreadsheetDocBuilder
 from .spreadsheet_formulas import (
     SpreadsheetFormulaEvaluator,
@@ -44,26 +45,34 @@ _formula_evaluator = SpreadsheetFormulaEvaluator()
 _docbuilder = SpreadsheetDocBuilder(_formula_evaluator)
 
 
+def _can_write(document):
+    """Whether the current user may write the document in Odoo."""
+    try:
+        document.check_access_rights("write")
+        document.check_access_rule("write")
+    except AccessError:
+        return False
+    return True
+
+
 def _get_document_share_role(document):
-    """Resolve the effective ONLYOFFICE sharing role of the current user on a document.
+    """The ONLYOFFICE role of the current user on a document, by the same rule as when it is opened."""
+    return request.env["onlyoffice.odoo.documents"]._get_user_role(document, request.env.user, _can_write(document))
 
-    Mirrors the resolution order used by OnlyofficeConnector.get_documents_permissions
-    so conversion access matches editor/view access.
-    """
-    if document.owner_id.id == request.env.user.id:
-        return "editor"
 
-    access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-        [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
-    )
-    if access_user:
-        return access_user.role
-
-    access = request.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
-    if access:
-        return access.internal_users
-
-    return "viewer"  # default role for internal users, consistent with get_documents_permissions
+def _get_share_link_role(document, user):
+    """The ONLYOFFICE role of whoever opens a document through a share link: "none" closes it."""
+    access = request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
+    role = access.link_access or "viewer"
+    if user and not user._is_public():
+        access_user = (
+            request.env["onlyoffice.odoo.documents.access.user"]
+            .sudo()
+            .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
+        )
+        if access_user.role and access_user.role != "none":
+            role = access_user.role
+    return role
 
 
 def _validate_document_for_convert(document, save_to_documents):
@@ -115,22 +124,8 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 "folder_id": int(folder_id),
             }
 
+            # No ONLYOFFICE roles: the rights of Odoo decide until the owner sets some.
             document = request.env["documents.document"].create(data)
-            # The document is created with the user's rights; its roles are read-only for users.
-            request.env["onlyoffice.odoo.documents.access"].sudo().create(
-                {
-                    "document_id": document.id,
-                    "internal_users": "none",
-                    "link_access": "viewer",
-                }
-            )
-            request.env["onlyoffice.odoo.documents.access.user"].sudo().create(
-                {
-                    "document_id": document.id,
-                    "user_id": request.env.user.id,
-                    "role": "editor",
-                }
-            )
             result["file_id"] = document.attachment_id.id
             result["document_id"] = document.id
 
@@ -354,28 +349,10 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         return editor_values
 
     def prepare_share_editor(self, document, access_token, share_id):
-        role = "viewer"
-        access = (
-            request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
-        )
-        if access:
-            if access.link_access != "none":
-                role = access.link_access
-            else:
-                role = None
-
         public_user = request.env.ref("base.public_user")
         current_user = request.env.user
-        if current_user and current_user.id != public_user.id:
-            access_user = (
-                request.env["onlyoffice.odoo.documents.access.user"]
-                .sudo()
-                .search([("document_id", "=", document.id), ("user_id", "=", current_user.id)], limit=1)
-            )
-            if access_user and access_user.role != "none":
-                role = access_user.role
-
-        if not role:
+        role = _get_share_link_role(document, current_user)
+        if role == "none":
             raise AccessError(_("User has no read access rights to open this document"))
 
         attachment = self.get_attachment(document.attachment_id.id)
@@ -432,7 +409,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             root_config["document"]["permissions"]["edit"] = True
             root_config["document"]["permissions"]["modifyFilter"] = False
 
-        if role and role != "viewer":
+        if role in SAVING_ROLES:
             token_user = current_user if current_user and current_user.id != public_user.id else public_user
             security_token = jwt_utils.encode_payload(
                 request.env, {"id": token_user.id}, config_utils.get_internal_jwt_secret(request.env)
@@ -476,26 +453,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             share = request.env["documents.share"].sudo().browse(int(share_id))
             document = share._get_documents_and_check_access(access_token, [int(document_id)], operation="read")
 
-            access = (
-                request.env["onlyoffice.odoo.documents.access"]
-                .sudo()
-                .search([("document_id", "=", document.id)], limit=1)
-            )
-            can_write = False
-            if access:
-                if access.link_access in ("editor", "custom_filter"):
-                    can_write = True
-
-            if not can_write and user:
-                access_user = (
-                    request.env["onlyoffice.odoo.documents.access.user"]
-                    .sudo()
-                    .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
-                )
-                if access_user and access_user.role in ("editor", "custom_filter"):
-                    can_write = True
-
-            if not can_write:
+            # The same roles as the editor got a callback URL for.
+            if _get_share_link_role(document, user) not in SAVING_ROLES:
                 raise Exception("No access rights to overwrite this document for access via share link")
 
             attachment = request.env["ir.attachment"].sudo().browse([document.attachment_id.id]).exists().ensure_one()

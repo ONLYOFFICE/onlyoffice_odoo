@@ -168,6 +168,8 @@
                                 t-att-disabled="state.saving"
                                 t-on-change="onInternalAccessChange"
                               >
+                                <!-- Not set: the rights of Odoo decide. -->
+                                <option value="" t-att-selected="!state.internalAccess">Default</option>
                                 <t
                                   t-foreach="state.internalAccessRoles"
                                   t-as="internal_users_role"
@@ -195,6 +197,8 @@
                                 t-att-disabled="state.saving"
                                 t-on-change="onLinkAccessChange"
                               >
+                                <!-- Not set: the rights of Odoo decide. -->
+                                <option value="" t-att-selected="!state.linkAccess">Default</option>
                                 <t
                                   t-foreach="state.linkAccessRoles"
                                   t-as="link_access_roles"
