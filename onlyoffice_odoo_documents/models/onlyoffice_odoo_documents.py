@@ -20,6 +20,7 @@ class OnlyofficeDocuments(models.Model):
         # Roles are read-only for users: they are changed only here, after the check above.
         Access = self.env["onlyoffice.odoo.documents.access"].sudo()
         AccessUser = self.env["onlyoffice.odoo.documents.access.user"].sudo()
+        AccessGroup = self.env["onlyoffice.odoo.documents.access.group"].sudo()
 
         access = Access.search([("document_id", "=", document_id)], limit=1)
         if not access:
@@ -65,20 +66,18 @@ class OnlyofficeDocuments(models.Model):
 
         groups_to_remove = vals.get("groups_to_remove", [])
         if groups_to_remove:
-            self.env["onlyoffice.odoo.documents.access.group"].search(
-                [("document_id", "=", document_id), ("group_id", "in", groups_to_remove)]
-            ).unlink()
+            AccessGroup.search([("document_id", "=", document_id), ("group_id", "in", groups_to_remove)]).unlink()
 
         for group_data in vals.get("group_accesses", []):
             if not group_data.get("role"):
                 continue
-            group_access = self.env["onlyoffice.odoo.documents.access.group"].search(
+            group_access = AccessGroup.search(
                 [("document_id", "=", document_id), ("group_id", "=", group_data["group_id"])]
             )
             if group_access:
                 group_access.write({"role": group_data["role"]})
             else:
-                self.env["onlyoffice.odoo.documents.access.group"].create(
+                AccessGroup.create(
                     {
                         "document_id": document_id,
                         "group_id": group_data["group_id"],

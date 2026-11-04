@@ -59,9 +59,13 @@ class TestAccessRoles(DocumentsCase, TransactionCase):
         self._roles(document, internal_users="view", owner="edit")
         Access = self.env["onlyoffice.odoo.documents.access"].with_user(self.colleague)
         AccessUser = self.env["onlyoffice.odoo.documents.access.user"].with_user(self.colleague)
+        AccessGroup = self.env["onlyoffice.odoo.documents.access.group"].with_user(self.colleague)
         own_role = {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "edit"}
+        group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
+        group_role = {"document_id": document.id, "group_id": group.id, "role": "edit"}
         attempts = {
             "create a role": lambda: AccessUser.create(own_role),
+            "create a group role": lambda: AccessGroup.create(group_role),
             "raise the internal role": lambda: Access.search([("document_id", "=", document.id)]).write(
                 {"internal_users": "edit"}
             ),
