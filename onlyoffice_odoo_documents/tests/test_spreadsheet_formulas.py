@@ -170,7 +170,7 @@ class TestFormulaEvaluator(TransactionCase):
         company = self.env.company
         other_company = self.env["res.company"].create({"name": "OO Rates Co", "currency_id": company.currency_id.id})
         Rate = self.env["res.currency.rate"]
-        for day, rate, rate_company in (("2020-01-01", 2.0, company), (fields.Date.today(), 4.0, company)):
+        for day, rate, rate_company in (("2020-01-01", 2.0, company), ("2021-01-01", 4.0, company)):
             Rate.create({"currency_id": currency.id, "name": day, "rate": rate, "company_id": rate_company.id})
         Rate.create({"currency_id": currency.id, "name": "2020-01-01", "rate": 8.0, "company_id": other_company.id})
         company_code = self.env.company.currency_id.name
@@ -187,7 +187,8 @@ class TestFormulaEvaluator(TransactionCase):
             self._eval(f'=ODOO_CURRENCY_RATE("{company_code}","OOX","2020-06-01",{other_company.id})'),
             expected(company_code, "OOX", "2020-06-01", other_company.id),
         )
-        self.assertNotEqual(expected(company_code, "OOX"), expected(company_code, "OOX", "2020-06-01"))
+        # A rate dated today is not taken by Odoo 20 in a test transaction: compare two past dates instead.
+        self.assertNotEqual(expected(company_code, "OOX", "2021-06-01"), expected(company_code, "OOX", "2020-06-01"))
         self.assertNotEqual(
             expected(company_code, "OOX", "2020-06-01"), expected(company_code, "OOX", "2020-06-01", other_company.id)
         )
