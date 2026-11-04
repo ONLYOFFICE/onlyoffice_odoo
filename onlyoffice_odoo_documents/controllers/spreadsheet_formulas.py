@@ -35,11 +35,13 @@ def _user_today():
 
 
 def _domain_eval_context():
-    """Return the evaluation context of a domain string, as Odoo uses for action domains."""
-    user = request.env.user
+    """Return the evaluation context of a domain string, as the Odoo web client evaluates it.
+
+    Only plain values and date helpers: the domain comes from the document data, which users can edit, and a record
+    here (such as the user) would give the expression the whole environment, sudo() included.
+    """
     return {
-        "uid": user.id,
-        "user": user,
+        "uid": request.env.uid,
         "allowed_company_ids": request.env.companies.ids,
         "context_today": _user_today,
         "datetime": safe_datetime,
