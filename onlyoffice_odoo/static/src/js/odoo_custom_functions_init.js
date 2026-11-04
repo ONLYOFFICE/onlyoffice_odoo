@@ -506,15 +506,22 @@
          * @param {string} currencyFrom Source currency code.
          * @param {string} currencyTo Target currency code.
          * @param {string} [date] Date for the rate.
+         * @param {number} [companyId] Company to take the rate from.
          * @returns {number} The exchange rate.
          */
-        async function ODOO_CURRENCY_RATE(currencyFrom, currencyTo, date) {
+        async function ODOO_CURRENCY_RATE(currencyFrom, currencyTo, date, companyId) {
           var escapeQuotes = function (s) {
             return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
           }
+          var isSet = function (v) {
+            return v !== undefined && v !== null && v !== ""
+          }
           var parts = ['"' + escapeQuotes(currencyFrom) + '"', '"' + escapeQuotes(currencyTo) + '"']
-          if (date !== undefined && date !== null) {
-            parts.push('"' + escapeQuotes(date) + '"')
+          if (isSet(date) || isSet(companyId)) {
+            parts.push('"' + (isSet(date) ? escapeQuotes(date) : "") + '"')
+          }
+          if (isSet(companyId)) {
+            parts.push('"' + escapeQuotes(companyId) + '"')
           }
           var formula = "=ODOO_CURRENCY_RATE(" + parts.join(",") + ")"
           return new Promise(function (resolve) {

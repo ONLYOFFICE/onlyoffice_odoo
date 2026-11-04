@@ -11,8 +11,6 @@ from odoo.tests.common import TransactionCase
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request, onlyoffice_urlopen
 from odoo.addons.onlyoffice_odoo.utils import config_utils
 
-from .common import known_bug
-
 MAIN = "odoo.addons.onlyoffice_odoo.controllers.main"
 
 
@@ -73,7 +71,6 @@ class TestOnlyofficeRequest(TransactionCase):
         ):
             onlyoffice_request(url="https://docs.example.com/x", method="get", env=self.env)
 
-    @known_bug("a failed request logs its options, including the JWT of the Authorization header")
     def test_failed_request_does_not_log_the_jwt(self):
         refused = MagicMock(status_code=500)
         refused.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
