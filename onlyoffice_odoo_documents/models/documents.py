@@ -11,6 +11,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import AccessError
 
 from ..controllers.spreadsheet_docbuilder import XLSX_MIMETYPE
+from .onlyoffice_odoo_documents import ONLYOFFICE_ONLY_ROLES
 
 _logger = logging.getLogger(__name__)
 
@@ -191,14 +192,16 @@ class Document(models.Model):
 
         document_id = result["record"]["id"]
 
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)])
-        if access and access.exists():
+        # An ONLYOFFICE role is shown instead of the value of Odoo; without one, the panel shows that of Odoo.
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
+        if access.internal_users:
             result["record"]["access_internal"] = access.internal_users
+        if access.link_access:
             result["record"]["access_via_link"] = access.link_access
 
         access_user = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document_id)])
-        if access_user and access_user.exists():
-            user_roles = {access.user_id.id: access.role for access in access_user if access.user_id}
+        if access_user:
+            user_roles = {access.user_id.id: access.role for access in access_user if access.user_id and access.role}
             for access_id in result["record"].get("access_ids", []):
                 partner_id = access_id["partner_id"]["id"]
                 if partner_id in user_roles:
@@ -254,6 +257,10 @@ class Document(models.Model):
                 return "edit"
             return role
 
+        def onlyoffice_role(role):
+            """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""
+            return role if role in ONLYOFFICE_ONLY_ROLES else False
+
         if partners:
             partners_with_standard_roles = {}
             for partner_id, role_data in partners.items():
@@ -294,7 +301,7 @@ class Document(models.Model):
                     if partner.exists():
                         role = role_data[0] if isinstance(role_data, list | tuple) else role_data
 
-                        if role is False:
+                        if not onlyoffice_role(role):
                             users_to_remove.append(partner.id)
                         else:
                             user_accesses.append(
@@ -304,21 +311,9 @@ class Document(models.Model):
                                 }
                             )
 
-            access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
-
-            if access_internal:
-                internal_users = access_internal
-            elif access and access.exists():
-                internal_users = access.internal_users
-            else:
-                internal_users = document.access_internal
-
-            if access_via_link:
-                link_access = access_via_link
-            elif access and access.exists():
-                link_access = access.link_access
-            else:
-                link_access = document.access_via_link
+            access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
+            internal_users = onlyoffice_role(access_internal) if access_internal else access.internal_users
+            link_access = onlyoffice_role(access_via_link) if access_via_link else access.link_access
 
             vals = {
                 "document_id": document.id,

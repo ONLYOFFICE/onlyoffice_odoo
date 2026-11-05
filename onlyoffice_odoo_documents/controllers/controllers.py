@@ -28,6 +28,7 @@ from odoo.addons.onlyoffice_odoo.utils import (
     url_utils,
 )
 
+from ..models.onlyoffice_odoo_documents import SAVING_ROLES
 from .spreadsheet_docbuilder import XLSX_MIMETYPE, SpreadsheetDocBuilder
 from .spreadsheet_formulas import (
     SpreadsheetFormulaEvaluator,
@@ -44,43 +45,55 @@ _formula_evaluator = SpreadsheetFormulaEvaluator()
 _docbuilder = SpreadsheetDocBuilder(_formula_evaluator)
 
 
+# From the least to the most: a document on the page of a shared folder gets the lower of its role and the folder's.
+_ROLE_RANK = {
+    role: rank
+    for rank, role in enumerate(("none", "view", "form_filling", "commenter", "reviewer", "custom_filter", "edit"))
+}
+
+
 def _get_document_share_role(document):
-    """Resolve the effective ONLYOFFICE sharing role of the current user on a document.
-
-    Mirrors the resolution order used by OnlyofficeConnector.get_documents_permissions
-    so conversion access matches editor/view access.
-    """
-    if document.owner_id.id == request.env.user.id:
-        return "editor"
-
-    access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-        [("document_id", "=", document.id), ("user_id", "=", request.env.user.partner_id.id)], limit=1
+    """The ONLYOFFICE role of the current user on a document, by the same rule as when it is opened."""
+    return request.env["onlyoffice.odoo.documents"]._get_user_role(
+        document, request.env.user, document.has_access("write")
     )
-    if access_user:
-        return access_user.role
-
-    access = request.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
-    if access:
-        return access.internal_users
-
-    return "viewer"  # default role for internal users, consistent with get_documents_permissions
 
 
-def _validate_document_for_convert(document, save_to_documents):
+def _get_link_role(document):
+    """The role a share link of a document or folder gives: its ONLYOFFICE role, otherwise that of Odoo."""
+    access = request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
+    return access.link_access or document.sudo().access_via_link or "none"
+
+
+def _get_share_link_role(document, user, folder=None):
+    """The ONLYOFFICE role of whoever opens a document through a share link: "none" closes it.
+
+    On the page of a shared folder the document keeps its own role; that of the folder is the most it gets.
+    """
+    role = _get_link_role(document)
+    if folder:
+        role = min(role, _get_link_role(folder), key=lambda r: _ROLE_RANK.get(r, 0))
+    if user and not user._is_public():
+        access_user = (
+            request.env["onlyoffice.odoo.documents.access.user"]
+            .sudo()
+            .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
+        )
+        if access_user.role and access_user.role != "none":
+            role = access_user.role
+    return role
+
+
+def _validate_document_for_convert(document):
     """Validate access rights for converting a document, returning an error message or None."""
     try:
         document.check_access("read")
     except AccessError:
         return _("You do not have access to this document")
 
-    if document.is_locked and document.lock_uid.id != request.env.user.id:
-        return _("This document is locked by another user")
-
+    # A lock only keeps others from changing the document; converting reads it, as a download does.
     if _get_document_share_role(document) == "none":
         return _("You do not have access to this document")
-
-    if save_to_documents and document.folder_id.user_permission != "edit":
-        return _("You do not have permission to create documents in this workspace")
 
     return None
 
@@ -138,24 +151,10 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 "owner_id": owner_id,
             }
 
-            # Record rules are checked after the insert: roll it back when they refuse, the error is swallowed below.
+            # No ONLYOFFICE roles: the rights of Odoo decide until the owner sets some. Record rules are checked
+            # after the insert: roll it back when they refuse, the error is swallowed below.
             with request.env.cr.savepoint():
                 document = request.env["documents.document"].create(data)
-                # The document is created with the user's rights; its roles are read-only for users.
-                request.env["onlyoffice.odoo.documents.access"].sudo().create(
-                    {
-                        "document_id": document.id,
-                        "internal_users": "none",
-                        "link_access": "none",
-                    }
-                )
-                request.env["onlyoffice.odoo.documents.access.user"].sudo().create(
-                    {
-                        "document_id": document.id,
-                        "user_id": request.env.user.partner_id.id,
-                        "role": "edit",
-                    }
-                )
             result["file_id"] = document.attachment_id.id
             result["document_id"] = document.id
 
@@ -175,7 +174,7 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 result["error"] = _("Document not found")
                 return json.dumps(result)
 
-            access_error = _validate_document_for_convert(document, save_to_documents)
+            access_error = _validate_document_for_convert(document)
             if access_error:
                 result["error"] = access_error
                 return json.dumps(result)
@@ -374,57 +373,20 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
         return editor_values
 
-    def _get_folder_link_role(self, folder_token, document):
-        """Resolve folder_token, verify document is a direct child, return the folder's link role.
-
-        Returns None if the token is invalid, the document is not a direct child of that folder,
-        or the folder itself grants no link access.
-        """
+    @staticmethod
+    def _get_shared_folder(folder_token, document):
+        """The shared folder of ``folder_token`` when ``document`` is directly in it, otherwise None."""
         folder = ShareRoute._from_access_token(folder_token, skip_log=True)
-        if not folder or not folder.exists() or folder.type != "folder":
+        if not folder or not folder.exists() or folder.type != "folder" or document.folder_id != folder:
             return None
-        if document.folder_id.id != folder.id:
-            return None
-        folder_access = (
-            request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", folder.id)], limit=1)
-        )
-        if folder_access and folder_access.link_access != "none":
-            return folder_access.link_access
-        if folder.access_via_link and folder.access_via_link != "none":
-            return folder.access_via_link
-        return None
-
-    def _get_document_link_role(self, document):
-        """Return the ONLYOFFICE link access role for a document, or None if explicitly blocked."""
-        access = (
-            request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
-        )
-        if not access:
-            return "view"
-        return access.link_access if access.link_access != "none" else None
+        return folder
 
     def prepare_share_editor(self, document, access_token, folder_token=None):
-        effective_folder_token = None
-
-        if folder_token:
-            role = self._get_folder_link_role(folder_token, document)
-            if role is not None:
-                effective_folder_token = folder_token
-        else:
-            role = self._get_document_link_role(document)
-
+        folder = self._get_shared_folder(folder_token, document) if folder_token else None
         public_user = request.env.ref("base.public_user")
         current_user = request.env.user
-        if current_user and current_user.id != public_user.id:
-            access_user = (
-                request.env["onlyoffice.odoo.documents.access.user"]
-                .sudo()
-                .search([("document_id", "=", document.id), ("user_id", "=", current_user.partner_id.id)], limit=1)
-            )
-            if access_user and access_user.role != "none":
-                role = access_user.role
-
-        if not role:
+        role = _get_share_link_role(document, current_user, folder) if folder or not folder_token else "none"
+        if role == "none":
             raise AccessError(_("User has no read access rights to open this document"))
 
         attachment = self.get_attachment(document.attachment_id.id)
@@ -458,7 +420,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             },
         }
 
-        if not role or role == "view":
+        if role == "view":
             root_config["editorConfig"]["mode"] = "view"
             root_config["document"]["permissions"]["edit"] = False
         elif role == "commenter":
@@ -481,15 +443,15 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             root_config["document"]["permissions"]["edit"] = True
             root_config["document"]["permissions"]["modifyFilter"] = False
 
-        if role and role != "view":
+        if role in SAVING_ROLES:
             token_user = current_user if current_user and current_user.id != public_user.id else public_user
             security_token = jwt_utils.encode_payload(
                 request.env, {"id": token_user.id}, config_utils.get_internal_jwt_secret(request.env)
             )
             security_token = security_token.decode("utf-8") if isinstance(security_token, bytes) else security_token
             callback_url = odoo_url + "onlyoffice/documents/share/callback/" + access_token + "/" + security_token
-            if effective_folder_token:
-                callback_url += "?folder_token=" + effective_folder_token
+            if folder:
+                callback_url += "?folder_token=" + folder_token
             root_config["editorConfig"]["callbackUrl"] = callback_url
 
         if jwt_utils.is_jwt_enabled(request.env):
@@ -520,32 +482,9 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             if not document or not document.exists():
                 raise request.not_found()
 
-            _callback_roles = ("edit", "custom_filter", "commenter", "reviewer")
-
-            can_write = False
-            if folder_token:
-                folder_role = self._get_folder_link_role(folder_token, document)
-                if folder_role in _callback_roles:
-                    can_write = True
-            else:
-                access = (
-                    request.env["onlyoffice.odoo.documents.access"]
-                    .sudo()
-                    .search([("document_id", "=", document.id)], limit=1)
-                )
-                if access and access.link_access in _callback_roles:
-                    can_write = True
-
-            if not can_write and user:
-                access_user = (
-                    request.env["onlyoffice.odoo.documents.access.user"]
-                    .sudo()
-                    .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
-                )
-                if access_user and access_user.role in _callback_roles:
-                    can_write = True
-
-            if not can_write:
+            # The same roles as the editor got a callback URL for.
+            folder = self._get_shared_folder(folder_token, document) if folder_token else None
+            if (folder_token and not folder) or _get_share_link_role(document, user, folder) not in SAVING_ROLES:
                 raise Exception("No access rights to overwrite this document for access via share link")
 
             attachment = request.env["ir.attachment"].sudo().browse([document.attachment_id.id]).exists().ensure_one()
