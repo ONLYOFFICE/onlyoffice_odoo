@@ -29,7 +29,7 @@ from odoo.tools.translate import _
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
 
-from .spreadsheet_formulas import SpreadsheetFormulaEvaluator, compute_filter_values
+from .spreadsheet_formulas import SpreadsheetFormulaEvaluator, compute_filter_values, normalize_pivot_definition
 
 _logger = logging.getLogger(__name__)
 
@@ -50,6 +50,11 @@ _FILE_MODES = ("insert_sheet", "patch_formulas", "freeze_collect", "freeze", "co
 
 # A call of an Odoo spreadsheet function: ODOO.LIST(, odoo.pivot.header(, ... (not a part of a longer name).
 _ODOO_CALL = re.compile(r"(?<![\w.])ODOO\.([A-Z][A-Z0-9_.]*)\(", re.IGNORECASE)
+# A text in double quotes, or a call of a pivot function of Odoo with its pivot id ("1" or 1).
+_PIVOT_CALL = re.compile(
+    r'("(?:[^"]|"")*")|(?<![\w.])PIVOT\.(VALUE|HEADER)\(\s*("?)([\w-]+)\3\s*(?=[,)])', re.IGNORECASE
+)
+_PIVOT_FUNCTIONS = {"VALUE": "ODOO_PIVOT", "HEADER": "ODOO_PIVOT_HEADER"}
 
 
 class _DateTimeEncoder(json.JSONEncoder):
@@ -395,12 +400,29 @@ class SpreadsheetDocBuilder:
         return result
 
     @staticmethod
-    def _convert_odoo_formula(content):
+    def _convert_odoo_formula(content, pivot_ids=()):
         """Rewrite every 'ODOO.X.Y(' call of a formula to 'ODOO_X_Y(', wherever it is in the formula.
 
+        'PIVOT.VALUE(' and 'PIVOT.HEADER(' of a pivot of Odoo data (its formulaId in ``pivot_ids``) become
+        'ODOO_PIVOT(' and 'ODOO_PIVOT_HEADER('. A formula with another pivot call (a pivot of a range of the
+        spreadsheet, a header by position "#field") keeps the value of the export: the editor has no such function.
         Text in double quotes is left as it is. Returns None when the formula calls no ODOO function.
         """
         if not isinstance(content, str) or not content.startswith("="):
+            return None
+        pivot_calls = {"converted": 0, "kept": 0}
+
+        def convert_pivot_call(match):
+            if match.group(1) is not None:
+                return match.group(0)
+            if match.group(4) in pivot_ids:
+                pivot_calls["converted"] += 1
+                return _PIVOT_FUNCTIONS[match.group(2).upper()] + "(" + match.group(0).split("(", 1)[1]
+            pivot_calls["kept"] += 1
+            return match.group(0)
+
+        content = _PIVOT_CALL.sub(convert_pivot_call, content)
+        if pivot_calls["kept"] or (pivot_calls["converted"] and '"#' in content):
             return None
         # Even parts are outside the quotes, odd parts are the quoted texts ("" escapes a quote).
         parts = re.split(r'("(?:[^"]|"")*")', content)
@@ -411,7 +433,7 @@ class SpreadsheetDocBuilder:
             )
             parts[index] = converted
             found = found or bool(count)
-        return "".join(parts) if found else None
+        return "".join(parts) if found or pivot_calls["converted"] else None
 
     def _build_formula_patches(self, snapshot, sheet_names=None):
         """Collect {sheet, index, cell, formula} for every cell whose formula calls an ODOO function.
@@ -419,13 +441,14 @@ class SpreadsheetDocBuilder:
         ``sheet_names`` are the names of the sheets as the native export wrote them, in the same order: Excel cuts
         a name to 31 characters. The index lets the docbuilder find a sheet whose name differs all the same.
         """
+        pivot_ids = set(self._odoo_pivots(snapshot))
         patches = []
         for index, sheet in enumerate(snapshot.get("sheets", [])):
             sheet_name = sheet.get("name") or ""
             if sheet_names and index < len(sheet_names) and sheet_names[index]:
                 sheet_name = sheet_names[index]
             for cell_address, cell_data in sheet.get("cells", {}).items():
-                formula = self._convert_odoo_formula(cell_data.get("content", ""))
+                formula = self._convert_odoo_formula(cell_data.get("content", ""), pivot_ids)
                 if formula:
                     patches.append({"sheet": sheet_name, "index": index, "cell": cell_address, "formula": formula})
         return patches
@@ -560,7 +583,8 @@ class SpreadsheetDocBuilder:
             metadata["lists"] = lists_with_formats
         if snapshot.get("pivots"):
             pivots_with_formats = {}
-            for pivot_id, pivot_data in snapshot["pivots"].items():
+            # As the formulas name them; only the pivots of Odoo data.
+            for pivot_id, pivot_data in self._odoo_pivots(snapshot).items():
                 pivot_copy = dict(pivot_data)
                 try:
                     pivot_copy["columnFormats"] = self._formula_evaluator.get_pivot_column_formats(pivot_copy)
@@ -571,6 +595,16 @@ class SpreadsheetDocBuilder:
         if snapshot.get("globalFilters"):
             metadata["globalFilters"] = snapshot["globalFilters"]
         return json.dumps(metadata, cls=_DateTimeEncoder) if metadata else None
+
+    @staticmethod
+    def _odoo_pivots(snapshot):
+        """{formulaId: definition} of the pivots of Odoo data, in the shape the formulas read."""
+        pivots = {}
+        for pivot_id, pivot_data in (snapshot.get("pivots") or {}).items():
+            definition = normalize_pivot_definition(pivot_data)
+            if definition:
+                pivots[str(pivot_data.get("formulaId") or pivot_id)] = definition
+        return pivots
 
     def _call_docbuilder(self, oo_security_token, document_id):
         """Call the DocBuilder service and download the resulting XLSX.

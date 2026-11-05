@@ -17,11 +17,70 @@ from dateutil.relativedelta import relativedelta
 from odoo import _, fields
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.tools.misc import babel_locale_parse
 from odoo.tools.safe_eval import datetime as safe_datetime
 from odoo.tools.safe_eval import safe_eval
 from odoo.tools.safe_eval import time as safe_time
 
 _logger = logging.getLogger(__name__)
+
+
+# Date groupings whose groups are numbers (1 for January, ...), as Odoo groups them: no date range narrows them.
+_NUMBER_GRANULARITIES = (
+    "day_of_month",
+    "day_of_week",
+    "iso_week_number",
+    "month_number",
+    "quarter_number",
+    "hour_number",
+    "minute_number",
+    "second_number",
+)
+
+
+def normalize_pivot_definition(pivot):
+    """A pivot of the spreadsheet data in the shape the formulas read; None for a pivot not of Odoo data.
+
+    Odoo keeps the groupings as dimensions (``rows`` / ``columns``) and the measures as objects: the formulas name a
+    measure by its id ("amount_total:sum", or the field name in older data). A pivot already in this shape (inserted
+    into an XLSX file, or converted before) is returned as it is.
+    """
+    if not isinstance(pivot, dict) or pivot.get("type", "ODOO") != "ODOO":
+        return None
+    if "rowGroupBys" in pivot or "colGroupBys" in pivot:
+        return pivot
+
+    def dimensions(items):
+        return [
+            item["fieldName"] + (f":{item['granularity']}" if item.get("granularity") else "")
+            for item in items or []
+            if isinstance(item, dict) and item.get("fieldName")
+        ]
+
+    measures, specs, labels = [], {}, {}
+    for measure in pivot.get("measures") or []:
+        if not isinstance(measure, dict):
+            measures.append(str(measure))
+            continue
+        if measure.get("computedBy"):
+            # A measure computed by a formula of the spreadsheet: there is no field to read.
+            continue
+        measure_id = measure.get("id") or measure.get("fieldName")
+        field_name = measure.get("fieldName") or measure_id
+        aggregator = measure.get("aggregator")
+        measures.append(measure_id)
+        specs[measure_id] = field_name if field_name == "__count" or not aggregator else f"{field_name}:{aggregator}"
+        if measure.get("userDefinedName"):
+            labels[measure_id] = measure["userDefinedName"]
+    normalized = {key: pivot[key] for key in ("model", "domain", "context", "name", "formulaId") if key in pivot}
+    normalized.update(
+        rowGroupBys=dimensions(pivot.get("rows")),
+        colGroupBys=dimensions(pivot.get("columns")),
+        measures=measures,
+        measureSpecs=specs,
+        measureLabels=labels,
+    )
+    return normalized
 
 
 def _get_lang_code(env):
@@ -109,11 +168,13 @@ def get_field_excel_format(model, field_name):
 
     if ftype in ("date", "datetime"):
         date_format, time_format = _spreadsheet_locale(env)
+        if granularity == "day":
+            return "dd mmm yyyy", "right"
         if granularity == "month":
             return "mmmm yyyy", "right"
-        if granularity == "year":
+        if granularity in ("year", "day_of_month", "iso_week_number"):
             return "0", "right"
-        if granularity in ("week", "quarter"):
+        if granularity in ("week", "quarter") or granularity in _NUMBER_GRANULARITIES:
             return None, "left"
         if ftype == "datetime" and not granularity:
             return f"{date_format} {time_format}", "right"
@@ -286,15 +347,19 @@ class SpreadsheetFormulaEvaluator:
         """Return {measure or grouping: {format, align, type}} for a pivot's measures and date groupings."""
         model = request.env[pivot_data["model"]]
         formats = {}
+        pivot_data = normalize_pivot_definition(pivot_data) or pivot_data
         group_bys = pivot_data.get("rowGroupBys", []) + pivot_data.get("colGroupBys", [])
-        for spec in self._get_measures(pivot_data) + [gb for gb in group_bys if ":" in str(gb)]:
-            if spec == "__count":
-                formats[spec] = {"format": "0", "align": "right", "type": "integer"}
+        specs = pivot_data.get("measureSpecs") or {}
+        for key in self._get_measures(pivot_data) + [gb for gb in group_bys if ":" in str(gb)]:
+            spec = specs.get(key, key)
+            field_name, aggregator = (str(spec).split(":", 1) + [None])[:2]
+            if field_name == "__count" or aggregator in ("count", "count_distinct"):
+                formats[key] = {"format": "0", "align": "right", "type": "integer"}
                 continue
             excel_format, align = get_field_excel_format(model, spec)
-            fobj = model._fields.get(str(spec).split(":")[0])
+            fobj = model._fields.get(field_name)
             if (excel_format or align) and fobj:
-                formats[spec] = {"format": excel_format, "align": align, "type": fobj.type}
+                formats[key] = {"format": excel_format, "align": align, "type": fobj.type}
         return formats
 
     def get_list_column_formats(self, list_data, rows=0):
@@ -448,7 +513,7 @@ class SpreadsheetFormulaEvaluator:
             raise ValueError("ODOO.PIVOT requires at least 2 args")
 
         pivot_id, measure = str(args[0]), str(args[1])
-        pivot_data = snapshot.get("pivots", {}).get(pivot_id)
+        pivot_data = self._find_pivot(snapshot, pivot_id)
         if not pivot_data:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
@@ -464,9 +529,10 @@ class SpreadsheetFormulaEvaluator:
                 pairs.append((fs, args[i + 1]))
             i += 2
 
-        measure_field = measure.split(":")[0] if ":" in measure else measure
-        fields_to_read = [] if measure == "__count" else [measure]
-        self._check_fields(model, measure, *(fs for fs, _value in pairs))
+        spec = self._measure_spec(pivot_data, measure)
+        measure_field = spec.split(":")[0]
+        fields_to_read = [] if measure_field == "__count" else [spec]
+        self._check_fields(model, spec, *(fs for fs, _value in pairs))
 
         if not pairs:
             # Return a plain, unformatted number here: formulas that do
@@ -475,8 +541,7 @@ class SpreadsheetFormulaEvaluator:
             result = self._safe_read_group(model, base_domain, fields_to_read, [])
             if not result:
                 return 0
-            key = "__count" if measure == "__count" else measure_field
-            return self._format_measure_value(model, key, result[0].get(key, 0), domain=base_domain)
+            return self._format_measure_value(model, measure_field, result[0].get(measure_field, 0), domain=base_domain)
 
         # Build narrow domain from pairs and execute
         extra = self._pairs_to_domain(pairs, model)
@@ -490,13 +555,15 @@ class SpreadsheetFormulaEvaluator:
             # empty or zero value.
             _logger.warning("PIVOT %s: read_group failed for domain %r, group_bys %r", pivot_id, combined, group_bys)
             raise ValueError("read_group failed")
+        # A grouping by number (month_number, ...) is not in the domain: its group is picked here.
+        number_pairs = [(fs, value) for fs, value in pairs if _granularity(fs) in _NUMBER_GRANULARITIES]
+        groups = [group for group in groups if all(_same_number(group.get(fs), value) for fs, value in number_pairs)]
         if not groups:
             # No data for this combination. Return a plain, unformatted
             # number so arithmetic formulas built on this cell keep working.
             return 0
 
-        key = "__count" if measure == "__count" else measure_field
-        return self._format_measure_value(model, key, groups[0].get(key, 0), domain=combined)
+        return self._format_measure_value(model, measure_field, groups[0].get(measure_field, 0), domain=combined)
 
     def _eval_pivot_table(self, snapshot, args):
         """ODOO.PIVOT.TABLE(pivot_id, ...) — returns the whole pivot as a 2D array."""
@@ -504,14 +571,14 @@ class SpreadsheetFormulaEvaluator:
             raise ValueError("ODOO.PIVOT.TABLE requires at least 1 arg")
 
         pivot_id = str(args[0])
-        pivot_data = snapshot.get("pivots", {}).get(pivot_id)
+        pivot_data = self._find_pivot(snapshot, pivot_id)
         if not pivot_data:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
         model = self._data_model(pivot_data["model"])
         base_domain = self._resolve_domain(pivot_data.get("domain", []), model)
-        measures = self._get_measures(pivot_data)
-        measure_fields = [m for m in measures if m != "__count"]
+        measures = [self._measure_spec(pivot_data, m) for m in self._get_measures(pivot_data)]
+        measure_fields = [m for m in measures if m.split(":")[0] != "__count"]
         all_group_bys = pivot_data.get("rowGroupBys", []) + pivot_data.get("colGroupBys", [])
         self._check_fields(model, *measures, *all_group_bys)
 
@@ -548,7 +615,7 @@ class SpreadsheetFormulaEvaluator:
 
         pivot_id = str(args[0])
         domain_args = args[1:]
-        pivot_data = snapshot.get("pivots", {}).get(pivot_id)
+        pivot_data = self._find_pivot(snapshot, pivot_id)
         if not pivot_data:
             return str(args[-1]) if domain_args else "Total"
 
@@ -569,6 +636,8 @@ class SpreadsheetFormulaEvaluator:
 
         if not field_obj:
             return str(value)
+        if field_obj.type in ("date", "datetime") and granularity in _NUMBER_GRANULARITIES:
+            return _format_number_header(model.env, granularity, value)
         if field_obj.type in ("date", "datetime") and granularity:
             return _format_date_header(model.env, granularity, value)
         if field_obj.type in ("many2one", "many2many", "one2many") and field_obj.comodel_name:
@@ -658,7 +727,11 @@ class SpreadsheetFormulaEvaluator:
             gran = field_spec.split(":")[1] if ":" in field_spec else None
             fobj = model._fields.get(fname)
 
-            if value == "false" or value is False:
+            if gran in _NUMBER_GRANULARITIES:
+                # Picked from the groups (see _eval_pivot); "false" is the group without a date.
+                if value == "false" or value is False:
+                    domain.append((fname, "=", False))
+            elif value == "false" or value is False:
                 domain.append((fname, "=", False))
             elif fobj and fobj.type in ("date", "datetime"):
                 # Infer granularity from value if not explicitly specified
@@ -780,6 +853,31 @@ class SpreadsheetFormulaEvaluator:
             raise AccessError(_("You do not have access to the field %s.", ", ".join(sorted(hidden))))
 
     @staticmethod
+    def _find_pivot(snapshot, pivot_id):
+        """The pivot a formula names, in the shape the formulas read: Odoo names it by its formulaId."""
+        pivots = snapshot.get("pivots") or {}
+        for pivot in pivots.values():
+            if isinstance(pivot, dict) and str(pivot.get("formulaId")) == pivot_id:
+                return normalize_pivot_definition(pivot)
+        pivot = pivots.get(pivot_id)
+        if isinstance(pivot, dict) and "formulaId" not in pivot:
+            return normalize_pivot_definition(pivot)
+        return None
+
+    @staticmethod
+    def _measure_spec(pivot_data, measure):
+        """The read_group measure ("amount_total:sum") of a measure a formula names.
+
+        A measure the pivot does not have is an error, as in Odoo.
+        """
+        specs = pivot_data.get("measureSpecs")
+        if specs is None:
+            return measure
+        if measure not in specs:
+            raise ValueError(_("Field %s does not exist", measure))
+        return specs[measure]
+
+    @staticmethod
     def _get_measures(pivot_data):
         """Extract measure field names from pivot definition."""
         raw = pivot_data.get("measures", [])
@@ -787,9 +885,12 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _measure_label(pivot_data, measure):
-        if measure == "__count":
+        label = (pivot_data.get("measureLabels") or {}).get(measure)
+        if label:
+            return label
+        mf = SpreadsheetFormulaEvaluator._measure_spec(pivot_data, measure).split(":")[0]
+        if mf == "__count":
             return "Count"
-        mf = measure.split(":")[0] if ":" in measure else measure
         model = SpreadsheetFormulaEvaluator._data_model(pivot_data["model"])
         SpreadsheetFormulaEvaluator._check_fields(model, mf)
         fobj = model._fields.get(mf)
@@ -858,6 +959,10 @@ def _infer_date_granularity(value):
 def _date_to_range(granularity, value):
     """Convert a pivot date value to a (from, to) pair of 'YYYY-MM-DD' strings, or None."""
     try:
+        if granularity == "day" and re.fullmatch(r"\d+(\.\d+)?", value):
+            # A day of Odoo 18 functions: its serial number.
+            start = date_cls(1899, 12, 30) + timedelta(days=int(float(value)))
+            return (start.isoformat(), (start + timedelta(days=1)).isoformat())
         parts = value.split("/")
         if granularity == "year":
             y = int(float(value))
@@ -893,6 +998,8 @@ def _format_date_header(env, granularity, value):
     s = str(value)
     try:
         parts = s.split("/")
+        if granularity == "day" and re.fullmatch(r"\d+(\.\d+)?", s):
+            return int(float(s))
         if granularity == "day" and len(parts) == 3:
             return _to_serial(env, date_cls(int(parts[2]), int(parts[0]), int(parts[1])))
         if granularity == "month" and len(parts) == 2:
@@ -907,3 +1014,43 @@ def _format_date_header(env, granularity, value):
     except (IndexError, ValueError) as e:
         _logger.debug("Could not format date header %r (%r): %s", granularity, value, e)
     return s
+
+
+def _granularity(field_spec):
+    """The granularity of a pivot grouping ("date_order:month" -> "month"), or None."""
+    return str(field_spec).split(":", 1)[1] if ":" in str(field_spec) else None
+
+
+def _same_number(group_value, value):
+    """Whether a group of a grouping by number is the value of a formula ("false": the group without a date)."""
+    if value == "false" or value is False:
+        return group_value is False or group_value is None
+    try:
+        return group_value is not False and group_value is not None and int(group_value) == int(float(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _format_number_header(env, granularity, value):
+    """A header of a grouping by number, as Odoo Spreadsheet shows it (its time adapters): "January", "Q1", "13h"..."""
+    if value == "false" or value is False:
+        return _("None")
+    number = int(float(value))
+    locale = babel_locale_parse(_get_lang_code(env))
+    if granularity == "month_number":
+        return locale.months["format"]["wide"][number]
+    if granularity == "quarter_number":
+        return _("Q%(quarter_number)s", quarter_number=number)
+    if granularity == "day_of_week":
+        # 1 is the first day of the week of the language of the user (1 Monday ... 7 Sunday); babel counts from
+        # Monday (0).
+        lang = env["res.lang"]._lang_get(_get_lang_code(env))
+        week_start = int(lang.week_start) if lang and lang.week_start else 7
+        return locale.days["format"]["wide"][(number - 1 + week_start - 1) % 7]
+    if granularity == "hour_number":
+        return _("%(hour_number)sh", hour_number=number)
+    if granularity == "minute_number":
+        return _("%(minute_number)s'", minute_number=number)
+    if granularity == "second_number":
+        return _("%(second_number)s''", second_number=number)
+    return number
