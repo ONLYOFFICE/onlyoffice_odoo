@@ -1,0 +1,65 @@
+// "Freeze and share": write into a copy of the XLSX the values of its Odoo functions, computed by the server with
+// the rights of the user, as Odoo freezes a spreadsheet: each cell keeps its format, the hidden _OdooMetadata sheet
+// is removed (no Odoo function is left to read it) and the active filters get a sheet of their own.
+builder.OpenFile(FILE_URL_PLACEHOLDER)
+
+var cells = CELLS_PLACEHOLDER // [{s: sheet index, c: cell, v: value} or {s, c, f: formula}, ...]
+var filters = FILTERS_PLACEHOLDER // {title, header: [label, value], rows: [[label, value], ...]} or null
+
+var sheets = Api.GetSheets()
+var i
+for (i = 0; i < cells.length; i++) {
+  var item = cells[i]
+  try {
+    var range = sheets[item.s].GetRange(item.c)
+    if (item.f !== undefined) {
+      range.SetValue(item.f)
+    } else {
+      range.SetValue(item.v)
+    }
+  } catch (e) {
+    // A cell that cannot be written is left as it is.
+  }
+}
+
+var meta = null
+try {
+  meta = Api.GetSheet("_OdooMetadata")
+} catch (e) {
+  meta = null
+}
+if (meta) {
+  meta.Delete()
+}
+
+if (filters) {
+  // The export of Odoo already has this sheet when the spreadsheet has filters: it gets the values seen now.
+  var filterSheet = null
+  try {
+    filterSheet = Api.GetSheet(filters.title)
+  } catch (e) {
+    filterSheet = null
+  }
+  if (filterSheet) {
+    filterSheet.GetUsedRange().Clear()
+  } else {
+    // A new sheet becomes the active one.
+    Api.AddSheet(filters.title)
+    filterSheet = Api.GetActiveSheet()
+  }
+  filterSheet.GetRange("A1").SetValue(filters.header[0])
+  filterSheet.GetRange("B1").SetValue(filters.header[1])
+  try {
+    filterSheet.GetRange("A1:B1").SetBold(true)
+  } catch (e) {
+    // Bold titles are only a nicety.
+  }
+  var r
+  for (r = 0; r < filters.rows.length; r++) {
+    filterSheet.GetRange("A" + String(r + 2)).SetValue(filters.rows[r][0])
+    filterSheet.GetRange("B" + String(r + 2)).SetValue(filters.rows[r][1])
+  }
+}
+
+builder.SaveFile("xlsx", OUTPUT_PATH_PLACEHOLDER)
+builder.CloseFile()

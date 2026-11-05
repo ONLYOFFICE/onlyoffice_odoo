@@ -15,6 +15,14 @@
         t-if="userIsInternal and this.isOdooSpreadsheet(singleSelection)"
         t-on-click.prevent="() => this.convertSpreadsheetViaDocBuilder(singleSelection.data.id)"
       > Convert to ONLYOFFICE XLSX (with formulas) </button>
+      <button
+        type="button"
+        class="btn btn-secondary o_onlyoffice_freeze"
+        t-if="userIsInternal and !isInTrash and this.canOnlyofficeFreeze(singleSelection)"
+        t-on-click.prevent="() => this.freezeAndShareSpreadsheet(singleSelection.data.id)"
+      >
+        <i class="fa fa-snowflake-o" /> Freeze and share
+      </button>
     </xpath>
   </t>
 </templates>

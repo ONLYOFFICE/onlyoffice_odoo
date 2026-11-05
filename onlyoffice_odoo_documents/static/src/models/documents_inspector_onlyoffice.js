@@ -8,6 +8,7 @@ import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
+import { exportSpreadsheetNativeXlsx } from "../documents_view/spreadsheet_export"
 
 const { DateTime } = luxon
 
@@ -33,52 +34,13 @@ patch(DocumentsControlPanel.prototype, {
   },
 
   /**
-   * Export the spreadsheet with the native o-spreadsheet engine, so charts
-   * and other advanced formatting are kept. Throws if the export fails.
+   * The native XLSX export of an Odoo Spreadsheet (see exportSpreadsheetNativeXlsx).
    * @param {Number} id documents.document id of the Odoo Spreadsheet.
-   * @returns {Promise<{base64: string, name: string}>}
+   * @returns {Promise<Object>} the file, its data and sheet names.
    */
   // eslint-disable-next-line sort-keys
-  async _exportSpreadsheetNativeXlsx(id) {
-    await loadBundle("spreadsheet.o_spreadsheet")
-    const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
-    const record = await this.orm.call("documents.document", "join_spreadsheet_session", [id])
-    const model = await createSpreadsheetModel({
-      data: record.data,
-      env: this.env,
-      revisions: record.revisions,
-    })
-    await waitForDataLoaded(model)
-    const xlsxData = model.exportXLSX()
-
-    const formData = new URLSearchParams({
-      files: JSON.stringify(xlsxData.files),
-      zip_name: `${record.name}.xlsx`,
-    })
-    if (odoo.csrf_token) {
-      formData.append("csrf_token", odoo.csrf_token)
-    }
-
-    const response = await fetch("/spreadsheet/xlsx", {
-      body: formData,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      method: "POST",
-    })
-    if (!response.ok) {
-      throw new Error("Failed to export spreadsheet to XLSX")
-    }
-    const xlsxBlob = await response.blob()
-
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result.split(",")[1])
-      reader.onerror = reject
-      reader.readAsDataURL(xlsxBlob)
-    })
-    return {
-      base64,
-      name: record.name,
-    }
+  _exportSpreadsheetNativeXlsx(id) {
+    return exportSpreadsheetNativeXlsx(this.env, id)
   },
 
   async _openDocumentInOnlyoffice(documentId) {
@@ -99,6 +61,9 @@ patch(DocumentsControlPanel.prototype, {
     await this.env.model.load()
     this.env.model.notify()
   },
+  canOnlyofficeFreeze(record) {
+    return Boolean(record?.data?.onlyoffice_can_freeze)
+  },
   async convertSpreadsheetViaDocBuilder(id) {
     this.ui.block({ message: _t("Converting spreadsheet to XLSX via ONLYOFFICE...") })
     try {
@@ -106,8 +71,11 @@ patch(DocumentsControlPanel.prototype, {
       // ODOO.* cells into it. There is no fallback: if the native export
       // fails, the conversion fails.
       const nativeExport = await this._exportSpreadsheetNativeXlsx(id)
+      // The data with the revisions: what was inserted since the last snapshot is only there.
       const payload = {
         document_id: id,
+        sheet_names: nativeExport.sheetNames,
+        spreadsheet_data: nativeExport.data,
         xlsx_base64: nativeExport.base64,
       }
       const result = await rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", payload)
@@ -128,6 +96,23 @@ patch(DocumentsControlPanel.prototype, {
     } finally {
       this.ui.unblock()
     }
+  },
+  /**
+   * "Freeze and share" of an XLSX with Odoo formulas, as Odoo freezes a spreadsheet: a read-only copy with the
+   * values the user sees now, then the share panel of that copy.
+   * @param {Number} id documents.document id of the XLSX.
+   */
+  async freezeAndShareSpreadsheet(id) {
+    this.ui.block({ message: _t("Freezing the spreadsheet...") })
+    const frozen = await this.orm
+      .call("documents.document", "action_onlyoffice_freeze_and_copy", [[id]])
+      .finally(() => this.ui.unblock())
+    await this.env.searchModel._reloadSearchModel(true)
+    await this.env.documentsView.bus.trigger("documents-open-share", {
+      id: frozen.id,
+      shortcut_document_id: frozen.shortcut_document_id,
+      withUpload: false,
+    })
   },
   isOdooSpreadsheet(record) {
     return Boolean(record?.data) && record.data.handler === "spreadsheet"

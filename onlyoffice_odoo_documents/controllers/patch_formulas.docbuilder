@@ -6,7 +6,7 @@
 // function plugin. Everything else in the file is left untouched.
 builder.OpenFile(FILE_URL_PLACEHOLDER)
 
-var patches = PATCHES_PLACEHOLDER // [{sheet, cell, formula}, ...]
+var patches = PATCHES_PLACEHOLDER // [{sheet, index, cell, formula}, ...]
 var metadata = METADATA_PLACEHOLDER
 
 // Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
@@ -14,19 +14,51 @@ var metadata = METADATA_PLACEHOLDER
 // insert_sheet.docbuilder and this file.
 SHARED_HELPERS_PLACEHOLDER
 
+// The sheet of a patch by its name in the export, otherwise by its position (the export may rename a sheet).
+function findSheet(patch) {
+  var ws = null
+  try {
+    ws = Api.GetSheet(patch.sheet)
+  } catch (e) {
+    ws = null
+  }
+  if (!ws && typeof patch.index === "number") {
+    ws = Api.GetSheets()[patch.index] || null
+  }
+  return ws
+}
+
+// The format the export of Odoo gave the cell, made fit for a formula: a cell formatted as Text ("@") would keep the
+// formula as a string, so it becomes General; the AM/PM code "a" of Odoo is a plain letter here. Returns the format.
+function prepareNativeFormat(cellRange) {
+  var format = ""
+  try {
+    format = String(cellRange.GetNumberFormat())
+  } catch (e) {
+    format = "@"
+  }
+  if (format.indexOf("@") !== -1) {
+    cellRange.SetNumberFormat("General")
+    return "General"
+  }
+  if (/\sa$/.test(format)) {
+    format = format.replace(/\sa$/, " AM/PM")
+    cellRange.SetNumberFormat(format)
+  }
+  return format
+}
+
 var i
 for (i = 0; i < patches.length; i++) {
   var patch = patches[i]
   try {
-    var ws = Api.GetSheet(patch.sheet)
+    var ws = findSheet(patch)
     var cellRange = ws.GetRange(patch.cell)
-    // The native export marks a cell of text as Text ("@"), which would keep the formula as a string.
-    cellRange.SetNumberFormat("General")
+    var nativeFormat = prepareNativeFormat(cellRange)
     cellRange.SetValue(patch.formula)
-    applyOdooColumnFormat(cellRange, patch.formula, metadata)
+    applyOdooColumnFormat(cellRange, patch.formula, metadata, nativeFormat !== "" && nativeFormat !== "General")
   } catch (e) {
-    // Sheet/cell not found (name changed during native export, etc.) - skip it
-    // rather than failing the whole conversion.
+    // Sheet/cell not found - skip it rather than failing the whole conversion.
   }
 }
 

@@ -7,8 +7,10 @@ import zipfile
 from io import BytesIO
 from xml.etree import ElementTree as ET
 
-from odoo import _, api, fields, models
-from odoo.exceptions import AccessError
+from odoo import Command, _, api, fields, models
+from odoo.exceptions import AccessError, UserError
+from odoo.osv import expression
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 from ..controllers.spreadsheet_docbuilder import XLSX_MIMETYPE
 from .onlyoffice_odoo_documents import ONLYOFFICE_ONLY_ROLES
@@ -103,6 +105,143 @@ class Document(models.Model):
         help="True once we looked for embedded ODOO metadata in this file's hidden sheet",
     )
 
+    _sql_constraints = [
+        (
+            "onlyoffice_frozen_not_editable",
+            "CHECK(onlyoffice_frozen IS NOT TRUE OR (access_via_link != 'edit' AND access_internal != 'edit'))",
+            "A frozen spreadsheet can not be editable",
+        )
+    ]
+
+    onlyoffice_frozen = fields.Boolean(
+        string="Frozen by ONLYOFFICE",
+        readonly=True,
+        copy=False,
+        help="A read-only copy of an XLSX with Odoo data: the values of its formulas, frozen by 'Freeze and share'",
+    )
+
+    onlyoffice_can_freeze = fields.Boolean(
+        compute="_compute_onlyoffice_can_freeze",
+        help="An XLSX that may have Odoo formulas (or not looked at yet), and not a frozen copy",
+    )
+
+    @api.depends(
+        "type",
+        "mimetype",
+        "onlyoffice_frozen",
+        "onlyoffice_spreadsheet_metadata",
+        "onlyoffice_spreadsheet_source_id",
+        "onlyoffice_spreadsheet_metadata_checked",
+    )
+    def _compute_onlyoffice_can_freeze(self):
+        for document in self:
+            has_odoo_data = (
+                document.onlyoffice_spreadsheet_metadata
+                or document.onlyoffice_spreadsheet_source_id
+                or not document.onlyoffice_spreadsheet_metadata_checked
+            )
+            document.onlyoffice_can_freeze = bool(
+                document.type == "binary"
+                and document.mimetype == XLSX_MIMETYPE
+                and not document.onlyoffice_frozen
+                and has_odoo_data
+            )
+
+    def write(self, vals):
+        # As Odoo for a frozen spreadsheet: the file of a frozen copy is not replaced.
+        if not self.env.su and {"datas", "raw", "attachment_id"} & set(vals) and any(self.mapped("onlyoffice_frozen")):
+            raise UserError(_("You can not edit a frozen spreadsheet"))
+        return super().write(vals)
+
+    def action_onlyoffice_freeze_and_copy(self):
+        """Freeze an XLSX with Odoo formulas into a read-only copy, as "Freeze and share" of Odoo Spreadsheet.
+
+        As action_freeze_and_copy of Odoo: the formulas of the copy become their values, computed now with the rights
+        of the user; the copy goes into the "Frozen spreadsheets" folder of the folder of the source, with the access
+        of the source made view-only. Returns the copy, to open its share panel.
+        """
+        self.ensure_one()
+        self.env["documents.document"].check_access("create")
+        self.check_access("read")
+        if not self.env.su and self.folder_id and self.folder_id.user_permission != "edit":
+            raise AccessError(
+                _("You are not allowed to freeze spreadsheets in %(folder)s", folder=self.folder_id.display_name)
+            )
+        if self.onlyoffice_frozen:
+            raise UserError(_("A frozen spreadsheet can not be frozen again"))
+        if self.type != "binary" or self.mimetype != XLSX_MIMETYPE:
+            raise UserError(_("Only an XLSX file with Odoo data can be frozen"))
+        # Metadata of a file not opened yet; a technical field, read from the file itself.
+        self.sudo()._ensure_onlyoffice_spreadsheet_metadata()
+        if not (self.onlyoffice_spreadsheet_metadata or self.onlyoffice_spreadsheet_source_id):
+            raise UserError(_("This file has no Odoo data to freeze"))
+
+        from ..controllers.controllers import _docbuilder  # noqa: PLC0415 - the controllers import this module
+
+        content = _docbuilder.freeze_spreadsheet(self)
+        # The same folder as for the spreadsheets of Odoo, created the same way.
+        folder_sudo = (
+            self.env["documents.document"]
+            .sudo()
+            .search(
+                [("folder_id", "=", self.folder_id.id), ("type", "=", "folder"), ("handler", "=", "frozen_folder")],
+                limit=1,
+            )
+        )
+        if not folder_sudo:
+            folder_sudo = (
+                self.env["documents.document"]
+                .sudo()
+                .create(
+                    {
+                        "name": _("Frozen spreadsheets"),
+                        "type": "folder",
+                        "handler": "frozen_folder",
+                        "folder_id": self.folder_id.id,
+                        "access_via_link": "none",
+                        "access_internal": "none",
+                        "access_ids": False,
+                        "owner_id": self.env.ref("base.user_root").id,
+                    }
+                )
+            )
+        frozen = self.sudo().copy(
+            {
+                "name": _(
+                    "Frozen at %(date)s: %(name)s",
+                    date=fields.Date.today().strftime(DEFAULT_SERVER_DATE_FORMAT),
+                    name=self.name,
+                ),
+                "access_internal": "none" if self.access_internal == "none" else "view",
+                "access_via_link": "view",
+                "folder_id": folder_sudo.id,
+                "is_access_via_link_hidden": True,
+                "access_ids": [
+                    Command.create(
+                        {"partner_id": access.partner_id.id, "role": "view" if access.role == "edit" else access.role}
+                    )
+                    for access in self.access_ids
+                    if access.role
+                ],
+                "lock_uid": False,
+                "onlyoffice_frozen": True,
+                "onlyoffice_spreadsheet_source_id": False,
+                "onlyoffice_spreadsheet_metadata": False,
+                "onlyoffice_spreadsheet_metadata_checked": True,
+            }
+        )
+        frozen.attachment_id.sudo().write({"raw": content, "mimetype": XLSX_MIMETYPE})
+        return {"id": frozen.id, "shortcut_document_id": frozen.shortcut_document_id.id}
+
+    def _get_access_update_domain(self):
+        """As for the frozen spreadsheets of Odoo: a frozen copy keeps its access when that of its folder changes."""
+        return expression.AND(
+            [
+                super()._get_access_update_domain(),
+                expression.OR([[("id", "in", self.ids)], [("onlyoffice_frozen", "=", False)]]),
+            ]
+        )
+
     def _ensure_onlyoffice_spreadsheet_metadata(self):
         """Recover metadata from the hidden `_OdooMetadata` sheet, once per document.
 
@@ -136,10 +275,11 @@ class Document(models.Model):
             _logger.debug("Could not persist embedded metadata for document %s: %s", self.id, ex)
 
     def _get_onlyoffice_spreadsheets_domain(self, domain=None):
-        """Build the base domain matching any XLSX document, regardless of folder."""
+        """Build the base domain matching any XLSX document, regardless of folder; a frozen copy is read-only."""
         base_domain = [
             ("type", "=", "binary"),
             ("mimetype", "=", XLSX_MIMETYPE),
+            ("onlyoffice_frozen", "=", False),
         ]
         if domain:
             base_domain += domain
@@ -260,6 +400,13 @@ class Document(models.Model):
         def onlyoffice_role(role):
             """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""
             return role if role in ONLYOFFICE_ONLY_ROLES else False
+
+        # A frozen copy is only viewed: no role that edits it, in Odoo (edit) or in ONLYOFFICE.
+        if any(self.mapped("onlyoffice_frozen")):
+            roles = [access_internal, access_via_link]
+            roles += [data[0] if isinstance(data, list | tuple) else data for data in (partners or {}).values()]
+            if any(role and role not in ("none", "view") for role in roles):
+                raise UserError(_("The frozen spreadsheets are readonly."))
 
         if partners:
             partners_with_standard_roles = {}

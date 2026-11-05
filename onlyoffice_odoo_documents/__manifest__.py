@@ -14,6 +14,7 @@
     "data": [
         "security/ir.model.access.csv",
         "views/onlyoffice_templates_share.xml",
+        "views/documents_views.xml",
     ],
     "images": [
         "static/description/main_screenshot.png",
