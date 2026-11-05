@@ -4,6 +4,33 @@
 import { loadBundle } from "@web/core/assets"
 
 /**
+ * A list of the data without its sort (made through the API, not by Odoo) is loaded by Odoo, but its exportData
+ * fails on it: the sort is empty, as Odoo reads it.
+ * @param {Object} data the spreadsheet data.
+ */
+function addMissingListSort(data) {
+  for (const list of Object.values(data?.lists || {})) {
+    if (list && !Array.isArray(list.orderBy)) {
+      list.orderBy = []
+    }
+  }
+}
+
+/**
+ * The data with the revisions applied; when Odoo cannot export it, nothing: the server then takes the last snapshot.
+ * @param {Object} model the spreadsheet model.
+ * @returns {Object|undefined} the data, or undefined. // eslint-disable-line jsdoc/check-types
+ */
+function exportDataOrNothing(model) {
+  try {
+    return model.exportData()
+  } catch (error) {
+    console.warn("The spreadsheet data could not be exported, the last snapshot is used:", error)
+    return undefined
+  }
+}
+
+/**
  * Export an Odoo Spreadsheet with the native o-spreadsheet engine, so charts
  * and other advanced formatting are kept. Throws if the export fails.
  * @param {Object} env the environment of the component that exports.
@@ -16,6 +43,7 @@ export async function exportSpreadsheetNativeXlsx(env, id) {
   const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
   // Odoo 19 has no join_spreadsheet_session: the data and revisions come as the spreadsheet action gets them.
   const record = await env.services.http.get(`/spreadsheet/data/documents.document/${id}`)
+  addMissingListSort(record.data)
   const model = await createSpreadsheetModel({
     data: record.data,
     env,
@@ -57,7 +85,7 @@ export async function exportSpreadsheetNativeXlsx(env, id) {
   }
   return {
     base64,
-    data: model.exportData(),
+    data: exportDataOrNothing(model),
     name: record.name,
     sheetNames,
   }
