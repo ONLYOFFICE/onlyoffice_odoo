@@ -21,7 +21,7 @@ from xml.etree import ElementTree as ET
 import pytz
 
 from odoo import fields
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.misc import file_open, get_lang
 from odoo.tools.translate import _
@@ -29,7 +29,7 @@ from odoo.tools.translate import _
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
 
-from .spreadsheet_formulas import SpreadsheetFormulaEvaluator
+from .spreadsheet_formulas import SpreadsheetFormulaEvaluator, compute_filter_values
 
 _logger = logging.getLogger(__name__)
 
@@ -44,6 +44,12 @@ _DOCBUILDER_CACHE_TTL_HOURS = 1
 # Explicit mimetype for rewritten XLSX attachments, since Odoo re-guesses
 # the mimetype from content and may otherwise detect it as a plain zip file.
 XLSX_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+# Docbuilder modes whose script opens the cached XLSX (served by get_cached_file).
+_FILE_MODES = ("insert_sheet", "patch_formulas", "freeze_collect", "freeze", "convert_source")
+
+# A call of an Odoo spreadsheet function: ODOO.LIST(, odoo.pivot.header(, ... (not a part of a longer name).
+_ODOO_CALL = re.compile(r"(?<![\w.])ODOO\.([A-Z][A-Z0-9_.]*)\(", re.IGNORECASE)
 
 
 class _DateTimeEncoder(json.JSONEncoder):
@@ -112,32 +118,112 @@ function columnToLetter(column) {
   return letter
 }
 
-// Apply the number format and horizontal alignment for an ODOO_PIVOT/ODOO_LIST
-// value cell, based on the underlying Odoo field's type.
-function applyOdooColumnFormat(oRange, formula, metadata) {
+// Apply the number format and horizontal alignment of an ODOO_PIVOT / ODOO_PIVOT_HEADER / ODOO_LIST cell, as Odoo
+// formats it, based on the type of the Odoo field. keepNative: the cell already has the format of the export of Odoo
+// itself, which is kept for money and dates (the currency of each cell, the date format of the user).
+function applyOdooColumnFormat(oRange, formula, metadata, keepNative) {
   if (!metadata) return
+  var info = null
+  var row = 0
   // Accept both quoted and unquoted numeric IDs, and an optional leading minus.
   var m = formula.match(/^=\\s*-?\\s*ODOO_PIVOT\\(\\s*"?(\\d+)"?\\s*,\\s*"([^"]+)"/)
   if (m) {
     var pivotMeta = metadata.pivots && metadata.pivots[m[1]]
-    var info = pivotMeta && pivotMeta.columnFormats && pivotMeta.columnFormats[m[2]]
-    if (info) {
-      if (info.format) oRange.SetNumberFormat(info.format)
-      if (info.align) oRange.SetAlignHorizontal(info.align)
-    }
-    return
+    info = pivotMeta && pivotMeta.columnFormats && pivotMeta.columnFormats[m[2]]
   }
-  m = formula.match(/^=\\s*-?\\s*ODOO_LIST\\(\\s*"?(\\d+)"?\\s*,\\s*"?\\d+"?\\s*,\\s*"([^"]+)"\\s*\\)/)
-  if (m) {
-    var listMeta = metadata.lists && metadata.lists[m[1]]
-    var lInfo = listMeta && listMeta.columnFormats && listMeta.columnFormats[m[2]]
-    if (lInfo) {
-      if (lInfo.format) oRange.SetNumberFormat(lInfo.format)
-      if (lInfo.align) oRange.SetAlignHorizontal(lInfo.align)
+  if (!m) {
+    // A header: the format of its grouping (the last field/value pair), for dates.
+    m = formula.match(/^=\\s*ODOO_PIVOT_HEADER\\(\\s*"?(\\d+)"?\\s*,(.*)\\)\\s*$/)
+    if (m) {
+      var args = m[2].match(/"(?:[^"]|"")*"|[^,]+/g) || []
+      var field = args.length >= 2 ? args[args.length - 2].trim().replace(/^"|"$/g, "") : ""
+      var headerMeta = metadata.pivots && metadata.pivots[m[1]]
+      if (field.indexOf(":") !== -1) {
+        info = headerMeta && headerMeta.columnFormats && headerMeta.columnFormats[field]
+      }
     }
   }
+  if (!m) {
+    m = formula.match(/^=\\s*-?\\s*ODOO_LIST\\(\\s*"?(\\d+)"?\\s*,\\s*"?(\\d+)"?\\s*,\\s*"([^"]+)"\\s*\\)/)
+    if (m) {
+      var listMeta = metadata.lists && metadata.lists[m[1]]
+      info = listMeta && listMeta.columnFormats && listMeta.columnFormats[m[3]]
+      row = Number(m[2])
+    }
+  }
+  if (!info) return
+  if (keepNative && (info.type === "monetary" || info.type === "date" || info.type === "datetime")) return
+  // A monetary list cell: the currency of its record.
+  var format = (info.formats && row && info.formats[row - 1]) || info.format
+  if (format) oRange.SetNumberFormat(format)
+  if (info.align) oRange.SetAlignHorizontal(info.align)
 }
 """
+
+
+def _column_letter(index):
+    """Letter of a 0-based column index (0 -> "A")."""
+    letters = ""
+    index += 1
+    while index:
+        index, rest = divmod(index - 1, 26)
+        letters = chr(65 + rest) + letters
+    return letters
+
+
+def _find_odoo_calls(formula):
+    """(start, end) of each outermost ODOO_*(...) call of a formula, text in double quotes skipped."""
+    calls, i, n = [], 0, len(formula)
+    while i < n:
+        ch = formula[i]
+        if ch == '"':
+            i += 1
+            while i < n and not (formula[i] == '"' and formula[i + 1 : i + 2] != '"'):
+                i += 2 if formula[i] == '"' else 1
+            i += 1
+            continue
+        match = re.match(r"ODOO_[A-Z_]+\(", formula[i:], re.IGNORECASE)
+        if match and (i == 0 or not (formula[i - 1].isalnum() or formula[i - 1] in "_.")):
+            j, depth, quoted = i + match.end(), 1, False
+            while j < n and depth:
+                if formula[j] == '"':
+                    quoted = not quoted
+                elif not quoted:
+                    depth += {"(": 1, ")": -1}.get(formula[j], 0)
+                j += 1
+            calls.append((i, j))
+            i = j
+            continue
+        i += 1
+    return calls
+
+
+def _frozen_content(value):
+    """A value in a frozen cell, as Odoo writes it (toFrozenContent): {"v": value} or {"f": formula}.
+
+    An error stays an error; text that would read as a number or a date is kept as text by a formula.
+    """
+    if isinstance(value, str) and value.startswith("#ERROR"):
+        return {"f": "=NA()"}
+    if isinstance(value, bool) or isinstance(value, int | float):
+        return {"v": value}
+    text = "" if value is None else str(value)
+    if text == "" or text.startswith("=") or re.fullmatch(r"[\d\s.,:/+-]+", text):
+        return {"f": '="' + text.replace('"', '""') + '"'}
+    return {"v": text}
+
+
+def _formula_literal(value):
+    """A value written in a formula in place of the call that gave it."""
+    if isinstance(value, str) and value.startswith("#ERROR"):
+        return "NA()"
+    if isinstance(value, bool):
+        return "TRUE" if value else "FALSE"
+    if isinstance(value, int | float):
+        return repr(value)
+    if isinstance(value, list):
+        return "NA()"
+    return '"' + ("" if value is None else str(value)).replace('"', '""') + '"'
 
 
 def _expand_group_paths(leaf_paths):
@@ -218,7 +304,7 @@ class SpreadsheetDocBuilder:
 
     # ── Public entry points (called from controllers.py routes) ─────────────
 
-    def convert_spreadsheet_to_xlsx(self, document_id, xlsx_base64=None):
+    def convert_spreadsheet_to_xlsx(self, document_id, xlsx_base64=None, spreadsheet_data=None, sheet_names=None):
         """Convert an Odoo Spreadsheet to XLSX, keeping formulas.
 
         ``xlsx_base64`` must be a native browser export (with charts and
@@ -226,6 +312,10 @@ class SpreadsheetDocBuilder:
         formula cells back to live ODOO_* formulas. There is no fallback:
         if the caller could not produce a native export, this returns an
         error instead of rebuilding the workbook from scratch.
+
+        ``spreadsheet_data`` is the data the export was made from, the revisions applied: what was inserted since
+        the last snapshot is only in the revisions. ``sheet_names`` are the sheet names of the export. The data
+        only decides which cells become ODOO_* formulas: the formulas read with the rights of whoever opens the file.
         """
         result = {"error": None, "xlsx_id": None}
 
@@ -246,10 +336,16 @@ class SpreadsheetDocBuilder:
             if not document.exists() or document.handler != "spreadsheet":
                 result["error"] = _("Document is not a spreadsheet")
                 return result
+            # As "Save to Documents" of a conversion: refused before the Document Builder runs.
+            if not document.folder_id.has_write_access:
+                result["error"] = _("You do not have permission to create documents in this workspace")
+                return result
 
-            # Get spreadsheet data with revisions
+            # The session also checks the right to read the spreadsheet; its data is the last snapshot only.
             session_data = document.join_spreadsheet_session()
             snapshot = session_data.get("data", {})
+            if isinstance(spreadsheet_data, dict) and spreadsheet_data.get("sheets"):
+                snapshot = spreadsheet_data
 
             if not snapshot or "sheets" not in snapshot:
                 result["error"] = _("Spreadsheet has no data or invalid structure")
@@ -264,7 +360,8 @@ class SpreadsheetDocBuilder:
             output_filename = f"{document.name}_{timestamp}.xlsx"
 
             # Patch the native export in place.
-            patches = self._build_formula_patches(snapshot)
+            names = [str(name) for name in sheet_names] if isinstance(sheet_names, list) else None
+            patches = self._build_formula_patches(snapshot, names)
             _store_docbuilder_data(
                 oo_security_token,
                 {
@@ -299,24 +396,38 @@ class SpreadsheetDocBuilder:
 
     @staticmethod
     def _convert_odoo_formula(content):
-        """Rewrite '=ODOO.PIVOT(...)' to '=ODOO_PIVOT(...)' (dot to underscore)."""
-        return re.sub(r"ODOO\.([A-Z._]+)(\()", lambda m: "ODOO_" + m.group(1).replace(".", "_") + m.group(2), content)
+        """Rewrite every 'ODOO.X.Y(' call of a formula to 'ODOO_X_Y(', wherever it is in the formula.
 
-    def _build_formula_patches(self, snapshot):
-        """Collect {sheet, cell, formula} for every ODOO.* formula cell in the snapshot."""
+        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function.
+        """
+        if not isinstance(content, str) or not content.startswith("="):
+            return None
+        # Even parts are outside the quotes, odd parts are the quoted texts ("" escapes a quote).
+        parts = re.split(r'("(?:[^"]|"")*")', content)
+        found = False
+        for index in range(0, len(parts), 2):
+            converted, count = _ODOO_CALL.subn(
+                lambda m: "ODOO_" + m.group(1).upper().replace(".", "_") + "(", parts[index]
+            )
+            parts[index] = converted
+            found = found or bool(count)
+        return "".join(parts) if found else None
+
+    def _build_formula_patches(self, snapshot, sheet_names=None):
+        """Collect {sheet, index, cell, formula} for every cell whose formula calls an ODOO function.
+
+        ``sheet_names`` are the names of the sheets as the native export wrote them, in the same order: Excel cuts
+        a name to 31 characters. The index lets the docbuilder find a sheet whose name differs all the same.
+        """
         patches = []
-        for sheet in snapshot.get("sheets", []):
+        for index, sheet in enumerate(snapshot.get("sheets", [])):
             sheet_name = sheet.get("name") or ""
+            if sheet_names and index < len(sheet_names) and sheet_names[index]:
+                sheet_name = sheet_names[index]
             for cell_address, cell_data in sheet.get("cells", {}).items():
-                content = cell_data.get("content", "")
-                if isinstance(content, str) and content.startswith(("=ODOO.", "=-ODOO.")):
-                    patches.append(
-                        {
-                            "sheet": sheet_name,
-                            "cell": cell_address,
-                            "formula": self._convert_odoo_formula(content),
-                        }
-                    )
+                formula = self._convert_odoo_formula(cell_data.get("content", ""))
+                if formula:
+                    patches.append({"sheet": sheet_name, "index": index, "cell": cell_address, "formula": formula})
         return patches
 
     def insert_list(self, document_id, list_data, threshold, name):
@@ -348,7 +459,8 @@ class SpreadsheetDocBuilder:
             "name": name,
         }
         try:
-            list_entry["columnFormats"] = self._formula_evaluator.get_list_column_formats(list_entry)
+            # The currency of each inserted row, as Odoo formats a monetary list cell.
+            list_entry["columnFormats"] = self._formula_evaluator.get_list_column_formats(list_entry, int(threshold))
         except Exception as e:
             _logger.debug("Could not compute column formats for new list %s: %s", new_id, e)
         metadata.setdefault("lists", {})[new_id] = list_entry
@@ -409,6 +521,8 @@ class SpreadsheetDocBuilder:
             return self._build_insert_sheet_script(cache_data)
         if mode == "patch_formulas":
             return self._build_patch_formulas_script(cache_data)
+        if mode in ("freeze_collect", "freeze"):
+            return self._build_freeze_script(cache_data)
 
         return None
 
@@ -418,7 +532,7 @@ class SpreadsheetDocBuilder:
         Returns None if the token is unknown or in another mode.
         """
         cache_data = _load_docbuilder_data(oo_security_token)
-        if not cache_data or cache_data.get("mode") not in ("insert_sheet", "patch_formulas"):
+        if not cache_data or cache_data.get("mode") not in _FILE_MODES:
             return None
 
         xlsx_data = base64.b64decode(cache_data["xlsx_base64"])
@@ -526,17 +640,24 @@ class SpreadsheetDocBuilder:
         return xlsx_response.content, None
 
     def _save_xlsx_document(self, document, document_id, output_filename, xlsx_content, metadata_json):
-        """Create a new XLSX document in Odoo for this conversion. Returns document ID."""
-        xlsx_doc = request.env["documents.document"].create(
-            {
-                "name": output_filename,
-                "folder_id": document.folder_id.id,
-                "datas": base64.b64encode(xlsx_content),
-                "mimetype": XLSX_MIMETYPE,
-                "onlyoffice_spreadsheet_source_id": document_id,
-                "onlyoffice_spreadsheet_metadata": metadata_json,
-            }
-        )
+        """Create a new XLSX document in Odoo for this conversion. Returns document ID.
+
+        The rights of Odoo decide; record rules are checked after the insert, so it is rolled back when they refuse.
+        """
+        try:
+            with request.env.cr.savepoint():
+                xlsx_doc = request.env["documents.document"].create(
+                    {
+                        "name": output_filename,
+                        "folder_id": document.folder_id.id,
+                        "datas": base64.b64encode(xlsx_content),
+                        "mimetype": XLSX_MIMETYPE,
+                        "onlyoffice_spreadsheet_source_id": document_id,
+                        "onlyoffice_spreadsheet_metadata": metadata_json,
+                    }
+                )
+        except AccessError as e:
+            raise UserError(_("You do not have permission to create documents in this workspace")) from e
         return xlsx_doc.id
 
     def _build_insert_sheet_script(self, cache_data):
@@ -576,6 +697,110 @@ class SpreadsheetDocBuilder:
 
         # Don't delete the cache entry yet — the file-serving route needs it
         return script
+
+    def _build_freeze_script(self, cache_data):
+        """Build the DocBuilder script that reads (``freeze_collect``) or writes (``freeze``) the frozen cells."""
+        odoo_url = config_utils.get_base_or_odoo_url(request.env)
+        file_url = f"{odoo_url}onlyoffice/documents/docbuilder_file/{cache_data.get('_token')}"
+        name = "freeze_collect" if cache_data["mode"] == "freeze_collect" else "freeze_formulas"
+        with file_open(f"onlyoffice_odoo_documents/controllers/{name}.docbuilder", "r") as f:
+            script = f.read()
+        script = script.replace("FILE_URL_PLACEHOLDER", f'"{file_url}"')
+        script = script.replace("CELLS_PLACEHOLDER", cache_data.get("cells_json") or "[]")
+        script = script.replace("FILTERS_PLACEHOLDER", cache_data.get("filters_json") or "null")
+        return script.replace("OUTPUT_PATH_PLACEHOLDER", f'"{cache_data.get("output_filename") or "frozen.xlsx"}"')
+
+    # ── Freeze and share ──────────────────────────────────────────────────────
+
+    def freeze_spreadsheet(self, document):
+        """XLSX content of ``document`` with the values of its Odoo functions, as the current user sees them.
+
+        As Odoo freezes a spreadsheet (freezeOdooData): a cell with an Odoo function gets its value, computed now
+        with the rights of the user (without the right to read the data, the error), its format is kept; the hidden
+        metadata sheet goes and the active filters get a sheet. Raises UserError when the Document Server fails.
+        """
+        source = document.attachment_id.raw
+        text = self._run_freeze_docbuilder(document, "freeze_collect", source)
+        try:
+            formulas = json.loads(text.decode("utf-8-sig").strip() or "[]")
+        except ValueError as e:
+            raise UserError(_("The Document Server did not return the formulas of the file")) from e
+
+        snapshot = self._formula_evaluator.load_document_snapshot(document.id)
+        request._rg_cache = {}
+        cells = []
+        for item in formulas:
+            cells.extend(self._frozen_cells(snapshot, item))
+        filters = None
+        if snapshot.get("globalFilters"):
+            values = compute_filter_values(snapshot)
+            # A value is text, as Odoo shows it ("03/2026" must not become a date).
+            rows = []
+            for global_filter in snapshot["globalFilters"]:
+                content = _frozen_content(values.get(global_filter.get("label", ""), ""))
+                rows.append([global_filter.get("label", ""), content.get("f", content.get("v"))])
+            filters = {"title": _("Active Filters"), "header": ["Filter", "Value"], "rows": rows}
+        return self._run_freeze_docbuilder(
+            document,
+            "freeze",
+            source,
+            cells_json=json.dumps(cells, cls=_DateTimeEncoder),
+            filters_json=json.dumps(filters),
+        )
+
+    def _run_freeze_docbuilder(self, document, mode, source, **data):
+        """Run a freeze script on ``source``, returning the file the Document Builder made."""
+        token = secrets.token_urlsafe(32)
+        cache = {"mode": mode, "xlsx_base64": base64.b64encode(source).decode(), "_token": token, **data}
+        cache["output_filename"] = "frozen.xlsx"
+        _store_docbuilder_data(token, cache)
+        try:
+            content, error = self._call_docbuilder(token, document.id)
+        finally:
+            _delete_docbuilder_data(token)
+        if error:
+            raise UserError(_("The spreadsheet could not be frozen: %s", error))
+        return content
+
+    def _frozen_cells(self, snapshot, item):
+        """What a cell with an Odoo function becomes in the frozen copy: [{s, c, v or f}].
+
+        A formula that is one call gets its value (a table of ODOO_PIVOT_TABLE fills the cells it spreads over); in a
+        longer formula each call becomes its value, the rest of the formula stays and is computed by the spreadsheet.
+        """
+        formula, sheet, cell = item.get("f") or "", item.get("s"), item.get("c")
+        calls = _find_odoo_calls(formula)
+        if not calls or not isinstance(sheet, int) or not cell:
+            return []
+        start, end = calls[0]
+        if len(calls) == 1 and re.fullmatch(r"=\s*-?\s*", formula[:start]) and not formula[end:].strip():
+            value = self._formula_evaluator.evaluate_single_formula(snapshot, formula)
+            if isinstance(value, list):
+                return self._frozen_table(sheet, cell, value)
+            return [{"s": sheet, "c": cell, **_frozen_content(value)}]
+        parts, last = [], 0
+        for start, end in calls:
+            value = self._formula_evaluator.evaluate_single_formula(snapshot, "=" + formula[start:end])
+            parts.extend([formula[last:start], _formula_literal(value)])
+            last = end
+        parts.append(formula[last:])
+        return [{"s": sheet, "c": cell, "f": "".join(parts)}]
+
+    @staticmethod
+    def _frozen_table(sheet, cell, table):
+        """The cells a table value spreads over from ``cell``, as Odoo freezes a spread formula."""
+        match = re.fullmatch(r"\$?([A-Z]+)\$?(\d+)", cell)
+        if not match:
+            return []
+        col0 = 0
+        for ch in match.group(1):
+            col0 = col0 * 26 + ord(ch) - 64
+        row0 = int(match.group(2))
+        cells = []
+        for r, row in enumerate(table):
+            for c, value in enumerate(row if isinstance(row, list) else [row]):
+                cells.append({"s": sheet, "c": f"{_column_letter(col0 + c - 1)}{row0 + r}", **_frozen_content(value)})
+        return cells
 
     # ── Insert helpers ────────────────────────────────────────────────────────
 

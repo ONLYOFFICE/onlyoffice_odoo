@@ -57,7 +57,7 @@
          * @param {number} listId ID of the list.
          * @param {number} index Position of the record in the list (1-based).
          * @param {string} fieldName Name of the field.
-         * @returns {string} The value from the list.
+         * @returns {any} The value from the list: a number, a date (serial number) or text.
          */
         async function ODOO_LIST(listId, index, fieldName) {
           var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
@@ -90,15 +90,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
@@ -144,15 +155,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
@@ -185,7 +207,7 @@
          * @param {string} [domain_value_9] Ninth group-by value.
          * @param {string} [domain_field_10] Tenth group-by field name.
          * @param {string} [domain_value_10] Tenth group-by value.
-         * @returns {number} The aggregated pivot value.
+         * @returns {any} The aggregated pivot value.
          */
         async function ODOO_PIVOT(
           pivotId,
@@ -248,15 +270,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
@@ -288,7 +321,7 @@
          * @param {string} [domain_value_9] Ninth group-by value.
          * @param {string} [domain_field_10] Tenth group-by field name.
          * @param {string} [domain_value_10] Tenth group-by value.
-         * @returns {string} The header display value.
+         * @returns {any} The header: text, or a date or year as a number.
          */
         async function ODOO_PIVOT_HEADER(
           pivotId,
@@ -350,15 +383,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
@@ -375,7 +419,7 @@
          * @returns {string} The element ID.
          */
         function ODOO_PIVOT_POSITION(pivotId, fieldName, position) {
-          return "#ERROR: ODOO_PIVOT_POSITION cannot be called from the spreadsheet"
+          throw new Error("ODOO_PIVOT_POSITION cannot be called from the spreadsheet")
         }
 
         /**
@@ -385,7 +429,7 @@
          * @param {number} [rowCount] Maximum number of data rows.
          * @param {number} [includeTotal] Include totals (1 or 0).
          * @param {number} [includeColumnTitles] Include column titles (1 or 0).
-         * @returns {string} The pivot table data.
+         * @returns {any} The pivot table data.
          */
         async function ODOO_PIVOT_TABLE(pivotId, rowCount, includeTotal, includeColumnTitles) {
           var parts = [pivotId]
@@ -427,15 +471,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
@@ -484,15 +539,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
@@ -545,15 +611,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)

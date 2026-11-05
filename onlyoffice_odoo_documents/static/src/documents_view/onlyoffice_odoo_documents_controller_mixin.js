@@ -46,6 +46,8 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     this.dialogService.add(ConvertDialog, {
       documentId: record.resId,
       filename: record.data.display_name || record.data.name,
+      handler: record.data.handler,
+      mimetype: record.data.mimetype,
       model: this.env.model,
     })
   },
