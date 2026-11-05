@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import secrets
 from mimetypes import guess_type
 from urllib.request import urlopen
 
@@ -29,7 +30,12 @@ from odoo.addons.onlyoffice_odoo.utils import (
 )
 
 from ..models.onlyoffice_odoo_documents import SAVING_ROLES
-from .spreadsheet_docbuilder import XLSX_MIMETYPE, SpreadsheetDocBuilder
+from .spreadsheet_docbuilder import (
+    XLSX_MIMETYPE,
+    SpreadsheetDocBuilder,
+    _delete_docbuilder_data,
+    _store_docbuilder_data,
+)
 from .spreadsheet_formulas import (
     SpreadsheetFormulaEvaluator,
     compute_filter_values,
@@ -138,8 +144,10 @@ class OnlyofficeDocuments_Connector(http.Controller):
         return json.dumps(result)
 
     @http.route("/onlyoffice/documents/file/convert", auth="user", methods=["POST"], type="json")
-    def post_file_convert(self, document_id, target_format, save_to_documents=False):
+    def post_file_convert(self, document_id, target_format, save_to_documents=False, xlsx_base64=None):  # noqa: C901
+        """Convert a document with the Document Server; an Odoo Spreadsheet from ``xlsx_base64``, its native export."""
         result = {"error": None}
+        source_token = None
 
         try:
             document = request.env["documents.document"].browse(int(document_id)).exists()
@@ -157,63 +165,91 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 result["error"] = _("Document has no attachment")
                 return json.dumps(result)
 
-            source_ext = file_utils.get_file_ext(attachment.name)
+            # An Odoo Spreadsheet is converted from its XLSX export, as it is opened; a name without extension
+            # gets the format of the type of the file.
+            is_spreadsheet = document.handler == "spreadsheet"
+            source_data = None
+            if is_spreadsheet:
+                if not xlsx_base64:
+                    result["error"] = _("Native spreadsheet export is required for conversion")
+                    return json.dumps(result)
+                source_data = base64.b64decode(xlsx_base64)
+                source_ext = "xlsx"
+                title = document.name
+            else:
+                source_ext = file_utils.get_file_ext(attachment.name) or file_utils.get_ext_by_mime(attachment.mimetype)
+                title = file_utils.get_file_title_without_ext(attachment.name)
             target_format = (target_format or "").lower()
 
             allowed_formats = []
             for supported_format in format_utils.get_supported_formats():
                 if supported_format.name == source_ext:
-                    allowed_formats = supported_format.convert
+                    allowed_formats = list(supported_format.convert)
                     break
+            if is_spreadsheet:
+                allowed_formats.append("xlsx")
 
             if target_format not in allowed_formats:
                 result["error"] = _("Unsupported target format")
                 return json.dumps(result)
 
-            jwt_header = config_utils.get_jwt_header(request.env)
-            jwt_secret = config_utils.get_jwt_secret(request.env)
-            internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
-            docserver_url = config_utils.get_doc_server_public_url(request.env)
-            docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
-            odoo_url = config_utils.get_base_or_odoo_url(request.env)
+            if is_spreadsheet and target_format == "xlsx":
+                # The export itself is the XLSX file.
+                converted_data = source_data
+            else:
+                jwt_header = config_utils.get_jwt_header(request.env)
+                jwt_secret = config_utils.get_jwt_secret(request.env)
+                internal_jwt_secret = config_utils.get_internal_jwt_secret(request.env)
+                docserver_url = config_utils.get_doc_server_public_url(request.env)
+                docserver_url = url_utils.replace_public_url_to_internal(request.env, docserver_url)
+                odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
-            oo_security_token = jwt_utils.encode_payload(request.env, {"id": request.env.user.id}, internal_jwt_secret)
-            oo_security_token = (
-                oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
-            )
+                oo_security_token = jwt_utils.encode_payload(
+                    request.env, {"id": request.env.user.id}, internal_jwt_secret
+                )
+                oo_security_token = (
+                    oo_security_token.decode("utf-8") if isinstance(oo_security_token, bytes) else oo_security_token
+                )
 
-            source_url = f"{odoo_url}onlyoffice/file/content/{attachment.id}?oo_security_token={oo_security_token}"
-            region = conversion_utils.get_region(request.env.user.lang)
-            body_json = conversion_utils.build_conversion_body(
-                source_url, source_ext, target_format, extra_options={"async": False}, region=region
-            )
-            conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={body_json['key']}")
-            body_json, headers = conversion_utils.sign_conversion_request(
-                request.env, body_json, jwt_secret, jwt_header
-            )
+                source_url = f"{odoo_url}onlyoffice/file/content/{attachment.id}?oo_security_token={oo_security_token}"
+                if source_data is not None:
+                    # The export is served once to the Document Server, as the files of the Document Builder.
+                    source_token = secrets.token_urlsafe(32)
+                    _store_docbuilder_data(
+                        source_token,
+                        {"mode": "convert_source", "xlsx_base64": xlsx_base64, "_token": source_token},
+                    )
+                    source_url = f"{odoo_url}onlyoffice/documents/docbuilder_file/{source_token}"
+                region = conversion_utils.get_region(request.env.user.lang)
+                body_json = conversion_utils.build_conversion_body(
+                    source_url, source_ext, target_format, extra_options={"async": False}, region=region
+                )
+                conversion_url = os.path.join(docserver_url, "converter", f"?shardkey={body_json['key']}")
+                body_json, headers = conversion_utils.sign_conversion_request(
+                    request.env, body_json, jwt_secret, jwt_header
+                )
 
-            response = onlyoffice_request(
-                url=conversion_url,
-                method="post",
-                opts={"data": json.dumps(body_json), "headers": headers},
-                env=request.env,
-            )
-            conversion_result = conversion_utils.parse_conversion_response(response)
+                response = onlyoffice_request(
+                    url=conversion_url,
+                    method="post",
+                    opts={"data": json.dumps(body_json), "headers": headers},
+                    env=request.env,
+                )
+                conversion_result = conversion_utils.parse_conversion_response(response)
 
-            if "error" in conversion_result:
-                _logger.error("Document conversion failed: %s", conversion_result.get("error"))
-                result["error"] = conversion_result.get("message") or _("Document conversion failed")
-                return json.dumps(result)
+                if "error" in conversion_result:
+                    _logger.error("Document conversion failed: %s", conversion_result.get("error"))
+                    result["error"] = conversion_result.get("message") or _("Document conversion failed")
+                    return json.dumps(result)
 
-            file_url = conversion_result.get("fileUrl")
-            if not file_url:
-                result["error"] = _("Conversion service did not return a file")
-                return json.dumps(result)
+                file_url = conversion_result.get("fileUrl")
+                if not file_url:
+                    result["error"] = _("Conversion service did not return a file")
+                    return json.dumps(result)
 
-            file_response = onlyoffice_request(url=file_url, method="get", env=request.env)
-            converted_data = file_response.content
+                file_response = onlyoffice_request(url=file_url, method="get", env=request.env)
+                converted_data = file_response.content
 
-            title = file_utils.get_file_title_without_ext(attachment.name)
             new_name = f"{title}.{target_format}"
 
             if save_to_documents:
@@ -243,6 +279,9 @@ class OnlyofficeDocuments_Connector(http.Controller):
         except Exception as ex:
             _logger.exception(f"Failed to convert document {ex!s}")
             result["error"] = _("Failed to convert document")
+        finally:
+            if source_token:
+                _delete_docbuilder_data(source_token)
 
         return json.dumps(result)
 

@@ -46,7 +46,7 @@ _DOCBUILDER_CACHE_TTL_HOURS = 1
 XLSX_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 # Docbuilder modes whose script opens the cached XLSX (served by get_cached_file).
-_FILE_MODES = ("insert_sheet", "patch_formulas", "freeze_collect", "freeze")
+_FILE_MODES = ("insert_sheet", "patch_formulas", "freeze_collect", "freeze", "convert_source")
 
 # A call of an Odoo spreadsheet function: ODOO.LIST(, odoo.pivot.header(, ... (not a part of a longer name).
 _ODOO_CALL = re.compile(r"(?<![\w.])ODOO\.([A-Z][A-Z0-9_.]*)\(", re.IGNORECASE)
@@ -335,6 +335,10 @@ class SpreadsheetDocBuilder:
 
             if not document.exists() or document.handler != "spreadsheet":
                 result["error"] = _("Document is not a spreadsheet")
+                return result
+            # As "Save to Documents" of a conversion: refused before the Document Builder runs.
+            if not document.folder_id.has_write_access:
+                result["error"] = _("You do not have permission to create documents in this workspace")
                 return result
 
             # The session also checks the right to read the spreadsheet; its data is the last snapshot only.
@@ -636,17 +640,24 @@ class SpreadsheetDocBuilder:
         return xlsx_response.content, None
 
     def _save_xlsx_document(self, document, document_id, output_filename, xlsx_content, metadata_json):
-        """Create a new XLSX document in Odoo for this conversion. Returns document ID."""
-        xlsx_doc = request.env["documents.document"].create(
-            {
-                "name": output_filename,
-                "folder_id": document.folder_id.id,
-                "datas": base64.b64encode(xlsx_content),
-                "mimetype": XLSX_MIMETYPE,
-                "onlyoffice_spreadsheet_source_id": document_id,
-                "onlyoffice_spreadsheet_metadata": metadata_json,
-            }
-        )
+        """Create a new XLSX document in Odoo for this conversion. Returns document ID.
+
+        The rights of Odoo decide; record rules are checked after the insert, so it is rolled back when they refuse.
+        """
+        try:
+            with request.env.cr.savepoint():
+                xlsx_doc = request.env["documents.document"].create(
+                    {
+                        "name": output_filename,
+                        "folder_id": document.folder_id.id,
+                        "datas": base64.b64encode(xlsx_content),
+                        "mimetype": XLSX_MIMETYPE,
+                        "onlyoffice_spreadsheet_source_id": document_id,
+                        "onlyoffice_spreadsheet_metadata": metadata_json,
+                    }
+                )
+        except AccessError as e:
+            raise UserError(_("You do not have permission to create documents in this workspace")) from e
         return xlsx_doc.id
 
     def _build_insert_sheet_script(self, cache_data):

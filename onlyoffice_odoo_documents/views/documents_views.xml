@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
-  <!-- The inspector shows "Freeze and share" from the data of the selected records. -->
+  <!-- The inspector and the conversion dialog work from the data of the selected records. -->
   <record id="document_view_kanban_onlyoffice" model="ir.ui.view">
     <field name="name">documents.document kanban onlyoffice</field>
     <field name="model">documents.document</field>
@@ -20,6 +20,8 @@
     <field name="arch" type="xml">
       <field name="checksum" position="after">
         <field name="onlyoffice_can_freeze" column_invisible="True" />
+        <!-- "Convert with ONLYOFFICE" takes the format of a file without extension from it. -->
+        <field name="mimetype" column_invisible="True" />
       </field>
     </field>
   </record>

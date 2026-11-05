@@ -25,16 +25,27 @@ def get_custom_functions_url():
 
 def get_file_title_without_ext(name):
     ind = name.rfind(".")
-    return name[:ind]
+    # A name without extension is the title itself.
+    return name[:ind] if ind != -1 else name
 
 
 def get_file_name_without_ext(name):
     ind = name.rfind(".")
-    return name[:ind]
+    return name[:ind] if ind != -1 else name
 
 
 def get_file_ext(name):
-    return name[name.rfind(".") + 1 :].lower()
+    # A name without extension has none (not the whole name).
+    ind = name.rfind(".")
+    return name[ind + 1 :].lower() if ind != -1 else ""
+
+
+def get_ext_by_mime(mimetype):
+    """The extension of a supported format of that type, for a file whose name has no extension."""
+    for supported_format in format_utils.get_supported_formats():
+        if mimetype and mimetype in supported_format.mime:
+            return supported_format.name
+    return ""
 
 
 def get_file_type(context):

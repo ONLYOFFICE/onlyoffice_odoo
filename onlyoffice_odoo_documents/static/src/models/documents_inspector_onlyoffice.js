@@ -8,6 +8,7 @@ import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
 import { FormViewDialog } from "@web/views/view_dialogs/form_view_dialog"
+import { exportSpreadsheetNativeXlsx } from "../documents_view/spreadsheet_export"
 
 const { DateTime } = luxon
 
@@ -37,61 +38,12 @@ patch(DocumentsInspector.prototype, {
   },
 
   /**
-   * Export the spreadsheet with the native o-spreadsheet engine, so charts
-   * and other advanced formatting are kept. Throws if the export fails.
+   * The native XLSX export of an Odoo Spreadsheet (see exportSpreadsheetNativeXlsx).
    * @param {Number} id documents.document id of the Odoo Spreadsheet.
-   * @returns {Promise<{base64: string, name: string, data: Object, sheetNames: string[]}>} the file, and the data
-   * it was made from (revisions applied) with its sheet names as the export wrote them.
+   * @returns {Promise<Object>} the file, its data and sheet names.
    */
-  async _exportSpreadsheetNativeXlsx(id) {
-    await loadBundle("spreadsheet.o_spreadsheet")
-    const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
-    const record = await this.env.services.orm.call("documents.document", "join_spreadsheet_session", [id])
-    const model = await createSpreadsheetModel({
-      data: record.data,
-      env: this.env,
-      revisions: record.revisions,
-    })
-    await waitForDataLoaded(model)
-    const xlsxData = model.exportXLSX()
-
-    const formData = new URLSearchParams({
-      files: JSON.stringify(xlsxData.files),
-      zip_name: `${record.name}.xlsx`,
-    })
-    if (odoo.csrf_token) {
-      formData.append("csrf_token", odoo.csrf_token)
-    }
-
-    const response = await fetch("/spreadsheet/xlsx", {
-      body: formData,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      method: "POST",
-    })
-    if (!response.ok) {
-      throw new Error("Failed to export spreadsheet to XLSX")
-    }
-    const xlsxBlob = await response.blob()
-
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result.split(",")[1])
-      reader.onerror = reject
-      reader.readAsDataURL(xlsxBlob)
-    })
-    // Sheet names as written in the file: Excel cuts a name to 31 characters.
-    const workbook = xlsxData.files.find((file) => file.path === "xl/workbook.xml")
-    let sheetNames = []
-    if (workbook) {
-      const workbookXml = new DOMParser().parseFromString(workbook.content, "application/xml")
-      sheetNames = Array.from(workbookXml.getElementsByTagName("sheet"), (sheet) => sheet.getAttribute("name"))
-    }
-    return {
-      base64,
-      data: model.exportData(),
-      name: record.name,
-      sheetNames,
-    }
+  _exportSpreadsheetNativeXlsx(id) {
+    return exportSpreadsheetNativeXlsx(this.env, id)
   },
 
   async _openDocumentInOnlyoffice(documentId) {
