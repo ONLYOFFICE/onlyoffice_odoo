@@ -45,7 +45,11 @@
         </div>
       </div>
       <script type="text/javascript" t-att-src="docApiJS" />
-      <script type="text/javascript" src="/onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js" />
+      <!-- With a hash of the file in the URL: a new version is never taken from the browser cache. -->
+      <script
+        type="text/javascript"
+        t-att-src="customFunctionsJS or '/onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js'"
+      />
       <script type="text/javascript">
         function getCookie(name) {
           const value = `; ${document.cookie}`;

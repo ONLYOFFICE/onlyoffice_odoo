@@ -441,6 +441,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
+            "customFunctionsJS": file_utils.get_custom_functions_url(),
             "editorConfig": root_config,
         }
 

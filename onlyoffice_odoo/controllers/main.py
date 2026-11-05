@@ -367,6 +367,7 @@ class OnlyofficeConnector(http.Controller):
             "docTitle": filename,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
+            "customFunctionsJS": file_utils.get_custom_functions_url(),
             "editorConfig": root_config,
             "session_info": session_info,
         }
@@ -504,6 +505,7 @@ class OnlyofficeConnector(http.Controller):
                 "docTitle": title,
                 "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
                 "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
+                "customFunctionsJS": file_utils.get_custom_functions_url(),
                 "editorConfig": scriptsafe.dumps(root_config),
                 "session_info": scriptsafe.dumps(session_info),
             },

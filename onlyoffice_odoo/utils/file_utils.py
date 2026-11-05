@@ -1,9 +1,26 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import functools
+import hashlib
 import os
 
+from odoo.tools import file_open
+
 from odoo.addons.onlyoffice_odoo.utils import format_utils
+
+_CUSTOM_FUNCTIONS_PATH = "onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js"
+
+
+@functools.cache
+def get_custom_functions_url():
+    """URL of the ODOO functions of the editor with a hash of the file.
+
+    The file is served raw with a long browser cache: a new version must have a new URL, or browsers keep the old one.
+    """
+    with file_open(_CUSTOM_FUNCTIONS_PATH, "rb") as f:
+        digest = hashlib.sha1(f.read()).hexdigest()[:12]
+    return f"/{_CUSTOM_FUNCTIONS_PATH}?v={digest}"
 
 
 def get_file_title_without_ext(name):

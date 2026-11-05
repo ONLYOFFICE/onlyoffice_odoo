@@ -41,7 +41,10 @@ export class DocumentsAction extends Component {
         // minifier strips the JSDoc comments Api.AddCustomFunction relies on.
         if (response.has_odoo_formulas) {
           if (!window.initializeOdooCustomFunctions) {
-            await this.loadScript("/onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js")
+            // The URL carries a hash of the file, so a new version is not taken from the browser cache.
+            await this.loadScript(
+              response.customFunctionsJS || "/onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js",
+            )
           }
           window.odooDocumentId = response.document_id
           window.odooJwtToken = response.jwt_token
