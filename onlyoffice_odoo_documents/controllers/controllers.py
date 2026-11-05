@@ -283,24 +283,24 @@ class OnlyofficeDocuments_Connector(http.Controller):
             if save_to_documents:
                 # As "Duplicate" of Odoo: next to the source when the user may create there, otherwise in their
                 # "My Drive", with the access of the source rather than that of the folder.
+                mimetype = file_utils.get_mime_by_ext(target_format) or (
+                    guess_type(new_name)[0] or "application/octet-stream"
+                )
+                values = {
+                    "name": new_name,
+                    "lock_uid": False,
+                    "onlyoffice_spreadsheet_source_id": False,
+                    "onlyoffice_spreadsheet_metadata": False,
+                    "onlyoffice_spreadsheet_metadata_checked": False,
+                }
+                if is_spreadsheet:
+                    # The copy of an Odoo Spreadsheet is a file: not a spreadsheet, without its data and revisions.
+                    values.update(handler=False, spreadsheet_data=False, mimetype=mimetype)
                 try:
                     with request.env.cr.savepoint():
-                        new_document = document.copy(
-                            {
-                                "name": new_name,
-                                "lock_uid": False,
-                                "onlyoffice_spreadsheet_source_id": False,
-                                "onlyoffice_spreadsheet_metadata": False,
-                                "onlyoffice_spreadsheet_metadata_checked": False,
-                            }
-                        )
+                        new_document = document.copy(values)
                         new_document.attachment_id.write(
-                            {
-                                "name": new_name,
-                                "raw": converted_data,
-                                "mimetype": file_utils.get_mime_by_ext(target_format)
-                                or (guess_type(new_name)[0] or "application/octet-stream"),
-                            }
+                            {"name": new_name, "raw": converted_data, "mimetype": mimetype}
                         )
                 except (AccessError, UserError):
                     result["error"] = _("You do not have permission to create documents in this workspace")
