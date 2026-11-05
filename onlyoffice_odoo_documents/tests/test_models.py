@@ -181,6 +181,27 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
         )
         self.assertEqual(user_access.role, "commenter")
 
+    def test_standard_roles_are_left_to_odoo(self):
+        """Only roles Odoo has no counterpart for are kept: the panel then shows what Odoo has, kept current."""
+        document = self._document().with_user(self.owner)
+        partner = self.colleague.partner_id
+        document.action_update_access_rights(access_internal="commenter", partners={partner.id: ["reviewer", False]})
+
+        document.action_update_access_rights(
+            access_internal="edit", access_via_link="view", partners={partner.id: ["edit", False]}
+        )
+
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
+        self.assertEqual((access.internal_users, access.link_access), (False, False))
+        self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
+        self.assertEqual((document.access_internal, document.access_via_link), ("edit", "view"))
+
+        document.sudo().access_internal = "view"
+        data = document.permission_panel_data()
+        self.assertEqual((data["record"]["access_internal"], data["record"]["access_via_link"]), ("view", "view"))
+        roles = {access["partner_id"]["id"]: access["role"] for access in data["record"]["access_ids"]}
+        self.assertEqual(roles[partner.id], "edit")
+
     def test_removing_a_partner_removes_the_custom_role(self):
         document = self._document().with_user(self.owner)
         partner = self.colleague.partner_id

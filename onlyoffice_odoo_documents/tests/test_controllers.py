@@ -5,7 +5,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 from odoo.tests import tagged
-from odoo.tests.common import HttpCase
+from odoo.tests.common import HttpCase, new_test_user
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 
@@ -72,6 +72,54 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
                 self._roles(document, **dict(roles))
                 self.assertEqual(self._editor("oo_doc_colleague", document), result)
 
+    def test_roles_of_a_colleague_who_can_only_read(self):
+        """Edit needs the right to write in Odoo; commenting roles save with the right to read, signed by JWT."""
+        config_utils.set_jwt_secret(self.env, "ds-secret")
+        expected = {
+            (): ("view", {"edit": False}),
+            (("colleague", "edit"),): ("view", {"edit": False}),
+            (("internal_users", "edit"),): ("view", {"edit": False}),
+            (("colleague", "commenter"),): ("edit", {"edit": False, "comment": True}),
+            (("internal_users", "reviewer"),): ("edit", {"edit": False, "review": True}),
+        }
+        for roles, result in expected.items():
+            with self.subTest(roles=roles):
+                document = self._document(access_internal="view")
+                self._roles(document, **dict(roles))
+                self.assertEqual(self._editor("oo_doc_colleague", document), result)
+                config = self._config("oo_doc_colleague", document_id=document.id)["result"]["editorConfig"]
+                self.assertEqual("callbackUrl" in config["editorConfig"], result[0] == "edit")
+
+    def test_commenting_roles_only_view_without_jwt_when_the_user_cannot_write(self):
+        document = self._document(access_internal="view")
+        self._roles(document, colleague="commenter")
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("view", {"edit": False}))
+
+    def test_an_invitation_of_odoo_comes_before_the_role_of_internal_users(self):
+        document = self._document(access_internal="view")
+        document.with_user(self.owner).action_update_access_rights(
+            access_internal="commenter", partners={self.colleague.partner_id.id: ["edit", False]}
+        )
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("edit", {"edit": True}))
+
+    def test_an_expired_invitation_gives_no_role(self):
+        config_utils.set_jwt_secret(self.env, "ds-secret")
+        document = self._document(access_internal="view")
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ["commenter", False]}
+        )
+        invitation = document.access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id)
+        invitation.sudo().expiration_date = "2020-01-01 00:00:00"
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("view", {"edit": False}))
+
+    def test_a_document_shared_by_link_opens_with_the_rights_of_the_link(self):
+        """A colleague who followed the link of Odoo gets its rights in ONLYOFFICE too."""
+        document = self._document(access_internal="none", access_via_link="edit")
+        self.env["documents.access"].create(
+            {"document_id": document.id, "partner_id": self.colleague.partner_id.id, "last_access_date": "2026-01-01"}
+        )
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("edit", {"edit": True}))
+
     def test_custom_filter_role_keeps_the_filters_of_others(self):
         document = self._document("Sheet.xlsx")
         self._roles(document, colleague="custom_filter")
@@ -127,14 +175,18 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
 class TestDocumentSave(DocumentsCase, HttpCase):
     """The base save callback for a Documents file: a new version, the previous one kept and renamed."""
 
-    def _save(self, document, user, content):
+    def _save(self, document, user, content, jwt_secret=None):
         downloaded = MagicMock()
         downloaded.read.return_value = content
         token = self._internal_token({"id": user.id})
+        body = {"status": 2, "url": "http://documentserver/cache/files/out.docx"}
+        if jwt_secret:
+            config_utils.set_jwt_secret(self.env, jwt_secret)
+            body = {"token": jwt_utils.encode_payload(self.env, body, jwt_secret)}
         with patch(URLOPEN, return_value=downloaded):
             return self.url_open(
                 f"/onlyoffice/editor/callback/{document.attachment_id.id}?oo_security_token={token}",
-                data=json.dumps({"status": 2, "url": "http://documentserver/cache/files/out.docx"}),
+                data=json.dumps(body),
                 headers={"Content-Type": "application/json"},
             )
 
@@ -153,6 +205,34 @@ class TestDocumentSave(DocumentsCase, HttpCase):
         previous = {a.name: a.raw for a in document.previous_attachment_ids}
         self.assertEqual(previous, {"Report (1).docx": original, "Report (2).docx": b"version 2"})
         self.assertIn("Document edited by OO Owner", document.message_ids.mapped("body")[0])
+
+    def test_a_commenter_who_can_only_read_saves_when_jwt_signs_the_save(self):
+        document = self._document()
+        document.action_update_access_rights(access_internal="view")
+        self._roles(document, colleague="commenter")
+
+        response = self._save(document, self.colleague, b"commented", jwt_secret="ds-secret")
+
+        self.assertEqual(response.json(), {"error": 0})
+        self.env.invalidate_all()
+        self.assertEqual(document.attachment_id.raw, b"commented")
+        self.assertEqual(document.write_uid, self.colleague, "the user stays the author")
+        self.assertIn("Document edited by OO Colleague", document.message_ids.mapped("body")[0])
+
+    def test_a_save_without_the_right_to_write_is_rejected(self):
+        """Without JWT a save cannot be trusted; edit needs the right to write whatever signs it."""
+        cases = {"commenter without jwt": ("commenter", None), "edit with jwt": ("edit", "ds-secret")}
+        for case, (role, jwt_secret) in cases.items():
+            with self.subTest(case=case):
+                document = self._document()
+                document.action_update_access_rights(access_internal="view")
+                self._roles(document, colleague=role)
+
+                response = self._save(document, self.colleague, b"overwritten", jwt_secret=jwt_secret)
+
+                self.assertEqual((response.status_code, response.json()["error"]), (500, 1))
+                self.env.invalidate_all()
+                self.assertEqual(document.attachment_id.raw, blank("docx"))
 
     def test_save_by_a_viewer_is_rejected(self):
         document = self._document()
@@ -214,11 +294,20 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         self.assertEqual(document.attachment_id.id, result["file_id"])
         self.assertEqual(document.raw, file_utils.get_default_file_template("en_US", "docx"))
         self.assertEqual(document.mimetype, file_utils.get_mime_by_ext("docx"))
-        # Only the creator gets an ONLYOFFICE role on a new document.
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
-        self.assertEqual((access.internal_users, access.link_access), ("none", "none"))
-        user_access = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
-        self.assertEqual((user_access.user_id, user_access.role), (self.owner.partner_id, "edit"))
+        # No ONLYOFFICE roles: the rights of Odoo decide.
+        self.assertFalse(self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)]))
+        self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
+
+    def test_a_colleague_who_can_edit_works_on_a_created_document(self):
+        result = self._create(folder_id=self.folder.id, supported_format="docx", title="Plan")
+        document = self.env["documents.document"].browse(result["document_id"])
+        self.authenticate("oo_doc_colleague", "oo_doc_colleague")
+
+        config = self._rpc("/onlyoffice/editor/get_config", document_id=document.id)["result"]["editorConfig"]
+
+        self.assertEqual(config["editorConfig"]["mode"], "edit")
+        self.assertIn("callbackUrl", config["editorConfig"])
+        self.assertTrue(self._convert(document)[0]["saved"])
 
     def test_create_in_my_drive(self):
         result = self._create(folder_id="MY", supported_format="xlsx", title="Budget")
@@ -285,14 +374,63 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
             self._convert(self.env["documents.document"].browse(999_999_999))[0]["error"], "Document not found"
         )
 
-    def test_convert_needs_access(self):
-        no_role = self._document()
-        self._roles(no_role, internal_users="edit", colleague="none")
+    def test_convert_needs_the_right_to_read_and_ignores_locks(self):
+        turned_off = self._document()
+        self._roles(turned_off, internal_users="edit", colleague="none")
+        private = self._document(folder_id=False)
+        read_only = self._document()
+        read_only.action_update_access_rights(access_internal="view")
         locked = self._document()
         locked.sudo().lock_uid = self.owner
         self.authenticate("oo_doc_colleague", "oo_doc_colleague")
 
-        result, request = self._convert(no_role)
-        self.assertEqual(result["error"], "You do not have access to this document")
-        self.assertEqual(self._convert(locked)[0]["error"], "This document is locked by another user")
-        request.assert_not_called()
+        for document in (turned_off, private):
+            with self.subTest(document=document.id):
+                result, request = self._convert(document)
+                self.assertEqual(result["error"], "You do not have access to this document")
+                request.assert_not_called()
+        for document in (read_only, locked):
+            with self.subTest(document=document.id):
+                self.assertFalse(self._convert(document, save_to_documents=False)[0]["error"])
+
+    def test_converted_copy_goes_where_duplicate_puts_it(self):
+        """Next to the source when the user may create there, otherwise in their own drive."""
+        Document = self.env["documents.document"]
+        new_test_user(self.env, login="oo_doc_manager", groups="base.group_user,documents.group_documents_manager")
+        read_only = Document.create({"name": "OO Read-only", "type": "folder", "access_internal": "view"})
+        odoobot = self.env.ref("base.user_root")
+        company_root = {"folder_id": False, "owner_id": odoobot.id, "access_internal": "view"}
+        cases = [
+            ("own drive", "oo_doc_owner", self._document(folder_id=False), self.owner),
+            (
+                "read-only folder",
+                "oo_doc_colleague",
+                self._document(user=odoobot, folder_id=read_only.id),
+                self.colleague,
+            ),
+            ("company root, manager", "oo_doc_manager", self._document(user=odoobot, **company_root), odoobot),
+            ("company root, user", "oo_doc_colleague", self._document(user=odoobot, **company_root), self.colleague),
+        ]
+        for case, login, document, owner in cases:
+            with self.subTest(case=case):
+                self.authenticate(login, login)
+                result, _request = self._convert(document)
+                self.assertTrue(result.get("saved"), result)
+                converted = Document.browse(result["document_id"])
+                self.assertEqual((converted.folder_id, converted.owner_id), (Document, owner))
+                self.assertEqual((converted.name, converted.raw), ("Report.pdf", b"%PDF-1.7 converted"))
+                self.assertEqual(converted.mimetype, "application/pdf")
+
+    def test_converted_copy_gets_the_access_of_the_source(self):
+        contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
+        document = self._document()
+        document.action_update_access_rights(access_internal="view", partners={contact.id: ["view", False]})
+        document.sudo().lock_uid = self.owner
+
+        result, _request = self._convert(document)
+
+        converted = self.env["documents.document"].browse(result["document_id"])
+        self.assertEqual(converted.folder_id, self.folder)
+        self.assertEqual(converted.access_internal, "view", "not the edit of the folder")
+        self.assertIn(contact, converted.access_ids.partner_id)
+        self.assertFalse(converted.lock_uid)
