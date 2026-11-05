@@ -28,8 +28,9 @@ function findSheet(patch) {
   return ws
 }
 
-// A cell formatted as Text ("@") would keep the formula as a string: make it General. Other formats are kept.
-function resetTextFormat(cellRange) {
+// The format the export of Odoo gave the cell, made fit for a formula: a cell formatted as Text ("@") would keep the
+// formula as a string, so it becomes General; the AM/PM code "a" of Odoo is a plain letter here. Returns the format.
+function prepareNativeFormat(cellRange) {
   var format = ""
   try {
     format = String(cellRange.GetNumberFormat())
@@ -38,7 +39,13 @@ function resetTextFormat(cellRange) {
   }
   if (format.indexOf("@") !== -1) {
     cellRange.SetNumberFormat("General")
+    return "General"
   }
+  if (/\sa$/.test(format)) {
+    format = format.replace(/\sa$/, " AM/PM")
+    cellRange.SetNumberFormat(format)
+  }
+  return format
 }
 
 var i
@@ -47,9 +54,9 @@ for (i = 0; i < patches.length; i++) {
   try {
     var ws = findSheet(patch)
     var cellRange = ws.GetRange(patch.cell)
-    resetTextFormat(cellRange)
+    var nativeFormat = prepareNativeFormat(cellRange)
     cellRange.SetValue(patch.formula)
-    applyOdooColumnFormat(cellRange, patch.formula, metadata)
+    applyOdooColumnFormat(cellRange, patch.formula, metadata, nativeFormat !== "" && nativeFormat !== "General")
   } catch (e) {
     // Sheet/cell not found - skip it rather than failing the whole conversion.
   }

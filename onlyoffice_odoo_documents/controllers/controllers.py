@@ -633,15 +633,20 @@ class OnlyOfficeShareRoute(ShareRoute):
         # Attach a read_group cache so pivot evaluations share results
         request._rg_cache = {}
 
-        values = {}
+        # An error is returned apart from the values: the editor makes it an error of the cell, as Odoo does.
+        values, errors = {}, {}
         for formula in formulas or []:
             try:
-                values[formula] = _formula_evaluator.evaluate_single_formula(snapshot, formula)
+                value = _formula_evaluator.evaluate_single_formula(snapshot, formula)
             except Exception as e:
                 _logger.warning("Batch formula error for %s: %s", formula, e)
-                values[formula] = f"#ERROR: {e}"
+                value = f"#ERROR: {e}"
+            if isinstance(value, str) and value.startswith("#ERROR: "):
+                errors[formula] = value[len("#ERROR: ") :]
+            else:
+                values[formula] = value
 
-        return {"values": values}
+        return {"values": values, "errors": errors}
 
     @http.route(
         "/onlyoffice/documents/insert_list_in_xlsx",

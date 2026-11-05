@@ -115,30 +115,45 @@ function columnToLetter(column) {
   return letter
 }
 
-// Apply the number format and horizontal alignment for an ODOO_PIVOT/ODOO_LIST
-// value cell, based on the underlying Odoo field's type.
-function applyOdooColumnFormat(oRange, formula, metadata) {
+// Apply the number format and horizontal alignment of an ODOO_PIVOT / ODOO_PIVOT_HEADER / ODOO_LIST cell, as Odoo
+// formats it, based on the type of the Odoo field. keepNative: the cell already has the format of the export of Odoo
+// itself, which is kept for money and dates (the currency of each cell, the date format of the user).
+function applyOdooColumnFormat(oRange, formula, metadata, keepNative) {
   if (!metadata) return
+  var info = null
+  var row = 0
   // Accept both quoted and unquoted numeric IDs, and an optional leading minus.
   var m = formula.match(/^=\\s*-?\\s*ODOO_PIVOT\\(\\s*"?(\\d+)"?\\s*,\\s*"([^"]+)"/)
   if (m) {
     var pivotMeta = metadata.pivots && metadata.pivots[m[1]]
-    var info = pivotMeta && pivotMeta.columnFormats && pivotMeta.columnFormats[m[2]]
-    if (info) {
-      if (info.format) oRange.SetNumberFormat(info.format)
-      if (info.align) oRange.SetAlignHorizontal(info.align)
-    }
-    return
+    info = pivotMeta && pivotMeta.columnFormats && pivotMeta.columnFormats[m[2]]
   }
-  m = formula.match(/^=\\s*-?\\s*ODOO_LIST\\(\\s*"?(\\d+)"?\\s*,\\s*"?\\d+"?\\s*,\\s*"([^"]+)"\\s*\\)/)
-  if (m) {
-    var listMeta = metadata.lists && metadata.lists[m[1]]
-    var lInfo = listMeta && listMeta.columnFormats && listMeta.columnFormats[m[2]]
-    if (lInfo) {
-      if (lInfo.format) oRange.SetNumberFormat(lInfo.format)
-      if (lInfo.align) oRange.SetAlignHorizontal(lInfo.align)
+  if (!m) {
+    // A header: the format of its grouping (the last field/value pair), for dates.
+    m = formula.match(/^=\\s*ODOO_PIVOT_HEADER\\(\\s*"?(\\d+)"?\\s*,(.*)\\)\\s*$/)
+    if (m) {
+      var args = m[2].match(/"(?:[^"]|"")*"|[^,]+/g) || []
+      var field = args.length >= 2 ? args[args.length - 2].trim().replace(/^"|"$/g, "") : ""
+      var headerMeta = metadata.pivots && metadata.pivots[m[1]]
+      if (field.indexOf(":") !== -1) {
+        info = headerMeta && headerMeta.columnFormats && headerMeta.columnFormats[field]
+      }
     }
   }
+  if (!m) {
+    m = formula.match(/^=\\s*-?\\s*ODOO_LIST\\(\\s*"?(\\d+)"?\\s*,\\s*"?(\\d+)"?\\s*,\\s*"([^"]+)"\\s*\\)/)
+    if (m) {
+      var listMeta = metadata.lists && metadata.lists[m[1]]
+      info = listMeta && listMeta.columnFormats && listMeta.columnFormats[m[3]]
+      row = Number(m[2])
+    }
+  }
+  if (!info) return
+  if (keepNative && (info.type === "monetary" || info.type === "date" || info.type === "datetime")) return
+  // A monetary list cell: the currency of its record.
+  var format = (info.formats && row && info.formats[row - 1]) || info.format
+  if (format) oRange.SetNumberFormat(format)
+  if (info.align) oRange.SetAlignHorizontal(info.align)
 }
 """
 
@@ -372,7 +387,8 @@ class SpreadsheetDocBuilder:
             "name": name,
         }
         try:
-            list_entry["columnFormats"] = self._formula_evaluator.get_list_column_formats(list_entry)
+            # The currency of each inserted row, as Odoo formats a monetary list cell.
+            list_entry["columnFormats"] = self._formula_evaluator.get_list_column_formats(list_entry, int(threshold))
         except Exception as e:
             _logger.debug("Could not compute column formats for new list %s: %s", new_id, e)
         metadata.setdefault("lists", {})[new_id] = list_entry
