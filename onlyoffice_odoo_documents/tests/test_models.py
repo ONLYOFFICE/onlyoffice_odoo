@@ -165,8 +165,8 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
             access_internal="commenter", access_via_link="custom_filter", partners={partner.id: ("reviewer", None)}
         )
 
-        # Documents itself only knows view/edit: every custom role becomes view there.
-        self.assertEqual((document.access_internal, document.access_via_link), ("view", "view"))
+        # Documents itself only knows view/edit: read-only custom roles become view, custom_filter becomes edit.
+        self.assertEqual((document.access_internal, document.access_via_link), ("view", "edit"))
         self.assertEqual(document.access_ids.filtered(lambda a: a.partner_id == partner).role, "view")
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
         self.assertEqual((access.internal_users, access.link_access), ("commenter", "custom_filter"))
@@ -180,7 +180,8 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
         document.action_update_access_rights(access_via_link="commenter")
 
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
-        self.assertEqual((access.internal_users, access.link_access), ("edit", "commenter"))
+        self.assertEqual((access.internal_users, access.link_access), (False, "commenter"))
+        self.assertEqual(document.access_internal, "edit")
 
     def test_an_editor_invites_a_contact_with_a_custom_role(self):
         document = self._document(access_internal="view")
@@ -196,6 +197,27 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
             [("document_id", "=", document.id), ("user_id", "=", contact.id)]
         )
         self.assertEqual(user_access.role, "commenter")
+
+    def test_standard_roles_are_left_to_odoo(self):
+        """Only roles Odoo has no counterpart for are kept: the panel then shows what Odoo has, kept current."""
+        document = self._document().with_user(self.owner)
+        partner = self.colleague.partner_id
+        document.action_update_access_rights(access_internal="commenter", partners={partner.id: ("reviewer", None)})
+
+        document.action_update_access_rights(
+            access_internal="edit", access_via_link="view", partners={partner.id: ("edit", None)}
+        )
+
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
+        self.assertEqual((access.internal_users, access.link_access), (False, False))
+        self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
+        self.assertEqual((document.access_internal, document.access_via_link), ("edit", "view"))
+
+        document.sudo().access_internal = "view"
+        Sharing = self.env["documents.sharing"].with_user(self.owner)
+        wizard = Sharing.browse(Sharing.action_open(document.ids)["res_id"])
+        self.assertEqual((wizard.access_internal, wizard.access_via_link), ("view", "view"))
+        self.assertEqual(wizard.share_access_ids.filtered(lambda a: a.partner_id == partner).role, "edit")
 
     def test_removing_a_partner_removes_the_custom_role(self):
         document = self._document().with_user(self.owner)

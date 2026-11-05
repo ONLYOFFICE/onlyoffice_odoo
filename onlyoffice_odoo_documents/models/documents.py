@@ -11,6 +11,7 @@ from odoo import api, fields, models
 from odoo.exceptions import AccessError
 
 from ..controllers.spreadsheet_docbuilder import XLSX_MIMETYPE
+from .onlyoffice_odoo_documents import ONLYOFFICE_ONLY_ROLES
 
 _logger = logging.getLogger(__name__)
 
@@ -185,11 +186,13 @@ class Document(models.Model):
         return clean_role in ["commenter", "reviewer", "form_filling", "custom_filter"]
 
     def _convert_custom_role_to_standard(self, role):
-        """Convert custom roles to 'view' for base documents model."""
+        """The right of Odoo behind a custom role: custom filter edits the file, the others view it."""
         if not role:
             return role
         clean_role = role.replace("write_", "") if role.startswith("write_") else role
-        if clean_role in ["commenter", "reviewer", "form_filling", "custom_filter"]:
+        if clean_role == "custom_filter":
+            return "edit"
+        if clean_role in ["commenter", "reviewer", "form_filling"]:
             return "view"
         return role
 
@@ -264,6 +267,11 @@ class Document(models.Model):
         return invited
 
     def _save_onlyoffice_roles(self, access_internal, access_via_link, partners, groups=None):
+        def onlyoffice_role(role):
+            """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""
+            role = role.replace("write_", "") if role and role.startswith("write_") else role
+            return role if role in ONLYOFFICE_ONLY_ROLES else False
+
         for document in self:
             user_accesses = []
             users_to_remove = []
@@ -272,18 +280,18 @@ class Document(models.Model):
                 for partner_id, role_data in partners.items():
                     partner = self.env["res.partner"].browse(int(partner_id))
                     if partner.exists():
-                        if isinstance(role_data, tuple):
+                        if isinstance(role_data, list | tuple):
                             role, expiration_date = role_data
                         else:
                             role = role_data
 
-                        if role is False:
+                        if not onlyoffice_role(role):
                             users_to_remove.append(partner.id)
                         else:
                             user_accesses.append(
                                 {
                                     "user_id": partner.id,
-                                    "role": role,
+                                    "role": onlyoffice_role(role),
                                 }
                             )
 
@@ -292,26 +300,19 @@ class Document(models.Model):
             for group, role_data in (groups or {}).items():
                 group_id = int(group)
                 role = role_data[0] if isinstance(role_data, list | tuple) else role_data
-                if role is False:
+                if not onlyoffice_role(role):
                     groups_to_remove.append(group_id)
                 else:
-                    group_accesses.append({"group_id": group_id, "role": role})
+                    group_accesses.append({"group_id": group_id, "role": onlyoffice_role(role)})
 
-            access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
-
-            # A right left unchanged keeps its ONLYOFFICE role, or the standard one when the document has none yet.
-            if access_internal is not None:
-                internal_to_save = access_internal
-            else:
-                internal_to_save = access.internal_users if access else document.access_internal
-
-            if access_via_link is not None:
-                link_to_save = access_via_link
-            else:
-                link_to_save = access.link_access if access else document.access_via_link
+            access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
+            # A right left unchanged keeps its ONLYOFFICE role.
+            internal_to_save = onlyoffice_role(access_internal) if access_internal else access.internal_users
+            link_to_save = onlyoffice_role(access_via_link) if access_via_link else access.link_access
 
             if (
-                internal_to_save
+                access
+                or internal_to_save
                 or link_to_save
                 or user_accesses
                 or users_to_remove
@@ -320,8 +321,8 @@ class Document(models.Model):
             ):
                 vals = {
                     "document_id": document.id,
-                    "internal_users": internal_to_save or "none",
-                    "link_access": link_to_save or "none",
+                    "internal_users": internal_to_save,
+                    "link_access": link_to_save,
                     "user_accesses": user_accesses,
                     "users_to_remove": users_to_remove,
                     "group_accesses": group_accesses,
