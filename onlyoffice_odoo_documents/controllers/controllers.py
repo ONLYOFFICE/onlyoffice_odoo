@@ -12,7 +12,7 @@ import requests
 from werkzeug.exceptions import Forbidden
 
 from odoo import http
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.json import scriptsafe
 from odoo.tools.translate import _
@@ -244,18 +244,34 @@ class OnlyofficeDocuments_Connector(http.Controller):
             new_name = f"{title}.{target_format}"
 
             if save_to_documents:
-                new_document = request.env["documents.document"].create(
-                    {
-                        "name": new_name,
-                        "raw": converted_data,
-                        "mimetype": file_utils.get_mime_by_ext(target_format)
-                        or (guess_type(new_name)[0] or "application/octet-stream"),
-                        "folder_id": document.folder_id.id,
-                    }
-                )
+                # As "Duplicate" of Odoo: next to the source when the user may create there, otherwise in their
+                # "My Drive", with the access of the source rather than that of the folder.
+                try:
+                    with request.env.cr.savepoint():
+                        new_document = document.copy(
+                            {
+                                "name": new_name,
+                                "lock_uid": False,
+                                "onlyoffice_spreadsheet_source_id": False,
+                                "onlyoffice_spreadsheet_metadata": False,
+                                "onlyoffice_spreadsheet_metadata_checked": False,
+                            }
+                        )
+                        new_document.attachment_id.write(
+                            {
+                                "name": new_name,
+                                "raw": converted_data,
+                                "mimetype": file_utils.get_mime_by_ext(target_format)
+                                or (guess_type(new_name)[0] or "application/octet-stream"),
+                            }
+                        )
+                except (AccessError, UserError):
+                    result["error"] = _("You do not have permission to create documents in this workspace")
+                    return json.dumps(result)
 
                 result["saved"] = True
                 result["document_id"] = new_document.id
+                result["folder_id"] = new_document.folder_id.id
             else:
                 result["saved"] = False
                 result["filename"] = new_name
