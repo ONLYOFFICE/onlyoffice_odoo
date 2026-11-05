@@ -6,7 +6,7 @@
 // function plugin. Everything else in the file is left untouched.
 builder.OpenFile(FILE_URL_PLACEHOLDER)
 
-var patches = PATCHES_PLACEHOLDER // [{sheet, cell, formula}, ...]
+var patches = PATCHES_PLACEHOLDER // [{sheet, index, cell, formula}, ...]
 var metadata = METADATA_PLACEHOLDER
 
 // Shared helpers (columnToLetter, applyOdooColumnFormat) — injected server-side
@@ -14,17 +14,44 @@ var metadata = METADATA_PLACEHOLDER
 // insert_sheet.docbuilder and this file.
 SHARED_HELPERS_PLACEHOLDER
 
+// The sheet of a patch by its name in the export, otherwise by its position (the export may rename a sheet).
+function findSheet(patch) {
+  var ws = null
+  try {
+    ws = Api.GetSheet(patch.sheet)
+  } catch (e) {
+    ws = null
+  }
+  if (!ws && typeof patch.index === "number") {
+    ws = Api.GetSheets()[patch.index] || null
+  }
+  return ws
+}
+
+// A cell formatted as Text ("@") would keep the formula as a string: make it General. Other formats are kept.
+function resetTextFormat(cellRange) {
+  var format = ""
+  try {
+    format = String(cellRange.GetNumberFormat())
+  } catch (e) {
+    format = "@"
+  }
+  if (format.indexOf("@") !== -1) {
+    cellRange.SetNumberFormat("General")
+  }
+}
+
 var i
 for (i = 0; i < patches.length; i++) {
   var patch = patches[i]
   try {
-    var ws = Api.GetSheet(patch.sheet)
+    var ws = findSheet(patch)
     var cellRange = ws.GetRange(patch.cell)
+    resetTextFormat(cellRange)
     cellRange.SetValue(patch.formula)
     applyOdooColumnFormat(cellRange, patch.formula, metadata)
   } catch (e) {
-    // Sheet/cell not found (name changed during native export, etc.) - skip it
-    // rather than failing the whole conversion.
+    // Sheet/cell not found - skip it rather than failing the whole conversion.
   }
 }
 

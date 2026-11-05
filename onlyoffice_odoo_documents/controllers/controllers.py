@@ -538,13 +538,16 @@ class OnlyOfficeShareRoute(ShareRoute):
         return request.redirect("/web#action=documents.document_action&menu_id=documents.menu_root")
 
     @http.route("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", auth="user", methods=["POST"], type="json")
-    def convert_spreadsheet_via_docbuilder(self, document_id, xlsx_base64=None):
+    def convert_spreadsheet_via_docbuilder(
+        self, document_id, xlsx_base64=None, spreadsheet_data=None, sheet_names=None
+    ):
         """Convert an Odoo Spreadsheet to XLSX via ONLYOFFICE, keeping formulas.
 
         ``xlsx_base64`` (a native browser export) is required; only its
         ODOO.* cells are patched. Returns an error if it is missing.
+        ``spreadsheet_data`` and ``sheet_names``: the data and the sheet names of that export.
         """
-        return _docbuilder.convert_spreadsheet_to_xlsx(document_id, xlsx_base64)
+        return _docbuilder.convert_spreadsheet_to_xlsx(document_id, xlsx_base64, spreadsheet_data, sheet_names)
 
     @http.route("/onlyoffice/documents/docbuilder_callback/<string:oo_security_token>", auth="public", methods=["GET"])
     def docbuilder_callback(self, oo_security_token):

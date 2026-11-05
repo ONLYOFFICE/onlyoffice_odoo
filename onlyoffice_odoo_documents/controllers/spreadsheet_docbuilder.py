@@ -45,6 +45,9 @@ _DOCBUILDER_CACHE_TTL_HOURS = 1
 # the mimetype from content and may otherwise detect it as a plain zip file.
 XLSX_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+# A call of an Odoo spreadsheet function: ODOO.LIST(, odoo.pivot.header(, ... (not a part of a longer name).
+_ODOO_CALL = re.compile(r"(?<![\w.])ODOO\.([A-Z][A-Z0-9_.]*)\(", re.IGNORECASE)
+
 
 class _DateTimeEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime objects."""
@@ -218,7 +221,7 @@ class SpreadsheetDocBuilder:
 
     # ── Public entry points (called from controllers.py routes) ─────────────
 
-    def convert_spreadsheet_to_xlsx(self, document_id, xlsx_base64=None):
+    def convert_spreadsheet_to_xlsx(self, document_id, xlsx_base64=None, spreadsheet_data=None, sheet_names=None):
         """Convert an Odoo Spreadsheet to XLSX, keeping formulas.
 
         ``xlsx_base64`` must be a native browser export (with charts and
@@ -226,6 +229,10 @@ class SpreadsheetDocBuilder:
         formula cells back to live ODOO_* formulas. There is no fallback:
         if the caller could not produce a native export, this returns an
         error instead of rebuilding the workbook from scratch.
+
+        ``spreadsheet_data`` is the data the export was made from, the revisions applied: what was inserted since
+        the last snapshot is only in the revisions. ``sheet_names`` are the sheet names of the export. The data
+        only decides which cells become ODOO_* formulas: the formulas read with the rights of whoever opens the file.
         """
         result = {"error": None, "xlsx_id": None}
 
@@ -247,9 +254,11 @@ class SpreadsheetDocBuilder:
                 result["error"] = _("Document is not a spreadsheet")
                 return result
 
-            # Get spreadsheet data with revisions
+            # The session also checks the right to read the spreadsheet; its data is the last snapshot only.
             session_data = document.join_spreadsheet_session()
             snapshot = session_data.get("data", {})
+            if isinstance(spreadsheet_data, dict) and spreadsheet_data.get("sheets"):
+                snapshot = spreadsheet_data
 
             if not snapshot or "sheets" not in snapshot:
                 result["error"] = _("Spreadsheet has no data or invalid structure")
@@ -264,7 +273,8 @@ class SpreadsheetDocBuilder:
             output_filename = f"{document.name}_{timestamp}.xlsx"
 
             # Patch the native export in place.
-            patches = self._build_formula_patches(snapshot)
+            names = [str(name) for name in sheet_names] if isinstance(sheet_names, list) else None
+            patches = self._build_formula_patches(snapshot, names)
             _store_docbuilder_data(
                 oo_security_token,
                 {
@@ -299,24 +309,38 @@ class SpreadsheetDocBuilder:
 
     @staticmethod
     def _convert_odoo_formula(content):
-        """Rewrite '=ODOO.PIVOT(...)' to '=ODOO_PIVOT(...)' (dot to underscore)."""
-        return re.sub(r"ODOO\.([A-Z._]+)(\()", lambda m: "ODOO_" + m.group(1).replace(".", "_") + m.group(2), content)
+        """Rewrite every 'ODOO.X.Y(' call of a formula to 'ODOO_X_Y(', wherever it is in the formula.
 
-    def _build_formula_patches(self, snapshot):
-        """Collect {sheet, cell, formula} for every ODOO.* formula cell in the snapshot."""
+        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function.
+        """
+        if not isinstance(content, str) or not content.startswith("="):
+            return None
+        # Even parts are outside the quotes, odd parts are the quoted texts ("" escapes a quote).
+        parts = re.split(r'("(?:[^"]|"")*")', content)
+        found = False
+        for index in range(0, len(parts), 2):
+            converted, count = _ODOO_CALL.subn(
+                lambda m: "ODOO_" + m.group(1).upper().replace(".", "_") + "(", parts[index]
+            )
+            parts[index] = converted
+            found = found or bool(count)
+        return "".join(parts) if found else None
+
+    def _build_formula_patches(self, snapshot, sheet_names=None):
+        """Collect {sheet, index, cell, formula} for every cell whose formula calls an ODOO function.
+
+        ``sheet_names`` are the names of the sheets as the native export wrote them, in the same order: Excel cuts
+        a name to 31 characters. The index lets the docbuilder find a sheet whose name differs all the same.
+        """
         patches = []
-        for sheet in snapshot.get("sheets", []):
+        for index, sheet in enumerate(snapshot.get("sheets", [])):
             sheet_name = sheet.get("name") or ""
+            if sheet_names and index < len(sheet_names) and sheet_names[index]:
+                sheet_name = sheet_names[index]
             for cell_address, cell_data in sheet.get("cells", {}).items():
-                content = cell_data.get("content", "")
-                if isinstance(content, str) and content.startswith(("=ODOO.", "=-ODOO.")):
-                    patches.append(
-                        {
-                            "sheet": sheet_name,
-                            "cell": cell_address,
-                            "formula": self._convert_odoo_formula(content),
-                        }
-                    )
+                formula = self._convert_odoo_formula(cell_data.get("content", ""))
+                if formula:
+                    patches.append({"sheet": sheet_name, "index": index, "cell": cell_address, "formula": formula})
         return patches
 
     def insert_list(self, document_id, list_data, threshold, name):

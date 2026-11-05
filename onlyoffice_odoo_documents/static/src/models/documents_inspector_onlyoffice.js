@@ -38,7 +38,8 @@ patch(DocumentsInspector.prototype, {
    * Export the spreadsheet with the native o-spreadsheet engine, so charts
    * and other advanced formatting are kept. Throws if the export fails.
    * @param {Number} id documents.document id of the Odoo Spreadsheet.
-   * @returns {Promise<{base64: string, name: string}>}
+   * @returns {Promise<{base64: string, name: string, data: Object, sheetNames: string[]}>} the file, and the data
+   * it was made from (revisions applied) with its sheet names as the export wrote them.
    */
   async _exportSpreadsheetNativeXlsx(id) {
     await loadBundle("spreadsheet.o_spreadsheet")
@@ -76,9 +77,18 @@ patch(DocumentsInspector.prototype, {
       reader.onerror = reject
       reader.readAsDataURL(xlsxBlob)
     })
+    // Sheet names as written in the file: Excel cuts a name to 31 characters.
+    const workbook = xlsxData.files.find((file) => file.path === "xl/workbook.xml")
+    let sheetNames = []
+    if (workbook) {
+      const workbookXml = new DOMParser().parseFromString(workbook.content, "application/xml")
+      sheetNames = Array.from(workbookXml.getElementsByTagName("sheet"), (sheet) => sheet.getAttribute("name"))
+    }
     return {
       base64,
+      data: model.exportData(),
       name: record.name,
+      sheetNames,
     }
   },
 
@@ -108,8 +118,11 @@ patch(DocumentsInspector.prototype, {
       // ODOO.* cells into it. There is no fallback: if the native export
       // fails, the conversion fails.
       const nativeExport = await this._exportSpreadsheetNativeXlsx(id)
+      // The data with the revisions: what was inserted since the last snapshot is only there.
       const payload = {
         document_id: id,
+        sheet_names: nativeExport.sheetNames,
+        spreadsheet_data: nativeExport.data,
         xlsx_base64: nativeExport.base64,
       }
       const result = await this.env.services.rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", payload)
