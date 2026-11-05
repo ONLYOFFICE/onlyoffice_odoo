@@ -186,11 +186,13 @@ class Document(models.Model):
         return clean_role in ["commenter", "reviewer", "form_filling", "custom_filter"]
 
     def _convert_custom_role_to_standard(self, role):
-        """Convert custom roles to 'view' for base documents model."""
+        """The right of Odoo behind a custom role: custom filter edits the file, the others view it."""
         if not role:
             return role
         clean_role = role.replace("write_", "") if role.startswith("write_") else role
-        if clean_role in ["commenter", "reviewer", "form_filling", "custom_filter"]:
+        if clean_role == "custom_filter":
+            return "edit"
+        if clean_role in ["commenter", "reviewer", "form_filling"]:
             return "view"
         return role
 
