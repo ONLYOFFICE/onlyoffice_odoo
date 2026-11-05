@@ -108,6 +108,47 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         )
         self.assertEqual(self._editor("oo_doc_colleague", document), ("edit", {"edit": True}))
 
+    def _group(self, name):
+        return self.env["res.group.functional"].create({"name": name, "user_ids": [(6, 0, self.colleague.ids)]})
+
+    def test_the_widest_role_of_the_groups_of_a_colleague(self):
+        config_utils.set_jwt_secret(self.env, "ds-secret")
+        cases = {
+            "view and edit": (["view", "edit"], ("edit", {"edit": True})),
+            "view and commenter": (["view", "commenter"], ("edit", {"edit": False, "comment": True})),
+            "view only": (["view"], ("view", {"edit": False})),
+        }
+        for case, (roles, result) in cases.items():
+            with self.subTest(case=case):
+                document = self._read_only_document()
+                groups = {self._group(f"OO {case} {i}").id: (role, None) for i, role in enumerate(roles)}
+                document.with_user(self.owner).action_update_access_rights(groups=groups)
+                self.assertEqual(self._editor("oo_doc_colleague", document), result)
+
+    def test_the_role_of_a_colleague_comes_before_that_of_their_groups(self):
+        document = self._read_only_document()
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("commenter", None)},
+            groups={self._group("OO Editors").id: ("edit", None)},
+        )
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("edit", {"edit": False, "comment": True}))
+
+    def test_an_expired_or_turned_off_group_gives_no_role(self):
+        config_utils.set_jwt_secret(self.env, "ds-secret")
+        expired, viewers = self._group("OO Expired"), self._group("OO Viewers")
+        document = self._read_only_document()
+        document.with_user(self.owner).action_update_access_rights(
+            groups={expired.id: ("commenter", None), viewers.id: ("view", None)}
+        )
+        document.access_ids.filtered(lambda a: a.group_id == expired).sudo().expiration_date = "2020-01-01 00:00:00"
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("view", {"edit": False}))
+
+        # "none" turns ONLYOFFICE off only when every group of the colleague has it.
+        AccessGroup = self.env["onlyoffice.odoo.documents.access.group"]
+        AccessGroup.search([("document_id", "=", document.id)]).unlink()
+        AccessGroup.create({"document_id": document.id, "group_id": viewers.id, "role": "none"})
+        self.assertEqual(self._editor("oo_doc_colleague", document), "odoo.exceptions.AccessError")
+
     def test_an_expired_invitation_gives_no_role(self):
         config_utils.set_jwt_secret(self.env, "ds-secret")
         document = self._read_only_document()
@@ -223,7 +264,7 @@ class TestDocumentSave(DocumentsCase, HttpCase):
 
         self.assertEqual(response.json(), {"error": 0})
         self.env.invalidate_all()
-        self.assertEqual(document.attachment_id.raw, b"commented")
+        self.assertEqual(document.attachment_id.raw.content, b"commented")
         self.assertEqual(document.write_uid, self.colleague, "the user stays the author")
         self.assertIn("Document edited by OO Colleague", document.message_ids.mapped("body")[0])
 
@@ -240,7 +281,7 @@ class TestDocumentSave(DocumentsCase, HttpCase):
 
                 self.assertEqual((response.status_code, response.json()["error"]), (500, 1))
                 self.env.invalidate_all()
-                self.assertEqual(document.attachment_id.raw, blank("docx"))
+                self.assertEqual(document.attachment_id.raw.content, blank("docx"))
 
     def test_save_by_a_viewer_is_rejected(self):
         document = self._document()
@@ -428,7 +469,7 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
                 self.assertTrue(result.get("saved"), result)
                 converted = Document.browse(result["document_id"])
                 self.assertEqual((converted.folder_id, converted.owner_id), (Document, owner))
-                self.assertEqual((converted.name, converted.raw), ("Report.pdf", b"%PDF-1.7 converted"))
+                self.assertEqual((converted.name, converted.raw.content), ("Report.pdf", b"%PDF-1.7 converted"))
                 self.assertEqual(converted.mimetype, "application/pdf")
 
     def test_converted_copy_gets_the_access_of_the_source(self):
