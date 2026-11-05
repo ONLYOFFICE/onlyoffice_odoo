@@ -1,0 +1,40 @@
+// Read the formulas of an XLSX that call an Odoo function (ODOO_*), for "Freeze and share": the server computes
+// their values with the rights of the user and writes them back with freeze_formulas.docbuilder. The Document
+// Builder gives the formula of each cell, a shared (dragged) formula included. The result is returned as the text
+// of a document: [{s: sheet index, c: cell, f: formula}, ...].
+builder.OpenFile(FILE_URL_PLACEHOLDER)
+
+var found = []
+var sheets = Api.GetSheets()
+var s
+for (s = 0; s < sheets.length; s++) {
+  var ws = sheets[s]
+  if (ws.GetName() === "_OdooMetadata") {
+    continue
+  }
+  var used = ws.GetUsedRange()
+  if (!used) {
+    continue
+  }
+  used.ForEach(function (cell) {
+    var formula = ""
+    try {
+      formula = String(cell.GetFormula() || "")
+    } catch (e) {
+      formula = ""
+    }
+    if (formula.charAt(0) === "=" && /ODOO_/i.test(formula)) {
+      found.push({ s: s, c: cell.GetAddress(false, false, "xlA1", false), f: formula })
+    }
+  })
+}
+GlobalVariable["json"] = JSON.stringify(found)
+builder.CloseFile()
+
+builder.CreateFile("docx")
+var oDocument = Api.GetDocument()
+var oParagraph = oDocument.GetElement(0)
+oParagraph.AddText(GlobalVariable["json"])
+Api.Save()
+builder.SaveFile("txt", "formulas.txt")
+builder.CloseFile()

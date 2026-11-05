@@ -23,6 +23,16 @@
           <i class="fa fa-exchange" role="img" aria-label="Convert to ONLYOFFICE XLSX" />
         </button>
       </t>
+      <t t-if="canOnlyofficeFreeze(records)">
+        <button
+          class="btn fa o_inspector_button"
+          t-on-click="freezeAndShareSpreadsheet.bind(this, records[0].data.id)"
+          title="Freeze and share"
+          t-att-disabled="locked"
+        >
+          <i class="fa fa-snowflake-o" role="img" aria-label="Freeze and share" />
+        </button>
+      </t>
     </xpath>
   </t>
 </templates>

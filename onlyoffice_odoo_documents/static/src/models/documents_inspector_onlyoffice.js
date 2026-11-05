@@ -7,6 +7,7 @@ import { formatDateTime } from "@web/core/l10n/dates"
 import { _t } from "@web/core/l10n/translation"
 import { useService } from "@web/core/utils/hooks"
 import { patch } from "@web/core/utils/patch"
+import { FormViewDialog } from "@web/views/view_dialogs/form_view_dialog"
 
 const { DateTime } = luxon
 
@@ -31,6 +32,7 @@ patch(DocumentsInspector.prototype, {
     this.notification = useService("notification")
     this.actionService = useService("action")
     this.ui = useService("ui")
+    this.dialog = useService("dialog")
     this.onlyofficeEditorUrl = this.onlyofficeEditorUrl.bind(this)
   },
 
@@ -111,6 +113,9 @@ patch(DocumentsInspector.prototype, {
     await docModel.load()
     docModel.notify()
   },
+  canOnlyofficeFreeze(records) {
+    return records.length === 1 && Boolean(records[0].data.onlyoffice_can_freeze)
+  },
   async convertSpreadsheetViaDocBuilder(id) {
     this.ui.block({ message: _t("Converting spreadsheet to XLSX via ONLYOFFICE...") })
     try {
@@ -143,6 +148,47 @@ patch(DocumentsInspector.prototype, {
     } finally {
       this.ui.unblock()
     }
+  },
+  /**
+   * "Freeze and share" of an XLSX with Odoo formulas, as Odoo freezes a spreadsheet: a read-only copy with the
+   * values the user sees now, then the share dialog of Documents for that copy.
+   * @param {Number} id documents.document id of the XLSX.
+   */
+  async freezeAndShareSpreadsheet(id) {
+    const orm = this.env.services.orm
+    this.ui.block({ message: _t("Freezing the spreadsheet...") })
+    const frozen = await orm
+      .call("documents.document", "action_onlyoffice_freeze_and_copy", [[id]])
+      .finally(() => this.ui.unblock())
+    await this._refreshDocumentsFolder()
+    // As "Share" of Documents: a share of the frozen copy, its link copied once saved, dropped when cancelled.
+    const action = await orm.call("documents.share", "open_share_popup", [
+      {
+        document_ids: [[6, 0, [frozen.id]]],
+        folder_id: frozen.folder_id,
+        type: "ids",
+      },
+    ])
+    let saved = false
+    this.dialog.add(
+      FormViewDialog,
+      {
+        onRecordSaved: async (record) => {
+          saved = true
+          await navigator.clipboard.writeText(record.data.full_url)
+          this.notification.add(_t("The share url has been copied to your clipboard."), { type: "success" })
+        },
+        resId: action.res_id,
+        resModel: "documents.share",
+      },
+      {
+        onClose: async () => {
+          if (!saved) {
+            await orm.unlink("documents.share", [action.res_id])
+          }
+        },
+      },
+    )
   },
   isOdooSpreadsheet(records) {
     return records.length === 1 && records[0].data.handler === "spreadsheet"

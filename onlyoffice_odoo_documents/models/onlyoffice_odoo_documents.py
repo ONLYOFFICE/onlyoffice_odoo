@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ascensio System SIA
 
 from odoo import _, api, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 
 # ONLYOFFICE roles that save the file (edits, comments, review, filled forms); they need the right to write in Odoo.
 SAVING_ROLES = ("editor", "custom_filter", "commenter", "reviewer", "form_filling")
@@ -17,8 +17,14 @@ class OnlyofficeDocuments(models.Model):
 
         ONLYOFFICE roles are added to the rights of Odoo: a role that saves the file works only with the right to
         write in Odoo (``can_write``), otherwise the user views. Without a role of their own and without a role for
-        internal users, the rights of Odoo decide.
+        internal users, the rights of Odoo decide. A frozen spreadsheet is only viewed.
         """
+        role = self._get_role_within_odoo_rights(document, user, can_write)
+        return "viewer" if document.onlyoffice_frozen and role != "none" else role
+
+    @api.model
+    def _get_role_within_odoo_rights(self, document, user, can_write):
+        """The role of ``_get_user_role`` before the frozen rule."""
 
         def within_odoo_rights(role):
             return "viewer" if role in SAVING_ROLES and not can_write else role
@@ -142,6 +148,12 @@ class OnlyofficeDocuments(models.Model):
         document = self.env["documents.document"].browse(document_id)
         if not is_admin and document.owner_id != self.env.user:
             raise AccessError(_("Only the owner or administrator can share documents."))
+
+        if document.onlyoffice_frozen:
+            roles = [vals.get("internal_users"), vals.get("link_access")]
+            roles += [user_access.get("role") for user_access in vals.get("user_accesses", [])]
+            if any(role not in (False, None, "", "viewer", "none") for role in roles):
+                raise UserError(_("The frozen spreadsheets are readonly."))
 
         # Roles are read-only for users: they are changed only here, after the check above.
         Access = self.env["onlyoffice.odoo.documents.access"].sudo()

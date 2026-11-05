@@ -7,8 +7,9 @@ import zipfile
 from io import BytesIO
 from xml.etree import ElementTree as ET
 
-from odoo import api, fields, models
-from odoo.exceptions import AccessError
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError, UserError
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 from ..controllers.spreadsheet_docbuilder import XLSX_MIMETYPE
 
@@ -102,6 +103,117 @@ class Document(models.Model):
         help="True once we looked for embedded ODOO metadata in this file's hidden sheet",
     )
 
+    onlyoffice_frozen = fields.Boolean(
+        string="Frozen by ONLYOFFICE",
+        readonly=True,
+        copy=False,
+        help="A read-only copy of an XLSX with Odoo data: the values of its formulas, frozen by 'Freeze and share'",
+    )
+
+    onlyoffice_can_freeze = fields.Boolean(
+        compute="_compute_onlyoffice_can_freeze",
+        help="An XLSX that may have Odoo formulas (or not looked at yet), and not a frozen copy",
+    )
+
+    @api.depends(
+        "mimetype",
+        "onlyoffice_frozen",
+        "onlyoffice_spreadsheet_metadata",
+        "onlyoffice_spreadsheet_source_id",
+        "onlyoffice_spreadsheet_metadata_checked",
+    )
+    def _compute_onlyoffice_can_freeze(self):
+        for document in self:
+            has_odoo_data = (
+                document.onlyoffice_spreadsheet_metadata
+                or document.onlyoffice_spreadsheet_source_id
+                or not document.onlyoffice_spreadsheet_metadata_checked
+            )
+            document.onlyoffice_can_freeze = bool(
+                document.type == "binary"
+                and document.mimetype == XLSX_MIMETYPE
+                and not document.onlyoffice_frozen
+                and has_odoo_data
+            )
+
+    def write(self, vals):
+        # As Odoo for a frozen spreadsheet: the file of a frozen copy is not replaced.
+        if not self.env.su and {"datas", "raw", "attachment_id"} & set(vals) and any(self.mapped("onlyoffice_frozen")):
+            raise UserError(_("You can not edit a frozen spreadsheet"))
+        return super().write(vals)
+
+    def action_onlyoffice_freeze_and_copy(self):
+        """Freeze an XLSX with Odoo formulas into a read-only copy, as "Freeze and share" of Odoo Spreadsheet.
+
+        The formulas of the copy become their values, computed now with the rights of the user. The copy goes into
+        the child workspace "Frozen spreadsheets" of the workspace of the source, readable by whoever reads that one,
+        writable by nobody (Documents managers aside). Returns the copy and its workspace, to share it.
+        """
+        self.ensure_one()
+        self.env["documents.document"].check_access_rights("create")
+        self.check_access_rights("read")
+        self.check_access_rule("read")
+        if not self.folder_id.has_write_access:
+            raise AccessError(_("You are not allowed to freeze spreadsheets in Company"))
+        if self.onlyoffice_frozen:
+            raise UserError(_("A frozen spreadsheet can not be frozen again"))
+        if self.type != "binary" or self.mimetype != XLSX_MIMETYPE:
+            raise UserError(_("Only an XLSX file with Odoo data can be frozen"))
+        # Metadata of a file not opened yet; a technical field, read from the file itself.
+        self.sudo()._ensure_onlyoffice_spreadsheet_metadata()
+        if not (self.onlyoffice_spreadsheet_metadata or self.onlyoffice_spreadsheet_source_id):
+            raise UserError(_("This file has no Odoo data to freeze"))
+
+        from ..controllers.controllers import _docbuilder  # noqa: PLC0415 - the controllers import this module
+
+        content = _docbuilder.freeze_spreadsheet(self)
+        folder = self._get_onlyoffice_frozen_folder()
+        name = _(
+            "Frozen at %(date)s: %(name)s",
+            date=fields.Date.today().strftime(DEFAULT_SERVER_DATE_FORMAT),
+            name=self.name,
+        )
+        frozen = (
+            self.env["documents.document"]
+            .sudo()
+            .create(
+                {
+                    "name": name,
+                    "folder_id": folder.id,
+                    "owner_id": self.env.user.id,
+                    "partner_id": self.partner_id.id,
+                    "raw": content,
+                    "mimetype": XLSX_MIMETYPE,
+                    "onlyoffice_frozen": True,
+                    "onlyoffice_spreadsheet_metadata_checked": True,
+                }
+            )
+        )
+        return {"id": frozen.id, "folder_id": folder.id}
+
+    def _get_onlyoffice_frozen_folder(self):
+        """The child workspace "Frozen spreadsheets" of the workspace of the document, created once.
+
+        Readable by the groups that read or write the source workspace (everybody when it has none), writable by
+        nobody but Documents managers: Documents 17 gives rights by workspace only.
+        """
+        source = self.folder_id
+        Folder = self.env["documents.folder"].sudo()
+        folder = Folder.search([("parent_folder_id", "=", source.id), ("onlyoffice_frozen_folder", "=", True)], limit=1)
+        if folder:
+            return folder
+        readers = source.group_ids | source.read_group_ids or self.env.ref("base.group_user")
+        return Folder.create(
+            {
+                "name": _("Frozen spreadsheets"),
+                "parent_folder_id": source.id,
+                "company_id": source.company_id.id,
+                "read_group_ids": [(6, 0, readers.ids)],
+                "group_ids": [(5, 0, 0)],
+                "onlyoffice_frozen_folder": True,
+            }
+        )
+
     def _ensure_onlyoffice_spreadsheet_metadata(self):
         """Recover metadata from the hidden `_OdooMetadata` sheet, once per document.
 
@@ -176,3 +288,13 @@ class Document(models.Model):
                 record.thumbnail = False
                 record.thumbnail_status = False
         return res
+
+
+class Folder(models.Model):
+    _inherit = "documents.folder"
+
+    onlyoffice_frozen_folder = fields.Boolean(
+        readonly=True,
+        copy=False,
+        help="The workspace of the spreadsheets frozen by ONLYOFFICE 'Freeze and share' in its parent workspace",
+    )

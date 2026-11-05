@@ -72,7 +72,8 @@ def _get_share_link_role(document, user):
         )
         if access_user.role and access_user.role != "none":
             role = access_user.role
-    return role
+    # A frozen spreadsheet is only viewed.
+    return "viewer" if document.onlyoffice_frozen and role != "none" else role
 
 
 def _validate_document_for_convert(document, save_to_documents=False):
