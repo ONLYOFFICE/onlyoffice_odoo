@@ -17,16 +17,23 @@ function addMissingListSort(data) {
 }
 
 /**
- * The data with the revisions applied; when Odoo cannot export it, nothing: the server then takes the last snapshot.
+ * The data with the revisions applied. When Odoo cannot export it, no data and the failure: the server then takes the
+ * last saved snapshot, and the caller tells the user what that means for the file.
  * @param {Object} model the spreadsheet model.
- * @returns {Object|undefined} the data, or undefined. // eslint-disable-line jsdoc/check-types
+ * @returns {{data: Object|undefined, dataExportFailed: boolean}} the data, or the failure.
  */
-function exportDataOrNothing(model) {
+function exportSpreadsheetData(model) {
   try {
-    return model.exportData()
+    return {
+      data: model.exportData(),
+      dataExportFailed: false,
+    }
   } catch (error) {
     console.warn("The spreadsheet data could not be exported, the last snapshot is used:", error)
-    return undefined
+    return {
+      data: undefined,
+      dataExportFailed: true,
+    }
   }
 }
 
@@ -35,8 +42,9 @@ function exportDataOrNothing(model) {
  * and other advanced formatting are kept. Throws if the export fails.
  * @param {Object} env the environment of the component that exports.
  * @param {Number} id documents.document id of the Odoo Spreadsheet.
- * @returns {Promise<{base64: string, name: string, data: Object, sheetNames: string[]}>} the file, and the data
- * it was made from (revisions applied) with its sheet names as the export wrote them.
+ * @returns {Promise<{base64: string, name: string, data: Object, dataExportFailed: boolean, sheetNames: string[]}>}
+ * the file, and the data it was made from (revisions applied; undefined with dataExportFailed when Odoo could not
+ * export it) with its sheet names as the export wrote them.
  */
 export async function exportSpreadsheetNativeXlsx(env, id) {
   await loadBundle("spreadsheet.o_spreadsheet")
@@ -84,7 +92,7 @@ export async function exportSpreadsheetNativeXlsx(env, id) {
   }
   return {
     base64,
-    data: exportDataOrNothing(model),
+    ...exportSpreadsheetData(model),
     name: record.name,
     sheetNames,
   }
