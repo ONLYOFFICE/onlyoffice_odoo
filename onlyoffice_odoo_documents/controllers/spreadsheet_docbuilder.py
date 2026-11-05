@@ -333,6 +333,10 @@ class SpreadsheetDocBuilder:
         columns = list_data.get("columns", [])
         if not columns:
             return {"error": "No columns provided"}
+        field_names = [col.get("name") if isinstance(col, dict) else str(col) for col in columns]
+        error = self._check_readable(list_data.get("model", ""), field_names)
+        if error:
+            return {"error": error}
 
         # Add the new list definition to metadata (lists and pivots share the ID space)
         metadata, new_id = self._load_metadata_with_new_id(document)
@@ -365,6 +369,10 @@ class SpreadsheetDocBuilder:
         measures = pivot_data.get("measures") or ["__count"]
         row_group_bys = pivot_data.get("rowGroupBys") or []
         col_group_bys = pivot_data.get("colGroupBys") or []
+        measure_names = self._formula_evaluator._get_measures({"measures": measures})
+        error = self._check_readable(pivot_data["model"], measure_names + row_group_bys + col_group_bys)
+        if error:
+            return {"error": error}
 
         # Add the new pivot definition to metadata (lists and pivots share the ID space)
         metadata, new_id = self._load_metadata_with_new_id(document)
@@ -584,6 +592,17 @@ class SpreadsheetDocBuilder:
             return None, "Document not found or has no attachment"
         return document, None
 
+    def _check_readable(self, model_name, field_specs):
+        """Return an error unless the user may read the model and its fields, as Odoo requires to insert them."""
+        if model_name not in request.env:
+            return "Unknown model"
+        try:
+            model = self._formula_evaluator._data_model(model_name)
+            self._formula_evaluator._check_fields(model, *field_specs)
+        except AccessError as e:
+            return str(e).splitlines()[0]
+        return None
+
     @staticmethod
     def _load_metadata_with_new_id(document):
         """Load existing metadata and allocate the next free list/pivot ID.
@@ -614,7 +633,7 @@ class SpreadsheetDocBuilder:
         labels, then one row per row group path (parents before children,
         like the Odoo pivot view) and a final Total row.
         """
-        model = request.env[pivot_data["model"]].sudo()
+        model = request.env[pivot_data["model"]]
         domain = self._formula_evaluator.parse_and_resolve_domain(pivot_data.get("domain", []))
 
         col_paths = self._pivot_group_paths(model, domain, col_group_bys)

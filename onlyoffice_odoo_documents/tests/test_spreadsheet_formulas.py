@@ -3,10 +3,11 @@
 
 import json
 from datetime import datetime
+from unittest.mock import patch
 
 from odoo import fields
 from odoo.tests import tagged
-from odoo.tests.common import TransactionCase
+from odoo.tests.common import TransactionCase, new_test_user
 
 from odoo.addons.onlyoffice_odoo.tests.common import known_bug
 from odoo.addons.onlyoffice_odoo_documents.controllers.spreadsheet_formulas import (
@@ -293,6 +294,71 @@ class TestFormulaEvaluator(TransactionCase):
             self.evaluator.get_pivot_column_formats(self.snapshot["pivots"]["2"]),
             {"__count": {"format": "#,##0", "align": "right"}, "color": {"format": "#,##0", "align": "right"}},
         )
+
+
+@tagged("post_install", "-at_install")
+class TestFormulaAccess(TransactionCase):
+    """The formulas read with the rights of the user who opens the file, as Odoo Spreadsheet does."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = new_test_user(cls.env, login="oo_formula_user", groups="base.group_user")
+        Partner = cls.env["res.partner"]
+        Partner.create([{"name": "Alpha Corp", "color": 3, "ref": REF}, {"name": "Beta Corp", "color": 5, "ref": REF}])
+        pivot = {"model": "res.partner", "rowGroupBys": [], "colGroupBys": []}
+        cls.snapshot = {
+            "lists": {
+                "1": {"model": "ir.config_parameter", "domain": [], "columns": ["key"]},
+                "2": {"model": "res.partner", "domain": [["ref", "=", REF]], "columns": ["name", "color"]},
+                "3": {"model": "res.partner", "domain": [["ref", "=", REF], ["color", ">", 4]], "columns": ["name"]},
+            },
+            "pivots": {
+                "4": {**pivot, "domain": [["ref", "=", REF]], "measures": [{"field": "color"}]},
+                "5": {**pivot, "domain": [["ref", "=", REF]], "measures": [{"field": "__count"}]},
+                "6": {**pivot, "domain": "[('id', '=', user.id)]", "measures": [{"field": "__count"}]},
+            },
+        }
+
+    def setUp(self):
+        super().setUp()
+        request = fake_request(self.env(user=self.user))
+        request.__enter__()
+        self.addCleanup(request.__exit__, None, None, None)
+        # A field the user may not read, as a field with groups in Odoo.
+        groups = patch.object(self.env["res.partner"]._fields["color"], "groups", "base.group_system")
+        groups.start()
+        self.addCleanup(groups.stop)
+        self.evaluator = SpreadsheetFormulaEvaluator()
+
+    def _eval(self, formula):
+        return self.evaluator.evaluate_single_formula(self.snapshot, formula)
+
+    def test_a_model_or_a_field_the_user_cannot_read_gives_an_error(self):
+        formulas = [
+            '=ODOO_LIST(1,1,"key")',
+            '=ODOO_LIST_HEADER(1,"key")',
+            '=ODOO_LIST(2,1,"color")',
+            '=ODOO_LIST_HEADER(2,"color")',
+            '=ODOO_PIVOT(4,"color")',
+            '=ODOO_PIVOT(5,"__count","color","3")',
+            '=ODOO_PIVOT_HEADER(5,"color","3")',
+        ]
+        for formula in formulas:
+            with self.subTest(formula=formula):
+                self.assertRegex(str(self._eval(formula)), "^#ERROR: ")
+
+    def test_a_domain_on_a_field_the_user_cannot_read_gives_an_error(self):
+        """Odoo checks the fields of a search domain too: a filter must not reveal a hidden value."""
+        self.assertRegex(self._eval('=ODOO_LIST(3,1,"name")'), "^#ERROR: ")
+
+    def test_what_the_user_can_read_is_evaluated(self):
+        self.assertEqual(self._eval('=ODOO_LIST(2,1,"name")'), "Alpha Corp")
+        self.assertEqual(self._eval('=ODOO_PIVOT(5,"__count")'), 2)
+
+    def test_a_domain_gets_no_records_to_evaluate(self):
+        """A record such as the user would give the expression the whole environment, sudo() included."""
+        self.assertRegex(self._eval('=ODOO_PIVOT(6,"__count")'), "^#ERROR: Invalid domain")
 
 
 @tagged("post_install", "-at_install")

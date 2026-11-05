@@ -119,7 +119,7 @@ class TestShareLink(DocumentsCase, HttpCase):
 
     def test_document_opened_from_its_shared_folder(self):
         folder = self._shared_folder()
-        child = self._document(folder_id=folder.id, access_via_link="view")
+        child = self._document(folder_id=folder.id, access_via_link="edit")
         self._roles(folder, link_access="edit")
 
         config = self._config(child, folder)
@@ -127,6 +127,34 @@ class TestShareLink(DocumentsCase, HttpCase):
         self.assertEqual(config["editorConfig"]["mode"], "edit")
         self.assertTrue(config["editorConfig"]["callbackUrl"].endswith(f"?folder_token={folder.access_token}"))
         self.assertEqual(self._open(self.shared, folder).status_code, 404, "not a child of that folder")
+
+    def test_on_the_folder_page_a_document_keeps_its_own_role_at_most_that_of_the_folder(self):
+        cases = {
+            # (folder link, document link): mode
+            ("edit", "view"): "view",
+            ("edit", "commenter"): "edit",
+            ("view", "edit"): "view",
+        }
+        for (folder_role, document_role), mode in cases.items():
+            with self.subTest(folder=folder_role, document=document_role):
+                folder = self._shared_folder()
+                self._roles(folder, link_access=folder_role)
+                child = self._document(folder_id=folder.id, access_via_link="view")
+                self._roles(child, link_access=document_role)
+
+                config = self._config(child, folder)
+
+                self.assertEqual(config["editorConfig"]["mode"], mode)
+                self.assertEqual("callbackUrl" in config["editorConfig"], mode == "edit")
+
+    def test_without_onlyoffice_roles_the_link_of_odoo_decides(self):
+        document = self._document(access_via_link="edit")
+
+        config = self._config(document)
+
+        self.assertEqual((config["editorConfig"]["mode"], config["document"]["permissions"]), ("edit", {"edit": True}))
+        self.assertEqual(self._save(document, self.public_user).json(), {"error": 0})
+        self.assertEqual(self._raw(document), b"edited through the link")
 
     # -- POST /onlyoffice/documents/share/callback/<access_token>/<oo_security_token> --
 
@@ -142,6 +170,17 @@ class TestShareLink(DocumentsCase, HttpCase):
         self._roles(self.shared, link_access="view", colleague="edit")
         self.assertEqual(self._save(self.shared, self.colleague).json(), {"error": 0})
         self.assertEqual(self._raw(self.shared), b"edited through the link")
+
+    def test_every_role_that_gets_a_callback_saves(self):
+        files = {"edit": "Report.docx", "commenter": "Report.docx", "reviewer": "Report.docx"}
+        files.update({"form_filling": "Form.pdf", "custom_filter": "Sheet.xlsx"})
+        for role, name in files.items():
+            with self.subTest(role=role):
+                document = self._document(name, access_via_link="view")
+                self._roles(document, link_access=role)
+                self.assertIn("callbackUrl", self._config(document)["editorConfig"])
+                self.assertEqual(self._save(document, self.public_user).json(), {"error": 0})
+                self.assertEqual(self._raw(document), b"edited through the link")
 
     def test_view_link_cannot_save(self):
         self._roles(self.shared, link_access="view", owner="edit")

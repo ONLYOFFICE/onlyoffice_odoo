@@ -1,11 +1,9 @@
 // Copyright (C) 2026 Ascensio System SIA
 // Links of the Documents app (Share → "Access through link" → Copy Links) opened by a visitor and by the "demo" user.
 // The administrator generates every link through the Share panel; the rights are read from the editor config.
-// Tests of known bugs expect the correct behaviour and are marked as failing (see knownBug); E2E_STRICT=1 runs them as
-// plain tests, to see how they fail.
 import type { Page } from "@playwright/test"
 
-import { expect, knownBug, test } from "../fixtures"
+import { expect, test } from "../fixtures"
 import { contextOf, demoUser, newDocument, newFolder, openedEditor, shareByLink } from "../helpers/documents"
 import type { Odoo } from "../helpers/odoo"
 
@@ -31,7 +29,7 @@ const LINK_ROLES: [Role, string][] = [
   ["form_filling", "pdf"],
 ]
 
-/** Link roles followed by demo: the same bug refuses them all, a read-only and an edit role are enough. */
+/** Link roles followed by demo: a read-only and an edit role are enough. */
 const DEMO_LINK_ROLES: [Role, string][] = [
   ["view", "docx"],
   ["edit", "docx"],
@@ -94,7 +92,6 @@ for (const [role, ext] of DEMO_LINK_ROLES) {
     browser,
     odoo,
   }) => {
-    knownBug("the backend editor ignores the link role, an internal user gets 403")
     const marker = `E2E-demo-link-${role}-${Date.now()}`
     const name = `${marker}.${ext}`
     const folderId = await privateFolder(odoo, marker)
@@ -179,7 +176,6 @@ for (const role of ["view", "commenter"] as const) {
     browser,
     odoo,
   }) => {
-    knownBug("opened from the folder page, a document gets the folder role instead of its own")
     const marker = `E2E-own-${role}-${Date.now()}`
     const { folderId, folderLink } = await sharedFolderWithDocument(page, odoo, marker)
     await shareByLink(page, odoo, folderId, `${marker}.docx`, role)
@@ -200,7 +196,6 @@ test("the link of a document that inherits edit from its shared folder opens wit
   browser,
   odoo,
 }) => {
-  knownBug("without its own ONLYOFFICE role, a document link always opens read-only")
   const marker = `E2E-inherited-${Date.now()}`
   const { folderId } = await sharedFolderWithDocument(page, odoo, marker)
   const link = await shareByLink(page, odoo, folderId, `${marker}.docx`) // Copy Links, rights unchanged

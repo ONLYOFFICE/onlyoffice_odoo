@@ -189,6 +189,22 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
         )["result"]
         self.assertEqual(pivot, {"error": "No model provided"})
 
+    def test_insert_needs_the_right_to_read_the_model_and_its_fields(self):
+        document = self._xlsx()
+        self.authenticate("oo_doc_owner", "oo_doc_owner")
+        pivot_data = {"model": "res.partner", "measures": ["color"], "rowGroupBys": [], "colGroupBys": []}
+        mock, payloads = self._docbuilder()
+        with mock, patch.object(self.env["res.partner"]._fields["color"], "groups", "base.group_system"):
+            self.assertIn("error", self._insert_list(document, model="ir.config_parameter", columns=["key"]))
+            self.assertIn("error", self._insert_list(document, columns=["name", "color"]))
+            pivot = self._rpc(
+                "/onlyoffice/documents/insert_pivot_in_xlsx", document_id=document.id, pivot_data=pivot_data
+            )["result"]
+            self.assertIn("error", pivot)
+        self.assertFalse(payloads, "nothing is sent to the docbuilder")
+        self.env.invalidate_all()
+        self.assertFalse(document.onlyoffice_spreadsheet_metadata)
+
     def test_failed_rebuild_leaves_the_xlsx_unchanged(self):
         document = self._xlsx()
         self.authenticate("oo_doc_owner", "oo_doc_owner")

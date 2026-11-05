@@ -14,7 +14,7 @@ from urllib.request import urlopen
 import requests
 from werkzeug.exceptions import Forbidden
 
-from odoo import _, fields, http
+from odoo import _, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.json import scriptsafe
@@ -219,7 +219,15 @@ class OnlyofficeConnector(http.Controller):
                 raise ValueError(_("Attachment not found"))
 
             attachment._can_return_content(access_token=access_token)
-            attachment.has_access("write")
+            # The record itself: for a document, the right to write it in Odoo, or a commenting ONLYOFFICE role that
+            # saves with the right to read it.
+            save_as_superuser = False
+            try:
+                attachment.check_access("write")
+            except AccessError:
+                if not self._saves_with_read_access(attachment, user):
+                    raise
+                save_as_superuser = True
 
             if jwt_utils.is_jwt_enabled(request.env):
                 token = body.get("token")
@@ -245,9 +253,11 @@ class OnlyofficeConnector(http.Controller):
                 datas = onlyoffice_urlopen(file_url).read()
                 if attachment.res_model == "documents.document":
                     datas = base64.encodebytes(datas)
-                    document = request.env["documents.document"].browse(int(attachment.res_id))
-
-                    document.with_user(user).write(
+                    document = request.env["documents.document"].with_user(user).browse(int(attachment.res_id))
+                    if save_as_superuser:
+                        # Only the file: the user stays its author.
+                        document, attachment = document.sudo(), attachment.sudo()
+                    document.write(
                         {
                             "name": attachment.name,
                             "datas": datas,
@@ -318,14 +328,15 @@ class OnlyofficeConnector(http.Controller):
             },
         }
 
-        if can_write:
-            root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
-
         if attachment.res_model != "documents.document":
             root_config["editorConfig"]["mode"] = "edit" if can_write else "view"
             root_config["document"]["permissions"]["edit"] = can_write
-        elif attachment.res_model == "documents.document":
+        else:
             root_config = self.get_documents_permissions(attachment, can_write, root_config)
+
+        # Every role that edits in the editor saves: a commenting role does too, with the right to read.
+        if root_config["editorConfig"].get("mode") == "edit":
+            root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
 
         if jwt_utils.is_jwt_enabled(request.env):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
@@ -347,60 +358,21 @@ class OnlyofficeConnector(http.Controller):
 
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         _logger.info("get_documents_permissions - attachment: %s", attachment.id)
-        role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
-
-        now = fields.Datetime.now()
-        document_access_id = document.access_ids.filtered(lambda a: a.partner_id == request.env.user.partner_id)
-        expired_timer = False
-        if document_access_id and document_access_id.exists():
-            if document_access_id.expiration_date:
-                expired_timer = document_access_id.expiration_date < now
 
         if document.attachment_id.id != attachment.id:  # history files
             root_config["editorConfig"]["mode"] = "view"
             root_config["document"]["permissions"]["edit"] = False
             return root_config
 
-        if document.owner_id.id == request.env.user.id:  # owner
-            if can_write:
-                role = "edit"
-            else:
-                role = "view"
+        if "onlyoffice.odoo.documents" in request.env:
+            role = request.env["onlyoffice.odoo.documents"]._get_user_role(document, request.env.user, can_write)
         else:
-            access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-                [("document_id", "=", document.id), ("user_id", "=", request.env.user.partner_id.id)], limit=1
-            )
-            if access_user and not expired_timer:
-                if access_user.role == "none":
-                    raise AccessError(_("User has no read access rights to open this document"))
-                elif access_user.role == "edit" and can_write:
-                    role = "edit"
-                else:
-                    role = access_user.role
-            if not role:
-                access = request.env["onlyoffice.odoo.documents.access"].search(
-                    [("document_id", "=", document.id)], limit=1
-                )
-                if access:
-                    if access.internal_users == "none":
-                        raise AccessError(_("User has no read access rights to open this document"))
-                    elif access.internal_users == "edit" and can_write:
-                        role = "edit"
-                    else:
-                        role = access.internal_users
-                else:
-                    user_permission = document.user_permission
-                    if user_permission == "none":
-                        raise AccessError(_("User has no read access rights to open this document"))
-                    elif user_permission == "edit" and can_write:
-                        role = "edit"
-                    elif user_permission == "view":
-                        role = "view"
-                    else:
-                        role = "view"  # default role for internal users
+            role = "edit" if can_write else "view"
+        if role not in ("none", "view") and not file_utils.can_edit(attachment.name):
+            role = "view"
 
-        if not role:
+        if role == "none":
             raise AccessError(_("User has no read access rights to open this document"))
         elif role == "view":
             root_config["editorConfig"]["mode"] = "view"
@@ -427,6 +399,13 @@ class OnlyofficeConnector(http.Controller):
 
         _logger.info("get_documents_permissions - role: %s", role)
         return root_config
+
+    def _saves_with_read_access(self, attachment, user):
+        """Whether ``user`` saves ``attachment`` with only the right to read it: a commenting role on a document."""
+        if attachment.res_model != "documents.document" or "onlyoffice.odoo.documents" not in request.env:
+            return False
+        document = request.env["documents.document"].with_user(user).browse(int(attachment.res_id))
+        return request.env["onlyoffice.odoo.documents"].with_user(user)._saves_with_read_access(document)
 
     def get_attachment(self, attachment_id, user=None):
         IrAttachment = request.env["ir.attachment"]

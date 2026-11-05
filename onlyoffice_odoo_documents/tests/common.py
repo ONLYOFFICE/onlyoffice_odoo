@@ -111,13 +111,16 @@ class DocumentsCase(OnlyofficeCase):
         return self.env["documents.document"].with_user(user or self.owner).create({**values, **vals})
 
     def _roles(self, document, internal_users=None, link_access=None, **user_roles):
-        """ONLYOFFICE roles of ``document``: the defaults row and per-user rows keyed by the test user attribute."""
+        """ONLYOFFICE roles of ``document``: the defaults row and per-user rows keyed by the test user attribute.
+
+        A role left out is not set: the rights of Odoo decide.
+        """
         if internal_users or link_access:
             self.env["onlyoffice.odoo.documents.access"].create(
                 {
                     "document_id": document.id,
-                    "internal_users": internal_users or "none",
-                    "link_access": link_access or "none",
+                    "internal_users": internal_users or False,
+                    "link_access": link_access or False,
                 }
             )
         for user, role in user_roles.items():
