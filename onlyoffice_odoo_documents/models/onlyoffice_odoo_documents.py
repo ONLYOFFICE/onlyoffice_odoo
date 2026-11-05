@@ -3,10 +3,41 @@
 from odoo import _, api, models
 from odoo.exceptions import AccessError
 
+# ONLYOFFICE roles that save the file (edits, comments, review, filled forms); they need the right to write in Odoo.
+SAVING_ROLES = ("editor", "custom_filter", "commenter", "reviewer", "form_filling")
+
 
 class OnlyofficeDocuments(models.Model):
     _name = "onlyoffice.odoo.documents"
     _description = "ONLYOFFICE Documents"
+
+    @api.model
+    def _get_user_role(self, document, user, can_write):
+        """ONLYOFFICE role of an internal user on a document, "none" when ONLYOFFICE is turned off for them.
+
+        ONLYOFFICE roles are added to the rights of Odoo: a role that saves the file works only with the right to
+        write in Odoo (``can_write``), otherwise the user views. Without a role of their own and without a role for
+        internal users, the rights of Odoo decide.
+        """
+
+        def within_odoo_rights(role):
+            return "viewer" if role in SAVING_ROLES and not can_write else role
+
+        if document.owner_id == user:
+            return "editor" if can_write else "viewer"
+        access_user = (
+            self.env["onlyoffice.odoo.documents.access.user"]
+            .sudo()
+            .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
+        )
+        if access_user.role:
+            return within_odoo_rights(access_user.role)
+        access = (
+            self.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
+        )
+        if access.internal_users:
+            return within_odoo_rights(access.internal_users)
+        return "editor" if can_write else "viewer"
 
     @api.model
     def advanced_share_data(self, vals):
@@ -54,9 +85,9 @@ class OnlyofficeDocuments(models.Model):
                 "id": document.id,
                 "text": document.name,
             },
-            "internal_users": access.internal_users if access else "none",
+            "internal_users": access.internal_users or False,
             "internal_users_roles": roles,
-            "link_access": access.link_access if access else "viewer",
+            "link_access": access.link_access or False,
             "link_access_roles": roles,
             "users_access": users_access,
             "users_access_roles": roles,
@@ -121,15 +152,15 @@ class OnlyofficeDocuments(models.Model):
             access = Access.create(
                 {
                     "document_id": document_id[0],
-                    "internal_users": vals.get("internal_users", "none"),
-                    "link_access": vals.get("link_access", "none"),
+                    "internal_users": vals.get("internal_users") or False,
+                    "link_access": vals.get("link_access") or False,
                 }
             )
         else:
             access.write(
                 {
-                    "internal_users": vals.get("internal_users"),
-                    "link_access": vals.get("link_access"),
+                    "internal_users": vals.get("internal_users") or False,
+                    "link_access": vals.get("link_access") or False,
                 }
             )
 

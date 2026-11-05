@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from odoo import _, fields
+from odoo.exceptions import AccessError
 from odoo.http import request
 from odoo.tools import misc
 from odoo.tools.safe_eval import datetime as safe_datetime
@@ -35,11 +36,13 @@ def _user_today():
 
 
 def _domain_eval_context():
-    """Return the evaluation context of a domain string, as Odoo uses for action domains."""
-    user = request.env.user
+    """Return the evaluation context of a domain string, as the Odoo web client evaluates it.
+
+    Only plain values and date helpers: the domain comes from the document data, which users can edit, and a record
+    here (such as the user) would give the expression the whole environment, sudo() included.
+    """
     return {
-        "uid": user.id,
-        "user": user,
+        "uid": request.env.uid,
         "allowed_company_ids": request.env.companies.ids,
         "context_today": _user_today,
         "datetime": safe_datetime,
@@ -230,13 +233,16 @@ class SpreadsheetFormulaEvaluator:
             if negate and isinstance(result, int | float):
                 result = -result
             return result
+        except AccessError as e:
+            # As in Odoo Spreadsheet, data the user may not read is an error in the cell, not a value.
+            return f"#ERROR: {str(e).splitlines()[0]}"
         except Exception as e:
             _logger.warning("Formula error %s: %s", formula, e)
             return f"#ERROR: {e}"
 
     def get_pivot_column_formats(self, pivot_data):
         """Return {measure: {format, align}} for a pivot's measures."""
-        model = request.env[pivot_data["model"]].sudo()
+        model = request.env[pivot_data["model"]]
         formats = {}
         for measure in self._get_measures(pivot_data):
             if measure == "__count":
@@ -249,7 +255,7 @@ class SpreadsheetFormulaEvaluator:
 
     def get_list_column_formats(self, list_data):
         """Return {field_name: {format, align}} for a list's columns."""
-        model = request.env[list_data["model"]].sudo()
+        model = request.env[list_data["model"]]
         formats = {}
         for col in list_data.get("columns", []):
             field_name = col.get("name") if isinstance(col, dict) else str(col)
@@ -353,7 +359,8 @@ class SpreadsheetFormulaEvaluator:
             _logger.warning("LIST %s not found. Available lists: %s", list_id, list(snapshot.get("lists", {}).keys()))
             raise ValueError(f"List '{list_id}' not found")
 
-        model = request.env[list_data["model"]].sudo()
+        model = self._data_model(list_data["model"])
+        self._check_fields(model, field_name)
         domain = self._resolve_domain(list_data.get("domain", []), model)
         order = self._order_string(list_data.get("orderBy", []))
 
@@ -369,7 +376,9 @@ class SpreadsheetFormulaEvaluator:
         list_data = snapshot.get("lists", {}).get(str(args[0]))
         if not list_data:
             raise ValueError(f"List '{args[0]}' not found")
-        info = request.env[list_data["model"]].sudo().fields_get([str(args[1])])
+        model = self._data_model(list_data["model"])
+        self._check_fields(model, str(args[1]))
+        info = model.fields_get([str(args[1])])
         return info.get(str(args[1]), {}).get("string", str(args[1]))
 
     def _eval_pivot(self, snapshot, args):
@@ -382,7 +391,7 @@ class SpreadsheetFormulaEvaluator:
         if not pivot_data:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
-        model = request.env[pivot_data["model"]].sudo()
+        model = self._data_model(pivot_data["model"])
         base_domain = self._resolve_domain(pivot_data.get("domain", []), model)
 
         # Parse field/value pairs from args[2:]
@@ -396,6 +405,7 @@ class SpreadsheetFormulaEvaluator:
 
         measure_field = measure.split(":")[0] if ":" in measure else measure
         fields_to_read = [] if measure == "__count" else [measure]
+        self._check_fields(model, measure, *(fs for fs, _value in pairs))
 
         if not pairs:
             # Return a plain, unformatted number here: formulas that do
@@ -437,11 +447,12 @@ class SpreadsheetFormulaEvaluator:
         if not pivot_data:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
-        model = request.env[pivot_data["model"]].sudo()
+        model = self._data_model(pivot_data["model"])
         base_domain = self._resolve_domain(pivot_data.get("domain", []), model)
         measures = self._get_measures(pivot_data)
         measure_fields = [m for m in measures if m != "__count"]
         all_group_bys = pivot_data.get("rowGroupBys", []) + pivot_data.get("colGroupBys", [])
+        self._check_fields(model, *measures, *all_group_bys)
 
         if not all_group_bys:
             result = self._safe_read_group(model, base_domain, measure_fields, [])
@@ -491,7 +502,8 @@ class SpreadsheetFormulaEvaluator:
             return "None"
 
         field_name, granularity = (field_spec.split(":", 1) + [None])[:2]
-        model = request.env[pivot_data["model"]].sudo()
+        model = self._data_model(pivot_data["model"])
+        self._check_fields(model, field_name)
         field_obj = model._fields.get(field_name)
 
         if not field_obj:
@@ -500,7 +512,7 @@ class SpreadsheetFormulaEvaluator:
             return _format_date_header(model.env, granularity, value)
         if field_obj.type in ("many2one", "many2many", "one2many") and field_obj.comodel_name:
             try:
-                rec = request.env[field_obj.comodel_name].sudo().browse(int(value))
+                rec = request.env[field_obj.comodel_name].browse(int(value))
                 return rec.display_name or str(value) if rec.exists() else str(value)
             except (ValueError, TypeError):
                 return str(value)
@@ -525,10 +537,9 @@ class SpreadsheetFormulaEvaluator:
         if len(args) < 2:
             raise ValueError("ODOO.CURRENCY.RATE requires at least 2 args")
         rate_date = _to_server_date(args[2]) if len(args) > 2 and args[2] not in ("", None) else None
-        rate = (
-            request.env["res.currency.rate"]
-            .sudo()
-            ._get_rate_for_spreadsheet(str(args[0]), str(args[1]), rate_date and rate_date.isoformat())
+        # As the Odoo client: get_rates_for_spreadsheet runs with the rights of the user.
+        rate = request.env["res.currency.rate"]._get_rate_for_spreadsheet(
+            str(args[0]), str(args[1]), rate_date and rate_date.isoformat()
         )
         if rate is False:
             raise ValueError("Currency rate unavailable.")
@@ -632,6 +643,9 @@ class SpreadsheetFormulaEvaluator:
             cr.execute("SAVEPOINT pivot_rg")
             result = model.read_group(domain, fields, group_bys, lazy=False)
             cr.execute("RELEASE SAVEPOINT pivot_rg")
+        except AccessError:
+            cr.execute("ROLLBACK TO SAVEPOINT pivot_rg")
+            raise
         except Exception as e:
             _logger.warning("read_group error: %s", e)
             cr.execute("ROLLBACK TO SAVEPOINT pivot_rg")
@@ -689,6 +703,11 @@ class SpreadsheetFormulaEvaluator:
             return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, val, currency, lang_code)
         if fobj and fobj.type in ("date", "datetime"):
             return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, val, None, lang_code)
+        if fobj and fobj.type == "many2one":
+            # As Odoo reads a many2one: its name is shown whatever the rights on the related record.
+            if not val:
+                return ""
+            return val.sudo().display_name or str(val)
         if hasattr(val, "_name"):
             if not val:
                 return ""
@@ -728,6 +747,24 @@ class SpreadsheetFormulaEvaluator:
         return SpreadsheetFormulaEvaluator._format_typed_value(env, fobj, value, None, lang_code)
 
     @staticmethod
+    def _data_model(model_name):
+        """The model of a list or pivot with the rights of the current user, as Odoo Spreadsheet reads it."""
+        model = request.env[model_name]
+        model.check_access_rights("read")
+        return model
+
+    @staticmethod
+    def _check_fields(model, *field_specs):
+        """Raise AccessError for fields the user may not read (their groups); unknown fields are left to the caller."""
+        names = {str(spec).split(":")[0] for spec in field_specs if spec and spec not in ("__count", "measure")}
+        names = {name for name in names if name in model._fields}
+        if not names:
+            return
+        hidden = names - set(model.fields_get(list(names), attributes=["type"]))
+        if hidden:
+            raise AccessError(_("You do not have access to the field %s.", ", ".join(sorted(hidden))))
+
+    @staticmethod
     def _get_measures(pivot_data):
         """Extract measure field names from pivot definition."""
         raw = pivot_data.get("measures", [])
@@ -738,7 +775,9 @@ class SpreadsheetFormulaEvaluator:
         if measure == "__count":
             return "Count"
         mf = measure.split(":")[0] if ":" in measure else measure
-        fobj = request.env[pivot_data["model"]].sudo()._fields.get(mf)
+        model = SpreadsheetFormulaEvaluator._data_model(pivot_data["model"])
+        SpreadsheetFormulaEvaluator._check_fields(model, mf)
+        fobj = model._fields.get(mf)
         return fobj.string if fobj else measure
 
 

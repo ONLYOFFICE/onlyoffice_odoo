@@ -184,12 +184,12 @@ export class ShareDialog extends Component {
   }
 
   onInternalAccessChange = (ev) => {
-    this.state.internalAccess = ev.target.value
+    this.state.internalAccess = ev.target.value || false
     this.checkForChanges()
   }
 
   onLinkAccessChange = (ev) => {
-    this.state.linkAccess = ev.target.value
+    this.state.linkAccess = ev.target.value || false
     this.checkForChanges()
   }
 

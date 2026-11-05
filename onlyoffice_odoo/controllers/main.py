@@ -221,6 +221,8 @@ class OnlyofficeConnector(http.Controller):
 
             attachment.validate_access(access_token)
             attachment.check_access_rights("write")
+            # The record itself: for a document, the right to write it in Odoo.
+            attachment.check("write")
 
             if jwt_utils.is_jwt_enabled(request.env):
                 token = body.get("token")
@@ -335,6 +337,13 @@ class OnlyofficeConnector(http.Controller):
             },
         }
 
+        if can_write and attachment.res_model == "documents.document":
+            # The right to write the document itself, not only attachments in general.
+            try:
+                attachment.check("write")
+            except AccessError:
+                can_write = False
+
         if can_write:
             root_config["editorConfig"]["callbackUrl"] = odoo_url + "onlyoffice/editor/callback/" + path_part
 
@@ -364,7 +373,6 @@ class OnlyofficeConnector(http.Controller):
 
     def get_documents_permissions(self, attachment, can_write, root_config):  # noqa: C901
         _logger.info("get_documents_permissions - attachment: %s", attachment.id)
-        role = None
         document = request.env["documents.document"].browse(int(attachment.res_id))
 
         if document.attachment_id.id != attachment.id:  # history files
@@ -372,37 +380,12 @@ class OnlyofficeConnector(http.Controller):
             root_config["document"]["permissions"]["edit"] = False
             return root_config
 
-        if document.owner_id.id == request.env.user.id:
-            if can_write:
-                role = "editor"
-            else:
-                role = "viewer"
+        if "onlyoffice.odoo.documents" in request.env:
+            role = request.env["onlyoffice.odoo.documents"]._get_user_role(document, request.env.user, can_write)
         else:
-            access_user = request.env["onlyoffice.odoo.documents.access.user"].search(
-                [("document_id", "=", document.id), ("user_id", "=", request.env.user.id)], limit=1
-            )
-            if access_user:
-                if access_user.role == "none":
-                    raise AccessError(_("User has no read access rights to open this document"))
-                elif access_user.role == "editor" and can_write:
-                    role = "editor"
-                else:
-                    role = access_user.role
-            if not role:
-                access = request.env["onlyoffice.odoo.documents.access"].search(
-                    [("document_id", "=", document.id)], limit=1
-                )
-                if access:
-                    if access.internal_users == "none":
-                        raise AccessError(_("User has no read access rights to open this document"))
-                    elif access.internal_users == "editor" and can_write:
-                        role = "editor"
-                    else:
-                        role = access.internal_users
-                else:
-                    role = "viewer"  # default role for internal users
+            role = "editor" if can_write else "viewer"
 
-        if not role:
+        if role == "none":
             raise AccessError(_("User has no read access rights to open this document"))
         elif role == "viewer":
             root_config["editorConfig"]["mode"] = "view"
