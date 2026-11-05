@@ -116,6 +116,7 @@ class Document(models.Model):
     )
 
     @api.depends(
+        "type",
         "mimetype",
         "onlyoffice_frozen",
         "onlyoffice_spreadsheet_metadata",
@@ -154,7 +155,9 @@ class Document(models.Model):
         self.check_access_rights("read")
         self.check_access_rule("read")
         if not self.folder_id.has_write_access:
-            raise AccessError(_("You are not allowed to freeze spreadsheets in Company"))
+            raise AccessError(
+                _("You are not allowed to freeze spreadsheets in %(folder)s", folder=self.folder_id.display_name)
+            )
         if self.onlyoffice_frozen:
             raise UserError(_("A frozen spreadsheet can not be frozen again"))
         if self.type != "binary" or self.mimetype != XLSX_MIMETYPE:
