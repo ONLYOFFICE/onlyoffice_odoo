@@ -78,9 +78,9 @@ class TestDocBuilderScripts(TransactionCase):
             self.builder._build_formula_patches(snapshot),
             [
                 # Data without a version comes before Odoo 20: its one-value ODOO.LIST is ODOO.LIST.VALUE now.
-                {"sheet": "Sales", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'},
-                {"sheet": "Sales", "cell": "A2", "formula": '=-ODOO_PIVOT(2,"__count")'},
-                {"sheet": "Old", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,2,"name")'},
+                {"sheet": "Sales", "index": 0, "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'},
+                {"sheet": "Sales", "index": 0, "cell": "A2", "formula": '=-ODOO_PIVOT(2,"__count")'},
+                {"sheet": "Old", "index": 1, "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,2,"name")'},
             ],
         )
 
@@ -99,8 +99,8 @@ class TestDocBuilderScripts(TransactionCase):
                         {"version": version, "sheets": [{"name": "S", "cells": cells}]}
                     ),
                     [
-                        {"sheet": "S", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'},
-                        {"sheet": "S", "cell": "A2", "formula": '=ODOO_LIST_HEADER(1,"name")'},
+                        {"sheet": "S", "index": 0, "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'},
+                        {"sheet": "S", "index": 0, "cell": "A2", "formula": '=ODOO_LIST_HEADER(1,"name")'},
                     ],
                 )
         for version in (22, "14.5", "18.5.10", "19.3.9", None):
@@ -108,7 +108,74 @@ class TestDocBuilderScripts(TransactionCase):
                 patches = self.builder._build_formula_patches(
                     {"version": version, "sheets": [{"name": "S", "cells": {"A1": '=ODOO.LIST(1,1,"name")'}}]}
                 )
-                self.assertEqual(patches, [{"sheet": "S", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'}])
+                self.assertEqual(
+                    patches, [{"sheet": "S", "index": 0, "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'}]
+                )
+
+    def test_patches_use_the_sheet_names_of_the_export(self):
+        """Excel cuts a sheet name to 31 characters: the export names the sheet, its position finds it.
+
+        Data without a version comes before Odoo 20: its one-value ODOO.LIST is ODOO.LIST.VALUE now.
+        """
+        long_name = "Quarterly sales of every region and team"
+        snapshot = {"sheets": [{"name": long_name, "cells": {"B2": {"content": '=ROUND(ODOO.LIST(1,1,"amount"),2)'}}}]}
+        self.assertEqual(
+            self.builder._build_formula_patches(snapshot, [long_name[:31]]),
+            [{"sheet": long_name[:31], "index": 0, "cell": "B2", "formula": '=ROUND(ODOO_LIST_VALUE(1,1,"amount"),2)'}],
+        )
+
+    def test_pivot_formulas_of_odoo_pivots_become_functions_of_the_editor(self):
+        snapshot = {
+            "sheets": [
+                {
+                    "name": "Pivot",
+                    "cells": {
+                        "A1": {"content": '=PIVOT.HEADER(1,"measure","amount_total:sum")'},
+                        "A2": {"content": '=PIVOT.VALUE(1,"amount_total:sum","date_order:month","10/2026")'},
+                        "A3": {"content": '=-pivot.value("1","__count")'},
+                        # A pivot of a range of the spreadsheet, by position, the dynamic one: the export value stays.
+                        "B1": {"content": '=PIVOT.VALUE(2,"Amount:sum")'},
+                        "B2": {"content": '=PIVOT.VALUE(1,"__count","#partner_id",1)'},
+                        "B3": {"content": "=PIVOT(1)"},
+                        "B4": {"content": '="PIVOT.VALUE(1)"'},
+                    },
+                }
+            ],
+            "pivots": {
+                "a": {"type": "ODOO", "formulaId": "1", "model": "sale.order", "measures": [], "rows": []},
+                "b": {"type": "SPREADSHEET", "formulaId": "2"},
+            },
+        }
+        self.assertEqual(
+            [(patch["cell"], patch["formula"]) for patch in self.builder._build_formula_patches(snapshot)],
+            [
+                ("A1", '=ODOO_PIVOT_HEADER(1,"measure","amount_total:sum")'),
+                ("A2", '=ODOO_PIVOT(1,"amount_total:sum","date_order:month","10/2026")'),
+                ("A3", '=-ODOO_PIVOT("1","__count")'),
+            ],
+        )
+
+    def test_metadata_names_the_pivots_as_the_formulas_do(self):
+        snapshot = {
+            "pivots": {
+                "a": {
+                    "type": "ODOO",
+                    "formulaId": "3",
+                    "model": "res.partner",
+                    "domain": [],
+                    "measures": [{"id": "color:sum", "fieldName": "color", "aggregator": "sum"}],
+                    "rows": [{"fieldName": "create_date", "granularity": "day"}],
+                    "columns": [],
+                },
+                "b": {"type": "SPREADSHEET", "formulaId": "4"},
+            }
+        }
+        metadata = json.loads(self.builder._prepare_docbuilder_metadata(snapshot))
+        self.assertEqual(list(metadata["pivots"]), ["3"])
+        pivot = metadata["pivots"]["3"]
+        self.assertEqual((pivot["measures"], pivot["rowGroupBys"]), (["color:sum"], ["create_date:day"]))
+        self.assertEqual(pivot["columnFormats"]["color:sum"]["format"], "0")
+        self.assertEqual(pivot["columnFormats"]["create_date:day"]["format"], "dd mmm yyyy")
 
     # -- Inserted sheets --
 

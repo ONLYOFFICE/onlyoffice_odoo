@@ -57,14 +57,9 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
             document, ['=ODOO_LIST(1,2,"name")', '=ODOO_LIST_HEADER(1,"name")', "=ODOO_X(1)"], token
         )
 
-        self.assertEqual(
-            result["values"],
-            {
-                '=ODOO_LIST(1,2,"name")': "Bob",
-                '=ODOO_LIST_HEADER(1,"name")': "Name",
-                "=ODOO_X(1)": "#ERROR: Unknown function X",
-            },
-        )
+        self.assertEqual(result["values"], {'=ODOO_LIST(1,2,"name")': "Bob", '=ODOO_LIST_HEADER(1,"name")': "Name"})
+        # An error comes apart: the editor makes it an error of the cell, which ISERROR and IFERROR see.
+        self.assertEqual(result["errors"], {"=ODOO_X(1)": "Unknown function X"})
 
     def test_formulas_need_a_valid_token_for_the_document(self):
         document = self._xlsx({"lists": {"1": LIST}}, folder_id=False)  # private to the owner
@@ -146,7 +141,9 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
         self.assertEqual(document.raw.content, b"rebuilt xlsx")
         metadata = json.loads(document.onlyoffice_spreadsheet_metadata)
         self.assertEqual(sorted(metadata["lists"]), ["1", "2"])
-        self.assertEqual(metadata["lists"]["1"]["columnFormats"]["color"], {"format": "#,##0", "align": "right"})
+        self.assertEqual(
+            metadata["lists"]["1"]["columnFormats"]["color"], {"format": "0", "align": "right", "type": "integer"}
+        )
 
     def test_insert_a_pivot_into_an_xlsx(self):
         document = self._xlsx({"lists": {"3": LIST}})
@@ -166,7 +163,7 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
         )
         self.env.invalidate_all()
         pivot = json.loads(document.onlyoffice_spreadsheet_metadata)["pivots"]["4"]
-        self.assertEqual((pivot["measures"], pivot["columnFormats"]["__count"]["format"]), (["__count"], "#,##0"))
+        self.assertEqual((pivot["measures"], pivot["columnFormats"]["__count"]["format"]), (["__count"], "0"))
 
     def _insert_list(self, document, **list_data):
         list_data = {"model": "res.partner", "columns": ["name"], **list_data}
@@ -243,9 +240,12 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
             )
         )
 
-    def _convert(self, document, xlsx_base64):
+    def _convert(self, document, xlsx_base64, **params):
         return self._rpc(
-            "/onlyoffice/documents/convert_spreadsheet_via_docbuilder", document_id=document.id, xlsx_base64=xlsx_base64
+            "/onlyoffice/documents/convert_spreadsheet_via_docbuilder",
+            document_id=document.id,
+            xlsx_base64=xlsx_base64,
+            **params,
         )["result"]
 
     def test_spreadsheet_becomes_an_xlsx_with_live_formulas(self):
@@ -266,12 +266,46 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
         self.assertEqual((payloads[0]["mode"], payloads[0]["xlsx_base64"]), ("patch_formulas", native))
         self.assertEqual(
             json.loads(payloads[0]["patches_json"]),
-            [{"sheet": "Sheet1", "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'}],
+            [{"sheet": "Sheet1", "index": 0, "cell": "A1", "formula": '=ODOO_LIST_VALUE(1,1,"name")'}],
         )
         # Domains are kept as Odoo stores them: the formulas evaluate them for whoever opens the file.
         metadata = json.loads(xlsx.onlyoffice_spreadsheet_metadata)
         self.assertEqual(metadata["lists"]["1"]["domain"], "[('create_uid', '=', uid)]")
         self.assertEqual(metadata["globalFilters"], [{"label": "Region", "defaultValue": "EU"}])
+
+    def test_conversion_takes_the_data_with_the_revisions_and_the_sheet_names_of_the_export(self):
+        spreadsheet = self._spreadsheet()
+        self.authenticate("oo_doc_owner", "oo_doc_owner")
+        # What a revision inserted is only in the data of the browser, not in the last snapshot.
+        data = {
+            "sheets": [
+                {"id": "s1", "name": "Inserted by a revision", "cells": {"C3": {"content": '=ODOO.LIST(2,1,"name")'}}}
+            ],
+            "lists": {"2": LIST},
+        }
+        mock, payloads = self._docbuilder()
+
+        with mock:
+            result = self._convert(spreadsheet, "eA==", spreadsheet_data=data, sheet_names=["Inserted by a revisi"])
+
+        self.assertFalse(result["error"])
+        self.assertEqual(
+            json.loads(payloads[0]["patches_json"]),
+            [{"sheet": "Inserted by a revisi", "index": 0, "cell": "C3", "formula": '=ODOO_LIST_VALUE(2,1,"name")'}],
+        )
+        self.assertEqual(list(json.loads(payloads[0]["metadata_json"])["lists"]), ["2"])
+
+    def test_conversion_needs_the_right_to_create_in_the_folder(self):
+        spreadsheet = self._spreadsheet()
+        self.folder.action_update_access_rights(access_internal="view")
+        self.authenticate("oo_doc_owner", "oo_doc_owner")
+        mock, payloads = self._docbuilder()
+
+        with mock:
+            result = self._convert(spreadsheet, "eA==")
+
+        self.assertEqual(result["error"], "You do not have permission to create documents in this workspace")
+        self.assertFalse(payloads, "refused before the docbuilder runs")
 
     def test_spreadsheet_conversion_errors(self):
         self.authenticate("oo_doc_owner", "oo_doc_owner")

@@ -9,7 +9,6 @@ from odoo import fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase, new_test_user
 
-from odoo.addons.onlyoffice_odoo.tests.common import known_bug
 from odoo.addons.onlyoffice_odoo_documents.controllers.spreadsheet_formulas import (
     SpreadsheetFormulaEvaluator,
     _date_to_range,
@@ -17,6 +16,7 @@ from odoo.addons.onlyoffice_odoo_documents.controllers.spreadsheet_formulas impo
     compute_filter_values,
     get_field_excel_format,
     load_metadata_for_document,
+    normalize_pivot_definition,
 )
 
 from .common import fake_request
@@ -116,7 +116,8 @@ class TestFormulaEvaluator(TransactionCase):
             '=ODOO_PIVOT_HEADER(2,"type","contact")': "Contact",
             f'=ODOO_PIVOT_HEADER(2,"parent_id",{self.alpha.id})': "Alpha Corp",
             '=ODOO_PIVOT_HEADER(2,"is_company","false")': "None",
-            '=ODOO_PIVOT_HEADER(2,"create_date:month","3/2026")': "03/01/2026",
+            # A month is the serial number of its first day (the cell format shows "March 2026").
+            '=ODOO_PIVOT_HEADER(2,"create_date:month","3/2026")': 46082,
             '=ODOO_PIVOT_HEADER(2,"create_date:quarter","1/2026")': "Q1 2026",
             "=ODOO_PIVOT_HEADER(2)": "Total",
             '=ODOO_PIVOT_HEADER(9,"type","contact")': "contact",
@@ -131,7 +132,7 @@ class TestFormulaEvaluator(TransactionCase):
         self.assertEqual(self._eval('=ODOO_FILTER_VALUE("Region")'), "EU", "the current value wins")
         self.assertEqual(self._eval('=ODOO_FILTER_VALUE("Year")'), str(datetime.now().year))
         self.assertEqual(self._eval('=ODOO_FILTER_VALUE("Stage")'), "3")
-        self.assertEqual(self._eval('=ODOO_FILTER_VALUE("Unknown")'), "")
+        self.assertEqual(self._eval('=ODOO_FILTER_VALUE("Unknown")'), '#ERROR: Filter "Unknown" not found')
         self.assertEqual(
             compute_filter_values(self.snapshot), {"Region": "EU", "Year": str(datetime.now().year), "Stage": "3"}
         )
@@ -272,10 +273,16 @@ class TestFormulaEvaluator(TransactionCase):
     def test_excel_formats_by_field_type(self):
         model = self.env["res.partner"]
         cases = {
-            "color": ("#,##0", "right"),
+            "color": ("0", "right"),
             "is_company": (None, "center"),
-            "create_date": (None, "right"),
-            "create_date:month": (None, "right"),
+            # The time format of en_US in Odoo 19 has AM/PM.
+            "create_date": ("mm/dd/yyyy hh:mm:ss AM/PM", "right"),
+            "create_date:day": ("dd mmm yyyy", "right"),
+            "create_date:month": ("mmmm yyyy", "right"),
+            "create_date:year": ("0", "right"),
+            "create_date:quarter": (None, "left"),
+            "create_date:day_of_month": ("0", "right"),
+            "create_date:month_number": (None, "left"),
             "name": (None, "left"),
             "no_such_field": (None, None),
             None: (None, None),
@@ -284,7 +291,6 @@ class TestFormulaEvaluator(TransactionCase):
             with self.subTest(field=field_name):
                 self.assertEqual(get_field_excel_format(model, field_name), expected)
 
-    @known_bug("get_field_excel_format reads Float.digits, gone in Odoo 18 (get_digits(env))")
     def test_float_format_uses_the_field_precision(self):
         self.assertEqual(get_field_excel_format(self.env["res.partner"], "partner_latitude")[0], "#,##0.0000000")
 
@@ -292,12 +298,149 @@ class TestFormulaEvaluator(TransactionCase):
         left = {"format": None, "align": "left"}
         self.assertEqual(
             self.evaluator.get_list_column_formats(self.snapshot["lists"]["1"]),
-            {"name": left, "parent_id": left, "type": left},
+            {
+                "name": {**left, "type": "char"},
+                "parent_id": {**left, "type": "many2one"},
+                "type": {**left, "type": "selection"},
+            },
         )
+        integer = {"format": "0", "align": "right", "type": "integer"}
         self.assertEqual(
             self.evaluator.get_pivot_column_formats(self.snapshot["pivots"]["2"]),
-            {"__count": {"format": "#,##0", "align": "right"}, "color": {"format": "#,##0", "align": "right"}},
+            {"__count": integer, "color": integer},
         )
+
+
+@tagged("post_install", "-at_install")
+class TestOdooSpreadsheetPivots(TransactionCase):
+    """Pivots as an Odoo Spreadsheet keeps them: named by their formulaId, dimensions, measures by id."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        Partner = cls.env["res.partner"]
+        # Since Odoo 20 is_company is computed: a partner with a VAT of its own is a company.
+        cls.partners = Partner.create(
+            [
+                {"name": "Alpha Corp", "vat": "OO-ALPHA", "color": 3, "ref": REF},
+                {"name": "Beta Corp", "vat": "OO-BETA", "color": 5, "ref": REF},
+                {"name": "Carol", "ref": REF},
+            ]
+        )
+        cls.created = cls.partners[0].create_date
+        cls.snapshot = {
+            "pivots": {
+                # The key is not what the formulas use.
+                "pivot-a": {
+                    "type": "ODOO",
+                    "formulaId": "1",
+                    "model": "res.partner",
+                    "domain": [["ref", "=", REF]],
+                    "measures": [
+                        {"id": "color:sum", "fieldName": "color", "aggregator": "sum"},
+                        {"id": "color:max", "fieldName": "color", "aggregator": "max", "userDefinedName": "Top"},
+                        {"id": "__count", "fieldName": "__count"},
+                        {"id": "parent_id:count_distinct", "fieldName": "parent_id", "aggregator": "count_distinct"},
+                        {"id": "share", "fieldName": "share", "computedBy": {"formula": "=color:sum*2"}},
+                    ],
+                    "rows": [{"fieldName": "is_company"}],
+                    "columns": [{"fieldName": "create_date", "granularity": "month_number"}],
+                },
+                "pivot-b": {"type": "SPREADSHEET", "formulaId": "2", "dataSet": {"sheetId": "s1"}},
+            }
+        }
+
+    def setUp(self):
+        super().setUp()
+        request = fake_request(self.env)
+        request.__enter__()
+        self.addCleanup(request.__exit__, None, None, None)
+        self.evaluator = SpreadsheetFormulaEvaluator()
+
+    def _eval(self, formula):
+        return self.evaluator.evaluate_single_formula(self.snapshot, formula)
+
+    def test_measures_by_id_with_their_aggregator(self):
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"color:sum")'), 8)
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"color:max")'), 5)
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"__count")'), 3)
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"color:sum","is_company","true")'), 8)
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"__count","is_company","false")'), 1)
+
+    def test_what_the_pivot_does_not_have_is_an_error(self):
+        cases = {
+            '=ODOO_PIVOT(1,"color")': "#ERROR: Field color does not exist",
+            '=ODOO_PIVOT(1,"share")': "#ERROR: Field share does not exist",
+            '=ODOO_PIVOT(2,"__count")': "#ERROR: Pivot '2' not found",
+            '=ODOO_PIVOT("pivot-a","__count")': "#ERROR: Pivot 'pivot-a' not found",
+        }
+        for formula, error in cases.items():
+            with self.subTest(formula=formula):
+                self.assertEqual(self._eval(formula), error)
+
+    def test_measure_headers(self):
+        self.assertEqual(self._eval('=ODOO_PIVOT_HEADER(1,"measure","color:sum")'), "Color Index")
+        self.assertEqual(self._eval('=ODOO_PIVOT_HEADER(1,"measure","color:max")'), "Top")
+        self.assertEqual(self._eval('=ODOO_PIVOT_HEADER(1,"measure","__count")'), "Count")
+
+    def test_groupings_by_number(self):
+        month, hour = self.created.month, self.created.hour
+        other_month = month % 12 + 1
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:month_number",{month})'), 3)
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:month_number",{other_month})'), 0)
+        self.assertEqual(
+            self._eval(f'=ODOO_PIVOT(1,"color:sum","is_company","true","create_date:month_number",{month})'), 8
+        )
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:hour_number",{hour})'), 3)
+        self.assertEqual(self._eval('=ODOO_PIVOT(1,"__count","create_date:month_number","false")'), 0)
+        headers = {
+            '=ODOO_PIVOT_HEADER(1,"create_date:month_number",3)': "March",
+            '=ODOO_PIVOT_HEADER(1,"create_date:quarter_number",2)': "Q2",
+            '=ODOO_PIVOT_HEADER(1,"create_date:hour_number",13)': "13h",
+            '=ODOO_PIVOT_HEADER(1,"create_date:minute_number",5)': "5'",
+            '=ODOO_PIVOT_HEADER(1,"create_date:day_of_month",31)': 31,
+            # en_US weeks start on Sunday.
+            '=ODOO_PIVOT_HEADER(1,"create_date:day_of_week",1)': "Sunday",
+            '=ODOO_PIVOT_HEADER(1,"create_date:day_of_week",2)': "Monday",
+        }
+        for formula, label in headers.items():
+            with self.subTest(formula=formula):
+                self.assertEqual(self._eval(formula), label)
+
+    def test_a_day_is_its_serial_number(self):
+        serial = (self.created.date() - datetime(1899, 12, 30).date()).days
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:day",{serial})'), 3)
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:day",{serial + 1})'), 0)
+        day = self.created.strftime("%m/%d/%Y")
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:day","{day}")'), 3)
+        self.assertEqual(self._eval(f'=ODOO_PIVOT_HEADER(1,"create_date:day",{serial})'), serial)
+
+    def test_column_formats_by_measure_id(self):
+        integer = {"format": "0", "align": "right", "type": "integer"}
+        self.assertEqual(
+            self.evaluator.get_pivot_column_formats(self.snapshot["pivots"]["pivot-a"]),
+            {
+                "color:sum": integer,
+                "color:max": integer,
+                "__count": integer,
+                "parent_id:count_distinct": integer,
+                "create_date:month_number": {"format": None, "align": "left", "type": "datetime"},
+            },
+        )
+
+    def test_normalized_definition(self):
+        self.assertIsNone(normalize_pivot_definition(self.snapshot["pivots"]["pivot-b"]))
+        definition = normalize_pivot_definition(self.snapshot["pivots"]["pivot-a"])
+        self.assertEqual(
+            (definition["rowGroupBys"], definition["colGroupBys"], definition["measures"]),
+            (
+                ["is_company"],
+                ["create_date:month_number"],
+                ["color:sum", "color:max", "__count", "parent_id:count_distinct"],
+            ),
+        )
+        self.assertEqual(definition["measureSpecs"]["__count"], "__count")
+        self.assertIs(normalize_pivot_definition(definition), definition, "already normalized")
 
 
 @tagged("post_install", "-at_install")
@@ -378,6 +521,7 @@ class TestFormulaHelpers(TransactionCase):
             ("month", "2/2025"): ("2025-02-01", "2025-03-01"),
             ("week", "1/2026"): ("2025-12-29", "2026-01-05"),
             ("day", "2/28/2025"): ("2025-02-28", "2025-03-01"),
+            ("day", "46082"): ("2026-03-01", "2026-03-02"),
             ("month", "13/x"): None,
             ("hour", "1"): None,
         }

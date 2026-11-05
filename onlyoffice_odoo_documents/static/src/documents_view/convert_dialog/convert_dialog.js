@@ -5,6 +5,7 @@ import { Dialog } from "@web/core/dialog/dialog"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
+import { exportSpreadsheetNativeXlsx } from "../spreadsheet_export"
 
 const { Component, proxy, useProps, onWillStart } = owl
 
@@ -21,7 +22,10 @@ export class ConvertDialog extends Component {
     this.ui = useService("ui")
 
     this.dialogTitle = _t("Convert with ONLYOFFICE")
-    this.sourceExt = (this.props.filename.split(".").pop() || "").toLowerCase()
+    // An Odoo Spreadsheet is converted from its XLSX export, as "Open in ONLYOFFICE" opens it.
+    this.isOdooSpreadsheet = this.props.handler === "spreadsheet"
+    const name = this.props.filename || ""
+    this.nameExt = name.includes(".") ? name.split(".").pop().toLowerCase() : ""
 
     this.state = proxy({
       converting: false,
@@ -34,9 +38,15 @@ export class ConvertDialog extends Component {
       try {
         const response = await fetch("/onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json")
         const allFormats = await response.json()
-        const currentFormat = allFormats.find((f) => f.name === this.sourceExt)
+        // The format by the extension of the name, otherwise by the type of the file (a name without extension).
+        const sourceExt = this.isOdooSpreadsheet ? "xlsx" : this.nameExt
+        let currentFormat = allFormats.find((f) => f.name === sourceExt)
+        if (!currentFormat && this.props.mimetype) {
+          currentFormat = allFormats.find((f) => (f.mime || []).includes(this.props.mimetype))
+        }
         const targets = (currentFormat && currentFormat.convert) || []
-        this.state.formats = [...targets].sort()
+        // An Odoo Spreadsheet can also become an XLSX file.
+        this.state.formats = [...targets, ...(this.isOdooSpreadsheet ? ["xlsx"] : [])].sort()
         this.state.targetFormat = this.state.formats[0] || null
       } catch (error) {
         console.error("Error loading formats data:", error)
@@ -63,11 +73,15 @@ export class ConvertDialog extends Component {
     this.state.converting = true
     this.ui.block()
     try {
-      const json = await this.rpc("/onlyoffice/documents/file/convert", {
+      const params = {
         document_id: this.props.documentId,
         save_to_documents: this.state.saveToDocuments,
         target_format: this.state.targetFormat,
-      })
+      }
+      if (this.isOdooSpreadsheet) {
+        params.xlsx_base64 = (await exportSpreadsheetNativeXlsx(this.env, this.props.documentId)).base64
+      }
+      const json = await this.rpc("/onlyoffice/documents/file/convert", params)
       const result = JSON.parse(json)
       if (result.error) {
         this.notification.add(result.error, { type: "danger" })
