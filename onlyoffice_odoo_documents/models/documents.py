@@ -247,10 +247,11 @@ class Document(models.Model):
             _logger.debug("Could not persist embedded metadata for document %s: %s", self.id, ex)
 
     def _get_onlyoffice_spreadsheets_domain(self, domain=None):
-        """Build the base domain matching any XLSX document, regardless of folder."""
+        """Build the base domain matching any XLSX document, regardless of folder; a frozen copy is read-only."""
         base_domain = [
             ("type", "=", "binary"),
             ("mimetype", "=", XLSX_MIMETYPE),
+            ("onlyoffice_frozen", "=", False),
         ]
         if domain:
             base_domain += domain
