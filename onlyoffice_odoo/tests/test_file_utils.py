@@ -25,6 +25,20 @@ class TestFileUtils(TransactionCase):
     def test_get_file_name_without_ext_keeps_inner_dots(self):
         self.assertEqual(file_utils.get_file_name_without_ext("my.report.v2.xlsx"), "my.report.v2")
 
+    def test_a_name_without_extension(self):
+        self.assertEqual(file_utils.get_file_ext("Contract"), "")
+        self.assertEqual(file_utils.get_file_title_without_ext("Contract"), "Contract")
+        self.assertEqual(file_utils.get_file_title_without_ext("Contract.v2.docx"), "Contract.v2")
+
+    def test_extension_by_the_type_of_the_file(self):
+        self.assertEqual(file_utils.get_ext_by_mime(file_utils.get_mime_by_ext("docx")), "docx")
+        self.assertEqual(file_utils.get_ext_by_mime("application/x-unknown"), "")
+        self.assertEqual(file_utils.get_ext_by_mime(False), "")
+
+    def test_the_url_of_the_editor_functions_changes_with_the_file(self):
+        url = file_utils.get_custom_functions_url()
+        self.assertRegex(url, r"^/onlyoffice_odoo/static/src/js/odoo_custom_functions_init\.js\?v=[0-9a-f]{12}$")
+
     def test_get_file_type_by_extension(self):
         for name, file_type in {"a.docx": "word", "a.xlsx": "cell", "a.pptx": "slide", "a.xyz123": None}.items():
             with self.subTest(name=name):

@@ -9,5 +9,6 @@ from . import test_models
 from . import test_share
 from . import test_sharing
 from . import test_spreadsheet_docbuilder
+from . import test_spreadsheet_freeze
 from . import test_spreadsheet_formulas
 from . import test_spreadsheet_routes

@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import base64
 import json
 from unittest.mock import MagicMock, patch
 
@@ -264,7 +265,7 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
     def _create(self, **params):
         return json.loads(self._rpc("/onlyoffice/documents/file/create", **params)["result"])
 
-    def _convert(self, document, target_format="pdf", save_to_documents=True, responses=None):
+    def _convert(self, document, target_format="pdf", save_to_documents=True, responses=None, **params):
         converted = MagicMock(status_code=200)
         converted.json.return_value = {"endConvert": True, "fileUrl": "http://documentserver/out.pdf", "percent": 100}
         responses = responses or [converted, MagicMock(content=b"%PDF-1.7 converted")]
@@ -274,8 +275,24 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
                 document_id=document.id,
                 target_format=target_format,
                 save_to_documents=save_to_documents,
+                **params,
             )
         return json.loads(body["result"]), request
+
+    def _spreadsheet(self):
+        return (
+            self.env["documents.document"]
+            .with_user(self.owner)
+            .create(
+                {
+                    "name": "Sales",
+                    "handler": "spreadsheet",
+                    "mimetype": "application/o-spreadsheet",
+                    "spreadsheet_data": json.dumps({"sheets": [{"id": "s1", "name": "Sheet1"}]}),
+                    "folder_id": self.folder.id,
+                }
+            )
+        )
 
     # -- POST /onlyoffice/documents/folders --
 
@@ -369,6 +386,45 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         _result, request = self._convert(self._document())
         body = json.loads(request.call_args_list[0].kwargs["opts"]["data"])
         self.assertEqual(jwt_utils.decode_token(self.env, body["token"], "ds-secret")["outputtype"], "pdf")
+
+    def test_an_odoo_spreadsheet_is_converted_from_its_export(self):
+        spreadsheet = self._spreadsheet()
+        export = blank("xlsx")
+        xlsx_base64 = base64.b64encode(export).decode()
+
+        result, request = self._convert(spreadsheet, target_format="xlsx", xlsx_base64=xlsx_base64)
+
+        request.assert_not_called()
+        converted = self.env["documents.document"].browse(result["document_id"])
+        self.assertEqual((converted.name, converted.raw, converted.folder_id), ("Sales.xlsx", export, self.folder))
+        # A file, not another Odoo Spreadsheet.
+        self.assertEqual((converted.handler, converted.mimetype), (False, XLSX_MIMETYPE))
+        self.assertFalse(converted.spreadsheet_revision_ids)
+
+        result, request = self._convert(spreadsheet, xlsx_base64=xlsx_base64)
+
+        self.assertTrue(result["saved"])
+        body = json.loads(request.call_args_list[0].kwargs["opts"]["data"])
+        self.assertEqual((body["filetype"], body["outputtype"]), ("xlsx", "pdf"))
+        # The Document Server takes the export once, from the cache of the Document Builder files.
+        token = body["url"].split("/onlyoffice/documents/docbuilder_file/")[1]
+        self.assertEqual(self.url_open(f"/onlyoffice/documents/docbuilder_file/{token}").status_code, 404)
+        pdf = self.env["documents.document"].browse(result["document_id"])
+        self.assertEqual((pdf.name, pdf.handler, pdf.mimetype), ("Sales.pdf", False, "application/pdf"))
+
+    def test_an_odoo_spreadsheet_needs_its_export(self):
+        result, request = self._convert(self._spreadsheet())
+        self.assertEqual(result["error"], "Native spreadsheet export is required for conversion")
+        request.assert_not_called()
+
+    def test_a_file_without_extension_takes_the_format_of_its_type(self):
+        document = self._document("Contract", content=blank("docx"), mimetype=file_utils.get_mime_by_ext("docx"))
+
+        result, request = self._convert(document)
+
+        body = json.loads(request.call_args_list[0].kwargs["opts"]["data"])
+        self.assertEqual((body["filetype"], body["outputtype"]), ("docx", "pdf"))
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Contract.pdf")
 
     def test_convert_errors(self):
         failed = MagicMock(status_code=200)

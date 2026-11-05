@@ -2,13 +2,13 @@
 // Copyright (C) 2026 Ascensio System SIA
 
 import { onWillStart } from "@odoo/owl"
-import { loadBundle } from "@web/core/assets"
 import { formatDateTime } from "@web/core/l10n/dates"
 import { _t } from "@web/core/l10n/translation"
 import { rpc } from "@web/core/network/rpc"
 import { useService } from "@web/core/utils/hooks"
 import { ConvertDialog } from "./convert_dialog/convert_dialog"
 import { CreateModeDialog } from "./create_mode_dialog/create_mode_dialog"
+import { exportSpreadsheetNativeXlsx } from "./spreadsheet_export"
 
 const { DateTime } = luxon
 
@@ -22,13 +22,13 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     this.dialogService = useService("dialog")
     this.notification = useService("notification")
     this.ui = useService("ui")
-    this.http = useService("http")
     onWillStart(async () => (this.formats = await this.loadFormats()))
   },
 
   // eslint-disable-next-line sort-keys
   getTopBarActionMenuItems() {
     const menuItems = super.getTopBarActionMenuItems()
+    const isInTrash = this.env.searchModel.getSelectedFolderId() === "TRASH"
     const selectionCount = this.model.targetRecords.length
     const singleSelection = selectionCount === 1 && this.targetRecords[0]
     return {
@@ -47,57 +47,26 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
         isAvailable: () => this.documentService.userIsInternal && this.showOnlyofficeButton(singleSelection),
         sequence: 52,
       },
+      // As "Freeze and Share" of an Odoo Spreadsheet, for an XLSX with Odoo formulas.
+      onlyofficeFreezeAndShare: {
+        callback: () => this.freezeAndShareSpreadsheet(singleSelection),
+        description: _t("Freeze and Share"),
+        groupNumber: 1,
+        icon: "fa fa-share-alt",
+        isAvailable: () => !isInTrash && this.canOnlyofficeFreeze(singleSelection),
+        sequence: 54,
+      },
     }
   },
 
   /**
-   * Export the spreadsheet with the native o-spreadsheet engine, so charts
-   * and other advanced formatting are kept. Throws if the export fails.
+   * The native XLSX export of an Odoo Spreadsheet (see exportSpreadsheetNativeXlsx).
    * @param {Number} id documents.document id of the Odoo Spreadsheet.
-   * @returns {Promise<{base64: string, name: string}>}
+   * @returns {Promise<Object>} the file, its data and sheet names.
    */
-  async _exportSpreadsheetNativeXlsx(id) {
-    await loadBundle("spreadsheet.o_spreadsheet")
-    const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
-    // Documents.document has no join_spreadsheet_session RPC anymore; the data/revisions
-    // are fetched the same way the native spreadsheet action does it.
-    const { data, name, revisions } = await this.http.get(`/spreadsheet/data/documents.document/${id}`)
-    const model = await createSpreadsheetModel({
-      data,
-      env: this.env,
-      revisions,
-    })
-    await waitForDataLoaded(model)
-    const xlsxData = model.exportXLSX()
-
-    const formData = new URLSearchParams({
-      files: JSON.stringify(xlsxData.files),
-      zip_name: `${name}.xlsx`,
-    })
-    if (odoo.csrf_token) {
-      formData.append("csrf_token", odoo.csrf_token)
-    }
-
-    const response = await fetch("/spreadsheet/xlsx", {
-      body: formData,
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      method: "POST",
-    })
-    if (!response.ok) {
-      throw new Error("Failed to export spreadsheet to XLSX")
-    }
-    const xlsxBlob = await response.blob()
-
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result.split(",")[1])
-      reader.onerror = reject
-      reader.readAsDataURL(xlsxBlob)
-    })
-    return {
-      base64,
-      name,
-    }
+  // eslint-disable-next-line sort-keys
+  _exportSpreadsheetNativeXlsx(id) {
+    return exportSpreadsheetNativeXlsx(this.env, id)
   },
 
   async _openDocumentInOnlyoffice(documentId) {
@@ -120,6 +89,10 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     this.model.notify()
   },
 
+  canOnlyofficeFreeze(record) {
+    return this.documentService.userIsInternal && Boolean(record?.data?.onlyoffice_can_freeze)
+  },
+
   /**
    * "Способ 2" (see SPREADSHEET_TESTING_GUIDE.md): convert the Odoo
    * Spreadsheet to an XLSX file where ODOO.* formulas stay alive as
@@ -133,8 +106,11 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
       // ODOO.* cells into it. There is no fallback: if the native export
       // fails, the conversion fails.
       const nativeExport = await this._exportSpreadsheetNativeXlsx(doc.data.id)
+      // The data with the revisions: what was inserted since the last snapshot is only there.
       const payload = {
         document_id: doc.data.id,
+        sheet_names: nativeExport.sheetNames,
+        spreadsheet_data: nativeExport.data,
         xlsx_base64: nativeExport.base64,
       }
       const result = await rpc("/onlyoffice/documents/convert_spreadsheet_via_docbuilder", payload)
@@ -155,6 +131,20 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     } finally {
       this.ui.unblock()
     }
+  },
+
+  /**
+   * "Freeze and Share" of an XLSX with Odoo formulas, as Odoo freezes a spreadsheet: a read-only copy with the
+   * values the user sees now, then the share dialog of that copy.
+   * @param {Object} doc the selected documents.document record
+   */
+  async freezeAndShareSpreadsheet(doc) {
+    this.ui.block({ message: _t("Freezing the spreadsheet...") })
+    const frozen = await this.orm
+      .call("documents.document", "action_onlyoffice_freeze_and_copy", [[doc.data.id]])
+      .finally(() => this.ui.unblock())
+    await this.env.searchModel._reloadSearchModel(true)
+    await this.documentService.openSharingDialog([frozen.id])
   },
 
   isOdooSpreadsheet(record) {
@@ -180,6 +170,8 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
     this.dialogService.add(ConvertDialog, {
       documentId: record.resId,
       filename: record.data.display_name || record.data.name,
+      handler: record.data.handler,
+      mimetype: record.data.mimetype,
       model: this.env.model,
     })
   },

@@ -23,13 +23,12 @@ import { FolderSelectionDialog } from "./folder_selection_dialog"
  */
 patch(SpreadsheetSelectorDialog.prototype, {
   async _onInsert() {
-    const action = await this.actionState.getOpenSpreadsheetAction()
-
-    // Only intercept confirmations coming from the ONLYOFFICE tab
-    // (flagged by OnlyofficeSelectorPanel)
-    if (!(action && action.params && action.params.onlyoffice_insert)) {
+    // The other tabs are left to Odoo before their action is asked for: for "Blank spreadsheet" asking for it
+    // creates the spreadsheet, so asking twice created two.
+    if (!this.actionState.isOnlyoffice) {
       return super._onInsert()
     }
+    const action = await this.actionState.getOpenSpreadsheetAction()
 
     if (this.state.confirmationIsPending) {
       return
@@ -154,5 +153,15 @@ patch(SpreadsheetSelectorDialog.prototype, {
     // InsertLink / insertChart are not supported for ONLYOFFICE spreadsheets
     this.notification.add(_t("This insert type is not supported for ONLYOFFICE spreadsheets"), { type: "warning" })
     return false
+  },
+
+  /**
+   * Whether the choice is made on the ONLYOFFICE tab (flagged by OnlyofficeSelectorPanel); the other panels do not
+   * flag it, so it is cleared when the user switches back to them.
+   * @override
+   */
+  onSpreadsheetSelected(args) {
+    super.onSpreadsheetSelected(args)
+    this.actionState.isOnlyoffice = Boolean(args.isOnlyoffice)
   },
 })
