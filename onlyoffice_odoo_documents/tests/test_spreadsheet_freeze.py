@@ -146,6 +146,11 @@ class TestFreezeSpreadsheet(DocumentsCase, TransactionCase):
             self.env["onlyoffice.odoo.documents"].advanced_share_save(
                 {"document_id": frozen.id, "internal_users": "edit", "link_access": "view", "user_accesses": []}
             )
+        # The share panel shows it as Odoo shows its frozen spreadsheets: view only, without the ONLYOFFICE roles.
+        panel = frozen.permission_panel_data()
+        self.assertEqual(panel["record"]["handler"], "frozen_spreadsheet")
+        self.assertNotIn("commenter", dict(panel["selections"]["access_internal"]))
+        self.assertIn("commenter", dict(source.permission_panel_data()["selections"]["access_internal"]))
         # The database refuses it too.
         with self.assertRaises(IntegrityError), mute_logger("odoo.sql_db"), self.env.cr.savepoint():
             frozen.sudo().write({"access_internal": "edit"})

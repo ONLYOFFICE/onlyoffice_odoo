@@ -323,7 +323,10 @@ class Document(models.Model):
     def permission_panel_data(self):
         result = super().permission_panel_data()
 
-        if result["record"]["type"] == "binary":
+        if self.onlyoffice_frozen:
+            # The share panel of a frozen spreadsheet of Odoo: no role but view, the edit options say why.
+            result["record"]["handler"] = "frozen_spreadsheet"
+        elif result["record"]["type"] == "binary":
             roles = list(self._get_available_roles(self.name).items())
 
             for key in ["access_via_link", "access_internal", "doc_access_roles"]:
