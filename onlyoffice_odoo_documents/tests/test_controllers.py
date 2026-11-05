@@ -72,6 +72,12 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
                 self._roles(document, **dict(roles))
                 self.assertEqual(self._editor("oo_doc_colleague", document), result)
 
+    def _read_only_document(self):
+        """A document of the shared folder that internal users may only read (a new one takes the folder access)."""
+        document = self._document()
+        document.action_update_access_rights(access_internal="view")
+        return document
+
     def test_roles_of_a_colleague_who_can_only_read(self):
         """Edit needs the right to write in Odoo; commenting roles save with the right to read, signed by JWT."""
         config_utils.set_jwt_secret(self.env, "ds-secret")
@@ -84,29 +90,29 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         }
         for roles, result in expected.items():
             with self.subTest(roles=roles):
-                document = self._document(access_internal="view")
+                document = self._read_only_document()
                 self._roles(document, **dict(roles))
                 self.assertEqual(self._editor("oo_doc_colleague", document), result)
                 config = self._config("oo_doc_colleague", document_id=document.id)["result"]["editorConfig"]
                 self.assertEqual("callbackUrl" in config["editorConfig"], result[0] == "edit")
 
     def test_commenting_roles_only_view_without_jwt_when_the_user_cannot_write(self):
-        document = self._document(access_internal="view")
+        document = self._read_only_document()
         self._roles(document, colleague="commenter")
         self.assertEqual(self._editor("oo_doc_colleague", document), ("view", {"edit": False}))
 
     def test_an_invitation_of_odoo_comes_before_the_role_of_internal_users(self):
-        document = self._document(access_internal="view")
+        document = self._read_only_document()
         document.with_user(self.owner).action_update_access_rights(
-            access_internal="commenter", partners={self.colleague.partner_id.id: ["edit", False]}
+            access_internal="commenter", partners={self.colleague.partner_id.id: ("edit", None)}
         )
         self.assertEqual(self._editor("oo_doc_colleague", document), ("edit", {"edit": True}))
 
     def test_an_expired_invitation_gives_no_role(self):
         config_utils.set_jwt_secret(self.env, "ds-secret")
-        document = self._document(access_internal="view")
+        document = self._read_only_document()
         document.with_user(self.owner).action_update_access_rights(
-            partners={self.colleague.partner_id.id: ["commenter", False]}
+            partners={self.colleague.partner_id.id: ("commenter", None)}
         )
         invitation = document.access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id)
         invitation.sudo().expiration_date = "2020-01-01 00:00:00"
@@ -114,7 +120,8 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
 
     def test_a_document_shared_by_link_opens_with_the_rights_of_the_link(self):
         """A colleague who followed the link of Odoo gets its rights in ONLYOFFICE too."""
-        document = self._document(access_internal="none", access_via_link="edit")
+        document = self._document()
+        document.action_update_access_rights(access_internal="none", access_via_link="edit")
         self.env["documents.access"].create(
             {"document_id": document.id, "partner_id": self.colleague.partner_id.id, "last_access_date": "2026-01-01"}
         )
@@ -400,7 +407,9 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         new_test_user(self.env, login="oo_doc_manager", groups="base.group_user,documents.group_documents_manager")
         read_only = Document.create({"name": "OO Read-only", "type": "folder", "access_internal": "view"})
         odoobot = self.env.ref("base.user_root")
+        # Odoo 19 creates a document of an archived owner (OdooBot) without owner: the company root.
         company_root = {"folder_id": False, "owner_id": odoobot.id, "access_internal": "view"}
+        no_owner = self.env["res.users"]
         cases = [
             ("own drive", "oo_doc_owner", self._document(folder_id=False), self.owner),
             (
@@ -409,7 +418,7 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
                 self._document(user=odoobot, folder_id=read_only.id),
                 self.colleague,
             ),
-            ("company root, manager", "oo_doc_manager", self._document(user=odoobot, **company_root), odoobot),
+            ("company root, manager", "oo_doc_manager", self._document(user=odoobot, **company_root), no_owner),
             ("company root, user", "oo_doc_colleague", self._document(user=odoobot, **company_root), self.colleague),
         ]
         for case, login, document, owner in cases:
@@ -425,7 +434,7 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
     def test_converted_copy_gets_the_access_of_the_source(self):
         contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
         document = self._document()
-        document.action_update_access_rights(access_internal="view", partners={contact.id: ["view", False]})
+        document.action_update_access_rights(access_internal="view", partners={contact.id: ("view", None)})
         document.sudo().lock_uid = self.owner
 
         result, _request = self._convert(document)
