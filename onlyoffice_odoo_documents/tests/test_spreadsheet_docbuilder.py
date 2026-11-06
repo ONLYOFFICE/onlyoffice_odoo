@@ -54,6 +54,9 @@ class TestDocBuilderScripts(TransactionCase):
         self.assertEqual(
             convert('=-ODOO.LIST(1,2,"name")+ODOO.LIST(1,3,"name")'), '=-ODOO_LIST(1,2,"name")+ODOO_LIST(1,3,"name")'
         )
+        # The filter functions of Odoo 19, ODOO.FILTER.VALUE.V18 of the Odoo 18 spreadsheets included.
+        self.assertEqual(convert('=ODOO.FILTER.LABEL("Year")'), '=ODOO_FILTER_LABEL("Year")')
+        self.assertEqual(convert('=ODOO.FILTER.VALUE.V18("Year")'), '=ODOO_FILTER_VALUE_V18("Year")')
         # A dynamic pivot the export could not split keeps its values: the editor cannot spread a table.
         self.assertIsNone(convert('=ODOO.PIVOT.TABLE("1")'))
         self.assertIsNone(convert("=PIVOT(1)", pivot_ids={"1"}))

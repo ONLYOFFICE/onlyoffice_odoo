@@ -507,18 +507,152 @@
         }
 
         /**
-         * Get the current value of an Odoo spreadsheet filter.
-         * Resolves synchronously from filter values pre-computed by the server.
+         * Get the current value of an Odoo spreadsheet filter, as ODOO.FILTER.VALUE of Odoo 19: a date filter gives
+         * the first day of its period.
          * @customfunction
          * @param {string} filterName The label of the filter.
-         * @returns {string} The current filter value.
+         * @returns {any} The current filter value.
          */
         async function ODOO_FILTER_VALUE(filterName) {
+          var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var formula = '=ODOO_FILTER_VALUE("' + escapedFilterName + '")'
+          return new Promise(function (resolve) {
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
+            if (_flushTimer === null) {
+              _flushTimer = setTimeout(function () {
+                var batch = _pendingFormulas.splice(0)
+                _flushTimer = null
+                fetch(serverUrl + "/onlyoffice/documents/evaluate_formulas_batch", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "call",
+                    params: {
+                      document_id: documentId,
+                      formulas: batch.map(function (b) {
+                        return b.formula
+                      }),
+                      jwt_token: jwtToken,
+                      time_zone: timeZone,
+                    },
+                  }),
+                })
+                  .then(function (r) {
+                    return r.json()
+                  })
+                  .then(function (data) {
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
+                    }
+                  })
+                  .catch(function (e) {
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve(new Error(e.message))
+                    }
+                  })
+              }, 50)
+            }
+          })
+        }
+
+        /**
+         * Get the label of the current value of an Odoo spreadsheet filter ("09/2026", "Q3/2026", record names).
+         * Resolves synchronously from filter labels pre-computed by the server.
+         * @customfunction
+         * @param {string} filterName The label of the filter.
+         * @returns {any} The label of the current filter value.
+         */
+        async function ODOO_FILTER_LABEL(filterName) {
           if (filterName in filterValues) {
             return filterValues[filterName]
           }
           var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-          var formula = '=ODOO_FILTER_VALUE("' + escapedFilterName + '")'
+          var formula = '=ODOO_FILTER_LABEL("' + escapedFilterName + '")'
+          return new Promise(function (resolve) {
+            _pendingFormulas.push({
+              formula: formula,
+              resolve: resolve,
+            })
+            if (_flushTimer === null) {
+              _flushTimer = setTimeout(function () {
+                var batch = _pendingFormulas.splice(0)
+                _flushTimer = null
+                fetch(serverUrl + "/onlyoffice/documents/evaluate_formulas_batch", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    method: "call",
+                    params: {
+                      document_id: documentId,
+                      formulas: batch.map(function (b) {
+                        return b.formula
+                      }),
+                      jwt_token: jwtToken,
+                      time_zone: timeZone,
+                    },
+                  }),
+                })
+                  .then(function (r) {
+                    return r.json()
+                  })
+                  .then(function (data) {
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
+                    for (var i = 0; i < batch.length; i++) {
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
+                    }
+                  })
+                  .catch(function (e) {
+                    for (var i = 0; i < batch.length; i++) {
+                      batch[i].resolve(new Error(e.message))
+                    }
+                  })
+              }, 50)
+            }
+          })
+        }
+
+        /**
+         * ODOO.FILTER.VALUE of Odoo 18 spreadsheets: the label of the current value of a filter.
+         * @customfunction
+         * @param {string} filterName The label of the filter.
+         * @returns {any} The label of the current filter value.
+         */
+        async function ODOO_FILTER_VALUE_V18(filterName) {
+          if (filterName in filterValues) {
+            return filterValues[filterName]
+          }
+          var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var formula = '=ODOO_FILTER_VALUE_V18("' + escapedFilterName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
               formula: formula,
@@ -662,6 +796,8 @@
         Api.AddCustomFunction(ODOO_PIVOT_POSITION)
         Api.AddCustomFunction(ODOO_PIVOT_TABLE)
         Api.AddCustomFunction(ODOO_FILTER_VALUE)
+        Api.AddCustomFunction(ODOO_FILTER_LABEL)
+        Api.AddCustomFunction(ODOO_FILTER_VALUE_V18)
         Api.AddCustomFunction(ODOO_CURRENCY_RATE)
       })
 
