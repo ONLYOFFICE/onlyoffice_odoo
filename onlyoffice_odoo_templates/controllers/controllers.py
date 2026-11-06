@@ -9,7 +9,7 @@ from datetime import datetime
 from urllib.parse import quote
 
 from odoo import http
-from odoo.http import request
+from odoo.http import content_disposition, request
 from odoo.tools import (
     file_open,
     misc,
@@ -72,17 +72,14 @@ class OnlyofficeTemplate_Connector(http.Controller):
             templates = self.fill_template(oo_security_token, record_ids, template_id)
             if len(templates) == 1:
                 url = next(iter(templates.values()))
-                filename = next(iter(templates))
-                filename = filename.encode("ascii", "ignore").decode("ascii")
-                if not filename:
-                    filename = "document.pdf"
+                filename = next(iter(templates)) or "document.pdf"
                 response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get", env=request.env)
                 if response.status_code == 200:
                     headers = [
                         ("Content-Type", "application/pdf"),
                         ("X-Content-Type-Options", "nosniff"),
                         ("Content-Length", str(len(response.content))),
-                        ("Content-Disposition", f'attachment; filename="{filename}"'),
+                        ("Content-Disposition", content_disposition(filename)),
                     ]
                     logger.info("GET /onlyoffice/template/fill - returning single PDF: %s", filename)
                     return request.make_response(response.content, headers)
@@ -110,7 +107,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 headers = [
                     ("Content-Type", "application/zip"),
                     ("X-Content-Type-Options", "nosniff"),
-                    ("Content-Length", str(len(response.content))),
+                    ("Content-Length", str(len(content))),
                     ("Content-Disposition", f'attachment; filename="{filename}"'),
                 ]
                 logger.info("GET /onlyoffice/template/fill - returning ZIP: %s", filename)

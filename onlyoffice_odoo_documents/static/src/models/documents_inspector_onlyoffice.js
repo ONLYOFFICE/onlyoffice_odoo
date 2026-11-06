@@ -115,7 +115,10 @@ patch(DocumentsControlPanel.prototype, {
   async freezeAndShareSpreadsheet(id) {
     this.ui.block({ message: _t("Freezing the spreadsheet...") })
     const frozen = await this.orm
-      .call("documents.document", "action_onlyoffice_freeze_and_copy", [[id]])
+      .call("documents.document", "action_onlyoffice_freeze_and_copy", [[id]], {
+        // As Odoo freezes in the browser: the dates and times of lists in its time zone.
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })
       .finally(() => this.ui.unblock())
     await this.env.searchModel._reloadSearchModel(true)
     await this.env.documentsView.bus.trigger("documents-open-share", {
