@@ -242,7 +242,7 @@ def get_field_excel_format(model, field_name):
 
 
 def compute_filter_values(metadata):
-    """Resolve all global filters in metadata to {label: string_value}."""
+    """Resolve all global filters in metadata to {label: their label}, as ODOO.FILTER.LABEL gives it."""
     result = {}
     if not metadata:
         return result
@@ -251,7 +251,7 @@ def compute_filter_values(metadata):
         if not label:
             continue
         try:
-            result[label] = _resolve_filter_value(gf.get("currentValue") or gf.get("defaultValue"), gf.get("type"), gf)
+            result[label] = filter_label(gf)
         except AccessError:
             result[label] = ""
     return result
@@ -305,11 +305,179 @@ def _relative_date_range_label(value):
     return labels.get(value, "")
 
 
-def _resolve_filter_value(value, filter_type=None, global_filter=None):
-    """Resolve a global filter's raw value (currentValue/defaultValue) to a display string.
+_DATE_DEFAULT_PERIODS = (
+    "today",
+    "yesterday",
+    "last_7_days",
+    "last_30_days",
+    "last_90_days",
+    "month_to_date",
+    "last_month",
+    "last_12_months",
+    "year_to_date",
+)
 
-    Shared by compute_filter_values (all filters at once) and
-    SpreadsheetFormulaEvaluator._eval_filter_value (single filter by name).
+
+def _browser_today():
+    """Today for the dates of a filter: Odoo computes them in the browser, in its time zone."""
+    browser_tz = _time_zone(request.env.context.get(BROWSER_TZ_KEY))
+    if browser_tz:
+        return datetime.now(pytz.timezone(browser_tz)).date()
+    return _user_today()
+
+
+def _filter_value_of(global_filter):
+    """The value of a global filter: its current value, else its default value, in the form of Odoo 19.
+
+    As getGlobalFilterValue of Odoo 19: a date default ("this_month", "last_7_days", ...) becomes its period, the
+    current user of a relation default becomes their id.
+    """
+    value = global_filter.get("currentValue")
+    if value is None:
+        value = global_filter.get("defaultValue")
+    filter_type = global_filter.get("type")
+    if filter_type == "date" and isinstance(value, str):
+        today = _browser_today()
+        if value == "this_year":
+            return {"type": "year", "year": today.year}
+        if value == "this_month":
+            return {"type": "month", "year": today.year, "month": today.month}
+        if value == "this_quarter":
+            return {"type": "quarter", "year": today.year, "quarter": (today.month - 1) // 3 + 1}
+        if value in _DATE_DEFAULT_PERIODS:
+            return {"type": "relative", "period": value}
+    if filter_type == "relation" and isinstance(value, dict) and value.get("ids") == "current_user":
+        return {**value, "ids": [request.env.uid]}
+    return value
+
+
+def _is_odoo19_filter_value(filter_type, value):
+    """Whether a filter value has the form of Odoo 19 (a date period by "type", other filters by "operator")."""
+    if not isinstance(value, dict):
+        return False
+    return "type" in value if filter_type == "date" else "operator" in value
+
+
+def _end_of_month(day):
+    return day.replace(day=1) + relativedelta(months=1) - timedelta(days=1)
+
+
+def _date_filter_range(value):
+    """The first and the last day of the period of a date filter of Odoo 19, or (None, None) (getDateRange)."""
+    kind = value.get("type")
+    try:
+        if kind == "year" and value.get("year") is not None:
+            return date_cls(int(value["year"]), 1, 1), date_cls(int(value["year"]), 12, 31)
+        if kind == "month" and value.get("year") is not None and value.get("month") is not None:
+            first = date_cls(int(value["year"]), int(value["month"]), 1)
+            return first, _end_of_month(first)
+        if kind == "quarter" and value.get("year") is not None and value.get("quarter") is not None:
+            first = date_cls(int(value["year"]), int(value["quarter"]) * 3 - 2, 1)
+            return first, _end_of_month(first + relativedelta(months=2))
+        if kind == "range":
+            start = date_cls.fromisoformat(str(value["from"])[:10]) if value.get("from") else None
+            end = date_cls.fromisoformat(str(value["to"])[:10]) if value.get("to") else None
+            return start, end
+    except (TypeError, ValueError):
+        return None, None
+    if kind != "relative":
+        return None, None
+    today = _browser_today()
+    tomorrow = today + timedelta(days=1)
+    last_month = today - relativedelta(months=1)
+    periods = {
+        "today": (today, today),
+        "yesterday": (today - timedelta(days=1), today - timedelta(days=1)),
+        "month_to_date": (today.replace(day=1), today),
+        "last_month": (last_month.replace(day=1), _end_of_month(last_month)),
+        "year_to_date": (today.replace(month=1, day=1), today),
+        "last_7_days": (tomorrow - timedelta(days=7), today),
+        "last_30_days": (tomorrow - timedelta(days=30), today),
+        "last_90_days": (tomorrow - timedelta(days=90), today),
+        "last_12_months": (
+            (tomorrow - relativedelta(months=12)).replace(day=1),
+            _end_of_month(tomorrow - relativedelta(months=1)),
+        ),
+    }
+    return periods.get(value.get("period"), (None, None))
+
+
+def _odoo19_filter_cells(global_filter, value):
+    """The cells ODOO.FILTER.VALUE of Odoo 19 gives (getFilterDisplayValue), one value per cell."""
+    if not value:
+        return [""]
+    if global_filter.get("type") == "date":
+        start, end = _date_filter_range(value)
+        return [_to_serial(request.env, start) if start else "", _to_serial(request.env, end) if end else ""]
+    operator = value.get("operator")
+    if operator in ("set", "not set"):
+        return [operator == "set"]
+    if "ids" in value:
+        return [", ".join(str(record_id) for record_id in value.get("ids") or [])]
+    if "strings" in value:
+        return [", ".join(value.get("strings") or [])]
+    if "selectionValues" in value:
+        return [", ".join(value.get("selectionValues") or [])]
+    if operator == "between":
+        return [value.get("minimumValue", ""), value.get("maximumValue", "")]
+    if "targetValue" in value:
+        target = value.get("targetValue")
+        return ["" if target is None else target]
+    return [""]
+
+
+def _odoo19_filter_label(global_filter, value):
+    """What ODOO.FILTER.LABEL (and ODOO.FILTER.VALUE.V18) of Odoo 19 gives: "09/2026", "Q3/2026", "2026", names.
+
+    A date period that is not a whole month, quarter or year, and a numeric range, give their first cell: the editor
+    cannot spread the two cells Odoo gives.
+    """
+    filter_type = global_filter.get("type")
+    if filter_type == "relation" and value and value.get("ids"):
+        model_name = global_filter.get("modelName")
+        if model_name and model_name in request.env:
+            ids = [record_id for record_id in value["ids"] if isinstance(record_id, int)]
+            return ", ".join(request.env[model_name].browse(ids).exists().mapped("display_name"))
+        return ""
+    cells = _odoo19_filter_cells(global_filter, value)
+    if filter_type != "date" or len(cells) < 2:
+        return cells[0]
+    start, end = _date_filter_range(value)
+    if not start and not end:
+        return ""
+    if start and end and start.day == 1 and end == _end_of_month(end):
+        if (start.year, start.month) == (end.year, end.month):
+            return f"{start.month:02d}/{start.year}"
+        if end.month - start.month == 2:
+            return f"Q{(start.month - 1) // 3 + 1}/{start.year}"
+        if start.year == end.year:
+            return str(start.year)
+    return cells[0]
+
+
+def filter_label(global_filter):
+    """The label of the current value of a global filter, as ODOO.FILTER.LABEL of Odoo 19 gives it."""
+    value = _filter_value_of(global_filter)
+    if _is_odoo19_filter_value(global_filter.get("type"), value):
+        return _odoo19_filter_label(global_filter, value)
+    return _resolve_filter_value(value, global_filter.get("type"), global_filter)
+
+
+def filter_value(global_filter):
+    """The value of a global filter, as ODOO.FILTER.VALUE of Odoo 19 gives it in its first cell.
+
+    A date filter gives the first day of its period (Odoo also gives the last one, in the next cell, which the editor
+    cannot spread to). A value in the form of Odoo 17 / 18 gives its label, as these versions did.
+    """
+    value = _filter_value_of(global_filter)
+    if _is_odoo19_filter_value(global_filter.get("type"), value):
+        return _odoo19_filter_cells(global_filter, value)[0]
+    return _resolve_filter_value(value, global_filter.get("type"), global_filter)
+
+
+def _resolve_filter_value(value, filter_type=None, global_filter=None):
+    """Resolve a global filter value in the form of Odoo 17 / 18 to a display string (filter_label, filter_value).
+
     Date filters are shown like Odoo's getFilterDisplayValue: "Q3/2026",
     "09/2026", "2026", or the label of a relative range.
     """
@@ -479,6 +647,8 @@ class SpreadsheetFormulaEvaluator:
         "PIVOT_HEADER": "_eval_pivot_header",
         "PIVOT_TABLE": "_eval_pivot_table",
         "FILTER_VALUE": "_eval_filter_value",
+        "FILTER_LABEL": "_eval_filter_label",
+        "FILTER_VALUE_V18": "_eval_filter_label",
         "CURRENCY_RATE": "_eval_currency_rate",
     }
 
@@ -703,16 +873,26 @@ class SpreadsheetFormulaEvaluator:
             return sel.get(str(value), str(value))
         return str(value)
 
-    def _eval_filter_value(self, snapshot, args):
-        """ODOO.FILTER.VALUE(filter_name)"""
+    @staticmethod
+    def _global_filter(snapshot, args):
+        """The global filter a filter function names, or None without a name."""
         if not args:
-            return ""
+            return None
         name = str(args[0])
-        for f in snapshot.get("globalFilters", []):
-            if f.get("label") != name:
-                continue
-            return _resolve_filter_value(f.get("currentValue") or f.get("defaultValue"), f.get("type"), f)
+        for global_filter in snapshot.get("globalFilters", []):
+            if global_filter.get("label") == name:
+                return global_filter
         raise ValueError(f'Filter "{name}" not found')
+
+    def _eval_filter_value(self, snapshot, args):
+        """ODOO.FILTER.VALUE(filter_name): the value of the filter, as Odoo 19 gives it in its first cell."""
+        global_filter = self._global_filter(snapshot, args)
+        return filter_value(global_filter) if global_filter else ""
+
+    def _eval_filter_label(self, snapshot, args):
+        """ODOO.FILTER.LABEL(filter_name) and ODOO.FILTER.VALUE.V18(filter_name): the label of its value."""
+        global_filter = self._global_filter(snapshot, args)
+        return filter_label(global_filter) if global_filter else ""
 
     def _eval_currency_rate(self, _snapshot, args):
         """ODOO.CURRENCY.RATE(from, to, [date], [company_id]) — uses Odoo's own currency rate lookup."""

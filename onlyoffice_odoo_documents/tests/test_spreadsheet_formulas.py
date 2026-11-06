@@ -2,7 +2,7 @@
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import json
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from unittest.mock import patch
 
 from odoo import fields
@@ -171,6 +171,77 @@ class TestFormulaEvaluator(TransactionCase):
         self.assertEqual(
             self.evaluator.evaluate_single_formula(snapshot, '=ODOO_FILTER_VALUE("Q")'), f"Q3/{today.year - 1}"
         )
+
+    def test_filters_of_odoo_19_give_their_value_and_their_label(self):
+        """ODOO.FILTER.VALUE of Odoo 19 gives the value (a date filter: the first day of its period), ODOO.FILTER.LABEL
+        and ODOO.FILTER.VALUE.V18 the label; the editor cannot spread the second cell Odoo gives a date filter."""
+        today = fields.Date.context_today(self.env.user)
+        last_month = today.replace(day=1) - timedelta(days=1)
+
+        def serial(day):
+            return (day - date(1899, 12, 30)).days
+
+        snapshot = {
+            "globalFilters": [
+                {"label": "Month", "type": "date", "currentValue": {"type": "month", "year": 2026, "month": 9}},
+                {"label": "Quarter", "type": "date", "currentValue": {"type": "quarter", "year": 2026, "quarter": 3}},
+                {"label": "Year", "type": "date", "currentValue": {"type": "year", "year": 2026}},
+                {"label": "Last month", "type": "date", "defaultValue": "last_month"},
+                {"label": "Last 7 days", "type": "date", "defaultValue": "last_7_days"},
+                {
+                    "label": "Range",
+                    "type": "date",
+                    "currentValue": {"type": "range", "from": "2026-03-05", "to": "2026-03-20"},
+                },
+                {
+                    "label": "Whole month",
+                    "type": "date",
+                    "currentValue": {"type": "range", "from": "2026-03-01", "to": "2026-03-31"},
+                },
+                {
+                    "label": "Partner",
+                    "type": "relation",
+                    "modelName": "res.partner",
+                    "currentValue": {"operator": "in", "ids": [self.alpha.id]},
+                },
+                {
+                    "label": "Me",
+                    "type": "relation",
+                    "modelName": "res.users",
+                    "defaultValue": {"operator": "in", "ids": "current_user"},
+                },
+                {"label": "Text", "type": "text", "currentValue": {"operator": "ilike", "strings": ["a", "b"]}},
+                {"label": "Set", "type": "boolean", "currentValue": {"operator": "set"}},
+                {
+                    "label": "Between",
+                    "type": "numeric",
+                    "currentValue": {"operator": "between", "minimumValue": 2, "maximumValue": 5},
+                },
+                {"label": "Empty", "type": "date"},
+            ]
+        }
+        cases = {
+            "Month": (serial(date(2026, 9, 1)), "09/2026"),
+            "Quarter": (serial(date(2026, 7, 1)), "Q3/2026"),
+            "Year": (serial(date(2026, 1, 1)), "2026"),
+            "Last month": (serial(last_month.replace(day=1)), f"{last_month.month:02d}/{last_month.year}"),
+            "Last 7 days": (serial(today - timedelta(days=6)), serial(today - timedelta(days=6))),
+            "Range": (serial(date(2026, 3, 5)), serial(date(2026, 3, 5))),
+            "Whole month": (serial(date(2026, 3, 1)), "03/2026"),
+            "Partner": (str(self.alpha.id), "Alpha Corp"),
+            "Me": (str(self.env.uid), self.env.user.name),
+            "Text": ("a, b", "a, b"),
+            "Set": (True, True),
+            "Between": (2, 2),
+            "Empty": ("", ""),
+        }
+        for name, (value, label) in cases.items():
+            with self.subTest(filter=name):
+                evaluate = self.evaluator.evaluate_single_formula
+                self.assertEqual(evaluate(snapshot, f'=ODOO_FILTER_VALUE("{name}")'), value)
+                self.assertEqual(evaluate(snapshot, f'=ODOO_FILTER_LABEL("{name}")'), label)
+                self.assertEqual(evaluate(snapshot, f'=ODOO_FILTER_VALUE_V18("{name}")'), label)
+        self.assertEqual(compute_filter_values(snapshot)["Quarter"], "Q3/2026")
 
     def test_currency_rate_is_odoo_rate_for_the_date_and_company(self):
         currency = self.env["res.currency"].create({"name": "OOX", "symbol": "X", "active": True})
