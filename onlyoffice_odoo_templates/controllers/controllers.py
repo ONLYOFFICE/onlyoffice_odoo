@@ -498,7 +498,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
         folders = Document.search([("type", "=", "folder")])
         result = []
         for folder in folders:
-            if folder.access_internal != "edit":
+            # The folders the user may add a file to: their own, shared with them, or editable by all users.
+            if folder.user_permission != "edit":
                 continue
 
             parts = []
@@ -523,7 +524,7 @@ class OnlyofficeTemplate_Connector(http.Controller):
         )
         try:
             folder = request.env["documents.document"].browse(int(folder_id))
-            if not folder.exists() or folder.type != "folder":
+            if not folder.exists() or folder.type != "folder" or folder.user_permission != "edit":
                 raise Exception("Access denied to the selected folder")
         except KeyError:
             raise Exception("Documents module is not installed")  # noqa: B904

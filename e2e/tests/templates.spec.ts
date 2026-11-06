@@ -6,7 +6,7 @@ import type { FilePayload, Locator, Page } from "@playwright/test"
 import JSZip from "jszip"
 import { PDFDocument } from "pdf-lib"
 
-import { expect, knownBug, test } from "../fixtures"
+import { expect, test } from "../fixtures"
 import { contextOf, documentFile, newFolder } from "../helpers/documents"
 import { waitForEditor } from "../helpers/editor"
 import { pickGalleryForm, stubFormGallery } from "../helpers/gallery"
@@ -206,7 +206,6 @@ test("add an employee's PDF to a Documents folder → the filled PDF is saved th
 
 test("Add to Documents offers the folders the user can edit, their own private folders too", async ({ page, odoo }) => {
   test.skip(WITHOUT_DOCUMENTS, "needs the Documents app")
-  knownBug("only folders that every internal user can edit are offered")
   const shared = await newFolder(odoo, `E2E shared ${Date.now()}`)
   const own = await newFolder(odoo, `E2E own ${Date.now()}`, { access_internal: "none" })
 
