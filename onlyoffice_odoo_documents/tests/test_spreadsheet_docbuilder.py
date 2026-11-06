@@ -55,6 +55,9 @@ class TestDocBuilderScripts(TransactionCase):
             convert('=-ODOO.LIST(1,2,"name")+ODOO.LIST(1,3,"name")'), '=-ODOO_LIST(1,2,"name")+ODOO_LIST(1,3,"name")'
         )
         self.assertEqual(convert('=ODOO.LIST.VALUE(1,2,"name")'), '=ODOO_LIST_VALUE(1,2,"name")')
+        # A dynamic pivot the export could not split keeps its values: the editor cannot spread a table.
+        self.assertIsNone(convert('=ODOO.PIVOT.TABLE("1")'))
+        self.assertIsNone(convert("=PIVOT(1)", pivot_ids={"1"}))
 
     def test_patches_cover_only_odoo_formula_cells(self):
         snapshot = {

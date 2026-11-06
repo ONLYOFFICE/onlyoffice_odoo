@@ -17,6 +17,57 @@ function addMissingListSort(data) {
 }
 
 /**
+ * Each dynamic pivot (one PIVOT formula, its table spread over the cells around) becomes the formulas of its cells,
+ * as "Convert to individual formulas" of Odoo does: ONLYOFFICE cannot spread the result of a function. A table that
+ * cannot spread (cells around taken) stays as it is, as Odoo shows an error. Only the model of the export changes,
+ * not the spreadsheet.
+ * @param {Object} model the spreadsheet model, its data loaded.
+ */
+function splitDynamicPivots(model) {
+  const pivotFormulas = []
+  for (const sheetId of model.getters.getSheetIds()) {
+    for (const cell of Object.values(model.getters.getCells(sheetId))) {
+      if (!cell.isFormula) {
+        continue
+      }
+      const position = model.getters.getCellPosition(cell.id)
+      // Since Odoo 20 a formula cell keeps its compiled formula, not its text.
+      if (/^=\s*PIVOT\s*\(/i.test(model.getters.getCellText(position, { showFormula: true }))) {
+        pivotFormulas.push(position)
+      }
+    }
+  }
+  for (const position of pivotFormulas) {
+    // The table is spread once the formula is computed; an error (cells around taken) is left as Odoo shows it.
+    const evaluated = model.getters.getEvaluatedCell(position)
+    const pivotId = model.getters.getPivotIdFromPosition(position)
+    if (!pivotId || evaluated.type === "error") {
+      continue
+    }
+    const pivot = model.getters.getPivot(pivotId)
+    pivot.init()
+    if (!pivot.isValid()) {
+      continue
+    }
+    model.dispatch("SPLIT_PIVOT_FORMULA", {
+      ...position,
+      pivotId,
+    })
+    // The split leaves the corner of the title empty: the title stays, as the table showed it.
+    if (
+      typeof evaluated.value === "string" &&
+      evaluated.value &&
+      !model.getters.getCellText(position, { showFormula: true })
+    ) {
+      model.dispatch("UPDATE_CELL", {
+        ...position,
+        content: evaluated.value,
+      })
+    }
+  }
+}
+
+/**
  * The data with the revisions applied. When Odoo cannot export it, no data and the failure: the server then takes the
  * last saved snapshot, and the caller tells the user what that means for the file.
  * @param {Object} model the spreadsheet model.
@@ -57,6 +108,9 @@ export async function exportSpreadsheetNativeXlsx(env, id) {
     env,
     revisions: record.revisions,
   })
+  await waitForDataLoaded(model)
+  splitDynamicPivots(model)
+  // The formulas of the split pivots load their data too.
   await waitForDataLoaded(model)
   // Asynchronous since Odoo 20.
   const xlsxData = await model.exportXLSX()

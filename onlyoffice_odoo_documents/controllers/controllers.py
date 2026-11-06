@@ -41,6 +41,7 @@ from .spreadsheet_docbuilder import (
 from .spreadsheet_formulas import (
     SpreadsheetFormulaEvaluator,
     compute_filter_values,
+    formula_context,
     load_metadata_for_document,
 )
 
@@ -671,8 +672,11 @@ class OnlyOfficeShareRoute(ShareRoute):
         csrf=False,
         cors="*",
     )
-    def evaluate_formulas_batch(self, document_id, formulas, jwt_token=None):
-        """Evaluate several ODOO formulas in one request, sharing the document snapshot."""
+    def evaluate_formulas_batch(self, document_id, formulas, jwt_token=None, time_zone=None):
+        """Evaluate several ODOO formulas in one request, sharing the document snapshot.
+
+        ``time_zone`` is that of the browser of the editor, for the dates and times of lists.
+        """
         if request.httprequest.method == "OPTIONS":
             return {}
 
@@ -699,12 +703,11 @@ class OnlyOfficeShareRoute(ShareRoute):
             _logger.warning("evaluate_formulas_batch: token validation failed for doc %s: %s", document_id, e)
             return {"error": "Invalid security token"}
 
-        # Switch to the authenticated user (correct uid for domain resolution)
-        # and their language (this route is public, so the ambient context's
-        # language does not reflect the actual user).
-        request.update_env(
-            user=token_uid, context=dict(request.env.context, lang=user.lang or request.env.context.get("lang"))
-        )
+        # Switch to the authenticated user (correct uid for domain resolution),
+        # their language and time zones (this route is public, so the ambient
+        # context does not reflect the actual user).
+        context = dict(request.env.context, lang=user.lang or request.env.context.get("lang"))
+        request.update_env(user=token_uid, context=formula_context(context, user.tz, time_zone))
 
         # Load snapshot once for the whole batch
         snapshot = _formula_evaluator.load_document_snapshot(document_id)

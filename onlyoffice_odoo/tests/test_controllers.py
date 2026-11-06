@@ -10,7 +10,7 @@ from odoo.tests.common import HttpCase, new_test_user
 from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
-from .common import INTERNAL_SECRET, OnlyofficeCase, known_bug
+from .common import INTERNAL_SECRET, OnlyofficeCase
 
 URLOPEN = "odoo.addons.onlyoffice_odoo.controllers.main.onlyoffice_urlopen"
 DS_SECRET = "ds-secret"
@@ -124,7 +124,6 @@ class TestEditorConfig(ConnectorCase):
         response = self.url_open(f"/onlyoffice/editor/{self.attachment.id}", allow_redirects=False)
         self.assertEqual(response.status_code, 403)
 
-    @known_bug("the access token of an attachment is checked but does not grant access")
     def test_access_token_opens_a_shared_attachment(self):
         private = self._private_attachment()
         access_token = private.generate_access_token()[0]
@@ -133,7 +132,11 @@ class TestEditorConfig(ConnectorCase):
         response = self.url_open(f"/onlyoffice/editor/{private.id}?access_token={access_token}")
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(f"&access_token={access_token}", self._editor_config(response.text)["document"]["url"])
+        config = self._editor_config(response.text)
+        self.assertIn(f"&access_token={access_token}", config["document"]["url"])
+        # The token only lets the user read the file.
+        self.assertEqual(config["editorConfig"]["mode"], "view")
+        self.assertNotIn("callbackUrl", config["editorConfig"])
 
     def test_wrong_access_token_is_refused(self):
         private = self._private_attachment()
@@ -188,7 +191,6 @@ class TestFileContent(ConnectorCase):
             self._content(self.attachment, headers={"Authorization": f"Bearer {forged}"}).status_code, 200
         )
 
-    @known_bug("the access token of an attachment is checked but does not grant access")
     def test_access_token_lets_the_document_server_download_a_shared_attachment(self):
         private = self._private_attachment()
         access_token = private.generate_access_token()[0]
@@ -254,6 +256,22 @@ class TestEditorCallback(ConnectorCase):
                 response, _urlopen = self._callback({"status": 2, "url": "http://ds/out.docx"}, token=token)
                 self.assertEqual((response.status_code, response.json()["error"]), (500, 1))
                 self.assertEqual(self._raw(), b"content")
+
+    def test_access_token_does_not_let_a_user_save_a_file_they_cannot_write(self):
+        private = self._private_attachment()
+        access_token = private.generate_access_token()[0]
+        token = self._internal_token({"id": self.reader.id})
+        with patch(URLOPEN) as urlopen:
+            response = self.url_open(
+                f"/onlyoffice/editor/callback/{private.id}?oo_security_token={token}&access_token={access_token}",
+                data=json.dumps({"status": 2, "url": "http://documentserver/cache/out.docx"}),
+                headers={"Content-Type": "application/json"},
+            )
+
+        self.assertEqual((response.status_code, response.json()["error"]), (500, 1))
+        urlopen.assert_not_called()
+        self.env.invalidate_all()
+        self.assertEqual(private.raw.content, b"content")
 
     def test_signed_body_or_header_is_accepted_when_jwt_is_enabled(self):
         config_utils.set_jwt_secret(self.env, DS_SECRET)

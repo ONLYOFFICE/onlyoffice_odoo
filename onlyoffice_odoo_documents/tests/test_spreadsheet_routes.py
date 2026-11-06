@@ -3,7 +3,10 @@
 
 import base64
 import json
+from datetime import datetime
 from unittest.mock import patch
+
+import pytz
 
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
@@ -15,6 +18,7 @@ from odoo.addons.onlyoffice_odoo_documents.controllers.spreadsheet_docbuilder im
 from .common import XLSX_MIMETYPE, DocumentsCase, blank
 
 REF = "oo-routes"
+EPOCH = datetime(1899, 12, 30)
 LIST = {"model": "res.partner", "domain": [["ref", "=", REF]], "orderBy": [{"name": "name"}], "columns": ["name"]}
 
 
@@ -60,6 +64,34 @@ class TestSpreadsheetRoutes(DocumentsCase, HttpCase):
         self.assertEqual(result["values"], {'=ODOO_LIST(1,2,"name")': "Bob", '=ODOO_LIST_HEADER(1,"name")': "Name"})
         # An error comes apart: the editor makes it an error of the cell, which ISERROR and IFERROR see.
         self.assertEqual(result["errors"], {"=ODOO_X(1)": "Unknown function X"})
+
+    def test_dates_and_times_of_a_list_are_in_the_time_zone_of_the_browser(self):
+        self.owner.tz = "Europe/Brussels"
+        document = self._xlsx({"lists": {"1": dict(LIST, columns=["name", "create_date"])}})
+        token = self._internal_token({"uid": self.owner.id, "document_id": document.id})
+        created = self.env["res.partner"].search([("ref", "=", REF)], order="name", limit=1).create_date
+        formula = '=ODOO_LIST(1,1,"create_date")'
+
+        def serial(tz):
+            delta = pytz.utc.localize(created).astimezone(pytz.timezone(tz)).replace(tzinfo=None) - EPOCH
+            return delta.days + delta.seconds / 86400
+
+        # Without the time zone of the browser (or an unknown one), that of the user.
+        cases = {
+            "Europe/Moscow": serial("Europe/Moscow"),
+            None: serial("Europe/Brussels"),
+            "Not/A_Zone": serial("Europe/Brussels"),
+        }
+        for time_zone, expected in cases.items():
+            with self.subTest(time_zone=time_zone):
+                result = self._rpc(
+                    "/onlyoffice/documents/evaluate_formulas_batch",
+                    document_id=document.id,
+                    formulas=[formula],
+                    jwt_token=token,
+                    time_zone=time_zone,
+                )["result"]
+                self.assertAlmostEqual(result["values"][formula], expected)
 
     def test_formulas_need_a_valid_token_for_the_document(self):
         document = self._xlsx({"lists": {"1": LIST}}, folder_id=False)  # private to the owner

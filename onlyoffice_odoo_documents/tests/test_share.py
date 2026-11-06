@@ -4,6 +4,8 @@
 import json
 from unittest.mock import MagicMock, patch
 
+import lxml.html
+
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
 
@@ -58,6 +60,12 @@ class TestShareLink(DocumentsCase, HttpCase):
         response = self.url_open(f"/documents/{self.shared.access_token}")
         self.assertEqual(response.status_code, 200)
         self.assertIn(f'href="/onlyoffice/documents/share/{self.shared.access_token}"', response.text)
+
+        # The button is next to the download link, not inside it: a link in a link is not valid HTML.
+        page = lxml.html.fromstring(response.text)
+        [button] = page.xpath(f'//a[@href="/onlyoffice/documents/share/{self.shared.access_token}"]')
+        self.assertFalse(button.xpath("ancestor::a"))
+        self.assertIn("Download file", button.getprevious().text_content())
 
         archive = self._document("Backup.zip", content=b"PK\x05\x06" + b"\0" * 18, access_via_link="view")
         response = self.url_open(f"/documents/{archive.access_token}")
