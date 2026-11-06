@@ -121,4 +121,6 @@ class Document(models.Model):
                     "user_accesses": user_accesses,
                     "users_to_remove": users_to_remove,
                 }
-                self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)
+                # Native sharing already checked access before applying changes, which may revoke
+                # the caller's own edit role. Do not recheck that now-reduced permission here.
+                self.env["onlyoffice.odoo.documents"]._save_document_access(vals)

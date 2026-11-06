@@ -14,11 +14,15 @@ class OnlyofficeDocuments(models.Model):
         if not document_id:
             raise AccessError(_("No document selected for sharing."))
 
-        is_admin = self.env.user.has_group("base.group_system")
         document = self.env["documents.document"].browse(document_id)
-        if not is_admin and document.create_uid != self.env.user:
-            raise AccessError(_("Only the owner or administrator can share documents."))
+        document.check_access("write")
 
+        return self._save_document_access(vals)
+
+    @api.model
+    def _save_document_access(self, vals):
+        """Persist roles after the caller has authorized the document operation."""
+        document_id = vals["document_id"]
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
         if not access:
             access = self.env["onlyoffice.odoo.documents.access"].create(
