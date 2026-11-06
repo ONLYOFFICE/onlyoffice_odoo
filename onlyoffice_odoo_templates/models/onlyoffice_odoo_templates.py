@@ -118,15 +118,9 @@ class OnlyOfficeTemplate(models.Model):
     def create(self, vals):
         url = self._context.get("url", None)
         if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
+            # A form of the gallery: the address comes from the browser, only the files of the gallery are taken.
             try:
-                response = onlyoffice_request(
-                    url=url,
-                    method="get",
-                    env=self.env,
-                )
-
-                file_content = response.content
-                vals["file"] = base64.b64encode(file_content)
+                vals["file"] = base64.b64encode(url_utils.download_form_file(url, self.env))
             except Exception as e:
                 raise UserError(_("Failed to download form")) from e
 

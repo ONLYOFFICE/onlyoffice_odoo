@@ -10,5 +10,7 @@ DOC_SERVER_DEMO = "onlyoffice_connector.doc_server_demo"
 DOC_SERVER_DEMO_DATE = "onlyoffice_connector.doc_server_demo_date"
 DOC_SERVER_DISABLE_CERTIFICATE = "onlyoffice_connector.doc_server_disable_certificate"
 SAME_TAB = "onlyoffice_connector.same_tab"
+# The address of an own mirror of the files of the form gallery (a system parameter, unset by default).
+FORM_FILES_URL = "onlyoffice_connector.form_files_url"
 
 INTERNAL_JWT_SECRET = "onlyoffice_connector.internal_jwt_secret"
