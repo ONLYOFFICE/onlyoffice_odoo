@@ -4,17 +4,53 @@
 import { loadBundle } from "@web/core/assets"
 
 /**
+ * A list of the data without its sort (made through the API, not by Odoo) is loaded by Odoo, but its exportData
+ * fails on it: the sort is empty, as Odoo reads it.
+ * @param {Object} data the spreadsheet data.
+ */
+function addMissingListSort(data) {
+  for (const list of Object.values(data?.lists || {})) {
+    if (list && !Array.isArray(list.orderBy)) {
+      list.orderBy = []
+    }
+  }
+}
+
+/**
+ * The data with the revisions applied. When Odoo cannot export it, no data and the failure: the server then takes the
+ * last saved snapshot, and the caller tells the user what that means for the file.
+ * @param {Object} model the spreadsheet model.
+ * @returns {{data: Object|undefined, dataExportFailed: boolean}} the data, or the failure.
+ */
+function exportSpreadsheetData(model) {
+  try {
+    return {
+      data: model.exportData(),
+      dataExportFailed: false,
+    }
+  } catch (error) {
+    console.warn("The spreadsheet data could not be exported, the last snapshot is used:", error)
+    return {
+      data: undefined,
+      dataExportFailed: true,
+    }
+  }
+}
+
+/**
  * Export an Odoo Spreadsheet with the native o-spreadsheet engine, so charts
  * and other advanced formatting are kept. Throws if the export fails.
  * @param {Object} env the environment of the component that exports.
  * @param {Number} id documents.document id of the Odoo Spreadsheet.
- * @returns {Promise<{base64: string, name: string, data: Object, sheetNames: string[]}>} the file, and the data
- * it was made from (revisions applied) with its sheet names as the export wrote them.
+ * @returns {Promise<{base64: string, name: string, data: Object, dataExportFailed: boolean, sheetNames: string[]}>}
+ * the file, and the data it was made from (revisions applied; undefined with dataExportFailed when Odoo could not
+ * export it) with its sheet names as the export wrote them.
  */
 export async function exportSpreadsheetNativeXlsx(env, id) {
   await loadBundle("spreadsheet.o_spreadsheet")
   const { createSpreadsheetModel, waitForDataLoaded } = odoo.loader.modules.get("@spreadsheet/helpers/model")
   const record = await env.services.orm.call("documents.document", "join_spreadsheet_session", [id])
+  addMissingListSort(record.data)
   const model = await createSpreadsheetModel({
     data: record.data,
     env,
@@ -56,7 +92,7 @@ export async function exportSpreadsheetNativeXlsx(env, id) {
   }
   return {
     base64,
-    data: model.exportData(),
+    ...exportSpreadsheetData(model),
     name: record.name,
     sheetNames,
   }
