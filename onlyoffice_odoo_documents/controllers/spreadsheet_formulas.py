@@ -12,6 +12,7 @@ import re
 from datetime import date as date_cls
 from datetime import datetime, timedelta
 
+import pytz
 from dateutil.relativedelta import relativedelta
 
 from odoo import _, fields
@@ -52,14 +53,58 @@ def _domain_eval_context():
 
 _EXCEL_EPOCH = datetime(1899, 12, 30)
 
+# Context key of the time zone of the browser that opened the spreadsheet.
+BROWSER_TZ_KEY = "onlyoffice_browser_tz"
+
+
+def _time_zone(name):
+    """``name`` if it is a known time zone, else None."""
+    return name if isinstance(name, str) and name in pytz.all_timezones_set else None
+
+
+def formula_context(context, user_tz, browser_tz):
+    """The context to compute the Odoo functions of a spreadsheet in, with the time zones Odoo Spreadsheet uses.
+
+    The groups of a pivot by date are in the time zone of the user (the context of the Odoo web client), without
+    it in that of the browser; the dates and times of a list are in the time zone of the browser.
+    """
+    context = dict(context)
+    browser_tz = _time_zone(browser_tz)
+    tz = _time_zone(user_tz) or browser_tz
+    if tz:
+        context["tz"] = tz
+    else:
+        context.pop("tz", None)
+    if browser_tz:
+        context[BROWSER_TZ_KEY] = browser_tz
+    else:
+        context.pop(BROWSER_TZ_KEY, None)
+    return context
+
 
 def _to_serial(env, value):
-    """The spreadsheet serial number of a date, or of a datetime in the timezone of the user, as Odoo shows it."""
+    """The spreadsheet serial number of a date, or of a datetime as Odoo shows it in a list.
+
+    A datetime is in the time zone of the browser, as Odoo Spreadsheet shows it; without it, in that of the user.
+    """
     if isinstance(value, datetime):
-        local = fields.Datetime.context_timestamp(env.user, value).replace(tzinfo=None)
+        browser_tz = _time_zone(env.context.get(BROWSER_TZ_KEY))
+        if browser_tz:
+            local = pytz.utc.localize(value).astimezone(pytz.timezone(browser_tz)).replace(tzinfo=None)
+        else:
+            local = fields.Datetime.context_timestamp(env.user, value).replace(tzinfo=None)
         delta = local - _EXCEL_EPOCH
         return delta.days + delta.seconds / 86400
     return (datetime(value.year, value.month, value.day) - _EXCEL_EPOCH).days
+
+
+def _datetime_range(env, day_range):
+    """UTC bounds of a range of days in the time zone of the context, as read_group groups a datetime field."""
+    tz = pytz.timezone(_time_zone(env.context.get("tz")) or "UTC")
+    return tuple(
+        tz.localize(datetime.strptime(day, "%Y-%m-%d")).astimezone(pytz.utc).strftime("%Y-%m-%d %H:%M:%S")
+        for day in day_range
+    )
 
 
 def _spreadsheet_locale(env):
@@ -642,6 +687,8 @@ class SpreadsheetFormulaEvaluator:
                 except (ValueError, TypeError) as e:
                     _logger.debug("Could not parse year value %r: %s", value, e)
             if rng:
+                if fobj.type == "datetime":
+                    rng = _datetime_range(model.env, rng)
                 result.append((field_name, ">=", rng[0]))
                 result.append((field_name, "<", rng[1]))
             else:
@@ -667,6 +714,8 @@ class SpreadsheetFormulaEvaluator:
                 if effective_gran:
                     rng = _date_to_range(effective_gran, str(value))
                     if rng:
+                        if fobj.type == "datetime":
+                            rng = _datetime_range(model.env, rng)
                         domain.append((fname, ">=", rng[0]))
                         domain.append((fname, "<", rng[1]))
                     else:
@@ -727,7 +776,7 @@ class SpreadsheetFormulaEvaluator:
     def _format_value(record, field_name, model):
         """The value of a record field in a list cell, as Odoo Spreadsheet gives it (getListCellValue).
 
-        Numbers stay numbers and dates become serial numbers (a datetime in the timezone of the user): the format of
+        Numbers stay numbers and dates become serial numbers (a datetime in the time zone of the browser): the format of
         the cell shows them, so sums, sorting and date functions work. A boolean is the text TRUE / FALSE.
         """
         fobj = model._fields.get(field_name)

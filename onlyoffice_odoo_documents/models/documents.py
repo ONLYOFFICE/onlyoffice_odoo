@@ -143,10 +143,11 @@ class Document(models.Model):
             raise UserError(_("You can not edit a frozen spreadsheet"))
         return super().write(vals)
 
-    def action_onlyoffice_freeze_and_copy(self):
+    def action_onlyoffice_freeze_and_copy(self, time_zone=None):
         """Freeze an XLSX with Odoo formulas into a read-only copy, as "Freeze and share" of Odoo Spreadsheet.
 
-        The formulas of the copy become their values, computed now with the rights of the user. The copy goes into
+        The formulas of the copy become their values, computed now with the rights of the user; ``time_zone`` is
+        that of the browser, for the dates and times of lists, as Odoo freezes in the browser. The copy goes into
         the child workspace "Frozen spreadsheets" of the workspace of the source, readable by whoever reads that one,
         writable by nobody (Documents managers aside). Returns the copy and its workspace, to share it.
         """
@@ -169,7 +170,7 @@ class Document(models.Model):
 
         from ..controllers.controllers import _docbuilder  # noqa: PLC0415 - the controllers import this module
 
-        content = _docbuilder.freeze_spreadsheet(self)
+        content = _docbuilder.freeze_spreadsheet(self, time_zone)
         folder = self._get_onlyoffice_frozen_folder()
         name = _(
             "Frozen at %(date)s: %(name)s",
