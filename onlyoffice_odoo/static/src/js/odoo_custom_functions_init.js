@@ -127,7 +127,7 @@
          * @param {number} listId ID of the list.
          * @param {number} index Position of the record in the list (1-based).
          * @param {string} fieldName Name of the field.
-         * @returns {string} The value from the list.
+         * @returns {any} The value from the list: a number, a date (serial number) or text.
          */
         async function ODOO_LIST_VALUE(listId, index, fieldName) {
           var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
