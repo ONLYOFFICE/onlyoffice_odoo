@@ -122,6 +122,16 @@ export const OnlyofficeDocumentsControllerMixin = () => ({
 
       if (result.xlsx_id) {
         this.notification.add(_t("Spreadsheet successfully converted to XLSX with formulas!"), { type: "success" })
+        if (nativeExport.dataExportFailed) {
+          // The last saved version was converted: what was added since is in the file, but not as live formulas.
+          this.notification.add(
+            _t("Odoo formulas added since the spreadsheet was last saved are values in the XLSX file."),
+            {
+              sticky: true,
+              type: "warning",
+            },
+          )
+        }
         await this._refreshDocumentsFolder()
         await this._openDocumentInOnlyoffice(result.xlsx_id)
       }
