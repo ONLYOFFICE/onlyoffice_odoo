@@ -398,12 +398,16 @@ class SpreadsheetDocBuilder:
     def _convert_odoo_formula(content):
         """Rewrite every 'ODOO.X.Y(' call of a formula to 'ODOO_X_Y(', wherever it is in the formula.
 
-        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function.
+        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function, or calls
+        ODOO.PIVOT.TABLE: the export splits a dynamic pivot into the formulas of its cells, one it could not split
+        (cells around taken) stays the values of the export, as the editor cannot spread a table.
         """
         if not isinstance(content, str) or not content.startswith("="):
             return None
         # Even parts are outside the quotes, odd parts are the quoted texts ("" escapes a quote).
         parts = re.split(r'("(?:[^"]|"")*")', content)
+        if any(m.group(1).upper() == "PIVOT.TABLE" for part in parts[::2] for m in _ODOO_CALL.finditer(part)):
+            return None
         found = False
         for index in range(0, len(parts), 2):
             converted, count = _ODOO_CALL.subn(
