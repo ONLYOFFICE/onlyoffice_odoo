@@ -66,11 +66,15 @@ class OnlyofficeDocuments(models.Model):
 
         roles = self._get_available_roles(document.name)
 
-        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
+        # Users do not read the roles themselves (the rows name documents they may not see): read for the owner or
+        # an administrator, checked above.
+        access = (
+            self.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document_id)], limit=1)
+        )
 
         users_access = []
-        for user_access in self.env["onlyoffice.odoo.documents.access.user"].search(
-            [("document_id", "=", document_id)]
+        for user_access in (
+            self.env["onlyoffice.odoo.documents.access.user"].sudo().search([("document_id", "=", document_id)])
         ):
             users_access.append(
                 {

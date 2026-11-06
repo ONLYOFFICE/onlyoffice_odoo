@@ -66,8 +66,19 @@ def _get_document_share_role(document):
     return request.env["onlyoffice.odoo.documents"]._get_user_role(document, request.env.user, _can_write(document))
 
 
+# The ONLYOFFICE roles from the least to the most.
+_ROLE_RANK = {
+    role: rank
+    for rank, role in enumerate(("none", "viewer", "form_filling", "commenter", "reviewer", "custom_filter", "editor"))
+}
+
+
 def _get_share_link_role(document, user):
-    """The ONLYOFFICE role of whoever opens a document through a share link: "none" closes it."""
+    """The ONLYOFFICE role of whoever opens a document through a share link: "none" closes it.
+
+    A user with a role of their own on the document gets it within their rights of Odoo, as in the app (a role that
+    saves the file needs the right to write it); the link gives them at least what it gives anybody.
+    """
     access = request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
     role = access.link_access or "viewer"
     if user and not user._is_public():
@@ -77,7 +88,10 @@ def _get_share_link_role(document, user):
             .search([("document_id", "=", document.id), ("user_id", "=", user.id)], limit=1)
         )
         if access_user.role and access_user.role != "none":
-            role = access_user.role
+            own_role = request.env["onlyoffice.odoo.documents"]._get_role_within_odoo_rights(
+                document, user, _can_write(document.with_user(user))
+            )
+            role = max(role, own_role, key=lambda r: _ROLE_RANK.get(r, 0))
     # A frozen spreadsheet is only viewed.
     return "viewer" if document.onlyoffice_frozen and role != "none" else role
 
