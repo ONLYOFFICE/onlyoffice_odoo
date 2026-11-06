@@ -60,7 +60,7 @@ def check_doc_serv_url(url, demo, disable_certificate):
         healthcheck = response.read()
 
         if not healthcheck:
-            get_message_error(os.path.join(url, "healthcheck") + " returned false.", demo)
+            get_message_error(url + " returned false.", demo)
 
     except ValidationError as e:
         get_message_error(str(e), demo)

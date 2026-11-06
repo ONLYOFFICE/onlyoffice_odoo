@@ -29,7 +29,7 @@ from odoo.tools.translate import _
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils, url_utils
 
-from .spreadsheet_formulas import SpreadsheetFormulaEvaluator, compute_filter_values
+from .spreadsheet_formulas import SpreadsheetFormulaEvaluator, compute_filter_values, formula_context
 
 _logger = logging.getLogger(__name__)
 
@@ -398,12 +398,16 @@ class SpreadsheetDocBuilder:
     def _convert_odoo_formula(content):
         """Rewrite every 'ODOO.X.Y(' call of a formula to 'ODOO_X_Y(', wherever it is in the formula.
 
-        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function.
+        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function, or calls
+        ODOO.PIVOT.TABLE: the export splits a dynamic pivot into the formulas of its cells, one it could not split
+        (cells around taken) stays the values of the export, as the editor cannot spread a table.
         """
         if not isinstance(content, str) or not content.startswith("="):
             return None
         # Even parts are outside the quotes, odd parts are the quoted texts ("" escapes a quote).
         parts = re.split(r'("(?:[^"]|"")*")', content)
+        if any(m.group(1).upper() == "PIVOT.TABLE" for part in parts[::2] for m in _ODOO_CALL.finditer(part)):
+            return None
         found = False
         for index in range(0, len(parts), 2):
             converted, count = _ODOO_CALL.subn(
@@ -712,13 +716,15 @@ class SpreadsheetDocBuilder:
 
     # ── Freeze and share ──────────────────────────────────────────────────────
 
-    def freeze_spreadsheet(self, document):
+    def freeze_spreadsheet(self, document, time_zone=None):
         """XLSX content of ``document`` with the values of its Odoo functions, as the current user sees them.
 
         As Odoo freezes a spreadsheet (freezeOdooData): a cell with an Odoo function gets its value, computed now
         with the rights of the user (without the right to read the data, the error), its format is kept; the hidden
-        metadata sheet goes and the active filters get a sheet. Raises UserError when the Document Server fails.
+        metadata sheet goes and the active filters get a sheet. ``time_zone`` is that of the browser, for the dates
+        and times of lists. Raises UserError when the Document Server fails.
         """
+        request.update_env(context=formula_context(request.env.context, request.env.user.tz, time_zone))
         source = document.attachment_id.raw
         text = self._run_freeze_docbuilder(document, "freeze_collect", source)
         try:
