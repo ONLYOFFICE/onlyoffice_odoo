@@ -1009,8 +1009,24 @@ def _infer_date_granularity(value):
     return None
 
 
+def _pivot_date_value(granularity, value):
+    """A month or a year of a pivot formula in the form of Odoo 18 ("09/2026", "2026").
+
+    Odoo 19 writes the month of a group as a date (DATE(2026,9,1), its serial number in the editor), and takes a
+    year over 3000 as a date too (pivotTimeAdapter: normalizeFunctionValue).
+    """
+    text = str(value)
+    if granularity not in ("month", "year") or not re.fullmatch(r"\d+(\.\d+)?", text):
+        return text
+    if granularity == "year" and float(text) <= 3000:
+        return text
+    day = date_cls(1899, 12, 30) + timedelta(days=int(float(text)))
+    return f"{day.month:02d}/{day.year}" if granularity == "month" else str(day.year)
+
+
 def _date_to_range(granularity, value):
     """Convert a pivot date value to a (from, to) pair of 'YYYY-MM-DD' strings, or None."""
+    value = _pivot_date_value(granularity, value)
     try:
         if granularity == "day" and re.fullmatch(r"\d+(\.\d+)?", value):
             # A day of Odoo 18 functions: its serial number.
@@ -1048,7 +1064,7 @@ def _format_date_header(env, granularity, value):
 
     Day: the serial number of the date; month: that of its first day; year: the number; quarter and week: text.
     """
-    s = str(value)
+    s = _pivot_date_value(granularity, value)
     try:
         parts = s.split("/")
         if granularity == "day" and re.fullmatch(r"\d+(\.\d+)?", s):

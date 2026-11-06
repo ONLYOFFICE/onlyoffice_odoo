@@ -414,6 +414,15 @@ class TestOdooSpreadsheetPivots(TransactionCase):
         self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:day","{day}")'), 3)
         self.assertEqual(self._eval(f'=ODOO_PIVOT_HEADER(1,"create_date:day",{serial})'), serial)
 
+    def test_a_month_of_odoo_19_is_a_date(self):
+        # "Convert to individual formulas" of Odoo 19 writes DATE(year,month,1): the editor passes its serial number.
+        first = self.created.date().replace(day=1)
+        serial = (first - datetime(1899, 12, 30).date()).days
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:month",{serial})'), 3)
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:month",{serial - 40})'), 0)
+        self.assertEqual(self._eval(f'=ODOO_PIVOT_HEADER(1,"create_date:month",{serial})'), serial)
+        self.assertEqual(self._eval(f'=ODOO_PIVOT(1,"__count","create_date:year",{serial})'), 3)
+
     def test_column_formats_by_measure_id(self):
         integer = {"format": "0", "align": "right", "type": "integer"}
         self.assertEqual(
@@ -521,6 +530,9 @@ class TestFormulaHelpers(TransactionCase):
             ("week", "1/2026"): ("2025-12-29", "2026-01-05"),
             ("day", "2/28/2025"): ("2025-02-28", "2025-03-01"),
             ("day", "46082"): ("2026-03-01", "2026-03-02"),
+            # Odoo 19 writes a month as a date, DATE(2026,9,1), and takes a year over 3000 as a date.
+            ("month", "46266"): ("2026-09-01", "2026-10-01"),
+            ("year", "46266"): ("2026-01-01", "2027-01-01"),
             ("month", "13/x"): None,
             ("hour", "1"): None,
         }
