@@ -17,30 +17,37 @@ oDocumentElements.forEach((oElement) => {
 // And if the current paragraph is placed in a shape, then a caption is added after (or before) the parent shape.
 // So, numbering in shapes and footer/header is not supported.
 
-// fill header and footer
-var oSection = oDocument.GetFinalSection()
-var oHeader = oSection.GetHeader("default", true)
-var oFooter = oSection.GetFooter("default", true)
-var oHeaderElementsCount = oHeader.GetElementsCount()
-var oFooterElementsCount = oFooter.GetElementsCount()
-for (var i = 0; i < oHeaderElementsCount; i++) {
-  var oElement = oHeader.GetElement(i)
-  var oElementClassType = oElement.GetClassType()
-  if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
-    continue
-  } else {
-    fillElementByType(oElement)
+// fill headers and footers
+// Walk every section and every header/footer type, and fill only the ones that
+// exist. Never pass bCreate=true: a section without its own header inherits
+// the previous section's, and creating one there replaces the inherited header
+// with an empty one, so it vanishes from the output. That is exactly what
+// happened when only GetFinalSection().GetHeader("default", true) was filled:
+// a template whose header lives in section 1 lost it on every page of the
+// final section, and its own fields were never filled.
+function fillHeaderFooterContent(oContent) {
+  if (!oContent) {
+    return
+  }
+  var oContentElementsCount = oContent.GetElementsCount()
+  for (var i = 0; i < oContentElementsCount; i++) {
+    var oElement = oContent.GetElement(i)
+    var oElementClassType = oElement.GetClassType()
+    if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
+      continue
+    } else {
+      fillElementByType(oElement)
+    }
   }
 }
-for (var i = 0; i < oFooterElementsCount; i++) {
-  var oElement = oFooter.GetElement(i)
-  var oElementClassType = oElement.GetClassType()
-  if (oElementClassType === "paragraph" && oElement.GetNumbering()) {
-    continue
-  } else {
-    fillElementByType(oElement)
-  }
-}
+
+var oSections = oDocument.GetSections()
+oSections.forEach((oSection) => {
+  ;["default", "title", "even"].forEach((sType) => {
+    fillHeaderFooterContent(oSection.GetHeader(sType, false))
+    fillHeaderFooterContent(oSection.GetFooter(sType, false))
+  })
+})
 
 // fill form in shapes object
 var oShapes = oDocument.GetAllShapes()
