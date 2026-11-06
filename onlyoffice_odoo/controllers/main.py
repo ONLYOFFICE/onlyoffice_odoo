@@ -109,7 +109,7 @@ class OnlyofficeConnector(http.Controller):
             _logger.warning("POST /onlyoffice/editor/get_config - attachment not found: %s", attachment_id)
             return request.not_found()
 
-        attachment._can_return_content(access_token=access_token)
+        attachment, own_access = self._attachment_to_read(attachment, access_token)
 
         if attachment.res_model == "documents.document" and not document:
             document = request.env["documents.document"].browse(int(attachment.res_id))
@@ -127,7 +127,7 @@ class OnlyofficeConnector(http.Controller):
             raise AccessError(_("Cannot read attachment"))
 
         # The record of the attachment too: for a document, the right to write it in Odoo.
-        can_write = attachment.has_access("write") and file_utils.can_edit(filename)
+        can_write = own_access and attachment.has_access("write") and file_utils.can_edit(filename)
 
         config = self.prepare_editor_values(attachment, access_token, can_write)
         _logger.info("POST /onlyoffice/editor/get_config - success: %s", attachment_id)
@@ -153,8 +153,8 @@ class OnlyofficeConnector(http.Controller):
             _logger.warning("GET /onlyoffice/file/content/%s - attachment not found", attachment_id)
             return request.not_found()
 
-        attachment._can_return_content(access_token=access_token)
-        attachment.has_access("read")
+        attachment = self._attachment_to_read(attachment, access_token)[0]
+        attachment.check_access("read")
 
         if jwt_utils.is_jwt_enabled(request.env):
             token = request.httprequest.headers.get(config_utils.get_jwt_header(request.env))
@@ -182,7 +182,7 @@ class OnlyofficeConnector(http.Controller):
             _logger.warning("GET /onlyoffice/editor/%s - attachment not found", attachment_id)
             return request.not_found()
 
-        attachment._can_return_content(access_token=access_token)
+        attachment, own_access = self._attachment_to_read(attachment, access_token)
 
         if attachment.res_model == "documents.document":
             document = request.env["documents.document"].browse(int(attachment.res_id))
@@ -192,7 +192,7 @@ class OnlyofficeConnector(http.Controller):
         filename = data["name"]
 
         can_read = attachment.has_access("read") and file_utils.can_view(filename)
-        can_write = attachment.has_access("write") and file_utils.can_edit(filename)
+        can_write = own_access and attachment.has_access("write") and file_utils.can_edit(filename)
 
         if not can_read:
             _logger.warning("GET /onlyoffice/editor/%s - no read access", attachment_id)
@@ -219,6 +219,7 @@ class OnlyofficeConnector(http.Controller):
                 _logger.warning("POST /onlyoffice/editor/callback/%s - attachment not found", attachment_id)
                 raise ValueError(_("Attachment not found"))
 
+            # An access token only lets the user read the file: saving needs their own right to write it.
             attachment._can_return_content(access_token=access_token)
             # The record itself: for a document, the right to write it in Odoo, or a commenting ONLYOFFICE role that
             # saves with the right to read it.
@@ -420,6 +421,20 @@ class OnlyofficeConnector(http.Controller):
         except (ValueError, AccessError):
             _logger.debug("get_attachment - not found: %s", attachment_id)
             return None
+
+    def _attachment_to_read(self, attachment, access_token):
+        """The attachment to read the file from, and whether the user has their own access to it.
+
+        A valid access token (or a public attachment) lets the user read an attachment they have no right on, as when
+        Odoo serves the file; the file is then read as superuser, and the user may not save it. A wrong token raises
+        AccessError, as in Odoo.
+        """
+        own_access = attachment.env.su or attachment.has_access("read")
+        if access_token or not own_access:
+            allowed = attachment._can_return_content(access_token=access_token)
+            if allowed and not own_access:
+                return attachment.sudo(), False
+        return attachment, True
 
     def get_user_from_token(self, token):
         _logger.info("get_user_from_token")

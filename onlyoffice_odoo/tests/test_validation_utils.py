@@ -10,8 +10,6 @@ from odoo.tests.common import TransactionCase
 
 from odoo.addons.onlyoffice_odoo.utils import conversion_utils, jwt_utils, validation_utils
 
-from .common import known_bug
-
 
 @tagged("post_install", "-at_install")
 class TestValidationUtils(TransactionCase):
@@ -116,7 +114,6 @@ class TestValidationUtils(TransactionCase):
         self.assertEqual(urlopen.call_args.args, ("http://docserver/healthcheck",))
         self.assertIsNone(urlopen.call_args.kwargs["context"])
 
-    @known_bug("the error message repeats the healthcheck path")
     def test_empty_healthcheck_message_names_the_healthcheck_url(self):
         mock_resp = MagicMock()
         mock_resp.read.return_value = b""

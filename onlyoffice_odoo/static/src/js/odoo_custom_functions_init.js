@@ -39,12 +39,15 @@
       Asc.scope.odooJwtToken = jwtToken
       Asc.scope.odooServerUrl = window.location.origin
       Asc.scope.odooFilterValues = filterValues
+      // Odoo Spreadsheet shows the dates and times of a list in the time zone of the browser.
+      Asc.scope.odooTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || null
 
       connector.callCommand(() => {
         var documentId = Asc.scope.odooDocumentId
         var jwtToken = Asc.scope.odooJwtToken
         var serverUrl = Asc.scope.odooServerUrl
         var filterValues = Asc.scope.odooFilterValues || {}
+        var timeZone = Asc.scope.odooTimeZone || null
 
         // Batch queue: collects formulas and sends them in one HTTP request.
         // Each function must inline its own fetch logic (OnlyOffice requirement).
@@ -83,6 +86,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -148,6 +152,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -263,6 +268,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -376,6 +382,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -464,6 +471,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -532,6 +540,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -611,6 +620,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })

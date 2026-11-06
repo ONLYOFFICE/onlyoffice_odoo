@@ -2,10 +2,10 @@
 <!-- Copyright (C) 2026 Ascensio System SIA -->
 <odoo>
   <template id="onlyoffice_odoo_documents.share_file" inherit_id="documents.share_file">
-    <xpath expr="//div[hasclass('mt16') and hasclass('mb8')]/a" position="inside">
+    <xpath expr="//div[hasclass('mt16') and hasclass('mb8')]/a" position="after">
       <a
         t-if="onlyoffice_supported"
-        class="btn btn-secondary rounded-pill mt-2"
+        class="btn btn-secondary rounded-pill"
         t-att-href="'/onlyoffice/documents/share/' + document.access_token"
         target="_blank"
       >

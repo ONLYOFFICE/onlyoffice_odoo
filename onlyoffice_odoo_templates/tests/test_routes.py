@@ -87,3 +87,37 @@ class TestDocumentsRoutesWithoutDocuments(TemplatesCase, HttpCase):
         )
 
         self.assertEqual(body["error"]["data"]["message"], "Documents module is not installed")
+
+
+@tagged("post_install", "-at_install")
+class TestDocumentsFolderRoutes(TemplatesCase, HttpCase):
+    """Routes of "Save to Documents" with the Documents app: the folders the user may add a file to."""
+
+    def setUp(self):
+        super().setUp()
+        if "documents.document" not in self.env:
+            self.skipTest("the Documents app is not installed in this database")
+        Document = self.env["documents.document"].sudo()
+        self.editable = Document.create({"name": "Editable by all", "type": "folder", "access_internal": "edit"})
+        self.view_only = Document.create({"name": "Read only", "type": "folder", "access_internal": "view"})
+        self.own = Document.create(
+            {"name": "Own", "type": "folder", "access_internal": "none", "owner_id": self.user.id}
+        )
+        self.authenticate("oo_tpl_user", "oo_tpl_user")
+
+    def test_folders_the_user_can_edit_are_offered_their_own_ones_too(self):
+        offered = {folder["id"] for folder in self._rpc("/onlyoffice/template/documents/folders")["result"]}
+
+        self.assertIn(self.editable.id, offered)
+        self.assertIn(self.own.id, offered)
+        self.assertNotIn(self.view_only.id, offered)
+
+    def test_saving_into_a_read_only_folder_is_refused(self):
+        body = self._rpc(
+            "/onlyoffice/template/documents/save",
+            template_id=self._template().id,
+            record_ids=[self.env["res.partner"].create({"name": "Ann"}).id],
+            folder_id=self.view_only.id,
+        )
+
+        self.assertEqual(body["error"]["data"]["message"], "Access denied to the selected folder")
