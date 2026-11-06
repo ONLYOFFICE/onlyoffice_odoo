@@ -12,8 +12,11 @@ from odoo.tests.common import TransactionCase, new_test_user
 from odoo.addons.onlyoffice_odoo_documents.controllers.spreadsheet_formulas import (
     SpreadsheetFormulaEvaluator,
     _date_to_range,
+    _datetime_range,
     _infer_date_granularity,
+    _to_serial,
     compute_filter_values,
+    formula_context,
     get_field_excel_format,
     load_metadata_for_document,
     normalize_pivot_definition,
@@ -251,15 +254,16 @@ class TestFormulaEvaluator(TransactionCase):
         self.assertRegex(self._eval('=ODOO_PIVOT(3,"__count")'), "^#ERROR: Invalid domain")
 
     def test_month_and_year_values_become_date_ranges(self):
-        model = self.env["res.partner"]
+        # Days of a datetime in the time zone of the context, in UTC, as read_group groups them.
+        model = self.env["res.partner"].with_context(tz="Europe/Brussels")
         domain = [["create_date", "=", "03/2026"], ["write_date", "=", "2025"], ["name", "=", "2025"]]
         self.assertEqual(
             self.evaluator._resolve_domain(domain, model),
             [
-                ("create_date", ">=", "2026-03-01"),
-                ("create_date", "<", "2026-04-01"),
-                ("write_date", ">=", "2025-01-01"),
-                ("write_date", "<", "2026-01-01"),
+                ("create_date", ">=", "2026-02-28 23:00:00"),
+                ("create_date", "<", "2026-03-31 22:00:00"),
+                ("write_date", ">=", "2024-12-31 23:00:00"),
+                ("write_date", "<", "2025-12-31 23:00:00"),
                 ["name", "=", "2025"],
             ],
         )
@@ -522,6 +526,34 @@ class TestFormulaHelpers(TransactionCase):
         for (granularity, value), expected in cases.items():
             with self.subTest(granularity=granularity, value=value):
                 self.assertEqual(_date_to_range(granularity, value), expected)
+
+    def test_time_zones_of_the_formulas(self):
+        # Pivot groups in the time zone of the user, without it in that of the browser; lists in that of the browser.
+        cases = {
+            ("Europe/Brussels", "Europe/Moscow"): {"tz": "Europe/Brussels", "onlyoffice_browser_tz": "Europe/Moscow"},
+            (False, "Europe/Moscow"): {"tz": "Europe/Moscow", "onlyoffice_browser_tz": "Europe/Moscow"},
+            ("Europe/Brussels", None): {"tz": "Europe/Brussels"},
+            (False, "Not/A_Zone"): {},
+        }
+        for (user_tz, browser_tz), expected in cases.items():
+            with self.subTest(user_tz=user_tz, browser_tz=browser_tz):
+                context = formula_context({"tz": "UTC", "onlyoffice_browser_tz": "UTC"}, user_tz, browser_tz)
+                self.assertEqual(context, expected)
+
+    def test_a_datetime_of_a_list_is_in_the_time_zone_of_the_browser(self):
+        value = datetime(2026, 11, 3, 14, 0)  # UTC
+        with_browser = self.env(context={"tz": "Europe/Brussels", "onlyoffice_browser_tz": "Europe/Moscow"})
+        without_browser = self.env(context={"tz": "Europe/Brussels"})
+        self.assertAlmostEqual(_to_serial(with_browser, value), 46329 + 17 / 24)
+        self.assertAlmostEqual(_to_serial(without_browser, value), 46329 + 15 / 24)
+
+    def test_groups_of_a_datetime_are_days_of_the_time_zone_of_the_context(self):
+        days = ("2026-11-01", "2026-12-01")
+        self.assertEqual(
+            _datetime_range(self.env(context={"tz": "Europe/Brussels"}), days),
+            ("2026-10-31 23:00:00", "2026-11-30 23:00:00"),
+        )
+        self.assertEqual(_datetime_range(self.env(context={}), days), ("2026-11-01 00:00:00", "2026-12-01 00:00:00"))
 
     def test_granularity_is_inferred_from_the_value(self):
         cases = {"3/2025": "month", "2/28/2025": "day", "2025": "year", "Q1": None, "20/2025": None}

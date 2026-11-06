@@ -9,7 +9,6 @@ from urllib.parse import quote
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase, new_test_user
 
-from odoo.addons.onlyoffice_odoo.tests.common import known_bug
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
 from .common import TemplatesCase, bundled_pdf, ds_response
@@ -55,7 +54,9 @@ class TestFillRoute(TemplatesCase, HttpCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b"%PDF ann")
         self.assertEqual(response.headers["Content-Type"], "application/pdf")
-        self.assertEqual(response.headers["Content-Disposition"], 'attachment; filename="Partner Card - Ann.pdf"')
+        self.assertEqual(
+            response.headers["Content-Disposition"], f"attachment; filename*=UTF-8''{quote('Partner Card - Ann.pdf')}"
+        )
         docbuilder = calls[0]
         self.assertEqual((docbuilder["url"], docbuilder["method"]), (DOCBUILDER, "post"))
         payload = docbuilder["opts"]["json"]
@@ -99,7 +100,6 @@ class TestFillRoute(TemplatesCase, HttpCase):
                 response, _calls = self._fill(records, files, docbuilder)
                 self.assertEqual(response.status_code, 404)
 
-    @known_bug("a non-ASCII file name is reduced to '.pdf' in Content-Disposition")
     def test_non_ascii_file_name_is_kept(self):
         response, _calls = self._fill(self.ann, {"Карточка - Анна.pdf": b"%PDF"})
         self.assertIn(f"filename*=UTF-8''{quote('Карточка - Анна.pdf')}", response.headers["Content-Disposition"])
