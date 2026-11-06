@@ -77,8 +77,12 @@ response = onlyoffice_request(url=url, method="post", opts={"json": payload, "he
 - Use `url_utils.replace_public_url_to_internal(env, url)` on any URL you got back from the Document Server before
   downloading from it (the helpers already do this for the URL you pass them).
 - Allowed exceptions to the rule: the oforms gallery API (`OnlyOfficeOFormsDocumentsController`), downloading a gallery
-  form in `post_file_create`, and `validation_utils` (it must test the URLs the user just typed, before they are saved).
-  Everything that talks to the Document Server uses the helpers.
+  form (`url_utils.download_form_file`: only https files of `FORM_FILES_HOSTS` or the mirror set in the system parameter
+  `onlyoffice_connector.form_files_url`, no redirects, size limit — the address comes from the browser), and
+  `validation_utils` (it must test the URLs the user just typed, before they are saved).
+- A URL from a callback body is never trusted: `onlyoffice_urlopen` accepts only `http`/`https`
+  (`url_utils.check_download_url`); without JWT anybody can send that body. Everything that talks to the Document Server
+  uses the helpers.
 
 ### Editor save callback (reference)
 
