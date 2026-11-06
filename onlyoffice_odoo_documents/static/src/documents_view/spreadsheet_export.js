@@ -70,13 +70,16 @@ function splitDynamicPivots(model) {
 /**
  * The data with the revisions applied. When Odoo cannot export it, no data and the failure: the server then takes the
  * last saved snapshot, and the caller tells the user what that means for the file.
+ *
+ * Since Odoo 20 exportData squishes the formulas: a cell with a formula like the one above keeps only what differs
+ * ({"S": ["Q2"]}). The server needs every formula, so the data is exported as it is, not squished.
  * @param {Object} model the spreadsheet model.
  * @returns {{data: Object|undefined, dataExportFailed: boolean}} the data, or the failure.
  */
 function exportSpreadsheetData(model) {
   try {
     return {
-      data: model.exportData(),
+      data: typeof model._exportData === "function" ? model._exportData(false) : model.exportData(),
       dataExportFailed: false,
     }
   } catch (error) {
