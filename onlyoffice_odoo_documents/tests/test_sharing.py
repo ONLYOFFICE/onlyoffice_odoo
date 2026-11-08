@@ -46,6 +46,16 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
 
         self.assertNotIn(self.colleague.partner_id, wizard.share_access_ids.partner_id)
 
+    def test_dialog_hides_an_expired_group_with_a_custom_role(self):
+        group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
+        document = self._document()
+        document.with_user(self.owner).action_update_access_rights(groups={group.id: ("commenter", None)})
+        document.access_ids.filtered(lambda a: a.group_id == group).sudo().expiration_date = "2020-01-01 00:00:00"
+
+        wizard = self._open(document)
+
+        self.assertNotIn(group, wizard.share_access_ids.group_id)
+
     def test_dialog_of_several_documents(self):
         report = self._document()
         sheet = self._document("Sheet.xlsx")

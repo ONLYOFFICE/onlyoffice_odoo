@@ -91,7 +91,7 @@ class TestFormFileUrl(TransactionCase):
     GALLERY_FILE = "https://static-oforms.onlyoffice.com/uploads/form.docx"
 
     def _set_mirror(self, url):
-        self.env["ir.config_parameter"].sudo().set_param(config_constants.FORM_FILES_URL, url)
+        self.env["ir.config_parameter"].sudo().set_str(config_constants.FORM_FILES_URL, url)
 
     def test_check_download_url(self):
         for url in ("http://documentserver/cache/file.docx", "https://docs.example.com/file.docx"):

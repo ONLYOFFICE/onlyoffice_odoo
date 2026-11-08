@@ -186,10 +186,15 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
     def test_roles_are_read_only_with_their_document(self):
         private = self._document("Salaries.docx", access_internal="none")
         shared = self._document()
+        group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
         for document in (private, shared):
             self._roles(document, internal_users="commenter", colleague="reviewer")
+            self.env["onlyoffice.odoo.documents.access.group"].create(
+                {"document_id": document.id, "group_id": group.id, "role": "commenter"}
+            )
 
-        for model in ("onlyoffice.odoo.documents.access", "onlyoffice.odoo.documents.access.user"):
+        models = ("access", "access.user", "access.group")
+        for model in (f"onlyoffice.odoo.documents.{name}" for name in models):
             with self.subTest(model=model):
                 rows = self.env[model].with_user(self.colleague)
                 self.assertEqual(rows.search([("document_id", "in", (private | shared).ids)]).document_id, shared)
