@@ -22,15 +22,15 @@ access_my_model_user,my.model user,model_my_model,base.group_user,1,1,1,0
 
 Current ACLs:
 
-| Module    | Model                                                                       | Group                                   | Rights                                                                                                |
-| --------- | --------------------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| base      | `onlyoffice.odoo`                                                           | `base.group_user`                       | read                                                                                                  |
-| documents | `onlyoffice.odoo.documents`                                                 | `base.group_user`                       | full CRUD (owner/admin checks live in the model methods)                                              |
-| documents | `onlyoffice.odoo.documents.access`, `onlyoffice.odoo.documents.access.user` | `base.group_user`                       | none: the rows name documents a user may not read; code reads them with `sudo()` after its own checks |
-| templates | `onlyoffice.odoo.templates`                                                 | `group_onlyoffice_odoo_templates_user`  | read                                                                                                  |
-| templates | `onlyoffice.odoo.templates`                                                 | `group_onlyoffice_odoo_templates_admin` | full CRUD                                                                                             |
-| templates | `onlyoffice.odoo.templates`                                                 | (none)                                  | 0/0/0/0                                                                                               |
-| templates | `onlyoffice.odoo.demo.templates`                                            | `base.group_system`                     | full CRUD                                                                                             |
+| Module    | Model                                                                       | Group                                   | Rights                                                                                                                   |
+| --------- | --------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| base      | `onlyoffice.odoo`                                                           | `base.group_user`                       | read                                                                                                                     |
+| documents | `onlyoffice.odoo.documents`                                                 | `base.group_user`                       | full CRUD (owner/admin checks live in the model methods)                                                                 |
+| documents | `onlyoffice.odoo.documents.access`, `onlyoffice.odoo.documents.access.user` | `base.group_user`                       | read, only rows of documents the user sees (record rules on `document_id.user_permission`); writes by code with `sudo()` |
+| templates | `onlyoffice.odoo.templates`                                                 | `group_onlyoffice_odoo_templates_user`  | read                                                                                                                     |
+| templates | `onlyoffice.odoo.templates`                                                 | `group_onlyoffice_odoo_templates_admin` | full CRUD                                                                                                                |
+| templates | `onlyoffice.odoo.templates`                                                 | (none)                                  | 0/0/0/0                                                                                                                  |
+| templates | `onlyoffice.odoo.demo.templates`                                            | `base.group_system`                     | full CRUD                                                                                                                |
 
 The templates user/admin ACLs are declared twice — in `ir.model.access.csv` **and** as `ir.model.access` records in
 `security/onlyoffice_templates_security.xml`. Change both together.
