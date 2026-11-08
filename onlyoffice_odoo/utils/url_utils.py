@@ -59,7 +59,7 @@ def is_form_file_url(url, env=None):
     scheme, host, port = origin
     if scheme == "https" and host in FORM_FILES_HOSTS and port == 443:
         return True
-    mirror = env and env["ir.config_parameter"].sudo().get_param(config_constants.FORM_FILES_URL)
+    mirror = env and env["ir.config_parameter"].sudo().get_str(config_constants.FORM_FILES_URL, False)
     if not mirror:
         return False
     try:

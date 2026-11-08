@@ -3,3 +3,6 @@ access_onlyoffice_odoo_documents,onlyoffice.odoo.documents,onlyoffice.odoo.docum
 access_onlyoffice_odoo_documents_access_user,onlyoffice.odoo.documents.access.user,onlyoffice.odoo.documents.access.user,base.group_user,r,
 access_onlyoffice_odoo_documents_access,onlyoffice.odoo.documents.access,onlyoffice.odoo.documents.access,base.group_user,r,
 access_onlyoffice_odoo_documents_access_group,onlyoffice.odoo.documents.access.group,onlyoffice.odoo.documents.access.group,base.group_user,r,
+onlyoffice_documents_access_rule_read,onlyoffice.odoo.documents.access: read with the document,onlyoffice.odoo.documents.access,,r,"[('document_id.user_permission', '!=', 'none')]"
+onlyoffice_documents_access_user_rule_read,onlyoffice.odoo.documents.access.user: read with the document,onlyoffice.odoo.documents.access.user,,r,"[('document_id.user_permission', '!=', 'none')]"
+onlyoffice_documents_access_group_rule_read,onlyoffice.odoo.documents.access.group: read with the document,onlyoffice.odoo.documents.access.group,,r,"[('document_id.user_permission', '!=', 'none')]"

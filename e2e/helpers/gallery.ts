@@ -13,11 +13,11 @@ const FORM_FILES_URL = "onlyoffice_connector.form_files_url"
  * from them), removed whatever happens: a later run must not download from this Odoo.
  */
 export async function withFormFilesMirror(odoo: Odoo, test: () => Promise<void>) {
-  await odoo.call("ir.config_parameter", "set_param", [FORM_FILES_URL, GALLERY_FORM_URL.replace(/[^/]*$/, "")])
+  await odoo.call("ir.config_parameter", "set_str", [FORM_FILES_URL, GALLERY_FORM_URL.replace(/[^/]*$/, "")])
   try {
     await test()
   } finally {
-    await odoo.call("ir.config_parameter", "set_param", [FORM_FILES_URL, false])
+    await odoo.call("ir.config_parameter", "set_str", [FORM_FILES_URL, false])
   }
 }
 
