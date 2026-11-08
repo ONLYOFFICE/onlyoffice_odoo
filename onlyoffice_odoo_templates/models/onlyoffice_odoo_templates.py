@@ -8,7 +8,7 @@ import logging
 import os
 
 from odoo import _, api, fields, models, tools
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import UserError
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, conversion_utils, file_utils, jwt_utils, url_utils
@@ -360,12 +360,7 @@ class OnlyOfficeTemplate(models.Model):
             return
 
         record = self.env["onlyoffice.odoo.templates"].browse(template_model_id).exists()
-        if not record:
-            return
-        try:
-            record.check_access_rights("write")
-            record.check_access_rule("write")
-        except AccessError:
+        if not record or not record.has_access("write"):
             return
 
         model_id = (

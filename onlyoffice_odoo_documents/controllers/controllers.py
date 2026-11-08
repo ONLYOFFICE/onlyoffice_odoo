@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 import markupsafe
 from werkzeug.exceptions import Forbidden
 
-from odoo import http
+from odoo import fields, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.json import scriptsafe
@@ -88,7 +88,10 @@ def _get_share_link_role(document, user, folder=None):
             .sudo()
             .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
         )
-        if access_user.role and access_user.role != "none":
+        invitation = document.sudo().access_ids.filtered(lambda a: a.partner_id == user.partner_id)[:1]
+        expired = invitation.expiration_date and invitation.expiration_date < fields.Datetime.now()
+        # An expired invitation gives nothing in Odoo, nor its ONLYOFFICE role: the link decides.
+        if access_user.role and access_user.role != "none" and not expired:
             own_role = request.env["onlyoffice.odoo.documents"]._get_role_within_odoo_rights(
                 document, user, document.with_user(user).has_access("write")
             )
