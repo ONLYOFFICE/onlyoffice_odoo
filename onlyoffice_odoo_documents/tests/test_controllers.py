@@ -14,6 +14,8 @@ from .common import INTERNAL_SECRET, XLSX_MIMETYPE, DocumentsCase, blank, xlsx_w
 
 CONTROLLERS = "odoo.addons.onlyoffice_odoo_documents.controllers.controllers"
 URLOPEN = "odoo.addons.onlyoffice_odoo.controllers.main.onlyoffice_urlopen"
+FORM_GET = "odoo.addons.onlyoffice_odoo.utils.url_utils.requests.get"
+FORM_FILE = "https://static-oforms.onlyoffice.com/uploads/lease.pdf"
 
 
 @tagged("post_install", "-at_install")
@@ -332,13 +334,35 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         self.assertEqual((document.folder_id.id, document.owner_id), (False, self.owner))
 
     def test_create_from_a_gallery_form(self):
-        form = MagicMock(content=b"%PDF-1.7 form")
-        with patch(f"{CONTROLLERS}.requests.get", return_value=form) as get:
-            result = self._create(
-                folder_id=self.folder.id, supported_format="pdf", title="Lease", url="https://forms.example/lease.pdf"
-            )
-        get.assert_called_once()
+        form = MagicMock(status_code=200)
+        form.__enter__.return_value = form
+        form.iter_content.return_value = [b"%PDF-1.7 form"]
+        with patch(FORM_GET, return_value=form) as get:
+            result = self._create(folder_id=self.folder.id, supported_format="pdf", title="Lease", url=FORM_FILE)
+        self.assertEqual(get.call_args.args[0], FORM_FILE)
+        self.assertFalse(get.call_args.kwargs["allow_redirects"])
         self.assertEqual(self.env["documents.document"].browse(result["document_id"]).raw, b"%PDF-1.7 form")
+
+    def test_create_takes_only_forms_of_the_gallery_and_known_formats(self):
+        cases = {
+            "an internal address": {"supported_format": "pdf", "url": "http://localhost:8069/web/content/1/x.pdf"},
+            "another format": {"supported_format": "txt"},
+            "a format other than the file": {"supported_format": "docx", "url": FORM_FILE},
+        }
+        for case, params in cases.items():
+            with self.subTest(case=case), patch(FORM_GET) as get:
+                result = self._create(folder_id=self.folder.id, title="Intruder", **params)
+                self.assertEqual(result["error"], "Failed to create document")
+                get.assert_not_called()
+        self.assertFalse(self.env["documents.document"].search([("name", "like", "Intruder")]))
+
+    def test_portal_user_cannot_create(self):
+        new_test_user(self.env, login="oo_doc_portal", groups="base.group_portal")
+        self.authenticate("oo_doc_portal", "oo_doc_portal")
+        with patch(FORM_GET) as get:
+            result = self._create(folder_id=self.folder.id, supported_format="pdf", title="Portal", url=FORM_FILE)
+        self.assertEqual(result["error"], "Failed to create document")
+        get.assert_not_called()
 
     def test_create_in_a_read_only_folder_creates_nothing(self):
         read_only = self.env["documents.document"].create(
