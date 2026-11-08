@@ -108,10 +108,11 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
 
 ### `security/ir.model.access.csv` (20: `security/ir.access.csv`)
 
-`onlyoffice.odoo.documents` — full CRUD for `base.group_user`. `onlyoffice.odoo.documents.access` and
-`onlyoffice.odoo.documents.access.user` — read only, and only the rows of documents the user sees
-(`security/onlyoffice_documents_security.xml`: `document_id.user_permission != 'none'`, as Odoo's `documents.access`):
-the share panel reads them as the user; the code writes them with `sudo()` after its own checks.
+`onlyoffice.odoo.documents` — full CRUD for `base.group_user`. `onlyoffice.odoo.documents.access`,
+`onlyoffice.odoo.documents.access.user` and `onlyoffice.odoo.documents.access.group` — read only, and only the rows of
+documents the user sees (global rows of `security/ir.access.csv` with the domain
+`document_id.user_permission != 'none'`, as Odoo's `documents.access`): the share panel reads them as the user; the code
+writes them with `sudo()` after its own checks.
 
 ### `views/onlyoffice_templates_share.xml`
 
