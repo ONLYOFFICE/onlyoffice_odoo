@@ -1,8 +1,12 @@
 # Copyright (C) 2026 Ascensio System SIA
 import datetime
+import io
 import json
 import re
+import zipfile
+from unittest.mock import MagicMock, patch
 
+from odoo.fields import Float
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
 
@@ -15,6 +19,7 @@ KEYS += ["parent_id name", "child_ids name"]
 SAVE_FILE = re.compile(r"^\s*builder\.SaveFile\(.*$", re.M)
 # A SaveFile call whose only string literals are the format, the file name and the optional print parameters.
 SAFE_SAVE_FILE = re.compile(r'^\s*builder\.SaveFile\("pdf",\s+"[^"]*\.pdf"(, "[^"]*")?\);$')
+CONTROLLERS = "odoo.addons.onlyoffice_odoo_templates.controllers.controllers"
 
 
 @tagged("post_install", "-at_install")
@@ -111,3 +116,74 @@ class TestFillTemplateScript(HttpCase):
         response = self._get(self.company, forged)
         self.assertNotEqual(response.status_code, 200)
         self.assertNotIn("builder.", response.text)
+
+    def test_records_with_one_name_get_a_file_each(self):
+        first, second = self._partner("Twin"), self._partner("Twin")
+
+        names = re.findall(r'builder\.SaveFile\("pdf",\s+"([^"]*)\.pdf"', self._script(first | second))
+        self.assertEqual(names, ["Partner - Twin", f"Partner - Twin ({second.id})"])
+
+    def test_selection_shows_the_label_of_a_selection_method(self):
+        # res.partner.lang: its selection is a method (the installed languages), not a list.
+        self.template.field_keys = json.dumps(["lang", "type"])
+        partner = self._partner("Jane Doe", lang="en_US", type="invoice")
+
+        self.assertEqual(self._fields(self._script(partner))[0], {"lang": "English (US)", "type": "Invoice Address"})
+
+    def test_float_without_digits_or_with_the_full_precision(self):
+        rate_template = (
+            self.env["onlyoffice.odoo.templates"]
+            .with_context(skip_field_keys_refresh=True)
+            .create({"name": "Rate", "template_model_id": self.env["ir.model"]._get("res.currency.rate").id})
+        )
+        rate_template.field_keys = json.dumps(["rate"])
+        self.template = rate_template
+        # res.currency.rate.rate has digits=0: the full precision, as the shortest text of the float (no binary
+        # noise such as 100.004999999999995, no exponent such as 1e-05).
+        for day, value, printed in (
+            (1, 1.2345678, "1.2345678"),
+            (2, 100.005, "100.005"),
+            (3, 0.00001, "0.00001"),
+            (4, 1234567.891, "1234567.891"),
+            (5, 2.0, "2"),
+        ):
+            with self.subTest(value=value):
+                rate = self.env["res.currency.rate"].create(
+                    {"name": f"2001-01-0{day}", "rate": value, "currency_id": self.env.ref("base.EUR").id}
+                )
+                self.assertEqual(self._fields(self._script(rate))[0], {"rate": printed})
+
+        self.template = self.env["onlyoffice.odoo.templates"].search([("name", "=", "Partner")], limit=1)
+        self.template.field_keys = json.dumps(["partner_latitude"])
+        partner = self._partner("Jane Doe", partner_latitude=1.5)
+        original = Float.get_digits
+
+        def without_digits(field, env):
+            return None if field.name == "partner_latitude" else original(field, env)
+
+        with patch.object(Float, "get_digits", without_digits):
+            self.assertEqual(self._fields(self._script(partner))[0], {"partner_latitude": "1.50"})
+
+    def test_zip_downloads_files_whose_name_has_a_hash(self):
+        self.authenticate("admin", "admin")
+        files = {
+            "Partner - A#1.pdf": "http://docserver/cache/Partner - A#1.pdf",
+            "Partner - B.pdf": "http://docserver/cache/b.pdf",
+        }
+        requested = []
+
+        def download(url, method, env, **kwargs):
+            requested.append(url)
+            return MagicMock(status_code=200 if "#" not in url else 404, content=b"%PDF-1.7")
+
+        with (
+            patch(f"{CONTROLLERS}.OnlyofficeTemplate_Connector.fill_template", return_value=files),
+            patch(f"{CONTROLLERS}.onlyoffice_request", side_effect=download),
+        ):
+            response = self.url_open(
+                f"/onlyoffice/template/fill?template_id={self.template.id}&record_ids={self.company.id}"
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("%23", requested[0])
+        self.assertEqual(sorted(zipfile.ZipFile(io.BytesIO(response.content)).namelist()), sorted(files))

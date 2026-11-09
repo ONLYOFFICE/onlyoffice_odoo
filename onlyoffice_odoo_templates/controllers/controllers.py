@@ -6,6 +6,7 @@ import logging
 import re
 import zipfile
 from datetime import datetime
+from decimal import Decimal
 from urllib.parse import quote
 
 from odoo import http
@@ -65,6 +66,17 @@ class Onlyoffice_Inherited_Connector(OnlyofficeConnector):
         return prepare_editor_values
 
 
+def _float_precision(digits, value):
+    """Decimals of a float as Odoo shows it: those of its digits, two without digits, all of them for digits=0."""
+    if digits is None:
+        return 2
+    if digits:
+        return digits[1]
+    # The shortest text that gives the float back (repr, as the web client shows it): a fixed number of decimals
+    # would print the binary noise (100.005 -> 100.004999999999995). Decimal also counts those of 1e-05.
+    return max(0, -Decimal(repr(float(value))).normalize().as_tuple().exponent)
+
+
 class OnlyofficeTemplate_Connector(http.Controller):
     @http.route("/onlyoffice/template/fill", auth="user", type="http")
     def main(self, template_id, record_ids):
@@ -96,7 +108,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 stream = io.BytesIO()
                 with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
                     for filename, url in templates.items():
-                        response = onlyoffice_request(url=url, method="get", env=request.env)
+                        # The Document Server gives the names in the URLs as they are: "#" would cut the path.
+                        response = onlyoffice_request(url=quote(url, safe="/:?=&"), method="get", env=request.env)
                         if response.status_code == 200:
                             archive.writestr(filename, response.content)
                         else:
@@ -225,6 +238,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 docbuilder_script_content = f.read()
 
             keys = self._get_cached_keys(template, oo_security_token)
+            # The Document Server returns the files by name: two records with one name would give one file.
+            used_names = set()
             logger.info(
                 "GET /onlyoffice/template/callback/docbuilder/fill_template - got %s keys", len(keys) if keys else 0
             )
@@ -250,6 +265,10 @@ class OnlyofficeTemplate_Connector(http.Controller):
                 # renders fine for a record with a shorter name, and the same record
                 # fails on every template.
                 filename = " ".join(filename.split())[:120].strip()
+                if filename.casefold() in used_names:
+                    suffix = f" ({record_id})"
+                    filename = filename[: 120 - len(suffix)].strip() + suffix
+                used_names.add(filename.casefold())
 
                 editable_form_fields = templates_config_utils.get_editable_form_fields(http.request.env)
                 if editable_form_fields:
@@ -426,9 +445,8 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                 result[field] = str(data)
                             elif field_type == "float":
                                 lang = request.env["res.lang"].sudo().search([("code", "=", user.lang)], limit=1)
-                                result[field] = lang.format(
-                                    percent=f"%.{record._fields[field].get_digits(request.env)[1]}f", value=data
-                                )
+                                precision = _float_precision(record._fields[field].get_digits(request.env), data)
+                                result[field] = lang.format(percent=f"%.{precision}f", value=data)
                             elif field_type == "integer":
                                 lang = request.env["res.lang"].sudo().search([("code", "=", user.lang)], limit=1)
                                 result[field] = lang.format(percent="%d", value=data)
@@ -447,11 +465,11 @@ class OnlyofficeTemplate_Connector(http.Controller):
                                     env=request.env, value=data, tz=user.tz or "GMT", lang_code=user.lang
                                 )
                             elif field_type == "selection":
-                                selection = record._fields[field].selection
-                                if isinstance(selection, list):
-                                    result[field] = str(dict(selection).get(data))
-                                else:
-                                    result[field] = str(data)
+                                # As Odoo shows it: the label (translated), whether a list or a method gives them.
+                                labels = record._fields[field]._description_selection(
+                                    record.with_context(lang=user.lang).env
+                                )
+                                result[field] = str(dict(labels).get(data, data))
                 except Exception as e:
                     logger.warning(e)
                     continue
