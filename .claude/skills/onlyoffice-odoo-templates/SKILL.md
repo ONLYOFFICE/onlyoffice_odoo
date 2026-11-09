@@ -47,10 +47,14 @@ demo templates installed per model and exportable from Settings; setting "Disabl
   (`resolve().relative_to` + `file_open(filter_ext=(".pdf",))`) — reuse it for any file served from `data/templates`.
 - `ir_actions_report.py` — `ir.actions.report` extension: `report_type` adds `onlyoffice-pdf`, `onlyoffice_template_id`,
   `_render_onlyoffice_pdf()` modelled on `_render_qweb_pdf` (honours `attachment`/`attachment_use`, merges PDFs), plus
-  its own copy of `fill_template` / `get_docbuilder_error` working with `self.env` instead of `request`.
+  its own copy of `fill_template` / `get_docbuilder_error` working with `self.env` instead of `request`. The template is
+  that of the report (`report_sudo.onlyoffice_template_id`): mail templates call `_render()` on an empty
+  `ir.actions.report`.
 - `ir_attachment.py` — `create`/`write` register `_refresh_template_field_keys` in `env.cr.postcommit` when content
   fields (`datas`, `raw`, `db_datas`, `store_fname`) change on template attachments; skipped with context
   `skip_field_keys_refresh`. Single point where the `field_keys` cache is refreshed (upload, conversion, editor save).
+  The hook runs after the commit of its cursor, so it writes through a cursor of its own (`registry.cursor()`): a write
+  on the committed cursor is rolled back when it closes. Tests run it in `registry.enter_test_mode`.
 - `res_config_settings.py` — `editable_form_fields` ↔ `onlyoffice_connector.editable_form_fields` (own
   `utils/config_constants.py` / `config_utils.py`).
 

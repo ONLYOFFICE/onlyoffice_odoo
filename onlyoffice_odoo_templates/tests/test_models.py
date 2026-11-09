@@ -155,10 +155,37 @@ class TestOnlyofficeOdooTemplates(OnlyofficeTemplatesModelTestCase):
                 report.report_name, res_ids=[self.demo_record.id]
             )
 
-        self.assertEqual(report_type, "onlyoffice-pdf")
+        self.assertEqual(report_type, "pdf")
         self.assertEqual(pdf_content, fake_pdf)
         mock_fill.assert_called_once()
         mock_request.assert_called_once()
+
+    def test_print_through_the_report_model_as_mail_does(self):
+        """Mail templates render a report on an empty ir.actions.report: the template is that of the report."""
+        template, _path = self._create_template_from_first_bundled_file()
+        template.create_action()
+        report = template.report_id
+
+        with (
+            patch(
+                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.IrActionsReport.fill_template",
+                return_value={self.demo_record.id: "http://fake-docserver/result.pdf"},
+            ) as mock_fill,
+            patch(
+                "odoo.addons.onlyoffice_odoo_templates.models.ir_actions_report.onlyoffice_request",
+                return_value=MagicMock(status_code=200, content=b"%PDF-1.4 mail%%EOF"),
+            ),
+        ):
+            pdf_content, report_format = (
+                self.env["ir.actions.report"]
+                .with_context(report_pdf_no_attachment=True)
+                ._render(report.report_name, [self.demo_record.id])
+            )
+
+        self.assertEqual(pdf_content, b"%PDF-1.4 mail%%EOF")
+        # Mail names the attachment "<name>.<format>".
+        self.assertEqual(report_format, "pdf")
+        self.assertEqual(mock_fill.call_args.args[-1], template)
 
     def test_print_fails_loudly_when_docbuilder_fails(self):
         """A record whose document cannot be generated raises instead of silently missing from the output."""

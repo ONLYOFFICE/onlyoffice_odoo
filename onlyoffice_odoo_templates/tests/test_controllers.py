@@ -36,7 +36,14 @@ class TestFieldKeysCache(TransactionCase):
             patch.object(self.env.cr, "commit"),
         ):
             yield fetch_keys
-            self.env.cr.postcommit.run()
+            # The refresh opens its own cursor (see IrAttachment._refresh_template_field_keys): keep it on the test one.
+            self.registry.enter_test_mode(self.env.cr)
+            try:
+                self.env.cr.postcommit.run()
+            finally:
+                self.registry.leave_test_mode()
+            # The keys were written by another environment.
+            self.env.invalidate_all()
 
     def _create_template(self, is_pdf_form=True, keys=()):
         with self._pdf(is_pdf_form, list(keys)) as fetch_keys:
@@ -60,6 +67,18 @@ class TestFieldKeysCache(TransactionCase):
         with self._pdf(True, ["a", "c"]) as fetch_keys:
             template.attachment_id.write({"datas": base64.b64encode(b"%PDF-1.4 different contents")})
         fetch_keys.assert_called_once()
+        self.assertEqual(json.loads(template.field_keys), ["a", "c"])
+
+    def test_refresh_writes_through_a_cursor_of_its_own(self):
+        """The refresh runs after the commit of its cursor: what it writes there would never be committed."""
+        template, _fetch_keys = self._create_template(keys=["a"])
+        registry_class = type(self.env.registry)
+        with (
+            patch.object(registry_class, "cursor", autospec=True, side_effect=registry_class.cursor) as cursor,
+            self._pdf(True, ["a", "c"]),
+        ):
+            template.attachment_id.write({"datas": base64.b64encode(b"%PDF-1.4 edited in ONLYOFFICE")})
+        cursor.assert_called()
         self.assertEqual(json.loads(template.field_keys), ["a", "c"])
 
     def test_get_cached_keys_reads_cache_without_recomputing(self):
