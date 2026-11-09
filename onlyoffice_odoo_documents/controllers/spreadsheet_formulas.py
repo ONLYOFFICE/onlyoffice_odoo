@@ -249,6 +249,8 @@ def _resolve_filter_value(value, filter_type=None, global_filter=None):
     """
     if not value:
         return ""
+    if filter_type == "relation" and value == "current_user":
+        value = [request.env.uid]
     if filter_type == "relation" and isinstance(value, list):
         # The names of the records, as Odoo shows a relation filter.
         model_name = (global_filter or {}).get("modelName")
@@ -285,6 +287,143 @@ def _resolve_date_shortcut(value):
     }
     fn = shortcuts.get(value)
     return fn() if fn else value
+
+
+# Days of the relative ranges of a date filter (getRelativeDateDomain of Odoo); "year_to_date" is apart.
+_RELATIVE_DAYS = {
+    "last_week": 7,
+    "last_month": 30,
+    "last_three_months": 90,
+    "last_six_months": 180,
+    "last_year": 365,
+    "last_three_years": 3 * 365,
+}
+
+
+def _global_filter_value(global_filter, env):
+    """The value of a global filter as Odoo gives it when the spreadsheet opens (getGlobalFilterValue)."""
+    filter_type = global_filter.get("type")
+    value = global_filter.get("currentValue")
+    if filter_type == "date" and global_filter.get("rangeType") == "from_to":
+        return value or {}
+    default = global_filter.get("defaultValue")
+    if value in (None, "", [], {}) and default:
+        if filter_type == "date" and isinstance(default, str):
+            # "this_year", "this_month", "this_quarter" become their period; a period ({yearOffset, period}) stays.
+            return _resolve_date_shortcut(default)
+        if filter_type == "relation" and default == "current_user":
+            return [env.uid]
+        return default
+    return value
+
+
+def _filter_time_zone(env):
+    """The time zone Odoo builds filter domains in: that of the browser, else that of the user."""
+    return pytz.timezone(_time_zone(env.context.get(BROWSER_TZ_KEY)) or _time_zone(env.context.get("tz")) or "UTC")
+
+
+def _local_now(env):
+    """Now in the time zone of the filter domains, naive."""
+    return datetime.now(pytz.utc).astimezone(_filter_time_zone(env)).replace(tzinfo=None)
+
+
+def _date_bounds_domain(env, chain, field_type, start, end):
+    """``chain`` between two local moments, as Odoo serializes them: a date, or a datetime in UTC."""
+    if field_type == "date":
+        bounds = [moment and moment.date().isoformat() for moment in (start, end)]
+    else:
+        tz = _filter_time_zone(env)
+        bounds = [
+            moment and tz.localize(moment).astimezone(pytz.utc).strftime("%Y-%m-%d %H:%M:%S") for moment in (start, end)
+        ]
+    domain = []
+    if bounds[0]:
+        domain.append((chain, ">=", bounds[0]))
+    if bounds[1]:
+        domain.append((chain, "<=", bounds[1]))
+    return domain
+
+
+def _end_of_day(moment):
+    return moment.replace(hour=23, minute=59, second=59, microsecond=0)
+
+
+def _start_of_day(moment):
+    return moment.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _date_filter_domain(env, global_filter, value, chain, field_type, offset):
+    """The domain of a date filter on a field (_getDateDomain of Odoo)."""
+    if not value:
+        return []
+    now = _local_now(env)
+    if global_filter.get("rangeType") == "from_to":
+        start = value.get("from") and _start_of_day(datetime.fromisoformat(str(value["from"])[:10]))
+        end = value.get("to") and _end_of_day(datetime.fromisoformat(str(value["to"])[:10]))
+        return _date_bounds_domain(env, chain, field_type, start, end)
+    if global_filter.get("rangeType") == "relative":
+        end = _end_of_day(now)
+        if value == "year_to_date":
+            start = _start_of_day(now).replace(month=1, day=1) + relativedelta(years=offset)
+            end += relativedelta(years=offset)
+        elif isinstance(value, str) and value in _RELATIVE_DAYS:
+            days = _RELATIVE_DAYS[value]
+            end += timedelta(days=days * offset)
+            start = _start_of_day(now) + timedelta(days=1 - days + days * offset)
+        else:
+            return []
+        return _date_bounds_domain(env, chain, field_type, start, end)
+    if not isinstance(value, dict):
+        return []
+    period = value.get("period")
+    no_period = not period or period == "empty"
+    if no_period and "yearOffset" not in value:
+        return []
+    year_offset = int(value.get("yearOffset") or 0)
+    if no_period:
+        start = datetime(now.year + year_offset + offset, 1, 1)
+        end = start + relativedelta(years=1)
+    elif period in _FILTER_QUARTERS:
+        start = datetime(now.year, _FILTER_QUARTERS.index(period) * 3 + 1, 1)
+        start += relativedelta(years=year_offset, months=3 * offset)
+        end = start + relativedelta(months=3)
+    elif period in _FILTER_MONTHS:
+        start = datetime(now.year, _FILTER_MONTHS.index(period) + 1, 1)
+        start += relativedelta(years=year_offset, months=offset)
+        end = start + relativedelta(months=1)
+    else:
+        return []
+    return _date_bounds_domain(env, chain, field_type, start, end - timedelta(seconds=1))
+
+
+def global_filters_domain(env, snapshot, data, model):
+    """The domain the global filters of a spreadsheet add to one of its lists or pivots (``data``), as Odoo adds it.
+
+    Each filter applies through the field it matches in that list or pivot (``fieldMatching``), with its value when
+    the spreadsheet opens: the current one if the data has it, else the default one.
+    """
+    filters = {f.get("id"): f for f in snapshot.get("globalFilters") or [] if f.get("id")}
+    domain = []
+    for filter_id, matching in (data.get("fieldMatching") or {}).items():
+        global_filter = filters.get(filter_id)
+        chain = isinstance(matching, dict) and (matching.get("chain") or matching.get("field"))
+        if not global_filter or not chain:
+            continue
+        value = _global_filter_value(global_filter, env)
+        filter_type = global_filter.get("type")
+        if filter_type == "text" and value:
+            domain.append((chain, "ilike", value))
+        elif filter_type == "relation" and isinstance(value, list) and value:
+            # The ids of the records, as Odoo stores them; anything else is not a value of this filter.
+            ids = [int(v) for v in value if type(v) is int or (isinstance(v, str) and v.isdecimal() and v.isascii())]
+            if ids:
+                domain.append((chain, "in", ids))
+        elif filter_type == "date":
+            field = model._fields.get(chain)
+            field_type = matching.get("type") or (field.type if field else "date")
+            offset = int(matching.get("offset") or 0)
+            domain += _date_filter_domain(env, global_filter, value, chain, field_type, offset)
+    return domain
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -342,10 +481,11 @@ class SpreadsheetFormulaEvaluator:
                 formats[spec] = {"format": excel_format, "align": align, "type": fobj.type}
         return formats
 
-    def get_list_column_formats(self, list_data, rows=0):
+    def get_list_column_formats(self, list_data, rows=0, snapshot=None):
         """Return {field_name: {format, align, type}} for a list's columns.
 
-        A monetary column gets the currency of each record, ``formats`` by position, for the first ``rows`` records.
+        A monetary column gets the currency of each record, ``formats`` by position, for the first ``rows`` records
+        (of those the global filters of ``snapshot`` leave).
         """
         model = request.env[list_data["model"]]
         formats = {}
@@ -357,13 +497,14 @@ class SpreadsheetFormulaEvaluator:
                 continue
             formats[field_name] = {"format": excel_format, "align": align, "type": fobj.type}
             if fobj.type == "monetary" and rows:
-                formats[field_name]["formats"] = self._list_currency_formats(list_data, model, fobj, rows)
+                currencies = self._list_currency_formats(snapshot or {}, list_data, model, fobj, rows)
+                formats[field_name]["formats"] = currencies
         return formats
 
-    def _list_currency_formats(self, list_data, model, fobj, rows):
+    def _list_currency_formats(self, snapshot, list_data, model, fobj, rows):
         """The currency format of each of the first ``rows`` records of a list (getListCurrency of Odoo)."""
         currency_field = fobj.get_currency_field(model) if hasattr(fobj, "get_currency_field") else fobj.currency_field
-        domain = self._resolve_domain(list_data.get("domain", []), model)
+        domain = self._data_domain(snapshot, list_data, model)
         records = model.search(domain, limit=rows, order=self._order_string(list_data.get("orderBy", [])))
         return [
             currency_excel_format(record[currency_field]) if currency_field in record else "#,##0.00"
@@ -467,7 +608,7 @@ class SpreadsheetFormulaEvaluator:
 
         model = self._data_model(list_data["model"])
         self._check_fields(model, field_name)
-        domain = self._resolve_domain(list_data.get("domain", []), model)
+        domain = self._data_domain(snapshot, list_data, model)
         order = self._order_string(list_data.get("orderBy", []))
 
         records = model.search(domain, limit=1, offset=index, order=order)
@@ -498,7 +639,7 @@ class SpreadsheetFormulaEvaluator:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
         model = self._data_model(pivot_data["model"])
-        base_domain = self._resolve_domain(pivot_data.get("domain", []), model)
+        base_domain = self._data_domain(snapshot, pivot_data, model)
 
         # Parse field/value pairs from args[2:]
         pairs = []
@@ -535,13 +676,14 @@ class SpreadsheetFormulaEvaluator:
             # empty or zero value.
             _logger.warning("PIVOT %s: read_group failed for domain %r, group_bys %r", pivot_id, combined, group_bys)
             raise ValueError("read_group failed")
-        if not groups:
+        group = self._matching_group(groups, pairs, model)
+        if not group:
             # No data for this combination. Return a plain, unformatted
             # number so arithmetic formulas built on this cell keep working.
             return 0
 
         key = "__count" if measure == "__count" else measure_field
-        return self._format_measure_value(model, key, groups[0].get(key, 0), domain=combined)
+        return self._format_measure_value(model, key, group.get(key, 0), domain=combined)
 
     def _eval_pivot_table(self, snapshot, args):
         """ODOO.PIVOT.TABLE(pivot_id, ...) — returns the whole pivot as a 2D array."""
@@ -554,7 +696,7 @@ class SpreadsheetFormulaEvaluator:
             raise ValueError(f"Pivot '{pivot_id}' not found")
 
         model = self._data_model(pivot_data["model"])
-        base_domain = self._resolve_domain(pivot_data.get("domain", []), model)
+        base_domain = self._data_domain(snapshot, pivot_data, model)
         measures = self._get_measures(pivot_data)
         measure_fields = [m for m in measures if m != "__count"]
         all_group_bys = pivot_data.get("rowGroupBys", []) + pivot_data.get("colGroupBys", [])
@@ -652,6 +794,11 @@ class SpreadsheetFormulaEvaluator:
         return rate
 
     # ── Domain & date helpers ────────────────────────────────────────────────
+
+    def _data_domain(self, snapshot, data, model):
+        """The domain of a list or pivot (``data``) with the one its global filters add, as Odoo reads its records."""
+        domain = self._resolve_domain(data.get("domain", []), model)
+        return domain + global_filters_domain(model.env, snapshot, data, model)
 
     def _resolve_domain(self, domain_value, model):
         """Parse a domain, resolve 'uid', and normalize any date values."""
@@ -763,6 +910,29 @@ class SpreadsheetFormulaEvaluator:
         if cache is not None:
             cache[cache_key] = result
         return result
+
+    @staticmethod
+    def _matching_group(groups, pairs, model):
+        """The group of the values of ``pairs``, or None.
+
+        Grouped by a many2many (or one2many), a record is in the group of each of its values: the records of one value
+        have groups of their other values too, so the group is chosen by the value, not taken first.
+        """
+        for group in groups:
+            for field_spec, value in pairs:
+                fobj = model._fields.get(field_spec.split(":")[0])
+                if not fobj or fobj.type not in ("many2many", "one2many"):
+                    continue
+                group_value = group.get(field_spec)
+                group_id = group_value[0] if isinstance(group_value, list | tuple) and group_value else group_value
+                if value in ("false", False):
+                    if group_id:
+                        break
+                elif str(group_id) != str(value).split(".")[0]:
+                    break
+            else:
+                return group
+        return None
 
     @staticmethod
     def _order_string(order_by):

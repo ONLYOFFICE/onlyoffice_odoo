@@ -86,6 +86,12 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   batches evaluation requests (50 ms debounce) to `evaluate_formulas_batch` with `window.odooJwtToken`.
 - Domains are resolved (including `uid`) once, at conversion time, as the converting user; later viewers evaluate under
   their own access rights but with those baked-in domains.
+- Global filters narrow the lists and pivots as in Odoo (`global_filters_domain`): each filter applies through the field
+  it matches in that list or pivot (`fieldMatching[filter_id]`: `chain`, `type`, `offset`), with its value when the
+  spreadsheet opens (current value, else the default one: `this_year` / `this_month` / `this_quarter`, `current_user`).
+  Date bounds are computed in the time zone of the browser (`onlyoffice_browser_tz`), a datetime field gets them in UTC.
+  A pivot cell grouped by a many2many picks the group of its value (`_matching_group`): a record is in the group of each
+  of its tags.
 
 ### `models/`
 
