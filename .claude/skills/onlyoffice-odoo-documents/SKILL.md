@@ -77,9 +77,11 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   set explicitly because Odoo may sniff a rebuilt workbook as `application/zip`). Payloads for the docbuilder callback
   are stored in `ir.attachment` records named `onlyoffice_docbuilder_cache_<uuid>` (TTL 1 h, committed immediately so
   another worker can read them). Scripts selected by the cached `mode`: `patch_formulas.docbuilder` (patch `ODOO.*`
-  cells in a native export — the only conversion path, a native `xlsx_base64` export is required) and
-  `insert_sheet.docbuilder` (add a sheet); `convert_spreadsheet.docbuilder` (full rebuild from the JSON snapshot) is
-  kept in the module but no longer selected. A shared JS helper block is substituted into the scripts as text.
+  cells in a native export — the only conversion path, a native `xlsx_base64` export is required; only the functions the
+  editor computes are patched, `_EDITOR_FUNCTIONS`: a cell calling another Odoo function such as `ODOO.BALANCE` keeps
+  the value of the export) and `insert_sheet.docbuilder` (add a sheet); `convert_spreadsheet.docbuilder` (full rebuild
+  from the JSON snapshot) is kept in the module but no longer selected. A shared JS helper block is substituted into the
+  scripts as text.
 - Metadata (lists, pivots, global filters, resolved domains, column formats) is stored on the document
   (`onlyoffice_spreadsheet_metadata`) **and** inside the XLSX in a hidden `_OdooMetadata` sheet, so a re-uploaded file
   can be restored (`Document._ensure_onlyoffice_spreadsheet_metadata`).

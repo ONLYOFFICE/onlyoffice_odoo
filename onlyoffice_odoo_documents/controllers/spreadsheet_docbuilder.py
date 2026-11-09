@@ -51,6 +51,10 @@ _FILE_MODES = ("insert_sheet", "patch_formulas", "freeze_collect", "freeze", "co
 # A call of an Odoo spreadsheet function: ODOO.LIST(, odoo.pivot.header(, ... (not a part of a longer name).
 _ODOO_CALL = re.compile(r"(?<![\w.])ODOO\.([A-Z][A-Z0-9_.]*)\(", re.IGNORECASE)
 
+# The Odoo functions the ONLYOFFICE editor computes (odoo_custom_functions_init.js). A formula that calls any other
+# one (ODOO.BALANCE, ODOO.PIVOT.POSITION, a dynamic ODOO.PIVOT.TABLE, ...) keeps the value of the export.
+_EDITOR_FUNCTIONS = frozenset(("LIST", "LIST.HEADER", "PIVOT", "PIVOT.HEADER", "FILTER.VALUE", "CURRENCY.RATE"))
+
 
 class _DateTimeEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime objects."""
@@ -410,14 +414,15 @@ class SpreadsheetDocBuilder:
 
         Text in double quotes keeps its content and is written as an XLSX formula writes it: an Odoo spreadsheet
         escapes a quote inside it by a backslash, a workbook doubles it. Returns None when the formula calls no ODOO
-        function, or calls ODOO.PIVOT.TABLE: the export splits a dynamic pivot into the formulas of its cells, one it
-        could not split (cells around taken) stays the values of the export, as the editor cannot spread a table.
+        function, or one the editor does not compute (``_EDITOR_FUNCTIONS``): the cell keeps the value of the export.
+        So does ODOO.PIVOT.TABLE: the export splits a dynamic pivot into the formulas of its cells, one it could not
+        split (cells around taken) stays the values of the export, as the editor cannot spread a table.
         """
         if not isinstance(content, str) or not content.startswith("="):
             return None
         # Even parts are outside the quotes, odd parts are the quoted texts (\" escapes a quote in o-spreadsheet).
         parts = re.split(r'("(?:\\"|[^"])*")', content)
-        if any(m.group(1).upper() == "PIVOT.TABLE" for part in parts[::2] for m in _ODOO_CALL.finditer(part)):
+        if any(m.group(1).upper() not in _EDITOR_FUNCTIONS for part in parts[::2] for m in _ODOO_CALL.finditer(part)):
             return None
         found = False
         for index in range(0, len(parts), 2):
