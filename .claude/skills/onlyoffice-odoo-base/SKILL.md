@@ -40,7 +40,8 @@ Module-level helpers (import these from other modules):
   Server. Logs the request, replaces the public URL by the inner one, honours "disable certificate verification",
   default timeout 120 s (`opts["timeout"]` overrides), raises `requests.exceptions.RequestException` with context on any
   failure. `method` is `"post"` or anything else (= GET).
-- `onlyoffice_urlopen(url, timeout=120, context=None, env=None)` — low-level `urllib` variant used by the save callback.
+- `onlyoffice_urlopen(url, timeout=120, context=None, env=None)` — low-level `urllib` variant used by the save
+  callbacks; refuses any scheme but `http`/`https` (`url_utils.check_download_url`).
 - `_resolve_env(env)` — both helpers accept `env=` so they work outside an HTTP request (report rendering, cron, shell);
   without it they use `request.env`.
 

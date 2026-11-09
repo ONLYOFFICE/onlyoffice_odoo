@@ -197,13 +197,25 @@ class DocumentsSharing(models.TransientModel):
         self.ensure_one()
         documents = self.document_ids
 
+        # An expired invitation gives nothing in Odoo, nor its ONLYOFFICE role.
+        now = fields.Datetime.now()
+        expired = {
+            doc: doc.access_ids.filtered(lambda a: a.expiration_date and a.expiration_date < now) for doc in documents
+        }
+
         user_roles = {doc: {} for doc in documents}
         for access in self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "in", documents.ids)]):
-            if access.user_id and access.user_id != access.document_id.owner_id.partner_id:
-                user_roles[access.document_id][access.user_id] = access.role
+            document = access.document_id
+            if (
+                access.user_id
+                and access.user_id != document.owner_id.partner_id
+                and access.user_id not in expired[document].partner_id
+            ):
+                user_roles[document][access.user_id] = access.role
         group_roles = {doc: {} for doc in documents}
         for access in self.env["onlyoffice.odoo.documents.access.group"].search([("document_id", "in", documents.ids)]):
-            group_roles[access.document_id][access.group_id] = access.role
+            if access.group_id not in expired[access.document_id].group_id:
+                group_roles[access.document_id][access.group_id] = access.role
 
         def member_role(member, custom_roles):
             """ONLYOFFICE role of a partner/group on the documents, its standard role where it has none."""

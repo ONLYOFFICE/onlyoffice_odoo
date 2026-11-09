@@ -21,7 +21,7 @@ import {
   xlsxSheets,
 } from "../helpers/documents"
 import { typeInEditor, waitForEditor } from "../helpers/editor"
-import { pickGalleryForm, stubFormGallery } from "../helpers/gallery"
+import { pickGalleryForm, stubFormGallery, withFormFilesMirror } from "../helpers/gallery"
 import { PARAM, SAVE_GRACE_MS } from "../helpers/env"
 import { type Odoo, rpc } from "../helpers/odoo"
 import { officeText } from "../helpers/office"
@@ -308,14 +308,16 @@ test("create a document from the form gallery → the chosen form is in the fold
   await stubFormGallery(page, marker)
   await openFolder(page, odoo, folderId)
 
-  await newMenuItem(page, "Create with ONLYOFFICE")
-  await page.getByRole("dialog").getByText("From Template", { exact: true }).click()
-  await page.getByRole("dialog").getByRole("button", { name: "Create", exact: true }).click()
-  const [editor] = await Promise.all([context.waitForEvent("page"), pickGalleryForm(page, marker)])
+  await withFormFilesMirror(odoo, async () => {
+    await newMenuItem(page, "Create with ONLYOFFICE")
+    await page.getByRole("dialog").getByText("From Template", { exact: true }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "Create", exact: true }).click()
+    const [editor] = await Promise.all([context.waitForEvent("page"), pickGalleryForm(page, marker)])
 
-  await waitForEditor(editor)
-  const [documentId] = await inFolder(odoo, folderId, `${marker}.pdf`)
-  expect((await documentFile(odoo, documentId)).equals(await readFile(GALLERY_PDF))).toBe(true)
+    await waitForEditor(editor)
+    const [documentId] = await inFolder(odoo, folderId, `${marker}.pdf`)
+    expect((await documentFile(odoo, documentId)).equals(await readFile(GALLERY_PDF))).toBe(true)
+  })
 })
 
 test("Create & Set Permissions creates the document and opens its share panel", async ({ page, odoo }) => {

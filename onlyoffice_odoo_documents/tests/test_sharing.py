@@ -34,6 +34,18 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
         self.assertEqual(wizard.oo_file_extension, "docx")
         self.assertEqual(set(wizard.share_access_ids.mapped("oo_file_extension")), {"docx"})
 
+    def test_dialog_hides_an_expired_invitation_with_a_custom_role(self):
+        document = self._document()
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("reviewer", None)}
+        )
+        invitation = document.access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id)
+        invitation.sudo().expiration_date = "2020-01-01 00:00:00"
+
+        wizard = self._open(document)
+
+        self.assertNotIn(self.colleague.partner_id, wizard.share_access_ids.partner_id)
+
     def test_dialog_of_several_documents(self):
         report = self._document()
         sheet = self._document("Sheet.xlsx")

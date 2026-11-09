@@ -4,11 +4,11 @@
 import base64
 import json
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from odoo.exceptions import UserError
 from odoo.tests import tagged
-from odoo.tests.common import TransactionCase
+from odoo.tests.common import TransactionCase, new_test_user
 
 from odoo.addons.onlyoffice_odoo.utils import config_utils, file_utils, jwt_utils
 from odoo.addons.onlyoffice_odoo_templates.models.onlyoffice_odoo_templates import OnlyOfficeTemplate
@@ -17,6 +17,16 @@ from odoo.addons.onlyoffice_odoo_templates.utils import config_utils as template
 from .common import INTERNAL_SECRET, PLAIN_PDF, TemplatesCase, bundled_pdf, ds_response
 
 REQUEST = "odoo.addons.onlyoffice_odoo_templates.models.onlyoffice_odoo_templates.onlyoffice_request"
+FORM_GET = "odoo.addons.onlyoffice_odoo.utils.url_utils.requests.get"
+FORM_FILE = "https://static-oforms.onlyoffice.com/uploads/lease.pdf"
+
+
+def form_answer(content):
+    """A streamed answer of the form gallery with ``content``."""
+    answer = MagicMock(status_code=200)
+    answer.__enter__.return_value = answer
+    answer.iter_content.return_value = [content]
+    return answer
 
 
 @tagged("post_install", "-at_install")
@@ -121,18 +131,26 @@ class TestTemplateCreation(TemplatesCase, TransactionCase):
             self._create(file="abc")
 
     def test_form_of_the_gallery_is_downloaded(self):
-        with patch(REQUEST, return_value=ds_response(content=bundled_pdf())) as request:
-            template = self.Template.with_context(url="https://forms.example/lease.pdf").create(
+        with patch(FORM_GET, return_value=form_answer(bundled_pdf())) as get:
+            template = self.Template.with_context(url=FORM_FILE).create(
                 {"name": "Lease", "template_model_id": self.partner_model.id}
             )
-        self.assertEqual(request.call_args.kwargs["url"], "https://forms.example/lease.pdf")
+        self.assertEqual(get.call_args.args[0], FORM_FILE)
+        self.assertFalse(get.call_args.kwargs["allow_redirects"])
         self.assertEqual(template.attachment_id.raw.content, bundled_pdf())
 
     def test_failed_gallery_download_is_reported(self):
-        with patch(REQUEST, side_effect=Exception("timeout")), self.assertRaises(UserError):
-            self.Template.with_context(url="https://forms.example/lease.pdf").create(
+        with patch(FORM_GET, side_effect=Exception("timeout")), self.assertRaises(UserError):
+            self.Template.with_context(url=FORM_FILE).create(
                 {"name": "Lease", "template_model_id": self.partner_model.id}
             )
+
+    def test_form_from_another_address_is_refused_without_a_request(self):
+        with patch(FORM_GET) as get, self.assertRaises(UserError):
+            self.Template.with_context(url="http://localhost:8069/web/content/1/form.pdf").create(
+                {"name": "Lease", "template_model_id": self.partner_model.id}
+            )
+        get.assert_not_called()
 
     def test_plain_pdf_is_converted_into_a_form(self):
         converted = {"endConvert": True, "fileUrl": "http://ds/form.pdf"}
@@ -271,14 +289,30 @@ class TestTemplateModel(TemplatesCase, TransactionCase):
 
     def test_model_link_is_restored_by_model_name(self):
         template = self._template()
-        users_model = self.env["ir.model"]._get("res.users")
-        template.template_model_id = users_model
+        template.template_model_id = False  # the model of a reinstalled module was deleted
+
+        self.env["onlyoffice.odoo.templates"].update_relationship(template.id, "no.such.model")
+        self.assertFalse(template.template_model_id, "an unknown model changes nothing")
 
         self.env["onlyoffice.odoo.templates"].update_relationship(template.id, "res.partner")
         self.assertEqual(template.template_model_id, self.partner_model)
 
-        self.env["onlyoffice.odoo.templates"].update_relationship(template.id, "no.such.model")
-        self.assertEqual(template.template_model_id, self.partner_model, "an unknown model changes nothing")
+    def test_model_link_keeps_the_model_of_the_template(self):
+        template = self._template()
+        self.env["onlyoffice.odoo.templates"].update_relationship(template.id, "res.users")
+        self.assertEqual(template.template_model_id, self.partner_model)
+
+    def test_only_who_may_change_the_template_relinks_it(self):
+        portal = new_test_user(self.env, login="oo_tpl_portal", groups="base.group_portal")
+        template = self._template()
+        template.template_model_id = False
+        for user in (self.user, portal):
+            with self.subTest(user=user.login):
+                self.env["onlyoffice.odoo.templates"].with_user(user).update_relationship(template.id, "res.partner")
+                self.assertFalse(template.template_model_id)
+
+        self.env["onlyoffice.odoo.templates"].with_user(self.admin).update_relationship(template.id, "res.partner")
+        self.assertEqual(template.template_model_id, self.partner_model)
 
     def test_editor_action_carries_the_template(self):
         template = self._template()
