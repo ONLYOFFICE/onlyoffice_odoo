@@ -563,9 +563,8 @@ class SpreadsheetFormulaEvaluator:
     def _parse_args(args_str):
         """Split comma-separated formula arguments, ignoring commas inside quotes.
 
-        Supports backslash-escaped quotes (\\") inside string literals, so
-        values containing a literal '"' (e.g. field labels) round-trip
-        correctly instead of breaking argument boundaries.
+        Text is quoted as in a spreadsheet: a quote inside it is doubled (``"say ""hi"" now"``) and a backslash is a
+        plain character. The editor functions and the formulas of a frozen file both write text this way.
         """
         if not args_str:
             return []
@@ -576,7 +575,7 @@ class SpreadsheetFormulaEvaluator:
         n = len(args_str)
         while i < n:
             ch = args_str[i]
-            if ch == "\\" and in_quotes and i + 1 < n and args_str[i + 1] == '"':
+            if ch == '"' and in_quotes and i + 1 < n and args_str[i + 1] == '"':
                 current += '"'
                 i += 2
                 continue

@@ -84,6 +84,10 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   can be restored (`Document._ensure_onlyoffice_spreadsheet_metadata`).
 - Client side: `onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js` registers the `ODOO_*` functions and
   batches evaluation requests (50 ms debounce) to `evaluate_formulas_batch` with `window.odooJwtToken`.
+- Text in `ODOO_*` formulas is quoted as in a spreadsheet: a quote inside is doubled, a backslash is a plain character.
+  The editor functions send their text arguments so, `_parse_args` reads them so (and the formulas of a frozen file),
+  inserted pivots write group values so (`_text_literal`). An Odoo spreadsheet escapes a quote by a backslash
+  (o-spreadsheet): the conversion rewrites its texts (`_convert_odoo_formula`).
 - Domains are resolved (including `uid`) once, at conversion time, as the converting user; later viewers evaluate under
   their own access rights but with those baked-in domains.
 - Global filters narrow the lists and pivots as in Odoo (`global_filters_domain`): each filter applies through the field
