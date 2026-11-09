@@ -8,7 +8,7 @@ import logging
 import os
 
 from odoo import _, api, fields, models, tools
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 from odoo.addons.onlyoffice_odoo.controllers.main import onlyoffice_request
 from odoo.addons.onlyoffice_odoo.utils import config_utils, conversion_utils, file_utils, jwt_utils, url_utils
@@ -118,15 +118,9 @@ class OnlyOfficeTemplate(models.Model):
     def create(self, vals):
         url = self._context.get("url", None)
         if isinstance(url, str) and url.startswith(("http://", "https://")) and url.endswith(".pdf"):
+            # A form of the gallery: the address comes from the browser, only the files of the gallery are taken.
             try:
-                response = onlyoffice_request(
-                    url=url,
-                    method="get",
-                    env=self.env,
-                )
-
-                file_content = response.content
-                vals["file"] = base64.b64encode(file_content)
+                vals["file"] = base64.b64encode(url_utils.download_form_file(url, self.env))
             except Exception as e:
                 raise UserError(_("Failed to download form")) from e
 
@@ -358,19 +352,26 @@ class OnlyOfficeTemplate(models.Model):
         """
         If the module was uninstalled and reinstalled, its model id may have changed.
         Update the model id in the template record
+
+        Only a user who may change the template relinks it: the editor calls this for everybody who opens the
+        template. The model is the one the template was made for, the one given only when it has none stored.
         """
         if not template_model_id or not model:
             return
 
-        model_id = self.sudo().env["ir.model"].search([("model", "=", model)]).id
-        if not model_id:
-            return
-
-        record = self.sudo().env["onlyoffice.odoo.templates"].browse(template_model_id)
+        record = self.env["onlyoffice.odoo.templates"].browse(template_model_id).exists()
         if not record:
             return
+        try:
+            record.check_access_rights("write")
+            record.check_access_rule("write")
+        except AccessError:
+            return
 
-        if record.template_model_id != model_id:
+        model_id = (
+            self.env["ir.model"].sudo().search([("model", "=", record.template_model_model or model)], limit=1).id
+        )
+        if model_id and record.template_model_id.id != model_id:
             record.template_model_id = model_id
         return
 

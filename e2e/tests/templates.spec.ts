@@ -156,43 +156,51 @@ test("upload a plain PDF as a template → it is converted into a PDF form", asy
 
 test("create a template from the form gallery → it holds the chosen form", async ({ page, odoo }) => {
   // The gallery API (oforms.onlyoffice.com, proxied by /onlyoffice/oforms*) is stubbed; the chosen form points to a
-  // bundled PDF that this Odoo serves itself, so the server-side download needs no internet. The proxy routes are
-  // unit-tested in onlyoffice_odoo/tests/test_oforms.py.
-  const form = {
-    id: 1,
-    attributes: {
-      name_form: "E2E gallery form",
-      file_oform: {
-        data: [
-          {
-            attributes: {
-              url: "http://localhost:8069/onlyoffice/template/template_content/hr.employee_Employee.pdf",
-              ext: ".pdf",
+  // bundled PDF that this Odoo serves itself, so the server-side download needs no internet. The server takes forms
+  // only from the gallery files: this Odoo is set as a mirror of them for the test. The proxy routes are unit-tested
+  // in onlyoffice_odoo/tests/test_oforms.py.
+  const mirror = ["onlyoffice_connector.form_files_url", "http://localhost:8069/onlyoffice/template/template_content/"]
+  await odoo.call("ir.config_parameter", "set_param", mirror)
+  try {
+    const form = {
+      id: 1,
+      attributes: {
+        name_form: "E2E gallery form",
+        file_oform: {
+          data: [
+            {
+              attributes: {
+                url: "http://localhost:8069/onlyoffice/template/template_content/hr.employee_Employee.pdf",
+                ext: ".pdf",
+              },
             },
-          },
-        ],
+          ],
+        },
       },
-    },
+    }
+    const reply = (result: unknown) => (route: Route) =>
+      route.fulfill({ json: { jsonrpc: "2.0", id: route.request().postDataJSON().id, result } })
+    await page.route("**/onlyoffice/oforms/locales", reply({ data: [{ code: "en", name: "English" }] }))
+    await page.route("**/onlyoffice/oforms/category-types", reply({ data: [] }))
+    await page.route("**/onlyoffice/oforms", reply({ data: [form], meta: { pagination: { total: 1 } } }))
+
+    await page.goto(TEMPLATES)
+    await page.getByRole("button", { name: "Open Document templates" }).click()
+    const gallery = page.getByRole("dialog")
+    await gallery
+      .locator(".o_onlyoffice_kanban_record", { hasText: "E2E gallery form" })
+      .getByTitle("Select document")
+      .click()
+    await gallery.getByRole("button", { name: "Create" }).click()
+
+    await expect(page.locator('[name="name"] input')).toHaveValue("E2E gallery form")
+    await expect(page.locator('[name="file"]')).toBeHidden() // the file comes from the gallery
+    const id = await saveTemplateForEmployee(page)
+    expect((await templatePdf(odoo, id)).equals(await readFile(EMPLOYEE_PDF))).toBe(true)
+  } finally {
+    // Removed whatever happens: a later run must not download from this Odoo.
+    await odoo.call("ir.config_parameter", "set_param", [mirror[0], false])
   }
-  const reply = (result: unknown) => (route: Route) =>
-    route.fulfill({ json: { jsonrpc: "2.0", id: route.request().postDataJSON().id, result } })
-  await page.route("**/onlyoffice/oforms/locales", reply({ data: [{ code: "en", name: "English" }] }))
-  await page.route("**/onlyoffice/oforms/category-types", reply({ data: [] }))
-  await page.route("**/onlyoffice/oforms", reply({ data: [form], meta: { pagination: { total: 1 } } }))
-
-  await page.goto(TEMPLATES)
-  await page.getByRole("button", { name: "Open Document templates" }).click()
-  const gallery = page.getByRole("dialog")
-  await gallery
-    .locator(".o_onlyoffice_kanban_record", { hasText: "E2E gallery form" })
-    .getByTitle("Select document")
-    .click()
-  await gallery.getByRole("button", { name: "Create" }).click()
-
-  await expect(page.locator('[name="name"] input')).toHaveValue("E2E gallery form")
-  await expect(page.locator('[name="file"]')).toBeHidden() // the file comes from the gallery
-  const id = await saveTemplateForEmployee(page)
-  expect((await templatePdf(odoo, id)).equals(await readFile(EMPLOYEE_PDF))).toBe(true)
 })
 
 test("export a demo template in Settings → it is added to the templates", async ({ page, odoo }) => {
