@@ -659,7 +659,8 @@
       })
 
       // Poll sheets: wait until no #BUSY! cells remain, then check for #NAME?.
-      // Returns "busy" / "name_error" / "ok".
+      // Returns "busy" / "name_error" / "ok". Only reads: the sheets are not activated (that would show a hidden
+      // sheet, such as _OdooMetadata, and change the file of a user who only opened it), hidden sheets are skipped.
       window._odooRetryCount = window._odooRetryCount || 0
       window._odooPollCount = window._odooPollCount || 0
 
@@ -675,15 +676,16 @@
         connector.callCommand(
           function () {
             var sheets = Api.GetSheets()
-            var activeSheet = Api.GetActiveSheet()
-            var activeName = activeSheet.GetName()
             var hasBusy = false
             var hasName = false
             for (var i = 0; i < sheets.length; i++) {
-              var sheetName = sheets[i].GetName()
-              sheets[i].SetActive()
+              if (!sheets[i].GetVisible()) {
+                continue
+              }
               var range = sheets[i].GetUsedRange()
-              var rangeAddr = range.GetAddress()
+              if (!range) {
+                continue
+              }
 
               if (!hasBusy) {
                 var busyMatch = range.Find({
@@ -718,13 +720,6 @@
                 }
               }
               if (hasBusy) {
-                break
-              }
-            }
-            // Restore original active sheet
-            for (var j = 0; j < sheets.length; j++) {
-              if (sheets[j].GetName() === activeName) {
-                sheets[j].SetActive()
                 break
               }
             }

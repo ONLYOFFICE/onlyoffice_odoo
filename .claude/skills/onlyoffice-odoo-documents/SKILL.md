@@ -86,7 +86,9 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   (`onlyoffice_spreadsheet_metadata`) **and** inside the XLSX in a hidden `_OdooMetadata` sheet, so a re-uploaded file
   can be restored (`Document._ensure_onlyoffice_spreadsheet_metadata`).
 - Client side: `onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js` registers the `ODOO_*` functions and
-  batches evaluation requests (50 ms debounce) to `evaluate_formulas_batch` with `window.odooJwtToken`.
+  batches evaluation requests (50 ms debounce) to `evaluate_formulas_batch` with `window.odooJwtToken`. Its sheet check
+  (`odooCheckSheets`, `#BUSY!` / `#NAME?`) only reads the visible sheets: activating a sheet (`SetActive`) shows a
+  hidden one such as `_OdooMetadata` and makes opening the file a change that is saved.
 - Text in `ODOO_*` formulas is quoted as in a spreadsheet: a quote inside is doubled, a backslash is a plain character.
   The editor functions send their text arguments so, `_parse_args` reads them so (and the formulas of a frozen file),
   inserted pivots write group values so (`_text_literal`). An Odoo spreadsheet escapes a quote by a backslash
