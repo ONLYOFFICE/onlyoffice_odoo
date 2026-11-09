@@ -72,8 +72,16 @@ the `FormGallery` component.
 ### `models/`
 
 - `res_config_settings.py` — `res.config.settings` extension with one field per setting (same names as the config keys).
-  `set_values` compares with stored values and, when something changed and demo mode is off before and after, runs
-  `validation_utils.settings_validation` before `save_config_values`.
+  `set_values` compares with stored values (flags as booleans: any app's settings page saves this form) and, when
+  something changed: trims the addresses and the header, does not store an inner address equal to the public one being
+  saved (`_normalize_addresses`; any other inner address shown is kept: the public one may be for browsers only);
+  rejects a changed address `valid_url` refuses (`_check_addresses`, an error, never a silent skip; Document Server
+  addresses not with the demo on); runs `validation_utils.settings_validation` unless the demo is on after the save;
+  then `save_config_values`: the demo first (`set_demo(False)` resets URL/secret/header), then the entered values (not
+  with the demo on); an empty Odoo address goes back to web.base.url. Leaving the demo (`_forget_demo_values`, constants
+  `DEMO_*` in `config_utils`): an address of the demo host is not kept; without an own public address the defaults are
+  saved unchecked (an own inner address alone is an error); with one the server is checked and the demo secret and
+  header left in the form are reset (an own server sends the default header).
 - `onlyoffice_odoo.py` — model `onlyoffice.odoo` (no fields): `get_demo()` → JSON `{"mode", "date"}` and
   `get_same_tab()` → JSON `{"same_tab"}`. Called from JS via `orm.call` before opening the editor; ACL: read for
   `base.group_user`.
@@ -85,10 +93,12 @@ the base callback only touches it inside the `documents.document` branch.
 
 - `config_constants.py` — all settings are `ir.config_parameter` keys under `onlyoffice_connector.*` (one constant per
   setting, plus `doc_server_demo_date` and `internal_jwt_secret` which have no settings field).
-- `config_utils.py` — `get_*`/`set_*` pairs; inner URL falls back to the public URL, Odoo URL to `web.base.url`, all
-  URLs are normalised with a trailing slash. `get_internal_jwt_secret` generates the secret on first use and commits it
-  immediately (commented). `set_demo(True)` overwrites URL/header/secret with the public demo server's values and
-  records `doc_server_demo_date` (the 30-day limit is enforced client-side); `set_demo(False)` resets them.
+- `config_utils.py` — `get_*`/`set_*` pairs; `get_demo`, `get_same_tab`, `get_certificate_verify_disabled` return
+  booleans; `fix_proto` adds `http://` to an address without a scheme; inner URL falls back to the public URL, Odoo URL
+  to `web.base.url`, all URLs are normalised with a trailing slash. `get_internal_jwt_secret` generates the secret on
+  first use and commits it immediately (commented). `set_demo(True)` overwrites URL/header/secret with the public demo
+  server's values and records `doc_server_demo_date` (the 30-day limit is enforced client-side); `set_demo(False)`
+  resets them.
 - `jwt_utils.py` — `is_jwt_enabled(env)`, `encode_payload(env, payload, secret=None)` (adds `iat`/`exp`, 24 h, HS256),
   `decode_token(env, token, secret=None)`. `secret=None` means the Document Server secret.
 - `url_utils.py` — `replace_public_url_to_internal(env, url)` for server-to-server calls (Docker networks).
@@ -103,10 +113,11 @@ the base callback only touches it inside the `documents.document` branch.
   `url`, `filetype`, `outputtype`, optional `region`, extra options), `sign_conversion_request` (body `token`
   - `<jwt_header>: Bearer …`), `parse_conversion_response` (maps converter error codes −1…−8 to messages),
     `get_region(lang)`.
-- `validation_utils.py` — settings validation: `valid_url` regex, mixed-content check (HTTPS Odoo requires HTTPS DS),
-  `healthcheck`, CommandService `{"c": "version"}` (error 6 = authorization), and a txt→txt test conversion of
-  `/onlyoffice/file/content/test.txt`. Uses the inner URL when it differs from the public one. Errors are raised as
-  `ValidationError` (prefixed "Error connecting to demo server" in demo mode).
+- `validation_utils.py` — settings validation: `valid_url` (`urlparse`: http/https or no scheme, host name, IPv4 or
+  IPv6, port, path; no login, query or fragment), the addresses checked as saved (`fix_url`), mixed-content check (HTTPS
+  Odoo requires HTTPS DS), `healthcheck`, CommandService `{"c": "version"}` (error 6 = authorization), and a txt→txt
+  test conversion of `/onlyoffice/file/content/test.txt`. Uses the inner URL when it differs from the public one. Errors
+  are raised as `ValidationError` (prefixed "Error connecting to demo server" in demo mode).
 
 ### `views/`
 
