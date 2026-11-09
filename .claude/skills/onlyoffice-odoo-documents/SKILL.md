@@ -33,7 +33,7 @@ Odoo lists/pivots into an existing XLSX; version history on every save; a restri
 
 | Route                                     | auth / type | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /onlyoffice/documents/file/create`  | user, json  | `folder_id`, `supported_format`, `title`, optional `url` (gallery form, downloaded with plain `requests`). Creates `documents.document` (`raw`, `mimetype`, `folder_id`) plus default access rows: `internal_users="none"`, `link_access="viewer"`, creator = `editor`. Returns a JSON **string** `{"error", "file_id", "document_id"}`.                                                                                                                              |
+| `POST /onlyoffice/documents/file/create`  | user, json  | `folder_id`, `supported_format`, `title`, optional `url` (gallery form, downloaded only from the gallery files by `url_utils.download_form_file`; internal users only; formats docx / xlsx / pptx / pdf). Creates `documents.document` (`raw`, `mimetype`, `folder_id`) plus default access rows: `internal_users="none"`, `link_access="viewer"`, creator = `editor`. Returns a JSON **string** `{"error", "file_id", "document_id"}`.                               |
 | `POST /onlyoffice/documents/file/convert` | user, json  | `document_id`, `target_format`, `save_to_documents`. Access via `_validate_document_for_convert` (read rule, lock, share role ≠ `none`, `folder_id.has_write_access` when saving). Target must be in the source format's `convert` list from the formats JSON. Calls `/converter` (`async: False`, `region` from the user lang) through `conversion_utils` + `onlyoffice_request`; saves a new document in the same folder or returns `{"data": base64, "filename"}`. |
 
 `OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector)`:
@@ -105,8 +105,9 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
 
 ### `security/ir.model.access.csv`
 
-`onlyoffice.odoo.documents`, `onlyoffice.odoo.documents.access`, `onlyoffice.odoo.documents.access.user` — full CRUD for
-`base.group_user`. Owner/admin restrictions are enforced in the model methods and controllers, not by ACL.
+`onlyoffice.odoo.documents` — full CRUD for `base.group_user`. `onlyoffice.odoo.documents.access` and
+`onlyoffice.odoo.documents.access.user` — no access for users (their rows name documents a user may not read): the code
+reads and writes them with `sudo()` after the owner/admin checks of the model methods and controllers.
 
 ### `views/onlyoffice_templates_share.xml`
 

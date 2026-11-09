@@ -2,13 +2,23 @@
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import base64
+import io
 import json
+import os
+from email.message import Message
 from unittest.mock import MagicMock, patch
+from urllib import request as urllib_request
+from urllib.error import URLError
+from urllib.response import addinfourl
 
 from odoo.tests import tagged
-from odoo.tests.common import HttpCase, new_test_user
+from odoo.tests.common import HttpCase, TransactionCase, new_test_user
 
-from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector
+from odoo.addons.onlyoffice_odoo.controllers.main import (
+    OnlyofficeConnector,
+    _http_urlopen,
+    onlyoffice_urlopen,
+)
 from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
 from .common import INTERNAL_SECRET, OnlyofficeCase
@@ -345,3 +355,58 @@ class TestPreview(ConnectorCase):
         prefix = f"{self.odoo_url}onlyoffice/file/content/{self.attachment.id}?oo_security_token="
         self.assertTrue(url.startswith(prefix))
         self.assertEqual(jwt_utils.decode_token(self.env, url[len(prefix) :], INTERNAL_SECRET)["id"], self.reader.id)
+
+
+@tagged("post_install", "-at_install")
+class TestOnlyofficeUrlopen(TransactionCase):
+    """Downloads of Document Server files: HTTP only, redirects included, through the proxy of the environment."""
+
+    @staticmethod
+    def _answer(url, code, body=b"", location=None):
+        headers = Message()
+        if location:
+            headers["Location"] = location
+        answer = addinfourl(io.BytesIO(body), headers, url, code)
+        answer.msg = "Found" if location else "OK"
+        return answer
+
+    def test_redirect_only_to_http(self):
+        url = "http://documentserver/cache/file.docx"
+        # urllib itself follows a redirect to "ftp://" and refuses one to "file://".
+        for location, error in (("ftp://attacker.com/file.docx", ValueError), ("file:///etc/passwd", URLError)):
+            with patch.object(
+                urllib_request.HTTPHandler, "http_open", return_value=self._answer(url, 302, location=location)
+            ):
+                with self.assertRaises(error, msg=location):
+                    onlyoffice_urlopen(url, env=self.env)
+        other = "http://documentserver/cache/other.docx"
+        answers = [self._answer(url, 302, location=other), self._answer(other, 200, b"file")]
+        with patch.object(urllib_request.HTTPHandler, "http_open", side_effect=answers) as http_open:
+            self.assertEqual(onlyoffice_urlopen(url, env=self.env).read(), b"file")
+        self.assertEqual(http_open.call_args.args[0].full_url, other)
+
+    def test_refuses_not_http_addresses(self):
+        for url in ("file:///etc/passwd", "ftp://attacker.com/file.docx"):
+            with self.assertRaises(ValueError, msg=url):
+                onlyoffice_urlopen(url, env=self.env)
+        # The opener itself has no handlers of other schemes, also with proxies of them in the environment (the proxy
+        # answers, so an address sent to it would open).
+        proxies = {"ftp_proxy": "http://proxy.example:3128", "all_proxy": "http://proxy.example:3128"}
+        proxy_answer = self._answer("http://proxy.example:3128/", 200, b"secret")
+        with (
+            patch.dict(os.environ, proxies),
+            patch.object(urllib_request.HTTPHandler, "http_open", return_value=proxy_answer),
+        ):
+            for url in ("file:///etc/passwd", "ftp://attacker.com/file.docx", "data:text/plain,secret"):
+                with self.assertRaises(URLError, msg=url):
+                    _http_urlopen(url, timeout=5)
+
+    def test_uses_the_proxy_of_the_environment(self):
+        proxy = {"http_proxy": "http://proxy.example:3128", "no_proxy": "", "NO_PROXY": ""}
+        with (
+            patch.dict(os.environ, proxy),
+            patch.object(urllib_request.HTTPHandler, "http_open", side_effect=URLError("stop")) as http_open,
+        ):
+            with self.assertRaises(URLError):
+                onlyoffice_urlopen("http://documentserver.example/cache/file.docx", env=self.env)
+        self.assertEqual(http_open.call_args.args[0].host, "proxy.example:3128")

@@ -9,7 +9,7 @@ import { PDFDocument } from "pdf-lib"
 import { expect, test } from "../fixtures"
 import { contextOf, documentFile, newFolder } from "../helpers/documents"
 import { waitForEditor } from "../helpers/editor"
-import { pickGalleryForm, stubFormGallery } from "../helpers/gallery"
+import { pickGalleryForm, stubFormGallery, withFormFilesMirror } from "../helpers/gallery"
 import { PARAM, WITHOUT_DOCUMENTS } from "../helpers/env"
 import { type Odoo, rpc } from "../helpers/odoo"
 
@@ -161,14 +161,16 @@ test("upload a plain PDF as a template → it is converted into a PDF form", asy
 test("create a template from the form gallery → it holds the chosen form", async ({ page, odoo }) => {
   await stubFormGallery(page, "E2E gallery form")
 
-  await page.goto(TEMPLATES)
-  await page.getByRole("button", { name: "Open Document templates" }).click()
-  await pickGalleryForm(page, "E2E gallery form")
+  await withFormFilesMirror(odoo, async () => {
+    await page.goto(TEMPLATES)
+    await page.getByRole("button", { name: "Open Document templates" }).click()
+    await pickGalleryForm(page, "E2E gallery form")
 
-  await expect(page.locator('[name="name"] input')).toHaveValue("E2E gallery form")
-  await expect(page.locator('[name="file"]')).toBeHidden() // the file comes from the gallery
-  const id = await saveTemplateForEmployee(page)
-  expect((await templatePdf(odoo, id)).equals(await readFile(EMPLOYEE_PDF))).toBe(true)
+    await expect(page.locator('[name="name"] input')).toHaveValue("E2E gallery form")
+    await expect(page.locator('[name="file"]')).toBeHidden() // the file comes from the gallery
+    const id = await saveTemplateForEmployee(page)
+    expect((await templatePdf(odoo, id)).equals(await readFile(EMPLOYEE_PDF))).toBe(true)
+  })
 })
 
 test("export a demo template in Settings → it is added to the templates", async ({ page, odoo }) => {
