@@ -202,6 +202,10 @@ def _find_odoo_calls(formula):
     return calls
 
 
+# An argument written as a value: text in quotes, a number, a logical value, or nothing.
+_PLAIN_ARGUMENT = re.compile(r'\s*("(?:[^"]|"")*"|-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?|TRUE|FALSE)?\s*', re.IGNORECASE)
+
+
 def _frozen_content(value):
     """A value in a frozen cell, as Odoo writes it (toFrozenContent): {"v": value} or {"f": formula}.
 
@@ -799,17 +803,39 @@ class SpreadsheetDocBuilder:
             return []
         start, end = calls[0]
         if len(calls) == 1 and re.fullmatch(r"=\s*-?\s*", formula[:start]) and not formula[end:].strip():
-            value = self._formula_evaluator.evaluate_single_formula(snapshot, formula)
+            value = self._call_value(snapshot, formula[start:end])
+            if "-" in formula[:start] and isinstance(value, int | float) and not isinstance(value, bool):
+                value = -value
             if isinstance(value, list):
                 return self._frozen_table(sheet, cell, value)
             return [{"s": sheet, "c": cell, **_frozen_content(value)}]
         parts, last = [], 0
         for start, end in calls:
-            value = self._formula_evaluator.evaluate_single_formula(snapshot, "=" + formula[start:end])
+            value = self._call_value(snapshot, formula[start:end])
             parts.extend([formula[last:start], _formula_literal(value)])
             last = end
         parts.append(formula[last:])
         return [{"s": sheet, "c": cell, "f": "".join(parts)}]
+
+    def _call_value(self, snapshot, call):
+        """The value of one ODOO_*(...) call of a formula of the file.
+
+        The collect script wrote its computed arguments as values (freeze_collect.docbuilder); an argument that is an
+        Odoo call is computed here first, as the editor computes it. Any other argument (an error, or an expression
+        with an Odoo call inside) cannot be computed: the cell gets an error, not the value of a wrong argument.
+        """
+        name, args_text = call[: call.index("(")], call[call.index("(") + 1 : -1]
+        args = []
+        for arg in self._formula_evaluator._split_args(args_text):
+            if _find_odoo_calls(arg) == [(0, len(arg))]:
+                value = self._call_value(snapshot, arg)
+                if isinstance(value, list) or (isinstance(value, str) and value.startswith("#ERROR")):
+                    return value if not isinstance(value, list) else "#ERROR: A table cannot be an argument"
+                arg = _formula_literal(value)
+            elif not _PLAIN_ARGUMENT.fullmatch(arg):
+                return f"#ERROR: The argument {arg} could not be computed"
+            args.append(arg)
+        return self._formula_evaluator.evaluate_single_formula(snapshot, f"={name}({','.join(args)})")
 
     @staticmethod
     def _frozen_table(sheet, cell, table):

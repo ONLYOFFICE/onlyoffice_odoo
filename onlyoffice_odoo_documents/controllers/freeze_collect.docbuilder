@@ -2,7 +2,141 @@
 // their values with the rights of the user and writes them back with freeze_formulas.docbuilder. The Document
 // Builder gives the formula of each cell, a shared (dragged) formula included. The result is returned as the text
 // of a document: [{s: sheet index, c: cell, f: formula}, ...].
+//
+// In the editor the spreadsheet computes the arguments of an Odoo function (A2, ROW(), B1+1) before the server
+// gets them; so here: each argument that is neither a plain value nor an Odoo call (of an Odoo call nested in an
+// argument too) is computed in a spare cell and written in the formula as its value. An argument that gives an error
+// is left as it is (the server reports it). A function that depends on the cell it is in, other than ROW() and
+// COLUMN(), gets the spare cell (XFD1048576).
 builder.OpenFile(FILE_URL_PLACEHOLDER)
+
+// [start, end] of each argument of each outermost ODOO_*(...) call of a formula.
+function odooCallArguments(formula) {
+  var result = []
+  var i = 0
+  var n = formula.length
+  function skipQuoted(j, quote) {
+    j++
+    while (j < n) {
+      if (formula.charAt(j) === quote) {
+        if (formula.charAt(j + 1) === quote) {
+          j += 2
+          continue
+        }
+        return j + 1
+      }
+      j++
+    }
+    return j
+  }
+  while (i < n) {
+    var ch = formula.charAt(i)
+    if (ch === '"' || ch === "'") {
+      i = skipQuoted(i, ch)
+      continue
+    }
+    var match = /^ODOO_[A-Z_]+\(/i.exec(formula.substring(i))
+    if (match && (i === 0 || !/[A-Za-z0-9_.]/.test(formula.charAt(i - 1)))) {
+      var j = i + match[0].length
+      var depth = 1
+      var start = j
+      var args = []
+      while (j < n && depth) {
+        ch = formula.charAt(j)
+        if (ch === '"' || ch === "'") {
+          j = skipQuoted(j, ch)
+          continue
+        }
+        if (ch === "(" || ch === "{") {
+          depth++
+        } else if (ch === ")" || ch === "}") {
+          depth--
+          if (!depth) {
+            args.push([start, j])
+          }
+        } else if (ch === "," && depth === 1) {
+          args.push([start, j])
+          start = j + 1
+        }
+        j++
+      }
+      result.push(args)
+      i = j
+      continue
+    }
+    i++
+  }
+  return result
+}
+
+function isPlainValue(text) {
+  return /^\s*("([^"]|"")*"|-?\d+(\.\d+)?([eE][-+]?\d+)?|TRUE|FALSE)?\s*$/i.test(text)
+}
+
+function valueLiteral(value) {
+  if (typeof value === "number") {
+    return String(value)
+  }
+  if (typeof value === "boolean") {
+    return value ? "TRUE" : "FALSE"
+  }
+  return '"' + String(value).replace(/"/g, '""') + '"'
+}
+
+// [start, end] of each argument of each ODOO_*(...) call of a text, the calls nested in an argument included.
+function allOdooArguments(text, offset) {
+  var result = []
+  var calls = odooCallArguments(text)
+  for (var c = 0; c < calls.length; c++) {
+    for (var a = 0; a < calls[c].length; a++) {
+      var start = calls[c][a][0]
+      var end = calls[c][a][1]
+      result.push([offset + start, offset + end])
+      result = result.concat(allOdooArguments(text.substring(start, end), offset + start))
+    }
+  }
+  return result
+}
+
+function withComputedArguments(ws, formula, address) {
+  var replaced = []
+  var args = allOdooArguments(formula, 0)
+  for (var a = 0; a < args.length; a++) {
+    var text = formula.substring(args[a][0], args[a][1])
+    if (isPlainValue(text) || /ODOO_/i.test(text)) {
+      continue
+    }
+    // ROW() and COLUMN() without a cell are those of the cell of the formula, not of the spare cell.
+    var expression = text.replace(/\b(ROW|COLUMN)\(\s*\)/gi, "$1(" + address + ")")
+    var spare = ws.GetRange("XFD1048576")
+    var value
+    var held = spare.GetValue()
+    if (String(spare.GetFormula() || "") !== "" || (held !== undefined && held !== null && String(held) !== "")) {
+      // The spare cell holds data of the file: an argument could read it, so it is not used (the file is a copy
+      // that is not saved, the argument is left as it is and the server reports it).
+      continue
+    }
+    try {
+      spare.SetValue("=" + expression)
+      value = spare.GetValue()
+    } catch (e) {
+      value = undefined
+    }
+    spare.Clear()
+    if (value === undefined || value === null || (typeof value === "string" && /^#[A-Z0-9\/!?]+$/.test(value))) {
+      continue
+    }
+    replaced.push([args[a][0], args[a][1], valueLiteral(value)])
+  }
+  // Right to left: the positions before a replaced argument stay valid.
+  replaced.sort(function (x, y) {
+    return x[0] - y[0]
+  })
+  for (var r = replaced.length - 1; r >= 0; r--) {
+    formula = formula.substring(0, replaced[r][0]) + replaced[r][2] + formula.substring(replaced[r][1])
+  }
+  return formula
+}
 
 var found = []
 var sheets = Api.GetSheets()
@@ -16,6 +150,7 @@ for (s = 0; s < sheets.length; s++) {
   if (!used) {
     continue
   }
+  var cells = []
   used.ForEach(function (cell) {
     var formula = ""
     try {
@@ -24,9 +159,13 @@ for (s = 0; s < sheets.length; s++) {
       formula = ""
     }
     if (formula.charAt(0) === "=" && /ODOO_/i.test(formula)) {
-      found.push({ s: s, c: cell.GetAddress(false, false, "xlA1", false), f: formula })
+      cells.push({ address: cell.GetAddress(false, false, "xlA1", false), formula: formula })
     }
   })
+  for (var k = 0; k < cells.length; k++) {
+    var address = cells[k].address
+    found.push({ s: s, c: address, f: withComputedArguments(ws, cells[k].formula, address) })
+  }
 }
 GlobalVariable["json"] = JSON.stringify(found)
 builder.CloseFile()

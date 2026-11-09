@@ -560,37 +560,35 @@ class SpreadsheetFormulaEvaluator:
     # ── Argument parsing (single universal parser) ───────────────────────────
 
     @staticmethod
-    def _parse_args(args_str):
-        """Split comma-separated formula arguments, ignoring commas inside quotes.
+    def _split_args(args_str):
+        """The text of each comma-separated formula argument, commas inside quotes or parentheses kept.
 
         Text is quoted as in a spreadsheet: a quote inside it is doubled (``"say ""hi"" now"``) and a backslash is a
         plain character. The editor functions and the formulas of a frozen file both write text this way.
         """
-        if not args_str:
-            return []
-        args = []
-        current = ""
-        in_quotes = False
-        i = 0
-        n = len(args_str)
-        while i < n:
-            ch = args_str[i]
-            if ch == '"' and in_quotes and i + 1 < n and args_str[i + 1] == '"':
-                current += '"'
-                i += 2
-                continue
+        args, start, depth, in_quotes = [], 0, 0, False
+        for i, ch in enumerate(args_str or ""):
             if ch == '"':
+                # A doubled quote inside a text closes and opens it again.
                 in_quotes = not in_quotes
-            elif ch == "," and not in_quotes:
-                args.append(_coerce(current.strip()))
-                current = ""
-                i += 1
+            elif in_quotes:
                 continue
-            current += ch
-            i += 1
-        if current:
-            args.append(_coerce(current.strip()))
+            elif ch in "({":
+                depth += 1
+            elif ch in ")}":
+                depth -= 1
+            elif ch == "," and not depth:
+                args.append(args_str[start:i].strip())
+                start = i + 1
+        last = (args_str or "")[start:].strip()
+        if last:
+            args.append(last)
         return args
+
+    @classmethod
+    def _parse_args(cls, args_str):
+        """The formula arguments as values: text without its quotes, numbers as numbers."""
+        return [_coerce(arg) for arg in cls._split_args(args_str)]
 
     # ── Formula implementations ──────────────────────────────────────────────
 
@@ -1068,8 +1066,8 @@ class SpreadsheetFormulaEvaluator:
 
 def _coerce(arg):
     """Coerce a formula argument string to typed value."""
-    if arg.startswith('"') and arg.endswith('"'):
-        return arg[1:-1]
+    if len(arg) > 1 and arg.startswith('"') and arg.endswith('"'):
+        return arg[1:-1].replace('""', '"')
     try:
         return float(arg) if "." in arg else int(arg)
     except ValueError:
