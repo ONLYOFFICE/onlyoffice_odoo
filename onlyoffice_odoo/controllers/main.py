@@ -9,7 +9,7 @@ import ssl
 import string
 import time
 from mimetypes import guess_type
-from urllib.request import urlopen
+from urllib import request as urllib_request
 
 import requests
 from werkzeug.exceptions import Forbidden
@@ -34,15 +34,44 @@ def _resolve_env(env):
     return request.env
 
 
+class _HttpOnlyRedirectHandler(urllib_request.HTTPRedirectHandler):
+    """Follows a redirect only to another HTTP address (urllib would also follow one to "ftp://")."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        url_utils.check_download_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _http_urlopen(url, timeout, context=None):
+    """``urllib.request.urlopen`` with HTTP and HTTPS only, redirects included: no FTP, file or data handlers.
+    The HTTP and HTTPS proxies of the environment (``HTTP_PROXY``, ``HTTPS_PROXY``, ``NO_PROXY``) are used as by
+    ``urlopen``; other ones (``FTP_PROXY``, ``ALL_PROXY``) would add handlers of their schemes."""
+    proxies = {scheme: url for scheme, url in urllib_request.getproxies().items() if scheme in ("http", "https")}
+    opener = urllib_request.OpenerDirector()
+    for handler in (
+        urllib_request.ProxyHandler(proxies),
+        urllib_request.UnknownHandler(),
+        urllib_request.HTTPHandler(),
+        urllib_request.HTTPSHandler(context=context),
+        _HttpOnlyRedirectHandler(),
+        urllib_request.HTTPDefaultErrorHandler(),
+        urllib_request.HTTPErrorProcessor(),
+    ):
+        opener.add_handler(handler)
+    return opener.open(url, timeout=timeout)
+
+
 def onlyoffice_urlopen(url, timeout=120, context=None, env=None):
+    """Open a file of the Document Server, by its internal address. Only HTTP addresses, redirects included: the URL
+    of a save callback comes from its body, which without JWT anybody can send."""
     env = _resolve_env(env)
-    url = url_utils.replace_public_url_to_internal(env, url)
+    url = url_utils.check_download_url(url_utils.replace_public_url_to_internal(env, url))
     cert_verify_disabled = config_utils.get_certificate_verify_disabled(env)
 
     if cert_verify_disabled and url.startswith("https://"):
         context = context or ssl._create_unverified_context()
 
-    return urlopen(url, timeout=timeout, context=context)
+    return _http_urlopen(url, timeout=timeout, context=context)
 
 
 def onlyoffice_request(url, method, opts=None, env=None):

@@ -6,20 +6,19 @@ import os
 import re
 import secrets
 from mimetypes import guess_type
-from urllib.request import urlopen
+from urllib.parse import urlparse
 
 import markupsafe
-import requests
 from werkzeug.exceptions import Forbidden
 
-from odoo import http
+from odoo import fields, http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.json import scriptsafe
 from odoo.tools.translate import _
 
 from odoo.addons.documents.controllers.documents import ShareRoute
-from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector, onlyoffice_request
+from odoo.addons.onlyoffice_odoo.controllers.main import OnlyofficeConnector, onlyoffice_request, onlyoffice_urlopen
 from odoo.addons.onlyoffice_odoo.utils import (
     config_utils,
     conversion_utils,
@@ -75,7 +74,10 @@ def _get_link_role(document):
 def _get_share_link_role(document, user, folder=None):
     """The ONLYOFFICE role of whoever opens a document through a share link: "none" closes it.
 
-    On the page of a shared folder the document keeps its own role; that of the folder is the most it gets.
+    On the page of a shared folder the document keeps its own role; that of the folder is the most it gets. A user
+    with a role of their own on the document gets it within their rights of Odoo, as in the app (an expired invitation
+    gives nothing, a role that saves the file may need the right to write it); the link gives them at least what it
+    gives anybody.
     """
     role = _get_link_role(document)
     if folder:
@@ -86,8 +88,14 @@ def _get_share_link_role(document, user, folder=None):
             .sudo()
             .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
         )
-        if access_user.role and access_user.role != "none":
-            role = access_user.role
+        invitation = document.sudo().access_ids.filtered(lambda a: a.partner_id == user.partner_id)[:1]
+        expired = invitation.expiration_date and invitation.expiration_date < fields.Datetime.now()
+        # An expired invitation gives nothing in Odoo, nor its ONLYOFFICE role: the link decides.
+        if access_user.role and access_user.role != "none" and not expired:
+            own_role = request.env["onlyoffice.odoo.documents"]._get_role_within_odoo_rights(
+                document, user, document.with_user(user).has_access("write")
+            )
+            role = max(role, own_role, key=lambda r: _ROLE_RANK.get(r, 0))
     # A frozen spreadsheet is only viewed.
     return "view" if document.onlyoffice_frozen and role != "none" else role
 
@@ -134,10 +142,17 @@ class OnlyofficeDocuments_Connector(http.Controller):
         try:
             _logger.info(f"Getting new file template {request.env.user.lang} {supported_format}")
 
+            # A portal user may create documents through the API, never through ONLYOFFICE.
+            if not request.env.user._is_internal():
+                raise AccessError(_("Only internal users can create documents with ONLYOFFICE"))
+            # The formats of the blank files and of the forms of the gallery.
+            if supported_format not in ("docx", "xlsx", "pptx", "pdf"):
+                raise ValueError(f"Unsupported format {supported_format!r}")
             if url:
-                response = requests.get(url, stream=True, timeout=30)
-                response.raise_for_status()
-                file_data = response.content
+                # A form of the gallery: the address comes from the browser, only the files of the gallery are taken.
+                if supported_format != urlparse(url).path.rsplit(".", 1)[-1].lower():
+                    raise ValueError(f"The format {supported_format!r} is not the one of the form file")
+                file_data = url_utils.download_form_file(url, request.env)
             else:
                 file_data = file_utils.get_default_file_template(request.env.user.lang, supported_format)
 
@@ -565,8 +580,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             status = body["status"]
 
             if (status == 2) | (status == 3):  # mustsave, corrupted
-                file_url = url_utils.replace_public_url_to_internal(request.env, body.get("url"))
-                datas = base64.encodebytes(urlopen(file_url, timeout=120).read())
+                file_url = body.get("url")
+                datas = base64.encodebytes(onlyoffice_urlopen(file_url, env=request.env).read())
                 document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
                 document.with_user(user).sudo().write(
                     {

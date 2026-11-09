@@ -179,6 +179,20 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
         self.assertEqual((access.internal_users, access.link_access), (False, "commenter"))
         self.assertEqual(document.access_internal, "edit")
 
+    def test_roles_are_read_only_with_their_document(self):
+        private = self._document("Salaries.docx", access_internal="none")
+        shared = self._document()
+        for document in (private, shared):
+            self._roles(document, internal_users="commenter", colleague="reviewer")
+
+        for model in ("onlyoffice.odoo.documents.access", "onlyoffice.odoo.documents.access.user"):
+            with self.subTest(model=model):
+                rows = self.env[model].with_user(self.colleague)
+                self.assertEqual(rows.search([("document_id", "in", (private | shared).ids)]).document_id, shared)
+                hidden = self.env[model].search([("document_id", "=", private.id)])
+                with self.assertRaises(AccessError):
+                    hidden.with_user(self.colleague).read(["document_id"])
+
     def test_an_editor_invites_a_contact_with_a_custom_role(self):
         document = self._document(access_internal="view")
         document.with_user(self.owner).action_update_access_rights(

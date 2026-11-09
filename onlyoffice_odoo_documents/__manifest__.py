@@ -13,6 +13,7 @@
     "depends": ["onlyoffice_odoo", "documents", "documents_spreadsheet"],
     "data": [
         "security/ir.model.access.csv",
+        "security/onlyoffice_documents_security.xml",
         "views/polyfills.xml",
         "views/onlyoffice_templates_share.xml",
         "views/documents_sharing_views.xml",

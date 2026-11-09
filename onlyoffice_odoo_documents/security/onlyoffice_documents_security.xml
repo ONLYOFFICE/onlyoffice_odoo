@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright (C) 2026 Ascensio System SIA -->
+<odoo>
+  <!-- The ONLYOFFICE roles of a document are read as its access of Odoo: only by those who see the document. -->
+  <record id="onlyoffice_documents_access_rule_read" model="ir.rule">
+    <field name="name">ONLYOFFICE documents access: read with the document</field>
+    <field name="model_id" ref="model_onlyoffice_odoo_documents_access" />
+    <field name="domain_force">[('document_id.user_permission', '!=', 'none')]</field>
+    <field name="perm_write" eval="False" />
+    <field name="perm_create" eval="False" />
+    <field name="perm_unlink" eval="False" />
+  </record>
+
+  <record id="onlyoffice_documents_access_user_rule_read" model="ir.rule">
+    <field name="name">ONLYOFFICE documents user access: read with the document</field>
+    <field name="model_id" ref="model_onlyoffice_odoo_documents_access_user" />
+    <field name="domain_force">[('document_id.user_permission', '!=', 'none')]</field>
+    <field name="perm_write" eval="False" />
+    <field name="perm_create" eval="False" />
+    <field name="perm_unlink" eval="False" />
+  </record>
+</odoo>

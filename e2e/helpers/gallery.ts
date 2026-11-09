@@ -1,8 +1,25 @@
 // Copyright (C) 2026 Ascensio System SIA
 import type { Page, Route } from "@playwright/test"
 
+import type { Odoo } from "./odoo"
+
 /** A form of the gallery that points to a PDF this Odoo serves itself: downloading it needs no internet. */
 export const GALLERY_FORM_URL = "http://localhost:8069/onlyoffice/template/template_content/hr.employee_Employee.pdf"
+
+const FORM_FILES_URL = "onlyoffice_connector.form_files_url"
+
+/**
+ * Runs `test` with the folder of GALLERY_FORM_URL set as a mirror of the gallery files (the server takes forms only
+ * from them), removed whatever happens: a later run must not download from this Odoo.
+ */
+export async function withFormFilesMirror(odoo: Odoo, test: () => Promise<void>) {
+  await odoo.call("ir.config_parameter", "set_param", [FORM_FILES_URL, GALLERY_FORM_URL.replace(/[^/]*$/, "")])
+  try {
+    await test()
+  } finally {
+    await odoo.call("ir.config_parameter", "set_param", [FORM_FILES_URL, false])
+  }
+}
 
 /**
  * Stubs the form gallery API (oforms.onlyoffice.com, proxied by /onlyoffice/oforms*) with one form named `name`.

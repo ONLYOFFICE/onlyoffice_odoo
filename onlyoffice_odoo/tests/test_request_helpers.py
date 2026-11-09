@@ -87,7 +87,7 @@ class TestOnlyofficeRequest(TransactionCase):
         for case, (disabled, url, expected_url, context) in cases.items():
             with (
                 self.subTest(case=case),
-                patch(f"{MAIN}.urlopen") as urlopen,
+                patch(f"{MAIN}._http_urlopen") as urlopen,
                 patch(f"{MAIN}.ssl._create_unverified_context", return_value="ctx"),
             ):
                 config_utils.set_certificate_verify_disabled(self.env, disabled)

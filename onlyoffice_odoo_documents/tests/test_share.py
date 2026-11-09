@@ -9,11 +9,11 @@ import lxml.html
 from odoo.tests import tagged
 from odoo.tests.common import HttpCase
 
-from odoo.addons.onlyoffice_odoo.utils import config_utils
+from odoo.addons.onlyoffice_odoo.utils import config_utils, jwt_utils
 
 from .common import DocumentsCase, blank
 
-URLOPEN = "odoo.addons.onlyoffice_odoo_documents.controllers.controllers.urlopen"
+URLOPEN = "odoo.addons.onlyoffice_odoo_documents.controllers.controllers.onlyoffice_urlopen"
 
 
 @tagged("post_install", "-at_install")
@@ -43,14 +43,17 @@ class TestShareLink(DocumentsCase, HttpCase):
         self.assertEqual(response.status_code, 200)
         return self._editor_config(response.text)
 
-    def _save(self, document, user, status=2):
+    def _save(self, document, user, status=2, jwt_secret=None):
         downloaded = MagicMock()
         downloaded.read.return_value = b"edited through the link"
         token = self._internal_token({"id": user.id})
+        body = {"status": status, "url": "http://documentserver/cache/files/out.docx"}
+        if jwt_secret:
+            body = {"token": jwt_utils.encode_payload(self.env, body, jwt_secret)}
         with patch(URLOPEN, return_value=downloaded):
             return self.url_open(
                 f"/onlyoffice/documents/share/callback/{document.access_token}/{token}",
-                data=json.dumps({"status": status, "url": "http://documentserver/cache/files/out.docx"}),
+                data=json.dumps(body),
                 headers={"Content-Type": "application/json"},
             )
 
@@ -176,6 +179,42 @@ class TestShareLink(DocumentsCase, HttpCase):
 
     def test_user_with_an_edit_role_saves_through_a_view_link(self):
         self._roles(self.shared, link_access="view", colleague="edit")
+        self.assertEqual(self._save(self.shared, self.colleague).json(), {"error": 0})
+        self.assertEqual(self._raw(self.shared), b"edited through the link")
+
+    def test_own_role_on_a_link_stays_within_the_rights_of_odoo(self):
+        document = self._document(access_internal="view", access_via_link="view")
+        self._roles(document, link_access="view", colleague="edit")
+        self.authenticate("oo_doc_colleague", "oo_doc_colleague")
+        self.assertNotIn("callbackUrl", self._config(document)["editorConfig"])
+
+        response = self._save(document, self.colleague)
+
+        self.assertEqual((response.status_code, response.json()["error"]), (500, 1))
+        self.assertEqual(self._raw(document), blank("docx"))
+
+    def test_expired_invitation_gives_no_role_on_a_link(self):
+        # With JWT a commenting role saves with the right to read: only the expired invitation stops the save, and
+        # the role of internal users does not take its place.
+        config_utils.set_jwt_secret(self.env, "ds-secret")
+        document = self._document(access_internal="view", access_via_link="view")
+        self.env["documents.access"].create(
+            {
+                "document_id": document.id,
+                "partner_id": self.colleague.partner_id.id,
+                "role": "view",
+                "expiration_date": "2020-01-01 00:00:00",
+            }
+        )
+        self._roles(document, internal_users="commenter", link_access="view", colleague="reviewer")
+
+        response = self._save(document, self.colleague, jwt_secret="ds-secret")
+
+        self.assertEqual((response.status_code, response.json()["error"]), (500, 1))
+        self.assertEqual(self._raw(document), blank("docx"))
+
+    def test_own_role_never_lowers_the_link(self):
+        self._roles(self.shared, link_access="edit", colleague="view")
         self.assertEqual(self._save(self.shared, self.colleague).json(), {"error": 0})
         self.assertEqual(self._raw(self.shared), b"edited through the link")
 
