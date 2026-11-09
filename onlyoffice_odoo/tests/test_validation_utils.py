@@ -63,6 +63,10 @@ class TestValidationUtils(TransactionCase):
             with self.subTest(url=url):
                 self.assertFalse(validation_utils.valid_url(url))
 
+    def test_each_conversion_has_its_own_key(self):
+        keys = {conversion_utils.build_conversion_body("http://odoo/file", "docx", "pdf")["key"] for _i in range(5)}
+        self.assertEqual(len(keys), 5)
+
     # -- get_conversion_error_message --
 
     def test_error_message_unknown_error(self):

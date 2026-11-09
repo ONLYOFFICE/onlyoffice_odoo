@@ -11,7 +11,7 @@ from urllib import request as urllib_request
 from urllib.error import URLError
 from urllib.response import addinfourl
 
-from odoo.tests import tagged
+from odoo.tests import new_test_user, tagged
 from odoo.tests.common import HttpCase, TransactionCase
 
 from odoo.addons.onlyoffice_odoo.controllers.main import (
@@ -82,6 +82,25 @@ class TestOnlyofficeControllers(HttpCase):
         self.assertEqual(config["document"]["title"], "test_document.docx")
         self.assertEqual(config["editorConfig"]["mode"], "edit")
         self.assertIn(f"/onlyoffice/editor/callback/{self.attachment.id}", config["editorConfig"]["callbackUrl"])
+
+    def test_editor_opens_a_file_of_a_read_only_record_for_viewing(self):
+        # The user can read the company (and its attachments) but not write it: no edit mode, no callback.
+        new_test_user(self.env, login="_oo_reader", password=PASSWORD, groups="base.group_user")
+        attachment = self.env["ir.attachment"].create(
+            {
+                "name": "company.docx",
+                "datas": base64.b64encode(b"content"),
+                "res_model": "res.company",
+                "res_id": self.env.company.id,
+            }
+        )
+        self.authenticate("_oo_reader", PASSWORD)
+
+        config = self._get_config(attachment.id)["result"]["editorConfig"]
+        self.assertEqual(config["editorConfig"]["mode"], "view")
+        self.assertNotIn("callbackUrl", config["editorConfig"])
+        page = self.url_open(f"/onlyoffice/editor/{attachment.id}").text
+        self.assertNotIn("/onlyoffice/editor/callback/", page)
 
     def test_editor_config_for_missing_attachment_is_not_found(self):
         gone = self._attachment("gone.docx")

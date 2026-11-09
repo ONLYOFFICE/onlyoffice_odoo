@@ -57,11 +57,12 @@ Module-level helpers (import these from other modules):
 | `GET /onlyoffice/preview?url=&title=`                  | user, http, website=True   | Embedded read-only viewer (`type: embedded`, `mode: view`, key = timestamp). Relative `url`s under `/onlyoffice/file/content/` get an `oo_security_token` appended; other relative URLs are prefixed with the Odoo URL.                                                                                                                                                             |
 
 Helper methods on the same class (used by documents/templates too):
-`prepare_editor_values(attachment, access_token, can_write)`,
-`get_documents_permissions(attachment, can_write, root_config)` (role → editor permissions; history versions are forced
-to view mode; see `onlyoffice-odoo-documents`), `get_attachment(attachment_id, user=None)`,
-`get_user_from_token(token)`, `filter_xss(text)` (whitelist: letters, digits, `space _ - , . : @ +`),
-`_check_document_access(document)` (lock + `check_access_rule("read")`).
+`prepare_editor_values(attachment, access_token, can_write)` (edit mode and `callbackUrl` only with the right to write
+this attachment, `attachment.check("write")`, i.e. its record: the model right alone opens a read-only record for
+editing and the save is refused), `get_documents_permissions(attachment, can_write, root_config)` (role → editor
+permissions; history versions are forced to view mode; see `onlyoffice-odoo-documents`),
+`get_attachment(attachment_id, user=None)`, `get_user_from_token(token)`, `filter_xss(text)` (whitelist: letters,
+digits, `space _ - , . : @ +`), `_check_document_access(document)` (lock + `check_access_rule("read")`).
 
 `OnlyOfficeOFormsDocumentsController(http.Controller)` — JSON proxies for the form-template gallery
 (`/onlyoffice/oforms/locales`, `/onlyoffice/oforms/category-types`, `/onlyoffice/oforms/subcategories`,
@@ -109,8 +110,9 @@ the base callback only touches it inside the `documents.document` branch.
   `can_fill_form`, `get_mime_by_ext` (docx/xlsx/pptx/pdf only), `get_file_title_without_ext`, and
   `get_default_file_template(lang, ext)` → bytes of `static/assets/document_templates/<locale>/new.<ext>`
   (`docx`/`xlsx`/`pptx`/`pdf`; locale lookup by full code, then language prefix, then `default`).
-- `conversion_utils.py` — converter-service helpers shared with documents and templates: `build_conversion_body` (`key`,
-  `url`, `filetype`, `outputtype`, optional `region`, extra options), `sign_conversion_request` (body `token`
+- `conversion_utils.py` — converter-service helpers shared with documents and templates: `build_conversion_body` (`key`
+  — `uuid4().hex`, its own per conversion: the Document Server serves the result of a known key again —, `url`,
+  `filetype`, `outputtype`, optional `region`, extra options), `sign_conversion_request` (body `token`
   - `<jwt_header>: Bearer …`), `parse_conversion_response` (maps converter error codes −1…−8 to messages),
     `get_region(lang)`.
 - `validation_utils.py` — settings validation: `valid_url` (`urlparse`: http/https or no scheme, host name, IPv4 or
