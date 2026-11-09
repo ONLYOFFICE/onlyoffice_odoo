@@ -70,7 +70,8 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   `evaluate_single_formula(snapshot, "=ODOO_X(...)")`, `evaluate_odoo_formulas_in_snapshot`, `parse_and_resolve_domain`
   (`safe_eval` + `uid` substitution), `get_pivot_column_formats`/`get_list_column_formats`. Handlers: `LIST`,
   `LIST_HEADER`, `PIVOT`, `PIVOT_HEADER`, `PIVOT_TABLE`, `FILTER_VALUE`, `CURRENCY_RATE`. `read_group` calls run inside
-  a savepoint and are cached on `request._rg_cache` for the batch.
+  a savepoint and are cached on `request._rg_cache` for the batch; so are the records of a list, read by pages of 500
+  (`_list_record`), and the field checks. A failing query is an error of its cells only, the batch goes on.
 - `SpreadsheetDocBuilder` — `convert_spreadsheet_to_xlsx`, `insert_list`, `insert_pivot`, `build_callback_script`,
   `get_cached_file`. The module also defines `XLSX_MIMETYPE` (imported by `controllers.py` and `models/documents.py`;
   set explicitly because Odoo may sniff a rebuilt workbook as `application/zip`). Payloads for the docbuilder callback

@@ -599,6 +599,8 @@ class SpreadsheetFormulaEvaluator:
         if len(args) < 3:
             raise ValueError("ODOO.LIST requires 3 args")
         list_id, index, field_name = str(args[0]), int(args[1]) - 1, str(args[2])
+        if index < 0:
+            raise ValueError("The position of a record in a list starts at 1")
 
         list_data = snapshot.get("lists", {}).get(list_id)
         if not list_data:
@@ -607,13 +609,49 @@ class SpreadsheetFormulaEvaluator:
 
         model = self._data_model(list_data["model"])
         self._check_fields(model, field_name)
-        domain = self._data_domain(snapshot, list_data, model)
-        order = self._order_string(list_data.get("orderBy", []))
-
-        records = model.search(domain, limit=1, offset=index, order=order)
-        if not records:
+        record = self._list_record(snapshot, list_id, list_data, model, index)
+        if not record:
             return ""
-        return self._format_value(records[0], field_name, model)
+        return self._format_value(record, field_name, model)
+
+    # Records of a list read at once: one query for this many cells of a column, as Odoo reads a list.
+    _LIST_PAGE = 500
+
+    def _list_record(self, snapshot, list_id, list_data, model, index):
+        """The record at ``index`` of a list, or an empty recordset.
+
+        In a batch (``request._rg_cache``) the records are read by pages and kept for the next cells, the domain is
+        resolved once per list. A query that fails is rolled back to its savepoint, so the other formulas of the batch
+        keep working, and fails the same way for every cell of its page.
+        """
+        cache = getattr(request, "_rg_cache", None)
+        if cache is None:
+            cache = {}
+        key = ("list", list_id, id(snapshot))
+        if key not in cache:
+            cache[key] = {
+                "domain": self._data_domain(snapshot, list_data, model),
+                "order": self._order_string(list_data.get("orderBy", [])),
+                "pages": {},
+            }
+        entry = cache[key]
+        page = index // self._LIST_PAGE
+        if page not in entry["pages"]:
+            try:
+                with request.env.cr.savepoint(flush=False):
+                    entry["pages"][page] = model.search(
+                        entry["domain"], offset=page * self._LIST_PAGE, limit=self._LIST_PAGE, order=entry["order"]
+                    )
+            except Exception as e:
+                entry["pages"][page] = e
+        records = entry["pages"][page]
+        if isinstance(records, Exception):
+            raise records
+        position = index % self._LIST_PAGE
+        if position >= len(records):
+            return model.browse()
+        # One record of the page that reads its fields for the whole page (records[i] alone would read its own).
+        return records[position].with_prefetch(records._prefetch_ids)
 
     def _eval_list_header(self, snapshot, args):
         """ODOO.LIST.HEADER(list_id, field_name)"""
@@ -987,12 +1025,22 @@ class SpreadsheetFormulaEvaluator:
 
     @staticmethod
     def _check_fields(model, *field_specs):
-        """Raise AccessError for fields the user may not read (their groups); unknown fields are left to the caller."""
+        """Raise AccessError for fields the user may not read (their groups); unknown fields are left to the caller.
+
+        In a batch (``request._rg_cache``) the fields of a model are checked once.
+        """
         names = {str(spec).split(":")[0] for spec in field_specs if spec and spec not in ("__count", "measure")}
         names = {name for name in names if name in model._fields}
         if not names:
             return
-        hidden = names - set(model.fields_get(list(names), attributes=["type"]))
+        cache = getattr(request, "_rg_cache", None)
+        key = ("fields", model._name, frozenset(names))
+        if cache is not None and key in cache:
+            hidden = cache[key]
+        else:
+            hidden = names - set(model.fields_get(list(names), attributes=["type"]))
+            if cache is not None:
+                cache[key] = hidden
         if hidden:
             raise AccessError(_("You do not have access to the field %s.", ", ".join(sorted(hidden))))
 
