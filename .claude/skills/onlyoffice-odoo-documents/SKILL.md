@@ -84,7 +84,10 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   scripts as text.
 - Metadata (lists, pivots, global filters, resolved domains, column formats) is stored on the document
   (`onlyoffice_spreadsheet_metadata`) **and** inside the XLSX in a hidden `_OdooMetadata` sheet, so a re-uploaded file
-  can be restored (`Document._ensure_onlyoffice_spreadsheet_metadata`).
+  can be restored (`Document._ensure_onlyoffice_spreadsheet_metadata`). That metadata is untrusted (anyone who uploads
+  an XLSX writes it): what goes into the editor page is dumped with `scriptsafe.dumps` (never `json.dumps` in a
+  `<script>`), a model name from it is used only if it has a table, and the source spreadsheet
+  (`onlyoffice_spreadsheet_source_id`) is read with the rights of the user.
 - Client side: `onlyoffice_odoo/static/src/js/odoo_custom_functions_init.js` registers the `ODOO_*` functions and
   batches evaluation requests (50 ms debounce) to `evaluate_formulas_batch` with `window.odooJwtToken`. Its sheet check
   (`odooCheckSheets`, `#BUSY!` / `#NAME?`) only reads the visible sheets: activating a sheet (`SetActive`) shows a

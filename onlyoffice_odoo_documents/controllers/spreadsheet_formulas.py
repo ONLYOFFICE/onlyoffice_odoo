@@ -199,11 +199,21 @@ def load_metadata_for_document(document):
     """Load spreadsheet metadata (lists, pivots, filters) for a document."""
     if document.onlyoffice_spreadsheet_metadata:
         try:
-            return json.loads(document.onlyoffice_spreadsheet_metadata)
+            metadata = json.loads(document.onlyoffice_spreadsheet_metadata)
+            # The metadata can come from an uploaded file: anything but an object is not metadata.
+            return metadata if isinstance(metadata, dict) else {}
         except Exception as e:
             _logger.debug("Could not load spreadsheet metadata: %s", e)
     if document.onlyoffice_spreadsheet_source_id:
-        session_data = document.onlyoffice_spreadsheet_source_id.join_spreadsheet_session()
+        # With the rights of the user, whatever those of ``document``: the field can be written to point to a
+        # spreadsheet they may not read, whose filters and definitions the formulas would then give away.
+        source = document.onlyoffice_spreadsheet_source_id.sudo(False)
+        try:
+            source.check_access_rights("read")
+            source.check_access_rule("read")
+            session_data = source.join_spreadsheet_session()
+        except AccessError:
+            return {}
         return session_data.get("data", {})
     return {}
 
@@ -254,7 +264,8 @@ def _resolve_filter_value(value, filter_type=None, global_filter=None):
     if filter_type == "relation" and isinstance(value, list):
         # The names of the records, as Odoo shows a relation filter.
         model_name = (global_filter or {}).get("modelName")
-        if model_name and model_name in request.env:
+        # A model with a table only: the name comes from the document data.
+        if model_name and model_name in request.env and not request.env[model_name]._abstract:
             records = request.env[model_name].browse([v for v in value if isinstance(v, int)]).exists()
             return ", ".join(records.mapped("display_name"))
         return ""
