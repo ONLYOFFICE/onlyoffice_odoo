@@ -73,7 +73,9 @@ def normalize_pivot_definition(pivot):
         specs[measure_id] = field_name if field_name == "__count" or not aggregator else f"{field_name}:{aggregator}"
         if measure.get("userDefinedName"):
             labels[measure_id] = measure["userDefinedName"]
-    normalized = {key: pivot[key] for key in ("model", "domain", "context", "name", "formulaId") if key in pivot}
+    normalized = {
+        key: pivot[key] for key in ("model", "domain", "context", "name", "formulaId", "fieldMatching") if key in pivot
+    }
     normalized.update(
         rowGroupBys=dimensions(pivot.get("rows")),
         colGroupBys=dimensions(pivot.get("columns")),
@@ -270,8 +272,7 @@ def load_metadata_for_document(document):
         # spreadsheet they may not read, whose filters and definitions the formulas would then give away.
         source = document.onlyoffice_spreadsheet_source_id.sudo(False)
         try:
-            source.check_access_rights("read")
-            source.check_access_rule("read")
+            source.check_access("read")
             session_data = source.join_spreadsheet_session()
         except AccessError:
             return {}
@@ -489,7 +490,7 @@ def global_filters_domain(env, snapshot, data, model):
             # The ids of the records, as Odoo stores them; anything else is not a value of this filter.
             ids = [int(v) for v in value if type(v) is int or (isinstance(v, str) and v.isdecimal() and v.isascii())]
             if ids:
-                domain.append((chain, "in", ids))
+                domain.append((chain, "child_of" if global_filter.get("includeChildren") else "in", ids))
         elif filter_type == "date":
             field = model._fields.get(chain)
             field_type = matching.get("type") or (field.type if field else "date")

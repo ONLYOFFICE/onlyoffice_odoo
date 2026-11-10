@@ -159,6 +159,19 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         self.assertEqual(config["document"]["title"], "Report.docx")
         self.assertEqual(config["editorConfig"]["mode"], "edit")
 
+    def test_editor_page_does_not_run_the_text_of_a_file(self):
+        # The labels of the filters come from the metadata sheet of the file, written by whoever uploads it.
+        label = "</script><script>window.injected=1</script>"
+        metadata = {"lists": {}, "globalFilters": [{"label": label, "defaultValue": "<b>EU</b>"}]}
+        document = self._document("Sales.xlsx", content=xlsx_with_metadata(metadata), mimetype=XLSX_MIMETYPE)
+        self.authenticate("oo_doc_owner", "oo_doc_owner")
+
+        page = self.url_open(f"/onlyoffice/editor/document/{document.id}").text
+
+        self.assertNotIn("<script>window.injected", page)
+        self.assertNotIn("</script><script>", page)
+        self.assertIn("window.odooFilterValues = ", page)
+
     def test_editor_page_is_forbidden_without_access_or_when_locked(self):
         private = self._document(folder_id=False)
         locked = self._document()

@@ -102,8 +102,9 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   it matches in that list or pivot (`fieldMatching[filter_id]`: `chain`, `type`, `offset`), with its value when the
   spreadsheet opens (current value, else the default one: `this_year` / `this_month` / `this_quarter`, `current_user`).
   Date bounds are computed in the time zone of the browser (`onlyoffice_browser_tz`), a datetime field gets them in UTC.
-  A pivot cell grouped by a many2many picks the group of its value (`_matching_group`): a record is in the group of each
-  of its tags.
+  18+: a relation filter with `includeChildren` matches with `child_of`, as Odoo; `normalize_pivot_definition` keeps the
+  `fieldMatching` of a pivot. A pivot cell grouped by a many2many picks the group of its value (`_matching_group`): a
+  record is in the group of each of its tags.
 
 ### `models/`
 

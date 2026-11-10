@@ -58,6 +58,55 @@ class TestDocBuilderScripts(TransactionCase):
         self.assertIsNone(convert('=ODOO.PIVOT.TABLE("1")'))
         self.assertIsNone(convert("=PIVOT(1)", pivot_ids={"1"}))
 
+    def test_only_the_functions_of_the_editor_are_rewritten(self):
+        convert = SpreadsheetDocBuilder._convert_odoo_formula
+        self.assertEqual(convert('=ODOO.FILTER.VALUE("Year")'), '=ODOO_FILTER_VALUE("Year")')
+        self.assertEqual(convert('=ODOO.CURRENCY.RATE("EUR","USD")'), '=ODOO_CURRENCY_RATE("EUR","USD")')
+        # The editor has no such function: the cell keeps the value of the export, not #NAME?.
+        for formula in (
+            '=ODOO.BALANCE("100",2026)',
+            '=ODOO.PIVOT.POSITION(1,"partner_id",1)',
+            '=ODOO.LIST(1,1,"amount")+ODOO.BALANCE("100",2026)',
+        ):
+            with self.subTest(formula=formula):
+                self.assertIsNone(convert(formula))
+
+    def test_quoted_text_is_written_as_a_workbook_writes_it(self):
+        # The spreadsheet escapes a quote by a backslash, a workbook doubles it; the rest of a text stays as it is.
+        convert = SpreadsheetDocBuilder._convert_odoo_formula
+        self.assertEqual(convert(r'=ODOO.LIST(1,1,"a\"b")'), '=ODOO_LIST(1,1,"a""b")')
+        self.assertEqual(
+            convert(r'=PIVOT.VALUE(1,"__count","name","Mönchengladbach \"x\" (a, b)")', pivot_ids={"1"}),
+            '=ODOO_PIVOT(1,"__count","name","Mönchengladbach ""x"" (a, b)")',
+        )
+        self.assertEqual(
+            convert(r'=ODOO.LIST(1,1,"name")&" ODOO.BALANCE(\"x\")"'), '=ODOO_LIST(1,1,"name")&" ODOO.BALANCE(""x"")"'
+        )
+        self.assertEqual(_group_value_literal(self.env["res.partner"], "ref", {"ref": 'ö "x" \\'}), '"ö ""x"" \\"')
+
+    def test_frozen_calls_get_their_computed_arguments(self):
+        partner = self.env["res.partner"].create({"name": "Frozen Ann", "ref": "oo-frozen-arguments"})
+        snapshot = {
+            "lists": {
+                "1": {"model": "res.partner", "domain": [["id", "=", partner.id]], "orderBy": [], "columns": ["name"]}
+            }
+        }
+        # The collect script wrote the arguments it computed (A2, ROW()...) as values; a nested call is computed here.
+        self.assertEqual(self.builder._call_value(snapshot, 'ODOO_LIST(1,1,"name")'), "Frozen Ann")
+        self.assertEqual(
+            self.builder._call_value(snapshot, 'ODOO_LIST(1,ODOO_LIST(1,1,"color")+1,"name")'),
+            ('#ERROR: The argument ODOO_LIST(1,1,"color")+1 could not be computed'),
+        )
+        partner.color = 1
+        self.assertEqual(self.builder._call_value(snapshot, 'ODOO_LIST(1,ODOO_LIST(1,1,"color"),"name")'), "Frozen Ann")
+        self.assertEqual(
+            self.builder._call_value(snapshot, 'ODOO_LIST(1,A2,"name")'),
+            "#ERROR: The argument A2 could not be computed",
+        )
+        # A minus before a call is computed on a number only.
+        cells = self.builder._frozen_cells(snapshot, {"s": 0, "c": "A1", "f": '=-ODOO_LIST(1,1,"color")'})
+        self.assertEqual(cells, [{"s": 0, "c": "A1", "v": -1}])
+
     def test_patches_cover_only_odoo_formula_cells(self):
         snapshot = {
             "sheets": [
@@ -132,6 +181,7 @@ class TestDocBuilderScripts(TransactionCase):
                     "measures": [{"id": "color:sum", "fieldName": "color", "aggregator": "sum"}],
                     "rows": [{"fieldName": "create_date", "granularity": "day"}],
                     "columns": [],
+                    "fieldMatching": {"f1": {"chain": "name", "type": "char"}},
                 },
                 "b": {"type": "SPREADSHEET", "formulaId": "4"},
             }
@@ -140,6 +190,8 @@ class TestDocBuilderScripts(TransactionCase):
         self.assertEqual(list(metadata["pivots"]), ["3"])
         pivot = metadata["pivots"]["3"]
         self.assertEqual((pivot["measures"], pivot["rowGroupBys"]), (["color:sum"], ["create_date:day"]))
+        # The global filters apply to the pivot through the fields it matches.
+        self.assertEqual(pivot["fieldMatching"], {"f1": {"chain": "name", "type": "char"}})
         self.assertEqual(pivot["columnFormats"]["color:sum"]["format"], "0")
         self.assertEqual(pivot["columnFormats"]["create_date:day"]["format"], "dd mmm yyyy")
 
