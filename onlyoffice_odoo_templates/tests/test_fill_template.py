@@ -129,7 +129,8 @@ class TestFillTemplateScript(HttpCase):
         self.template.field_keys = json.dumps(["lang", "type"])
         partner = self._partner("Jane Doe", lang="en_US", type="invoice")
 
-        self.assertEqual(self._fields(self._script(partner))[0], {"lang": "English (US)", "type": "Invoice Address"})
+        # Odoo 19 names that type "Invoice" (18: "Invoice Address").
+        self.assertEqual(self._fields(self._script(partner))[0], {"lang": "English (US)", "type": "Invoice"})
 
     def test_float_without_digits_or_with_the_full_precision(self):
         rate_template = (

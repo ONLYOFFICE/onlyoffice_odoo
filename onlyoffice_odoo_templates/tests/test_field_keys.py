@@ -37,11 +37,8 @@ class TestFieldKeysCache(TransactionCase):
         ):
             yield fetch_keys
             # The refresh opens its own cursor (see IrAttachment._refresh_template_field_keys): keep it on the test one.
-            self.registry.enter_test_mode(self.env.cr)
-            try:
+            with self.enter_registry_test_mode():
                 self.env.cr.postcommit.run()
-            finally:
-                self.registry.leave_test_mode()
             # The keys were written by another environment.
             self.env.invalidate_all()
 
@@ -72,13 +69,16 @@ class TestFieldKeysCache(TransactionCase):
     def test_refresh_writes_through_a_cursor_of_its_own(self):
         """The refresh runs after the commit of its cursor: what it writes there would never be committed."""
         template, _fetch_keys = self._create_template(keys=["a"])
-        registry_class = type(self.env.registry)
+        # The registry test mode of Odoo 19 hands out its own cursors (wrapping the test one): the template is updated
+        # in an environment of another cursor than that of the write.
+        update = OnlyOfficeTemplate._update_field_keys
         with (
-            patch.object(registry_class, "cursor", autospec=True, side_effect=registry_class.cursor) as cursor,
+            patch.object(OnlyOfficeTemplate, "_update_field_keys", autospec=True, side_effect=update) as updated,
             self._pdf(True, ["a", "c"]),
         ):
             template.attachment_id.write({"datas": base64.b64encode(b"%PDF-1.4 edited in ONLYOFFICE")})
-        cursor.assert_called()
+        updated.assert_called_once()
+        self.assertIsNot(updated.call_args.args[0].env.cr, self.env.cr)
         self.assertEqual(json.loads(template.field_keys), ["a", "c"])
 
     def test_get_cached_keys_reads_cache_without_recomputing(self):
