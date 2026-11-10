@@ -185,6 +185,11 @@ Assets are listed explicitly in the manifest (desktop scripts first, then `model
   a folder by SQL); a member given a role on a folder loses the ONLYOFFICE roles set before on what is in it (trash
   included), as Odoo writes that role there. `migrations/0.0.0/post-migrate.py` clears the roles of Odoo older versions
   wrote into the rows; Odoo runs it on every raise of the module version.
+- 19: the Share dialog is the wizard `documents.sharing` (`models/documents_sharing.py`). `action_open` shows an
+  ONLYOFFICE role only for a live member (`_filtered_relevant_access`: a role, not expired) and only a role Odoo does
+  not have (`onlyoffice_role()`); otherwise the value of Odoo. Inviting with an ONLYOFFICE role goes through Odoo
+  (`super().action_invite_members()`, which mails the links to the files) with its standard counterpart; the role itself
+  reaches `action_update_access_rights` in the context (`onlyoffice_invite_role`), as in 20.
 - Documents created through ONLYOFFICE get no role rows (older versions wrote none / viewer / editor: see the migration
   above).
 - Full route-auth table and checklist: `odoo-security`.

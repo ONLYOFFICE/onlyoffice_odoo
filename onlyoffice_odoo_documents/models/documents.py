@@ -344,9 +344,17 @@ class Document(models.Model):
         original_access_via_link = access_via_link
         original_partners = partners.copy() if partners else None
 
+        # The sharing wizard invites with the standard equivalent of a custom role and passes the custom one here.
+        invite_role = self.env.context.get("onlyoffice_invite_role")
+        if invite_role and original_partners:
+            original_partners = {
+                partner: (invite_role, data[1]) if isinstance(data, list | tuple) and data[0] else data
+                for partner, data in original_partners.items()
+            }
+
         # A frozen copy is only viewed: no role that edits it, in Odoo (edit) or in ONLYOFFICE.
         if any(self.mapped("onlyoffice_frozen")):
-            roles = [access_internal, access_via_link]
+            roles = [access_internal, access_via_link, invite_role]
             roles += [data[0] if isinstance(data, list | tuple) else data for data in (partners or {}).values()]
             if any(role and role not in ("none", "view") for role in roles):
                 raise UserError(_("The frozen spreadsheets are readonly."))

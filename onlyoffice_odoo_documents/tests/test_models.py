@@ -363,10 +363,7 @@ class TestRolesOfMembers(DocumentsCase, TransactionCase):
             {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "view"}
         )
         self.assertEqual(self._role(document), "edit")
-        data = document.with_user(self.owner).permission_panel_data()
-        self.assertEqual((data["record"]["access_internal"], data["record"]["access_via_link"]), ("edit", "view"))
-        roles = {access["partner_id"]["id"]: access["role"] for access in data["record"]["access_ids"]}
-        self.assertEqual(roles[self.colleague.partner_id.id], "edit")
+        # The Share dialog of Odoo 19 shows the roles of Odoo too (TestSharingWizard).
 
     def test_update_clears_the_roles_of_odoo_from_the_rows(self):
         document = self._document()

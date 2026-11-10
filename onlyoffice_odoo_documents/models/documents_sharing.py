@@ -3,6 +3,8 @@
 from odoo import Command, _, api, fields, models
 from odoo.exceptions import ValidationError
 
+from .onlyoffice_odoo_documents import onlyoffice_role
+
 
 class DocumentsSharing(models.TransientModel):
     _inherit = "documents.sharing"
@@ -57,7 +59,8 @@ class DocumentsSharing(models.TransientModel):
         doc_id = self.document_ids[0].id
         original_user_roles = {}
         for access_user in self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", doc_id)]):
-            original_user_roles[access_user.user_id] = access_user.role
+            if onlyoffice_role(access_user.role):
+                original_user_roles[access_user.user_id] = access_user.role
 
         standard_accesses = self.env["documents.access"].search([("document_id", "=", doc_id)])
         for std_access in standard_accesses:
@@ -123,43 +126,11 @@ class DocumentsSharing(models.TransientModel):
         if not self._is_custom_role(self.invite_role):
             return super().action_invite_members()
 
-        if not self.invite_partner_ids:
-            params = {
-                "title": _("No partners"),
-                "message": "",
-                "type": "warning",
-            }
-        elif self.invite_partner_ids.filtered(lambda p: not p.email):
-            params = {
-                "title": _("Some emails are missing"),
-                "message": _("Please fill in the missing email addresses."),
-                "type": "warning",
-            }
-        else:
-            self.document_ids.action_update_access_rights(
-                partners={partner: (self.invite_role, None) for partner in self.invite_partner_ids},
-                no_propagation=not self.is_folder_only,
-            )
-
-            if self.invite_notify:
-                share_template = self.env.ref("documents.mail_template_document_share", raise_if_not_found=False)
-                if share_template:
-                    share_template.with_context(
-                        documents=self.document_ids, message=self.invite_notify_message or ""
-                    ).send_mail_batch(self.invite_partner_ids.ids)
-
-            params = {
-                "title": _("Successfully Shared"),
-                "message": (
-                    _("%s members added.", len(self.invite_partner_ids))
-                    if len(self.invite_partner_ids) > 1
-                    else _("Member added.")
-                ),
-                "type": "success",
-                "next": self.action_open(self.document_ids.ids),
-            }
-
-        return {"type": "ir.actions.client", "tag": "display_notification", "params": params}
+        # Odoo invites with the standard equivalent of the custom role (and mails the links to the files),
+        # action_update_access_rights keeps the custom one.
+        custom_role = self.invite_role
+        self.invite_role = self.document_ids._convert_custom_role_to_standard(custom_role)
+        return super(DocumentsSharing, self.with_context(onlyoffice_invite_role=custom_role)).action_invite_members()
 
     def _get_allowed_roles_for_extension(self, ext):
         return self.ROLES_BY_EXTENSION.get(ext.lower() if ext else "", [])
@@ -229,20 +200,18 @@ class DocumentsSharing(models.TransientModel):
             for doc in documents
         }
 
-        # Load custom roles; an expired invitation gives nothing in Odoo, nor its ONLYOFFICE role.
+        # Load custom roles: only of the members of the document in Odoo. An invitation expired, or removed (by the
+        # autovacuum of expired ones, or from a folder), gives nothing in Odoo, nor its ONLYOFFICE role; a role of Odoo
+        # left in the rows by an older version is not one.
         onlyoffice_access_by_partner = {}
-        now = fields.Datetime.now()
         for doc in documents:
-            expired = doc.access_ids.filtered(lambda a: a.expiration_date and a.expiration_date < now).partner_id
+            members = self._filtered_relevant_access(doc).partner_id
             onlyoffice_user_accesses = self.env["onlyoffice.odoo.documents.access.user"].search(
                 [("document_id", "=", doc.id)]
             )
             for access in onlyoffice_user_accesses:
-                if access.user_id and access.user_id != doc.owner_id.partner_id and access.user_id not in expired:
-                    if doc not in onlyoffice_access_by_partner:
-                        onlyoffice_access_by_partner[doc] = {}
-                    onlyoffice_access_by_partner[doc][access.user_id] = access.role
-                    all_partners |= access.user_id
+                if access.user_id in members and onlyoffice_role(access.role):
+                    onlyoffice_access_by_partner.setdefault(doc, {})[access.user_id] = access.role
 
         # Combine standard and custom roles
         for doc, custom_accesses in onlyoffice_access_by_partner.items():
@@ -287,7 +256,7 @@ class DocumentsSharing(models.TransientModel):
                 onlyoffice_access = self.env["onlyoffice.odoo.documents.access"].search(
                     [("document_id", "=", doc.id)], limit=1
                 )
-                if onlyoffice_access and onlyoffice_access[custom_field]:
+                if onlyoffice_role(onlyoffice_access[custom_field]):
                     onlyoffice_values.append(onlyoffice_access[custom_field])
                 else:
                     # If no record - use standard value from documents
