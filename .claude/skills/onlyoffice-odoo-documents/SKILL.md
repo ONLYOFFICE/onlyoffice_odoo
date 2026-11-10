@@ -78,10 +78,10 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   are stored in `ir.attachment` records named `onlyoffice_docbuilder_cache_<uuid>` (TTL 1 h, committed immediately so
   another worker can read them). Scripts selected by the cached `mode`: `patch_formulas.docbuilder` (patch `ODOO.*`
   cells in a native export — the only conversion path, a native `xlsx_base64` export is required; only the functions the
-  editor computes are patched, `_EDITOR_FUNCTIONS`: a cell calling another Odoo function such as `ODOO.BALANCE` keeps
-  the value of the export) and `insert_sheet.docbuilder` (add a sheet); `convert_spreadsheet.docbuilder` (full rebuild
-  from the JSON snapshot) is kept in the module but no longer selected. A shared JS helper block is substituted into the
-  scripts as text.
+  editor computes are patched, `_EDITOR_FUNCTIONS`, in 19 with `FILTER.LABEL` and `FILTER.VALUE.V18`: a cell calling
+  another Odoo function such as `ODOO.BALANCE` keeps the value of the export) and `insert_sheet.docbuilder` (add a
+  sheet); `convert_spreadsheet.docbuilder` (full rebuild from the JSON snapshot) is kept in the module but no longer
+  selected. A shared JS helper block is substituted into the scripts as text.
 - Metadata (lists, pivots, global filters, resolved domains, column formats) is stored on the document
   (`onlyoffice_spreadsheet_metadata`) **and** inside the XLSX in a hidden `_OdooMetadata` sheet, so a re-uploaded file
   can be restored (`Document._ensure_onlyoffice_spreadsheet_metadata`). That metadata is untrusted (anyone who uploads
@@ -103,8 +103,11 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   spreadsheet opens (current value, else the default one: `this_year` / `this_month` / `this_quarter`, `current_user`).
   Date bounds are computed in the time zone of the browser (`onlyoffice_browser_tz`), a datetime field gets them in UTC.
   18+: a relation filter with `includeChildren` matches with `child_of`, as Odoo; `normalize_pivot_definition` keeps the
-  `fieldMatching` of a pivot. A pivot cell grouped by a many2many picks the group of its value (`_matching_group`): a
-  record is in the group of each of its tags.
+  `fieldMatching` of a pivot. 19: a value in the form of Odoo 19 (a date period by `type`: month / quarter / year /
+  relative / range; the others by `operator`, with `strings` / `ids` / `selectionValues` / `targetValue`) gives the
+  domain of `getGlobalFilterDomain` of Odoo 19 (`_odoo19_filter_domain`); the value can come from an uploaded file, so
+  only the operators of Odoo and values of their own type count. Older values are read as in 17 / 18. A pivot cell
+  grouped by a many2many picks the group of its value (`_matching_group`): a record is in the group of each of its tags.
 
 ### `models/`
 

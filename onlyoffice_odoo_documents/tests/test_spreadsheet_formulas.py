@@ -239,6 +239,13 @@ class TestFormulaEvaluator(TransactionCase):
                 self.assertEqual(evaluate(snapshot, f'=ODOO_FILTER_LABEL("{name}")'), label)
                 self.assertEqual(evaluate(snapshot, f'=ODOO_FILTER_VALUE_V18("{name}")'), label)
         self.assertEqual(compute_filter_values(snapshot)["Quarter"], "Q3/2026")
+        # The editor quotes the name of a filter as the spreadsheet does: a quote doubled, a backslash as it is.
+        snapshot["globalFilters"].append(
+            {"label": 'Say "hi" \\', "type": "text", "currentValue": {"operator": "ilike", "strings": ["x"]}}
+        )
+        for function in ("ODOO_FILTER_VALUE", "ODOO_FILTER_LABEL", "ODOO_FILTER_VALUE_V18"):
+            with self.subTest(function=function):
+                self.assertEqual(self.evaluator.evaluate_single_formula(snapshot, f'={function}("Say ""hi"" \\")'), "x")
 
     def test_currency_rate_is_odoo_rate_for_the_date_and_company(self):
         currency = self.env["res.currency"].create({"name": "OOX", "symbol": "X", "active": True})
@@ -781,6 +788,77 @@ class TestGlobalFiltersAndGroups(TransactionCase):
         # As in Odoo, a from-to filter has no default value.
         no_value = {**from_to, "currentValue": None, "defaultValue": {"to": "2000-01-01"}}
         self.assertEqual(self._count(no_value, matching), 3)
+
+    def test_filters_of_odoo_19_by_their_operator(self):
+        text = {"type": "text", "defaultValue": {"operator": "ilike", "strings": ["alpha", "beta"]}}
+        self.assertEqual(self._count(text, {"chain": "name", "type": "char"}), 2)
+        cases = [
+            ({"type": "text", "defaultValue": {"operator": "not ilike", "strings": ["corp"]}}, "name", 1),
+            ({"type": "text", "defaultValue": {"operator": "starts with", "strings": ["car"]}}, "name", 1),
+            ({"type": "text", "defaultValue": {"operator": "in", "strings": ["Carol", "Beta Corp"]}}, "name", 2),
+            ({"type": "text", "defaultValue": {"operator": "ilike", "strings": []}}, "name", 3),
+            ({"type": "relation", "defaultValue": {"operator": "in", "ids": [self.alpha.id]}}, "id", 1),
+            ({"type": "relation", "defaultValue": {"operator": "not in", "ids": [self.alpha.id]}}, "id", 2),
+            ({"type": "relation", "defaultValue": {"operator": "child_of", "ids": [self.alpha.id]}}, "id", 2),
+            ({"type": "relation", "defaultValue": {"operator": "in", "ids": "current_user"}}, "user_id", 1),
+            ({"type": "relation", "defaultValue": {"operator": "set"}}, "parent_id", 1),
+            ({"type": "relation", "defaultValue": {"operator": "not set"}}, "parent_id", 2),
+            ({"type": "relation", "defaultValue": {"operator": "ilike", "strings": ["oo a"]}}, "category_id", 1),
+            ({"type": "selection", "defaultValue": {"operator": "in", "selectionValues": ["contact"]}}, "type", 3),
+            ({"type": "selection", "defaultValue": {"operator": "not in", "selectionValues": ["contact"]}}, "type", 0),
+            ({"type": "boolean", "defaultValue": {"operator": "set"}}, "active", 3),
+            ({"type": "numeric", "defaultValue": {"operator": ">", "targetValue": 0}}, "color", 0),
+            (
+                {"type": "numeric", "defaultValue": {"operator": "between", "minimumValue": 0, "maximumValue": 1}},
+                "color",
+                3,
+            ),
+        ]
+        for global_filter, chain, count in cases:
+            with self.subTest(global_filter=global_filter, chain=chain):
+                self.assertEqual(self._count(global_filter, {"chain": chain}), count)
+
+    def test_filters_of_odoo_19_from_a_file_give_only_their_operators_and_values(self):
+        # The metadata of an XLSX comes from whoever uploads it.
+        cases = [
+            {"type": "relation", "defaultValue": {"operator": "=like", "ids": [self.alpha.id]}},
+            {"type": "relation", "defaultValue": {"operator": "in", "ids": ["1 OR 1", 1.5]}},
+            {"type": "text", "defaultValue": {"operator": "ilike", "strings": [{"x": 1}]}},
+            {"type": "numeric", "defaultValue": {"operator": "=", "targetValue": "1"}},
+            {"type": "selection", "defaultValue": {"operator": "in", "selectionValues": "contact"}},
+        ]
+        for global_filter in cases:
+            with self.subTest(global_filter=global_filter):
+                count = self._count(global_filter, {"chain": "name"})
+                self.assertIn(count, (0, 3), "no domain, or one that matches nothing")
+        self.assertEqual(self._count(cases[0], {"chain": "id"}), 3)
+
+    def test_date_filters_of_odoo_19_with_their_offset(self):
+        matching = {"chain": "create_date", "type": "datetime"}
+        today = fields.Date.today()
+        this_year = {"type": "date", "defaultValue": "this_year"}
+        self.assertEqual(self._count(this_year, matching), 3)
+        self.assertEqual(self._count(this_year, {**matching, "offset": -1}), 0)
+        for default in ("this_month", "this_quarter", "today", "last_7_days", "month_to_date", "year_to_date"):
+            with self.subTest(default=default):
+                period = {"type": "date", "defaultValue": default}
+                self.assertEqual(self._count(period, matching), 3)
+                self.assertEqual(self._count(period, {**matching, "offset": -1}), 0)
+                self.assertEqual(self._count(period, {**matching, "offset": 1}), 0)
+        month = {"type": "date", "currentValue": {"type": "month", "year": today.year, "month": today.month}}
+        self.assertEqual(self._count(month, matching), 3)
+        last_month = {"type": "date", "defaultValue": "last_month"}
+        self.assertEqual(self._count(last_month, matching), 0)
+        self.assertEqual(self._count(last_month, {**matching, "offset": 1}), 3)
+        day = today.isoformat()
+        self.assertEqual(self._count({"type": "date", "currentValue": {"type": "range", "from": day}}, matching), 3)
+        self.assertEqual(
+            self._count({"type": "date", "currentValue": {"type": "range", "to": "2000-01-01"}}, matching), 0
+        )
+        # A month without its number is its year, which Odoo does not move.
+        whole_year = {"type": "date", "currentValue": {"type": "month", "year": today.year}}
+        self.assertEqual(self._count(whole_year, {**matching, "offset": -1}), 3)
+        self.assertEqual(self._count({"type": "date", "currentValue": {"type": "month"}}, matching), 3)
 
     def test_a_filter_the_data_does_not_match_changes_nothing(self):
         self.assertEqual(self._count({"type": "text", "defaultValue": "corp"}, {}), 3)

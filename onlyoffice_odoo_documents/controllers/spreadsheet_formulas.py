@@ -642,11 +642,103 @@ def _date_filter_domain(env, global_filter, value, chain, field_type, offset):
     return _date_bounds_domain(env, chain, field_type, start, end - timedelta(seconds=1))
 
 
+def _odoo19_date_range(env, value, offset):
+    """The first and the last moment of the period of a date filter of Odoo 19, moved by ``offset`` (getDateRange)."""
+    now = _local_now(env)
+    kind = value.get("type")
+    try:
+        if kind in ("year", "month", "quarter"):
+            if value.get("year") is None:
+                return None, None
+            start = datetime(int(value["year"]), 1, 1)
+            if kind == "month" and value.get("month") is not None:
+                start = start.replace(month=int(value["month"])) + relativedelta(months=offset)
+                return start, start + relativedelta(months=1, seconds=-1)
+            if kind == "quarter" and value.get("quarter") is not None:
+                start = start.replace(month=int(value["quarter"]) * 3 - 2) + relativedelta(months=3 * offset)
+                return start, start + relativedelta(months=3, seconds=-1)
+            # A month or a quarter without its number is its whole year, which Odoo does not move.
+            start += relativedelta(years=offset if kind == "year" else 0)
+            return start, start + relativedelta(years=1, seconds=-1)
+        if kind == "range":
+            start = value.get("from") and _start_of_day(datetime.fromisoformat(str(value["from"])[:10]))
+            end = value.get("to") and _end_of_day(datetime.fromisoformat(str(value["to"])[:10]))
+            return start or None, end or None
+    except (TypeError, ValueError):
+        return None, None
+    if kind != "relative":
+        return None, None
+    today, end = _start_of_day(now), _end_of_day(now)
+    tomorrow = today + timedelta(days=1)
+    period = value.get("period")
+    if period in ("today", "yesterday"):
+        day = today - timedelta(days=1 if period == "yesterday" else 0) + timedelta(days=offset)
+        return day, _end_of_day(day)
+    if period == "month_to_date":
+        return today.replace(day=1) + relativedelta(months=offset), end + relativedelta(months=offset)
+    if period == "last_month":
+        start = (now + relativedelta(months=offset - 1)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return start, start + relativedelta(months=1, seconds=-1)
+    if period == "year_to_date":
+        return today.replace(month=1, day=1) + relativedelta(years=offset), end + relativedelta(years=offset)
+    days = {"last_7_days": 7, "last_30_days": 30, "last_90_days": 90}.get(period)
+    if days:
+        return tomorrow - timedelta(days=days - days * offset), end + timedelta(days=days * offset)
+    if period == "last_12_months":
+        start = (tomorrow - relativedelta(months=12)).replace(day=1) + relativedelta(months=12 * offset)
+        return start, start + relativedelta(months=12, seconds=-1)
+    return None, None
+
+
+def _any_of(terms):
+    """The domain of any of ``terms``; none of them: no restriction, as Domain.or of Odoo."""
+    return ["|"] * (len(terms) - 1) + terms
+
+
+def _odoo19_filter_domain(env, global_filter, value, chain, field_type, offset):
+    """The domain of a filter value of Odoo 19 on a field (getGlobalFilterDomain, FILTERS_BEHAVIORS of Odoo 19).
+
+    The value can come from an uploaded file: only the operators of Odoo and values of their own type give a domain.
+    """
+    filter_type = global_filter.get("type")
+    if filter_type == "date":
+        start, end = _odoo19_date_range(env, value, offset)
+        return _date_bounds_domain(env, chain, field_type, start, end)
+    operator = value.get("operator")
+    if operator in ("set", "not set") and filter_type in ("text", "relation", "boolean"):
+        return [(chain, "!=" if operator == "set" else "=", False)]
+    strings = value.get("strings")
+    strings = [s for s in strings if isinstance(s, str)] if isinstance(strings, list) else []
+    if filter_type in ("text", "relation") and operator in ("ilike", "not ilike"):
+        return _any_of([(chain, operator, string) for string in strings])
+    if filter_type == "text" and operator == "starts with":
+        return _any_of([(chain, "=ilike", f"{string}%") for string in strings])
+    if filter_type == "text" and operator in ("in", "not in"):
+        return [(chain, operator, strings)]
+    if filter_type == "relation" and operator in ("in", "not in", "child_of"):
+        ids = value.get("ids")
+        return [(chain, operator, [i for i in ids if type(i) is int] if isinstance(ids, list) else [])]
+    if filter_type == "selection" and operator in ("in", "not in"):
+        selection = value.get("selectionValues")
+        return [(chain, operator, [s for s in selection if isinstance(s, str)] if isinstance(selection, list) else [])]
+    if filter_type == "numeric":
+
+        def number(key):
+            return value.get(key) if type(value.get(key)) in (int, float) else None
+
+        if operator in ("=", "!=", ">", "<") and number("targetValue") is not None:
+            return [(chain, operator, number("targetValue"))]
+        if operator == "between" and number("minimumValue") is not None and number("maximumValue") is not None:
+            return [(chain, ">=", number("minimumValue")), (chain, "<=", number("maximumValue"))]
+    return []
+
+
 def global_filters_domain(env, snapshot, data, model):
     """The domain the global filters of a spreadsheet add to one of its lists or pivots (``data``), as Odoo adds it.
 
     Each filter applies through the field it matches in that list or pivot (``fieldMatching``), with its value when
-    the spreadsheet opens: the current one if the data has it, else the default one.
+    the spreadsheet opens: the current one if the data has it, else the default one. Values in the form of Odoo 19
+    (date periods by "type", the others by "operator") as Odoo 19 reads them, older ones as Odoo 17 / 18 did.
     """
     filters = {f.get("id"): f for f in snapshot.get("globalFilters") or [] if f.get("id")}
     domain = []
@@ -654,6 +746,13 @@ def global_filters_domain(env, snapshot, data, model):
         global_filter = filters.get(filter_id)
         chain = isinstance(matching, dict) and (matching.get("chain") or matching.get("field"))
         if not global_filter or not chain:
+            continue
+        odoo19_value = _filter_value_of(global_filter)
+        if _is_odoo19_filter_value(global_filter.get("type"), odoo19_value):
+            field = model._fields.get(chain)
+            field_type = matching.get("type") or (field.type if field else "date")
+            offset = int(matching.get("offset") or 0)
+            domain += _odoo19_filter_domain(env, global_filter, odoo19_value, chain, field_type, offset)
             continue
         value = _global_filter_value(global_filter, env)
         filter_type = global_filter.get("type")

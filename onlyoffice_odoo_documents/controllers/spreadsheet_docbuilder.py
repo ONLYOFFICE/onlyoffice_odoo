@@ -64,7 +64,18 @@ _PIVOT_FUNCTIONS = {"VALUE": "ODOO_PIVOT", "HEADER": "ODOO_PIVOT_HEADER"}
 
 # The Odoo functions the ONLYOFFICE editor computes (odoo_custom_functions_init.js). A formula that calls any other
 # one (ODOO.BALANCE, ODOO.PIVOT.POSITION, a dynamic ODOO.PIVOT.TABLE, ...) keeps the value of the export.
-_EDITOR_FUNCTIONS = frozenset(("LIST", "LIST.HEADER", "PIVOT", "PIVOT.HEADER", "FILTER.VALUE", "CURRENCY.RATE"))
+_EDITOR_FUNCTIONS = frozenset(
+    (
+        "LIST",
+        "LIST.HEADER",
+        "PIVOT",
+        "PIVOT.HEADER",
+        "FILTER.VALUE",
+        "FILTER.LABEL",
+        "FILTER.VALUE.V18",
+        "CURRENCY.RATE",
+    )
+)
 
 
 class _DateTimeEncoder(json.JSONEncoder):
