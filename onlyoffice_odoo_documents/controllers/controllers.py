@@ -191,6 +191,8 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
         try:
             document = request.env["documents.document"].browse(int(document_id)).exists()
+            # A shortcut converts the document it points to, as Odoo downloads it.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
             if not document:
                 result["error"] = _("Document not found")
                 return json.dumps(result)
@@ -218,7 +220,10 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 title = document.name
             else:
                 source_ext = file_utils.get_file_ext(attachment.name) or file_utils.get_ext_by_mime(attachment.mimetype)
-                title = file_utils.get_file_title_without_ext(attachment.name)
+                # The name of the document, renamed in Odoo maybe (its attachment keeps the former name).
+                title = document.name
+                if source_ext and title.lower().endswith(f".{source_ext}"):
+                    title = title[: -len(source_ext) - 1]
             target_format = (target_format or "").lower()
 
             allowed_formats = []
@@ -346,6 +351,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         document = None
         if document_id:
             document = request.env["documents.document"].browse(int(document_id))
+            # A shortcut opens the document it points to, as in Odoo.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
         elif attachment_id:
             attachment = request.env["ir.attachment"].browse(int(attachment_id))
             if attachment.exists() and attachment.res_model == "documents.document":
@@ -400,6 +407,9 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
     def prepare_document_editor(self, document_id, access_token):
         document = request.env["documents.document"].browse(int(document_id))
+        # A shortcut opens the document it points to, as in Odoo.
+        document = document.sudo().shortcut_document_id.sudo(False) or document
+        document_id = document.id
         if document.is_locked and document.lock_uid.id != request.env.user.id:
             _logger.error("Document is locked by another user")
             raise Forbidden()
@@ -414,12 +424,13 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             _logger.error("Current document has no attachments")
             raise Forbidden()
 
+        # The name of the document: renamed in Odoo, its attachment keeps the former name.
         try:
             document.check_access("write")
-            editor_values = self.prepare_editor_values(attachment, access_token, True)
+            editor_values = self.prepare_editor_values(attachment, access_token, True, title=document.name)
         except AccessError:
             _logger.debug("Current user has no write access")
-            editor_values = self.prepare_editor_values(attachment, access_token, False)
+            editor_values = self.prepare_editor_values(attachment, access_token, False, title=document.name)
 
         # Add document_id and security token for ODOO custom functions
         editor_values["document_id"] = document_id
@@ -466,6 +477,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
         filename = self.filter_xss(data["name"])
+        # The name of the document: renamed in Odoo, its attachment keeps the former name.
+        title = self.filter_xss(document.sudo().name) or filename
         access_token = access_token.decode("utf-8") if isinstance(access_token, bytes) else access_token
         document_type = file_utils.get_file_type(filename)
         is_mobile = bool(re.search(_mobile_regex, request.httprequest.headers.get("User-Agent"), re.IGNORECASE))
@@ -476,7 +489,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             "type": "mobile" if is_mobile else "desktop",
             "documentType": document_type,
             "document": {
-                "title": filename,
+                "title": title,
                 "url": odoo_url + "documents/content/" + access_token,
                 "fileType": file_utils.get_file_ext(filename),
                 "key": key,
@@ -528,7 +541,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
         return {
-            "docTitle": filename,
+            "docTitle": title,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
             "customFunctionsJS": file_utils.get_custom_functions_url(),
@@ -581,13 +594,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
                 file_url = body.get("url")
                 datas = base64.encodebytes(onlyoffice_urlopen(file_url, env=request.env).read())
                 document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
-                document.with_user(user).sudo().write(
-                    {
-                        "name": attachment.name,
-                        "datas": datas,
-                        "mimetype": guess_type(file_url)[0],
-                    }
-                )
+                # The file only: the name of the document may have been changed in Odoo since it was opened.
+                document.with_user(user).sudo().write({"datas": datas, "mimetype": guess_type(file_url)[0]})
                 document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
 
         except Exception as ex:

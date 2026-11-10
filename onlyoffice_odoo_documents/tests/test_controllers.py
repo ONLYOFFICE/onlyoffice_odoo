@@ -144,6 +144,46 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         self.assertEqual(config["editorConfig"]["mode"], "view")
         self.assertFalse(config["document"]["permissions"]["edit"])
 
+    def test_the_editor_shows_the_name_of_the_document(self):
+        # Renamed in Odoo, a document keeps the former name on its attachment.
+        document = self._document()
+        document.name = "Q3 Report.docx"
+
+        config = self._config("oo_doc_owner", document_id=document.id)["result"]
+        page = self.url_open(f"/onlyoffice/editor/document/{document.id}")
+
+        self.assertEqual(config["editorConfig"]["document"]["title"], "Q3 Report.docx")
+        self.assertEqual(config["docTitle"], "Q3 Report.docx")
+        self.assertEqual(self._editor_config(page.text)["document"]["title"], "Q3 Report.docx")
+        self.assertEqual(config["editorConfig"]["document"]["fileType"], "docx")
+
+    def test_a_shortcut_opens_the_document_it_points_to(self):
+        document = self._document()
+        shortcut = self._document(shortcut_document_id=document.id, raw=False)
+
+        config = self._config("oo_doc_owner", document_id=shortcut.id)["result"]
+        page = self.url_open(f"/onlyoffice/editor/document/{shortcut.id}")
+
+        self.assertEqual(config["document_id"], document.id)
+        self.assertIn(
+            f"/onlyoffice/editor/callback/{document.attachment_id.id}?",
+            config["editorConfig"]["editorConfig"]["callbackUrl"],
+        )
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(
+            f"/onlyoffice/file/content/{document.attachment_id.id}?", self._editor_config(page.text)["document"]["url"]
+        )
+
+    def test_a_shortcut_to_a_document_the_user_cannot_read_does_not_open(self):
+        private = self._document(folder_id=False, access_internal="none")
+        shortcut = self._document(shortcut_document_id=private.id, raw=False, user=self.owner)
+        shortcut.sudo().owner_id = self.colleague
+        self.authenticate("oo_doc_colleague", "oo_doc_colleague")
+
+        response = self.url_open(f"/onlyoffice/editor/document/{shortcut.id}", allow_redirects=False)
+
+        self.assertEqual(response.status_code, 403)
+
     # -- GET /onlyoffice/editor/document/<id> --
 
     def test_editor_page_of_a_document(self):
@@ -203,6 +243,15 @@ class TestDocumentSave(DocumentsCase, HttpCase):
                 data=json.dumps(body),
                 headers={"Content-Type": "application/json"},
             )
+
+    def test_a_save_keeps_the_name_the_document_got_in_odoo(self):
+        document = self._document()
+        document.name = "Q3 Report.docx"
+
+        self.assertEqual(self._save(document, self.owner, b"edited").json(), {"error": 0})
+
+        self.env.invalidate_all()
+        self.assertEqual((document.name, document.raw), ("Q3 Report.docx", b"edited"))
 
     def test_each_save_keeps_the_previous_version(self):
         document = self._document()
@@ -481,6 +530,26 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         for document in (read_only, locked):
             with self.subTest(document=document.id):
                 self.assertFalse(self._convert(document, save_to_documents=False)[0]["error"])
+
+    def test_a_converted_copy_has_the_name_of_the_document(self):
+        document = self._document()
+        document.name = "Q3 Report.docx"
+        result, _request = self._convert(document)
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Q3 Report.pdf")
+        # A name without the extension keeps all of it.
+        document.name = "Q3 Report v1.2"
+        result, _request = self._convert(document)
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Q3 Report v1.2.pdf")
+
+    def test_a_shortcut_converts_the_document_it_points_to(self):
+        document = self._document()
+        shortcut = self._document(shortcut_document_id=document.id, raw=False)
+
+        result, request = self._convert(shortcut)
+
+        self.assertFalse(result["error"])
+        self.assertIn(f"/onlyoffice/file/content/{document.attachment_id.id}?", str(request.call_args_list[0]))
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Report.pdf")
 
     def test_converted_copy_goes_where_duplicate_puts_it(self):
         """Next to the source when the user may create there, otherwise in their own drive."""

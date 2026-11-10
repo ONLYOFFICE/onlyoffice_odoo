@@ -197,6 +197,10 @@ share-link callback in this module writes the document without this bookkeeping.
 
 - Check every fix against the Documents app source (Python and JS) of the Odoo version you are editing — do not assume
   an API from one version exists in another.
+- 18+: a shortcut (`shortcut_document_id`, no attachment of its own) opens and converts the document it points to, as
+  Odoo does; resolve it before the access checks (`document.sudo().shortcut_document_id.sudo(False) or document`).
+  Renaming a document in Odoo 18+ does not rename its attachment: the editor title and the names of converted copies
+  come from the document, the type of the file from the attachment, and a save writes the file only, never the name.
 - Spreadsheet changes: keep the formula grammar in sync in three places — the `ODOO_*` JS functions (base module), the
   `_HANDLERS` map in `spreadsheet_formulas.py`, and the `.docbuilder` scripts that write formulas into cells.
 - New docbuilder flows: store the payload with the cache helpers (`_store_docbuilder_data`), never in process memory —

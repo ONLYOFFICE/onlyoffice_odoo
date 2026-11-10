@@ -360,9 +360,12 @@ class SpreadsheetDocBuilder:
             if current_lang and request.env.context.get("lang") != current_lang:
                 request.update_env(context=dict(request.env.context, lang=current_lang))
 
-            document = request.env["documents.document"].browse(document_id)
+            document = request.env["documents.document"].browse(document_id).exists()
+            # A shortcut converts the spreadsheet it points to.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
+            document_id = document.id
 
-            if not document.exists() or document.handler != "spreadsheet":
+            if not document or document.handler != "spreadsheet":
                 result["error"] = _("Document is not a spreadsheet")
                 return result
             # As "Save to Documents" of a conversion: refused before the Document Builder runs.
