@@ -8,7 +8,6 @@ import secrets
 from mimetypes import guess_type
 from urllib.parse import urlparse
 
-import markupsafe
 from werkzeug.exceptions import Forbidden
 
 from odoo import http
@@ -410,9 +409,11 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             editor_values["has_odoo_formulas"] = True
             try:
                 metadata = load_metadata_for_document(document)
-                editor_values["filter_values_json"] = markupsafe.Markup(json.dumps(compute_filter_values(metadata)))
+                # Printed inside a <script> of the editor page, and the labels come from the file (its metadata
+                # sheet): scriptsafe escapes "</script>" and the like, json.dumps does not.
+                editor_values["filter_values_json"] = scriptsafe.dumps(compute_filter_values(metadata))
             except Exception:
-                editor_values["filter_values_json"] = markupsafe.Markup("{}")
+                editor_values["filter_values_json"] = scriptsafe.dumps({})
 
         return editor_values
 

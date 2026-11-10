@@ -47,10 +47,14 @@ demo templates installed per model and exportable from Settings; setting "Disabl
   (`resolve().relative_to` + `file_open(filter_ext=(".pdf",))`) — reuse it for any file served from `data/templates`.
 - `ir_actions_report.py` — `ir.actions.report` extension: `report_type` adds `onlyoffice-pdf`, `onlyoffice_template_id`,
   `_render_onlyoffice_pdf()` modelled on `_render_qweb_pdf` (honours `attachment`/`attachment_use`, merges PDFs), plus
-  its own copy of `fill_template` / `get_docbuilder_error` working with `self.env` instead of `request`.
+  its own copy of `fill_template` / `get_docbuilder_error` working with `self.env` instead of `request`. The template is
+  that of the report (`report_sudo.onlyoffice_template_id`): mail templates call `_render()` on an empty
+  `ir.actions.report`.
 - `ir_attachment.py` — `create`/`write` register `_refresh_template_field_keys` in `env.cr.postcommit` when content
   fields (`datas`, `raw`, `db_datas`, `store_fname`) change on template attachments; skipped with context
   `skip_field_keys_refresh`. Single point where the `field_keys` cache is refreshed (upload, conversion, editor save).
+  The hook runs after the commit of its cursor, so it writes through a cursor of its own (`registry.cursor()`): a write
+  on the committed cursor is rolled back when it closes. Tests run it in `registry.enter_test_mode`.
 - `res_config_settings.py` — `editable_form_fields` ↔ `onlyoffice_connector.editable_form_fields` (own
   `utils/config_constants.py` / `config_utils.py`).
 
@@ -152,12 +156,13 @@ Assets: `static/src/css/*`, `static/src/views/**/*`, `static/src/js/report/actio
    (JWT in body and header when a secret is set; inner URL for the Document Server host).
 3. The Document Server GETs that callback. Odoo resolves the user from the token, loads the template, gets the form keys
    (`_get_cached_keys`), and for every record emits `OpenFile(<download url>)` + `fields` JSON + the fill script +
-   `SaveFile("pdf", "<Template> - <Record>.pdf")`. With `editable_form_fields` enabled the save uses the print param
+   `SaveFile("pdf", "<Template> - <Record>.pdf")` (records with one name get ` (<id>)`: the Document Server returns the
+   files by name, one name would give one file). With `editable_form_fields` enabled the save uses the print param
    (`isPrint`) so filled fields are flattened.
 4. The Document Server downloads the template from `/onlyoffice/template/download/<id>?oo_security_token=…`, runs the
    script and returns `{"urls": {filename: url}}`.
-5. Odoo downloads the result(s) through `onlyoffice_request` and streams a PDF or ZIP, or stores them as
-   `documents.document`.
+5. Odoo downloads the result(s) through `onlyoffice_request` (the URL `quote`d: the names in it are raw, `#` would cut
+   the path) and streams a PDF or ZIP, or stores them as `documents.document`.
 
 Report path: `_render_onlyoffice_pdf` calls its own `fill_template` per record (one docbuilder call per record) and
 merges the streams like `_render_qweb_pdf`.
@@ -172,10 +177,11 @@ merges the streams like `_render_qweb_pdf`.
 - Relations: `many2one` → nested dict of the requested sub-keys; `one2many`/`many2many` → list of dicts (rendered as
   repeated table rows by the docbuilder script).
 - Value formatting, by field type: `boolean` → `"true"`/`"false"`; `binary` → base64 image data; `char`/`text` → str;
-  `float` → `res.lang.format` with the field's digits; `integer` → `res.lang.format("%d")`; `monetary` →
-  `misc.format_amount` with the record's currency field; `date` → `misc.format_date`; `datetime` →
-  `misc.format_datetime` in the user's tz; `selection` → label; tuples (m2o read) → display name; `html`/`json` are
-  skipped. All formatting uses the token user's language.
+  `float` → `res.lang.format` with the field's digits (two decimals without digits, all of them for `digits=0`);
+  `integer` → `res.lang.format("%d")`; `monetary` → `misc.format_amount` with the record's currency field; `date` →
+  `misc.format_date`; `datetime` → `misc.format_datetime` in the user's tz; `selection` → label
+  (`_description_selection` in the user's language: a selection given by a method too); tuples (m2o read) → display
+  name; `html`/`json` are skipped. All formatting uses the token user's language.
 - New field types or formats belong in `get_fields`; if you extract them into a util, update both the controller and
   `ir_actions_report.py` call sites.
 

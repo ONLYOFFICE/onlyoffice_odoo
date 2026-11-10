@@ -109,7 +109,8 @@ class IrActionsReport(models.Model):
                 # error anywhere, and nothing distinguishes a missing document from
                 # one that was never meant to be there.
                 try:
-                    templates = self.fill_template(oo_security_token, [res_id], self.onlyoffice_template_id)
+                    # The template of the report, not of self: _render() runs on an empty ir.actions.report (mail).
+                    templates = self.fill_template(oo_security_token, [res_id], report_sudo.onlyoffice_template_id)
                     url = next(iter(templates.values()), None)
                     if not url:
                         raise ValueError("the document generation service returned no document")
@@ -230,7 +231,8 @@ class IrActionsReport(models.Model):
                 "The PDF report has been generated for model: %s, records %s.", report_sudo.model, str(res_ids)
             )
 
-        return pdf_content, "onlyoffice-pdf"
+        # The format of the content, as _render_qweb_pdf gives it: mail names the attachment "<name>.<format>".
+        return pdf_content, "pdf"
 
     def fill_template(self, oo_security_token, record_ids, template_id):
         _logger.info("fill_template - template: %s, records: %s", template_id, record_ids)

@@ -375,8 +375,9 @@ class OnlyofficeConnector(http.Controller):
             },
         }
 
-        if can_write and attachment.res_model == "documents.document":
-            # The right to write the document itself, not only attachments in general.
+        if can_write:
+            # The right to write this attachment (that of its record), not only attachments in general: without it
+            # the callback refuses the save, the edits would be lost.
             try:
                 attachment.check("write")
             except AccessError:
