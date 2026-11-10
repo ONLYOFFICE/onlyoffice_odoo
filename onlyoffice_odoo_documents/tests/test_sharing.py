@@ -56,6 +56,20 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
 
         self.assertNotIn(group, wizard.share_access_ids.group_id)
 
+    def test_dialog_shows_a_group_role_only_with_its_access(self):
+        # A group row without an access of the group in Odoo gives nothing; a role of Odoo in a row is not shown.
+        group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
+        alone = self._document()
+        AccessGroup = self.env["onlyoffice.odoo.documents.access.group"]
+        AccessGroup.create({"document_id": alone.id, "group_id": group.id, "role": "commenter"})
+        stale = self._document()
+        stale.with_user(self.owner).action_update_access_rights(groups={group.id: ("edit", None)})
+        AccessGroup.create({"document_id": stale.id, "group_id": group.id, "role": "view"})
+
+        self.assertNotIn(group, self._open(alone).share_access_ids.group_id)
+        row = self._open(stale).share_access_ids.filtered(lambda a: a.group_id == group)
+        self.assertEqual(row.role, "edit")
+
     def test_dialog_hides_a_custom_role_whose_invitation_is_gone(self):
         # Removed by the autovacuum of expired invitations, or without one at all: the row gives nothing.
         removed = self._document()

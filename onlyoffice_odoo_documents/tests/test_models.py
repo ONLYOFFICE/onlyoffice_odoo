@@ -382,6 +382,40 @@ class TestRolesOfMembers(DocumentsCase, TransactionCase):
         )
         self.assertEqual(self._role(document), "view")
 
+    def _group_rows(self, document):
+        return self.env["onlyoffice.odoo.documents.access.group"].search([("document_id", "=", document.id)])
+
+    def test_a_group_removed_from_the_document_loses_its_role(self):
+        # Removed by the owner, by the autovacuum of expired accesses, or from the folder above: its row goes too.
+        group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
+        folder = self.env["documents.document"].create(
+            {"name": "OO Team", "type": "folder", "access_internal": "none", "owner_id": self.owner.id}
+        )
+        removed, inside = (self._document(folder_id=folder.id, access_internal="view") for _i in range(2))
+        expired = self._document(access_internal="view")  # out of the folder: only the autovacuum removes its access
+        for document in (removed, expired, inside):
+            document.with_user(self.owner).action_update_access_rights(groups={group.id: ["commenter", False]})
+            self.assertEqual(self._role(document), "commenter")
+
+        removed.with_user(self.owner).action_update_access_rights(groups={group.id: [False, False]})
+        expired.access_ids.filtered(lambda a: a.group_id == group).expiration_date = "2020-01-01 00:00:00"
+        self.env["documents.access"]._gc_expired()
+        folder.with_user(self.owner).action_update_access_rights(groups={group.id: ["view", False]})
+
+        for document in (removed, expired, inside):
+            with self.subTest(document=document.id):
+                self.assertFalse(self._group_rows(document))
+                self.assertEqual(self._role(document), "view")
+
+    def test_group_roles_of_odoo_left_in_the_rows_are_not_used(self):
+        group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
+        document = self._document(access_internal="none")
+        document.with_user(self.owner).action_update_access_rights(groups={group.id: ["edit", False]})
+        self.env["onlyoffice.odoo.documents.access.group"].create(
+            {"document_id": document.id, "group_id": group.id, "role": "view"}
+        )
+        self.assertEqual(self._role(document), "edit")
+
     def test_roles_of_odoo_left_in_the_rows_are_not_used(self):
         # Older versions copied the roles of Odoo into the rows ("none" on every share): Odoo decides.
         document = self._document(access_internal="edit", access_via_link="view")
@@ -404,6 +438,10 @@ class TestRolesOfMembers(DocumentsCase, TransactionCase):
         partner = self.colleague.partner_id.id
         stale = AccessUser.create({"document_id": document.id, "user_id": partner, "role": "edit"})
         own = AccessUser.create({"document_id": document.id, "user_id": self.owner.partner_id.id, "role": "reviewer"})
+        AccessGroup = self.env["onlyoffice.odoo.documents.access.group"]
+        groups = self.env["res.group.functional"].create([{"name": "OO Group A"}, {"name": "OO Group B"}])
+        stale_group = AccessGroup.create({"document_id": document.id, "group_id": groups[0].id, "role": "edit"})
+        own_group = AccessGroup.create({"document_id": document.id, "group_id": groups[1].id, "role": "commenter"})
         migration = importlib.util.spec_from_file_location(
             "post_migrate", file_path("onlyoffice_odoo_documents/migrations/0.0.0/post-migrate.py")
         )
@@ -416,6 +454,7 @@ class TestRolesOfMembers(DocumentsCase, TransactionCase):
             self.assertEqual((defaults.internal_users, defaults.link_access), (False, False))
             self.assertEqual((kept.internal_users, kept.link_access), ("commenter", False))
             self.assertEqual((stale.exists(), own.exists()), (AccessUser, own))
+            self.assertEqual((stale_group.exists(), own_group.exists()), (AccessGroup, own_group))
 
 
 @tagged("post_install", "-at_install")

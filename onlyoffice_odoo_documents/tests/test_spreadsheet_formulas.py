@@ -684,7 +684,7 @@ class TestFormulaHelpers(TransactionCase):
         self.assertEqual(load_metadata_for_document(copy)["lists"], metadata["lists"])
 
         # From the file: anything but an object is no metadata.
-        not_an_object = Document.create({"name": "d.xlsx", "onlyoffice_spreadsheet_metadata": "[1, 2]"})
+        not_an_object = Document.create({"name": "d.xlsx", "onlyoffice_spreadsheet_metadata": "[1, 2]", **file})
         self.assertEqual(load_metadata_for_document(not_an_object), {})
 
     def test_the_source_spreadsheet_is_read_with_the_rights_of_the_user(self):
@@ -704,8 +704,9 @@ class TestFormulaHelpers(TransactionCase):
                 "access_internal": "none",
             }
         )
+        # Odoo 20: a file document needs its file.
         copy = Document.create(
-            {"name": "c.xlsx", "onlyoffice_spreadsheet_source_id": source.id, "access_internal": "view"}
+            {"name": "c.xlsx", "onlyoffice_spreadsheet_source_id": source.id, "access_internal": "view", "raw": b"x"}
         )
         self.assertFalse(source.with_user(user).has_access("read"))
         self.assertEqual(load_metadata_for_document(copy.with_user(user)), {})

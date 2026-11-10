@@ -106,7 +106,7 @@ Module-level helpers: `_get_document_share_role(document)` (same resolution orde
   spreadsheet opens (current value, else the default one: `this_year` / `this_month` / `this_quarter`, `current_user`).
   Date bounds are computed in the time zone of the browser (`onlyoffice_browser_tz`), a datetime field gets them in UTC.
   18+: a relation filter with `includeChildren` matches with `child_of`, as Odoo; `normalize_pivot_definition` keeps the
-  `fieldMatching` of a pivot. 19: a value in the form of Odoo 19 (a date period by `type`: month / quarter / year /
+  `fieldMatching` of a pivot. 19+: a value in the form of Odoo 19 (a date period by `type`: month / quarter / year /
   relative / range; the others by `operator`, with `strings` / `ids` / `selectionValues` / `targetValue`) gives the
   domain of `getGlobalFilterDomain` of Odoo 19 (`_odoo19_filter_domain`); the value can come from an uploaded file, so
   only the operators of Odoo and values of their own type count. Older values are read as in 17 / 18. A pivot cell
@@ -187,13 +187,16 @@ Assets are listed explicitly in the manifest (desktop scripts first, then `model
   role, not expired). Rows of former members are dropped by `documents.access.unlink` (the autovacuum of expired
   invitations) and after `action_update_access_rights` for the documents and everything in them (Odoo removes members of
   a folder by SQL); a member given a role on a folder loses the ONLYOFFICE roles set before on what is in it (trash
-  included), as Odoo writes that role there. `migrations/0.0.0/post-migrate.py` clears the roles of Odoo older versions
-  wrote into the rows; Odoo runs it on every raise of the module version.
-- 19: the Share dialog is the wizard `documents.sharing` (`models/documents_sharing.py`). `action_open` shows an
-  ONLYOFFICE role only for a live member (`_filtered_relevant_access`: a role, not expired) and only a role Odoo does
-  not have (`onlyoffice_role()`); otherwise the value of Odoo. Inviting with an ONLYOFFICE role goes through Odoo
-  (`super().action_invite_members()`, which mails the links to the files) with its standard counterpart; the role itself
-  reaches `action_update_access_rights` in the context (`onlyoffice_invite_role`), as in 20.
+  included), as Odoo writes that role there; only where Odoo writes it (`_get_access_update_domain`, the rules of the
+  user who shares). 20: the same for groups (`.access.group`, `_get_group_role`: only groups with a live access).
+  `migrations/0.0.0/post-migrate.py` clears the roles of Odoo older versions wrote into the rows (20: group rows too);
+  Odoo runs it on every raise of the module version.
+- 19+: the Share dialog is the wizard `documents.sharing` (`models/documents_sharing.py`; 20: `action_open` →
+  `_load_onlyoffice_roles`). It shows an ONLYOFFICE role only for a live member or group (`_filtered_relevant_access`: a
+  role, not expired) and only a role Odoo does not have (`onlyoffice_role()`); otherwise the value of Odoo. Inviting
+  with an ONLYOFFICE role goes through Odoo (`super().action_invite_members()`, which mails the links to the files) with
+  its standard counterpart; the role itself reaches `action_update_access_rights` in the context
+  (`onlyoffice_invite_role`); a warning of Odoo (an email missing) leaves the chosen role in the dialog.
 - Documents created through ONLYOFFICE get no role rows (older versions wrote none / viewer / editor: see the migration
   above).
 - Full route-auth table and checklist: `odoo-security`.

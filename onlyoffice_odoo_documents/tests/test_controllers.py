@@ -144,11 +144,11 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         document.access_ids.filtered(lambda a: a.group_id == expired).sudo().expiration_date = "2020-01-01 00:00:00"
         self.assertEqual(self._editor("oo_doc_colleague", document), ("view", {"edit": False}))
 
-        # "none" turns ONLYOFFICE off only when every group of the colleague has it.
+        # A role of Odoo in a group row ("none", written by older versions) is not used: Odoo decides.
         AccessGroup = self.env["onlyoffice.odoo.documents.access.group"]
         AccessGroup.search([("document_id", "=", document.id)]).unlink()
         AccessGroup.create({"document_id": document.id, "group_id": viewers.id, "role": "none"})
-        self.assertEqual(self._editor("oo_doc_colleague", document), "odoo.exceptions.AccessError")
+        self.assertEqual(self._editor("oo_doc_colleague", document), ("view", {"edit": False}))
 
     def test_an_expired_invitation_gives_no_role(self):
         config_utils.set_jwt_secret(self.env, "ds-secret")
@@ -299,7 +299,7 @@ class TestDocumentSave(DocumentsCase, HttpCase):
         self.assertEqual(self._save(document, self.owner, b"edited").json(), {"error": 0})
 
         self.env.invalidate_all()
-        self.assertEqual((document.name, document.raw), ("Q3 Report.docx", b"edited"))
+        self.assertEqual((document.name, document.raw.content), ("Q3 Report.docx", b"edited"))
 
     def test_each_save_keeps_the_previous_version(self):
         document = self._document()

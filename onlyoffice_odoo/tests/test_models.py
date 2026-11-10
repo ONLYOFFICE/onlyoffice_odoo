@@ -218,7 +218,7 @@ class TestSettingsSavePaths(TransactionCase):
         self._own_server()
         config_utils.set_doc_server_inner_url(self.env, "http://docs.own.test/")
         self._save(same_tab=True)
-        self.assertFalse(self.env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_INNER_URL))
+        self.assertFalse(self.env["ir.config_parameter"].sudo().get_str(config_constants.DOC_SERVER_INNER_URL))
         self.assertEqual(config_utils.get_doc_server_inner_url(self.env), "http://docs.own.test/")
         # Typed equal to a new public address, it follows that one.
         self._save(doc_server_public_url="http://docs.moved.test/", doc_server_inner_url="docs.moved.test")
@@ -245,9 +245,9 @@ class TestSettingsSavePaths(TransactionCase):
         self.assertEqual(self._save(doc_server_public_url=" http://docs.padded.test/ ", doc_server_odoo_url="   "), 1)
         self.assertEqual(config_utils.get_doc_server_public_url(self.env), "http://docs.padded.test/")
         # A blank Odoo address is empty: it goes back to web.base.url, never "http://   /".
-        self.assertNotIn(" ", params.get_param(config_constants.DOC_SERVER_ODOO_URL) or "")
+        self.assertNotIn(" ", params.get_str(config_constants.DOC_SERVER_ODOO_URL) or "")
         self.assertEqual(
-            config_utils.get_base_or_odoo_url(self.env), config_utils.fix_url(params.get_param("web.base.url"))
+            config_utils.get_base_or_odoo_url(self.env), config_utils.fix_url(params.get_str("web.base.url"))
         )
         self.assertTrue(odoo_url)
 
@@ -267,11 +267,11 @@ class TestSettingsSavePaths(TransactionCase):
         self._own_server()
         params = self.env["ir.config_parameter"].sudo()
         self._save(doc_server_odoo_url="http://odoo.internal.test:8069")
-        self.assertEqual(params.get_param(config_constants.DOC_SERVER_ODOO_URL), "http://odoo.internal.test:8069/")
+        self.assertEqual(params.get_str(config_constants.DOC_SERVER_ODOO_URL), "http://odoo.internal.test:8069/")
         self._save(doc_server_odoo_url=False)
-        self.assertFalse(params.get_param(config_constants.DOC_SERVER_ODOO_URL))
+        self.assertFalse(params.get_str(config_constants.DOC_SERVER_ODOO_URL))
         self.assertEqual(
-            config_utils.get_base_or_odoo_url(self.env), config_utils.fix_url(params.get_param("web.base.url"))
+            config_utils.get_base_or_odoo_url(self.env), config_utils.fix_url(params.get_str("web.base.url"))
         )
 
     def test_demo_on_ignores_a_wrong_server_address(self):
@@ -284,12 +284,12 @@ class TestSettingsSavePaths(TransactionCase):
         # The Odoo address falls back to web.base.url, which the address check may refuse: it is not entered here.
         self._own_server()
         params = self.env["ir.config_parameter"].sudo()
-        params.set_param(config_constants.DOC_SERVER_ODOO_URL, False)
-        params.set_param("web.base.url", "http://odoo.local./")
+        params.set_str(config_constants.DOC_SERVER_ODOO_URL, False)
+        params.set_str("web.base.url", "http://odoo.local./")
         self.assertEqual(self._save(same_tab=True), 1)
         self.assertTrue(config_utils.get_same_tab(self.env))
         # It is not saved as the address of Odoo for the Document Server either.
-        self.assertFalse(params.get_param(config_constants.DOC_SERVER_ODOO_URL))
+        self.assertFalse(params.get_str(config_constants.DOC_SERVER_ODOO_URL))
 
     def test_demo_off_with_a_wrong_address_is_an_error(self):
         config_utils.set_demo(self.env, True)
