@@ -85,6 +85,7 @@ _PIVOT_FUNCTIONS = {"VALUE": "ODOO_PIVOT", "HEADER": "ODOO_PIVOT_HEADER"}
 _EDITOR_FUNCTIONS = frozenset(
     (
         "LIST",
+        "LIST.VALUE",
         "LIST.HEADER",
         "PIVOT",
         "PIVOT.HEADER",

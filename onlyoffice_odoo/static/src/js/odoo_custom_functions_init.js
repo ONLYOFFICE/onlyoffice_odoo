@@ -130,7 +130,7 @@
          * @returns {any} The value from the list: a number, a date (serial number) or text.
          */
         async function ODOO_LIST_VALUE(listId, index, fieldName) {
-          var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var escapedFieldName = String(fieldName).replace(/"/g, '""')
           var formula = "=ODOO_LIST_VALUE(" + listId + "," + index + ',"' + escapedFieldName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
@@ -153,6 +153,7 @@
                         return b.formula
                       }),
                       jwt_token: jwtToken,
+                      time_zone: timeZone,
                     },
                   }),
                 })
@@ -160,15 +161,26 @@
                     return r.json()
                   })
                   .then(function (data) {
-                    var v = data.result && data.result.values ? data.result.values : {}
+                    // An error becomes an error of the cell (#VALUE!), so ISERROR / IFERROR see it, as in Odoo.
+                    var result = data.result || {}
+                    var v = result.values || {}
+                    var errors = result.errors || {}
+                    var failure = result.error || (data.error && data.error.message)
                     for (var i = 0; i < batch.length; i++) {
-                      var val = v[batch[i].formula]
-                      batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      var formula = batch[i].formula
+                      var val = v[formula]
+                      if (failure) {
+                        batch[i].resolve(new Error(failure))
+                      } else if (errors[formula] !== undefined) {
+                        batch[i].resolve(new Error(errors[formula]))
+                      } else {
+                        batch[i].resolve(val !== undefined && val !== null ? val : "")
+                      }
                     }
                   })
                   .catch(function (e) {
                     for (var i = 0; i < batch.length; i++) {
-                      batch[i].resolve("#ERROR: " + e.message)
+                      batch[i].resolve(new Error(e.message))
                     }
                   })
               }, 50)
