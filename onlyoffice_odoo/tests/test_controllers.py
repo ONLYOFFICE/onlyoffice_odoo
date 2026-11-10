@@ -99,6 +99,17 @@ class TestEditorConfig(ConnectorCase):
         self.assertEqual(config["editorConfig"]["mode"], "view")
         self.assertNotIn("callbackUrl", config["editorConfig"])
 
+    def test_editor_opens_a_file_of_a_read_only_record_for_viewing(self):
+        # The user can read the company (and its attachments) but not write it: no edit mode, no callback.
+        attachment = self._attachment("company.docx", res_model="res.company", res_id=self.env.company.id)
+        self.authenticate("oo_base_reader", "oo_base_reader")
+
+        config = self._get_config(attachment.id)["result"]["editorConfig"]
+        self.assertEqual(config["editorConfig"]["mode"], "view")
+        self.assertNotIn("callbackUrl", config["editorConfig"])
+        page = self.url_open(f"/onlyoffice/editor/{attachment.id}").text
+        self.assertNotIn("/onlyoffice/editor/callback/", page)
+
     def test_missing_attachment_and_unsupported_format(self):
         gone = self._attachment("gone.docx")
         gone_id = gone.id

@@ -72,12 +72,26 @@ class TestOnlyofficePdfReport(ReportCase, TransactionCase):
         with mock:
             pdf, report_type = self._render(self.ann)
 
-        self.assertEqual((pdf, report_type), (GENERATED, "onlyoffice-pdf"))
+        # The format names a mail attachment "<name>.<format>", as for a QWeb report.
+        self.assertEqual((pdf, report_type), (GENERATED, "pdf"))
         docbuilder, download = calls
         self.assertEqual(docbuilder["url"], DOCBUILDER)
         url = docbuilder["opts"]["json"]["url"]
         self.assertIn(f"&record_ids={self.ann.id}&template_id={self.template.id}", url)
         self.assertEqual(download["url"], "http://ds/out.pdf")
+
+    def test_print_through_the_report_model_as_mail_does(self):
+        # Mail templates render a report on an empty ir.actions.report: the template is that of the report.
+        mock, calls = self._document_server()
+        with mock:
+            pdf, report_type = (
+                self.env["ir.actions.report"]
+                .with_context(report_pdf_no_attachment=True)
+                ._render(self.report.report_name, self.ann.ids)
+            )
+
+        self.assertEqual((pdf, report_type), (GENERATED, "pdf"))
+        self.assertIn(f"&template_id={self.template.id}", calls[0]["opts"]["json"]["url"])
 
     def test_several_records_are_merged_into_one_pdf(self):
         mock, calls = self._document_server()

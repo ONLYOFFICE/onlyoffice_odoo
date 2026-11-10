@@ -48,11 +48,11 @@
             </setting>
             <br />
             <setting string="ONLYOFFICE Docs address for internal requests from the server">
-              <field name="doc_server_odoo_url" />
+              <field name="doc_server_inner_url" />
             </setting>
             <br />
             <setting string="Server address for internal requests from ONLYOFFICE Docs">
-              <field name="doc_server_inner_url" />
+              <field name="doc_server_odoo_url" />
             </setting>
             <br />
             <div class="o_setting_box col-12 col-lg-6 o_searchable_setting">

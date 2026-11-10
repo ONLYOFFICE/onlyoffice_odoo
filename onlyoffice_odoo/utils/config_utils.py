@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import re
 import uuid
 from datetime import date
 
@@ -49,8 +50,19 @@ def get_internal_jwt_secret(env):
     return secret
 
 
+# The public demo server: the settings show its address, secret and header while the demo is on.
+DEMO_PUBLIC_URL = "https://onlinedocs.docs.onlyoffice.com/"
+DEMO_JWT_HEADER = "AuthorizationJWT"
+DEMO_JWT_SECRET = "sn2puSUF7muF5Jas"
+
+
+def _get_flag(env, key):
+    """A flag as set_param stores it ("True", or no parameter), as a boolean: the settings compare it with a box."""
+    return str(env["ir.config_parameter"].sudo().get_param(key) or "").lower() in ("true", "1")
+
+
 def get_demo(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DEMO)
+    return _get_flag(env, config_constants.DOC_SERVER_DEMO)
 
 
 def get_demo_date(env):
@@ -58,11 +70,11 @@ def get_demo_date(env):
 
 
 def get_same_tab(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.SAME_TAB)
+    return _get_flag(env, config_constants.SAME_TAB)
 
 
 def get_certificate_verify_disabled(env):
-    return env["ir.config_parameter"].sudo().get_param(config_constants.DOC_SERVER_DISABLE_CERTIFICATE)
+    return _get_flag(env, config_constants.DOC_SERVER_DISABLE_CERTIFICATE)
 
 
 def set_doc_server_public_url(env, url):
@@ -93,11 +105,11 @@ def set_demo(env, param):
     if not demo_date:
         set_demo_date(env)
     if param:
-        set_doc_server_public_url(env, "https://onlinedocs.docs.onlyoffice.com/")
+        set_doc_server_public_url(env, DEMO_PUBLIC_URL)
         set_doc_server_odoo_url(env, "")
         set_doc_server_inner_url(env, "")
-        set_jwt_header(env, "AuthorizationJWT")
-        set_jwt_secret(env, "sn2puSUF7muF5Jas")
+        set_jwt_header(env, DEMO_JWT_HEADER)
+        set_jwt_secret(env, DEMO_JWT_SECRET)
     elif demo and not param:
         set_doc_server_public_url(env, "http://documentserver/")
         set_doc_server_odoo_url(env, "")
@@ -126,7 +138,8 @@ def fix_url(url):
 
 
 def fix_proto(url):
-    return url if url.startswith("http") else ("http://" + url)
+    # "httpdocs.example.com" has no scheme although it starts with "http".
+    return url if re.match(r"https?://", url, re.IGNORECASE) else ("http://" + url)
 
 
 def fix_end_slash(url):

@@ -35,6 +35,39 @@ class TestValidationUtils(TransactionCase):
             with self.subTest(url=url):
                 self.assertFalse(validation_utils.valid_url(url))
 
+    def test_valid_url_accepts_ports_with_paths_ipv6_long_names_and_no_scheme(self):
+        for url in (
+            "http://docs.example.com:8443/ds/",
+            "https://docs.example.com:443/onlyoffice/docs",
+            "http://[::1]:8080/",
+            "http://[2001:db8::7]/",
+            "http://" + "a" * 40 + ".example.com/",
+            "docs.example.com",
+            "httpdocs.example.com:8080/ds",
+            "  http://docs.example.com/  ",
+            "HTTPS://docs.example.com/",
+        ):
+            with self.subTest(url=url):
+                self.assertTrue(validation_utils.valid_url(url))
+
+    def test_valid_url_rejects_other_schemes_logins_bad_ports_and_fragments(self):
+        for url in (
+            "ftp://docs.example.com/",
+            "http://user:password@docs.example.com/",
+            "http://docs.example.com:99999/",
+            "http://docs.example.com:port/",
+            "http://docs.example.com/#top",
+            "http:///path-only",
+            "http://[::1:zz]/",
+            "http://[not:an:address]:8080/",
+        ):
+            with self.subTest(url=url):
+                self.assertFalse(validation_utils.valid_url(url))
+
+    def test_each_conversion_has_its_own_key(self):
+        keys = {conversion_utils.build_conversion_body("http://odoo/file", "docx", "pdf")["key"] for _i in range(5)}
+        self.assertEqual(len(keys), 5)
+
     # -- get_conversion_error_message --
 
     def test_error_message_unknown_error(self):

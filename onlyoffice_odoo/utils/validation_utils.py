@@ -1,10 +1,12 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import ipaddress
 import json
 import os
 import re
 import ssl
+from urllib.parse import urlparse
 from urllib.request import urlopen
 
 import requests
@@ -15,20 +17,47 @@ from odoo.addons.onlyoffice_odoo.utils import config_utils, conversion_utils, jw
 
 
 def valid_url(url):
+    """True for an empty address, or an http(s) one as the settings save it (without a scheme it gets http://).
+
+    A host name, an IPv4 or an IPv6 address, an optional port and path; no login, query or fragment.
+    """
+    url = (url or "").strip()
     if not url:
         return True
-    pattern = r"^(https?://)?[\w-]{1,32}(\.[\w-]{1,32})*[/\w-]*(:[\d]{1,5}/?)?$"
-    if re.findall(pattern, url):
-        return True
-    return False
+    if re.match(r"[a-z][a-z0-9+.-]*://", url, re.IGNORECASE) and not re.match(r"https?://", url, re.IGNORECASE):
+        return False
+    url = config_utils.fix_proto(url)
+    try:
+        parsed = urlparse(url)
+        _port = parsed.port  # raises ValueError for a port that is not a number in range
+    except ValueError:
+        return False
+    host = parsed.hostname or ""
+    return (
+        parsed.scheme in ("http", "https")
+        and not (parsed.username or parsed.password or parsed.query or parsed.fragment)
+        and (_valid_ipv6(host) if ":" in host else bool(re.fullmatch(r"[\w-]{1,63}(\.[\w-]{1,63})*", host)))
+        and not re.search(r"\s", url)
+    )
+
+
+def _valid_ipv6(host):
+    """True for an IPv6 address (in brackets in a URL, without them in its host name)."""
+    try:
+        ipaddress.IPv6Address(host)
+    except ValueError:
+        return False
+    return True
 
 
 def settings_validation(self):
-    base_url = self.doc_server_odoo_url or config_utils.get_base_or_odoo_url(self.env)
-    public_url = self.doc_server_public_url
-    inner_url = self.doc_server_inner_url
+    # The addresses as they are saved (scheme and final slash added), so the check reaches what is saved.
+    base_url = config_utils.fix_url(self.doc_server_odoo_url) or config_utils.get_base_or_odoo_url(self.env)
+    public_url = config_utils.fix_url(self.doc_server_public_url or "http://documentserver/")
+    inner_url = config_utils.fix_url(self.doc_server_inner_url)
     jwt_secret = self.doc_server_jwt_secret
-    jwt_header = self.doc_server_jwt_header
+    # An empty header is saved as the default one: check with it.
+    jwt_header = self.doc_server_jwt_header or "Authorization"
     disable_certificate = self.doc_server_disable_certificate
     demo = self.doc_server_demo
 
