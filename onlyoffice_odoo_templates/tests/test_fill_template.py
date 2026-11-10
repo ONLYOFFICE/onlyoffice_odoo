@@ -129,8 +129,18 @@ class TestFillTemplateScript(HttpCase):
         self.template.field_keys = json.dumps(["lang", "type"])
         partner = self._partner("Jane Doe", lang="en_US", type="invoice")
 
-        # Odoo 19 names that type "Invoice" (18: "Invoice Address").
+        # Odoo 19+ names that type "Invoice" (18: "Invoice Address").
         self.assertEqual(self._fields(self._script(partner))[0], {"lang": "English (US)", "type": "Invoice"})
+
+    def test_image_field_gives_its_picture(self):
+        # A 1x1 PNG; Odoo 20 reads a binary field as {"content": <base64>, ...}.
+        png = (
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        )
+        self.template.field_keys = json.dumps(["image_1920"])
+        partner = self._partner("Jane Doe", image_1920=png)
+
+        self.assertEqual(self._fields(self._script(partner))[0], {"image_1920": png})
 
     def test_float_without_digits_or_with_the_full_precision(self):
         rate_template = (

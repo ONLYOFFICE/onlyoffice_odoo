@@ -435,10 +435,13 @@ class OnlyofficeTemplate_Connector(http.Controller):
                             result[field] = str(data).lower()
                         elif isinstance(data, tuple):
                             result[field] = str(data[1])
-                        elif field_type == "binary" and isinstance(data, bytes):
-                            img = re.search(r"'(.*?)'", str(data))
-                            if img:
-                                result[field] = img.group(1)
+                        elif field_type == "binary":
+                            # Odoo 20 reads a binary field as {"content": <base64>, "size": ...}.
+                            content = data.get("content") if isinstance(data, dict) else data
+                            if isinstance(content, bytes):
+                                content = content.decode()
+                            if content:
+                                result[field] = content
                         elif data or field_type in ["integer", "float", "monetary"]:
                             if field_type in ["char", "text"]:
                                 result[field] = str(data)
