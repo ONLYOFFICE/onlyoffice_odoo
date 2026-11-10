@@ -86,6 +86,10 @@ def fake_request(env):
         yield fake
 
 
+# The roles of Odoo itself: the ONLYOFFICE rows keep only the others.
+STANDARD_ROLES = ("none", "view", "edit")
+
+
 class DocumentsCase(OnlyofficeCase):
     """Shared fixture: a folder editable by internal users, its owner and a colleague, both Documents users
     (OnlyofficeCase: no Document Server JWT, a preset internal secret)."""
@@ -111,10 +115,18 @@ class DocumentsCase(OnlyofficeCase):
         return self.env["documents.document"].with_user(user or self.owner).create({**values, **vals})
 
     def _roles(self, document, internal_users=None, link_access=None, **user_roles):
-        """ONLYOFFICE roles of ``document``: the defaults row and per-user rows keyed by the test user attribute.
+        """Roles of ``document`` as sharing sets them; the users are keyed by their test attribute.
 
-        A role left out is not set: the rights of Odoo decide.
+        The roles Odoo has (none / view / edit) are set in Odoo; the others in the ONLYOFFICE rows, the Odoo right
+        they need in Odoo, and a user with such a role is invited in Odoo. A role left out is not set.
         """
+        odoo = {}
+        if internal_users in STANDARD_ROLES:
+            odoo["access_internal"], internal_users = internal_users, None
+        if link_access in STANDARD_ROLES:
+            odoo["access_via_link"], link_access = link_access, None
+        if odoo:
+            document.sudo().write(odoo)
         if internal_users or link_access:
             self.env["onlyoffice.odoo.documents.access"].create(
                 {
@@ -124,6 +136,18 @@ class DocumentsCase(OnlyofficeCase):
                 }
             )
         for user, role in user_roles.items():
-            self.env["onlyoffice.odoo.documents.access.user"].create(
-                {"document_id": document.id, "user_id": getattr(self, user).partner_id.id, "role": role}
+            assert role != "none", "Odoo has no member without access: leave the user out"
+            partner = getattr(self, user).partner_id
+            if partner == document.owner_id.partner_id:
+                continue
+            if role not in STANDARD_ROLES:
+                self.env["onlyoffice.odoo.documents.access.user"].create(
+                    {"document_id": document.id, "user_id": partner.id, "role": role}
+                )
+            odoo_role = "edit" if role in ("edit", "custom_filter") else "view"
+            self.env["documents.access"].search(
+                [("document_id", "=", document.id), ("partner_id", "=", partner.id)]
+            ).unlink()
+            self.env["documents.access"].create(
+                {"document_id": document.id, "partner_id": partner.id, "role": odoo_role}
             )

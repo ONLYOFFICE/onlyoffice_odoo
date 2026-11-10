@@ -296,7 +296,9 @@ class TestFormulaEvaluator(TransactionCase):
     def test_arguments_keep_quoted_commas_and_escaped_quotes(self):
         parse = SpreadsheetFormulaEvaluator._parse_args
         self.assertEqual(parse('1,2,"a, b"'), [1, 2, "a, b"])
-        self.assertEqual(parse(r'"say \"hi\"", 1.5'), ['say "hi"', 1.5])
+        # A quote inside a text is doubled, as the spreadsheet writes it; a backslash is a character like another.
+        self.assertEqual(parse('"say ""hi""", 1.5'), ['say "hi"', 1.5])
+        self.assertEqual(parse(r'"C:\dir\", "(a, b)"'), ["C:\\dir\\", "(a, b)"])
         self.assertEqual(parse(""), [])
 
     def test_domain_placeholders_are_resolved(self):
@@ -664,3 +666,193 @@ class TestFormulaHelpers(TransactionCase):
         )
         copy = Document.create({"name": "c.xlsx", "onlyoffice_spreadsheet_source_id": source.id})
         self.assertEqual(load_metadata_for_document(copy)["lists"], metadata["lists"])
+
+        # From the file: anything but an object is no metadata.
+        not_an_object = Document.create({"name": "d.xlsx", "onlyoffice_spreadsheet_metadata": "[1, 2]"})
+        self.assertEqual(load_metadata_for_document(not_an_object), {})
+
+    def test_the_source_spreadsheet_is_read_with_the_rights_of_the_user(self):
+        # The source of a copy the user may read can be a spreadsheet they may not: its filters and definitions stay
+        # hidden.
+        Document = self.env["documents.document"]
+        user = new_test_user(
+            self.env, login="oo_formula_reader", groups="base.group_user,documents.group_documents_user"
+        )
+        lists = {"1": {"model": "res.partner", "domain": [], "columns": ["name"], "orderBy": []}}
+        source = Document.create(
+            {
+                "name": "Private source",
+                "handler": "spreadsheet",
+                "mimetype": "application/o-spreadsheet",
+                "spreadsheet_data": json.dumps({"sheets": [{"id": "s1", "name": "Sheet1"}], "lists": lists}),
+                "access_internal": "none",
+            }
+        )
+        copy = Document.create(
+            {"name": "c.xlsx", "onlyoffice_spreadsheet_source_id": source.id, "access_internal": "view"}
+        )
+        self.assertFalse(source.with_user(user).has_access("read"))
+        self.assertEqual(load_metadata_for_document(copy.with_user(user)), {})
+        self.assertIn("lists", load_metadata_for_document(copy))
+
+
+@tagged("post_install", "-at_install")
+class TestGlobalFiltersAndGroups(TransactionCase):
+    """The global filters of a spreadsheet narrow its lists and pivots as Odoo does; groups of a many2many."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        Partner = cls.env["res.partner"]
+        cls.tag_a, cls.tag_b = cls.env["res.partner.category"].create([{"name": "OO A"}, {"name": "OO B"}])
+        cls.alpha = Partner.create(
+            {"name": "Alpha Corp", "ref": REF, "category_id": [(6, 0, (cls.tag_a | cls.tag_b).ids)]}
+        )
+        cls.beta = Partner.create({"name": "Beta Corp", "ref": REF, "category_id": [(6, 0, cls.tag_b.ids)]})
+        cls.carol = Partner.create({"name": "Carol", "ref": REF, "parent_id": cls.alpha.id, "user_id": cls.env.uid})
+
+    def setUp(self):
+        super().setUp()
+        request = fake_request(self.env)
+        request.__enter__()
+        self.addCleanup(request.__exit__, None, None, None)
+        self.evaluator = SpreadsheetFormulaEvaluator()
+
+    def _count(self, global_filter, matching):
+        """How many records the list and the pivot of a spreadsheet with ``global_filter`` show."""
+        global_filter = {"id": "f1", "label": "Filter", **global_filter}
+        field_matching = {"f1": matching}
+        snapshot = {
+            "globalFilters": [global_filter],
+            "lists": {
+                "1": {
+                    "model": "res.partner",
+                    "domain": [["ref", "=", REF]],
+                    "orderBy": [{"name": "name", "asc": True}],
+                    "columns": ["name"],
+                    "fieldMatching": field_matching,
+                }
+            },
+            "pivots": {
+                "p": {
+                    "type": "ODOO",
+                    "formulaId": "2",
+                    "model": "res.partner",
+                    "domain": [["ref", "=", REF]],
+                    "measures": [{"id": "__count", "fieldName": "__count"}],
+                    "rows": [],
+                    "columns": [],
+                    "fieldMatching": field_matching,
+                }
+            },
+        }
+        listed = [self.evaluator.evaluate_single_formula(snapshot, f'=ODOO_LIST(1,{i},"name")') for i in (1, 2, 3)]
+        counted = self.evaluator.evaluate_single_formula(snapshot, '=ODOO_PIVOT(2,"__count")')
+        self.assertEqual(len([name for name in listed if name]), counted, "the list and the pivot agree")
+        return counted
+
+    def test_text_and_relation_filters(self):
+        self.assertEqual(self._count({"type": "text", "defaultValue": "corp"}, {"chain": "name", "type": "char"}), 2)
+        relation = {"type": "relation", "modelName": "res.partner", "defaultValue": [self.alpha.id]}
+        self.assertEqual(self._count(relation, {"chain": "id", "type": "many2one"}), 1)
+        # "Include children": the records under the chosen ones too.
+        self.assertEqual(self._count({**relation, "includeChildren": True}, {"chain": "id", "type": "many2one"}), 2)
+        current_user = {"type": "relation", "modelName": "res.users", "defaultValue": "current_user"}
+        self.assertEqual(self._count(current_user, {"chain": "user_id", "type": "many2one"}), 1)
+        # A value that is not a list of ids is no value of the filter.
+        self.assertEqual(self._count({**relation, "defaultValue": ["1 OR 1"]}, {"chain": "id"}), 3)
+
+    def test_current_value_comes_before_the_default_one(self):
+        text = {"type": "text", "defaultValue": "corp", "currentValue": "carol"}
+        self.assertEqual(self._count(text, {"chain": "name", "type": "char"}), 1)
+
+    def test_date_filters_with_their_offset(self):
+        matching = {"chain": "create_date", "type": "datetime"}
+        this_year = {"type": "date", "rangeType": "fixedPeriod", "defaultValue": "this_year"}
+        self.assertEqual(self._count(this_year, matching), 3)
+        self.assertEqual(self._count(this_year, {**matching, "offset": -1}), 0)
+        relative = {"type": "date", "rangeType": "relative", "defaultValue": "last_week"}
+        self.assertEqual(self._count(relative, matching), 3)
+        self.assertEqual(self._count(relative, {**matching, "offset": -1}), 0)
+        today = fields.Date.today().isoformat()
+        from_to = {"type": "date", "rangeType": "from_to", "currentValue": {"from": today, "to": today}}
+        self.assertEqual(self._count(from_to, matching), 3)
+        self.assertEqual(self._count({**from_to, "currentValue": {"to": "2000-01-01"}}, matching), 0)
+        # As in Odoo, a from-to filter has no default value.
+        no_value = {**from_to, "currentValue": None, "defaultValue": {"to": "2000-01-01"}}
+        self.assertEqual(self._count(no_value, matching), 3)
+
+    def test_a_filter_the_data_does_not_match_changes_nothing(self):
+        self.assertEqual(self._count({"type": "text", "defaultValue": "corp"}, {}), 3)
+
+    def test_a_pivot_cell_of_a_many2many_group_is_that_of_its_value(self):
+        # Alpha has both tags: each tag has its own group, the cell takes the one of its value.
+        snapshot = {
+            "pivots": {
+                "p": {
+                    "type": "ODOO",
+                    "formulaId": "1",
+                    "model": "res.partner",
+                    "domain": [["ref", "=", REF]],
+                    "measures": [{"id": "__count", "fieldName": "__count"}],
+                    "rows": [{"fieldName": "category_id"}],
+                    "columns": [],
+                }
+            }
+        }
+        evaluate = self.evaluator.evaluate_single_formula
+        self.assertEqual(evaluate(snapshot, f'=ODOO_PIVOT(1,"__count","category_id",{self.tag_a.id})'), 1)
+        self.assertEqual(evaluate(snapshot, f'=ODOO_PIVOT(1,"__count","category_id",{self.tag_b.id})'), 2)
+        self.assertEqual(evaluate(snapshot, '=ODOO_PIVOT(1,"__count","category_id","false")'), 1)
+
+    def test_normalized_pivot_keeps_its_field_matching(self):
+        pivot = {"type": "ODOO", "model": "res.partner", "rows": [], "measures": [], "fieldMatching": {"f1": {}}}
+        self.assertEqual(normalize_pivot_definition(pivot)["fieldMatching"], {"f1": {}})
+
+
+@tagged("post_install", "-at_install")
+class TestFormulaBatch(TransactionCase):
+    """The formulas of one request: the records of a list are read once, one bad cell fails only itself."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env["res.partner"].create([{"name": f"Batch {i:02}", "ref": REF} for i in range(30)])
+        cls.snapshot = {
+            "lists": {
+                "1": {
+                    "model": "res.partner",
+                    "domain": [["ref", "=", REF]],
+                    "orderBy": [{"name": "name", "asc": True}],
+                    "columns": ["name", "email"],
+                }
+            }
+        }
+
+    def setUp(self):
+        super().setUp()
+        request = fake_request(self.env)
+        self.request = request.__enter__()
+        self.addCleanup(request.__exit__, None, None, None)
+        self.evaluator = SpreadsheetFormulaEvaluator()
+
+    def _batch(self, formulas):
+        """The values of ``formulas`` evaluated as one request, and the number of queries it took."""
+        self.request._rg_cache = {}
+        self.env.invalidate_all()
+        queries = self.env.cr.sql_log_count
+        values = [self.evaluator.evaluate_single_formula(self.snapshot, formula) for formula in formulas]
+        return values, self.env.cr.sql_log_count - queries
+
+    def test_records_of_a_list_are_read_once_per_request(self):
+        few, few_queries = self._batch([f'=ODOO_LIST(1,{i},"{f}")' for i in (1, 2) for f in ("name", "email")])
+        many, many_queries = self._batch([f'=ODOO_LIST(1,{i},"{f}")' for i in range(1, 31) for f in ("name", "email")])
+        self.assertEqual((few[0], many[-2]), ("Batch 00", "Batch 29"))
+        self.assertEqual(many_queries, few_queries)
+
+    def test_one_bad_cell_fails_only_itself(self):
+        values, _queries = self._batch(['=ODOO_LIST(1,0,"name")', '=ODOO_LIST(1,1,"name")', '=ODOO_LIST(9,1,"name")'])
+        self.assertTrue(values[0].startswith("#ERROR"))
+        self.assertEqual(values[1], "Batch 00")
+        self.assertTrue(values[2].startswith("#ERROR"))
+        self.assertEqual(self.evaluator.evaluate_single_formula(self.snapshot, '=ODOO_LIST(1,2,"name")'), "Batch 01")

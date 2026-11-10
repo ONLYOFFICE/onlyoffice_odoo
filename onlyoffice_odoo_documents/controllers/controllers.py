@@ -8,10 +8,9 @@ import secrets
 from mimetypes import guess_type
 from urllib.parse import urlparse
 
-import markupsafe
 from werkzeug.exceptions import Forbidden
 
-from odoo import fields, http
+from odoo import http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.json import scriptsafe
@@ -28,7 +27,7 @@ from odoo.addons.onlyoffice_odoo.utils import (
     url_utils,
 )
 
-from ..models.onlyoffice_odoo_documents import SAVING_ROLES
+from ..models.onlyoffice_odoo_documents import SAVING_ROLES, onlyoffice_role
 from .spreadsheet_docbuilder import (
     XLSX_MIMETYPE,
     SpreadsheetDocBuilder,
@@ -68,7 +67,7 @@ def _get_document_share_role(document):
 def _get_link_role(document):
     """The role a share link of a document or folder gives: its ONLYOFFICE role, otherwise that of Odoo."""
     access = request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
-    return access.link_access or document.sudo().access_via_link or "none"
+    return onlyoffice_role(access.link_access) or document.sudo().access_via_link or "none"
 
 
 def _get_share_link_role(document, user, folder=None):
@@ -88,13 +87,10 @@ def _get_share_link_role(document, user, folder=None):
             .sudo()
             .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
         )
-        invitation = document.sudo().access_ids.filtered(lambda a: a.partner_id == user.partner_id)[:1]
-        expired = invitation.expiration_date and invitation.expiration_date < fields.Datetime.now()
-        # An expired invitation gives nothing in Odoo, nor its ONLYOFFICE role: the link decides.
-        if access_user.role and access_user.role != "none" and not expired:
-            own_role = request.env["onlyoffice.odoo.documents"]._get_role_within_odoo_rights(
-                document, user, document.with_user(user).has_access("write")
-            )
+        roles = request.env["onlyoffice.odoo.documents"]
+        # An invitation expired or removed gives nothing in Odoo, nor its ONLYOFFICE role: the link decides.
+        if onlyoffice_role(access_user.role) and roles._is_invited(document, user):
+            own_role = roles._get_role_within_odoo_rights(document, user, document.with_user(user).has_access("write"))
             role = max(role, own_role, key=lambda r: _ROLE_RANK.get(r, 0))
     # A frozen spreadsheet is only viewed.
     return "view" if document.onlyoffice_frozen and role != "none" else role
@@ -195,6 +191,8 @@ class OnlyofficeDocuments_Connector(http.Controller):
 
         try:
             document = request.env["documents.document"].browse(int(document_id)).exists()
+            # A shortcut converts the document it points to, as Odoo downloads it.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
             if not document:
                 result["error"] = _("Document not found")
                 return json.dumps(result)
@@ -222,7 +220,10 @@ class OnlyofficeDocuments_Connector(http.Controller):
                 title = document.name
             else:
                 source_ext = file_utils.get_file_ext(attachment.name) or file_utils.get_ext_by_mime(attachment.mimetype)
-                title = file_utils.get_file_title_without_ext(attachment.name)
+                # The name of the document, renamed in Odoo maybe (its attachment keeps the former name).
+                title = document.name
+                if source_ext and title.lower().endswith(f".{source_ext}"):
+                    title = title[: -len(source_ext) - 1]
             target_format = (target_format or "").lower()
 
             allowed_formats = []
@@ -350,6 +351,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         document = None
         if document_id:
             document = request.env["documents.document"].browse(int(document_id))
+            # A shortcut opens the document it points to, as in Odoo.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
         elif attachment_id:
             attachment = request.env["ir.attachment"].browse(int(attachment_id))
             if attachment.exists() and attachment.res_model == "documents.document":
@@ -404,6 +407,9 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
 
     def prepare_document_editor(self, document_id, access_token):
         document = request.env["documents.document"].browse(int(document_id))
+        # A shortcut opens the document it points to, as in Odoo.
+        document = document.sudo().shortcut_document_id.sudo(False) or document
+        document_id = document.id
         if document.lock_uid and document.lock_uid.id != request.env.user.id:
             _logger.error("Document is locked by another user")
             raise Forbidden()
@@ -418,12 +424,13 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             _logger.error("Current document has no attachments")
             raise Forbidden()
 
+        # The name of the document: renamed in Odoo, its attachment keeps the former name.
         try:
             document.check_access("write")
-            editor_values = self.prepare_editor_values(attachment, access_token, True)
+            editor_values = self.prepare_editor_values(attachment, access_token, True, title=document.name)
         except AccessError:
             _logger.debug("Current user has no write access")
-            editor_values = self.prepare_editor_values(attachment, access_token, False)
+            editor_values = self.prepare_editor_values(attachment, access_token, False, title=document.name)
 
         # Add document_id and security token for ODOO custom functions
         editor_values["document_id"] = document_id
@@ -439,9 +446,11 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             editor_values["has_odoo_formulas"] = True
             try:
                 metadata = load_metadata_for_document(document)
-                editor_values["filter_values_json"] = markupsafe.Markup(json.dumps(compute_filter_values(metadata)))
+                # Printed inside a <script> of the editor page, and the labels come from the file (its metadata
+                # sheet): scriptsafe escapes "</script>" and the like, json.dumps does not.
+                editor_values["filter_values_json"] = scriptsafe.dumps(compute_filter_values(metadata))
             except Exception:
-                editor_values["filter_values_json"] = markupsafe.Markup("{}")
+                editor_values["filter_values_json"] = scriptsafe.dumps({})
 
         return editor_values
 
@@ -468,6 +477,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
         odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
         filename = self.filter_xss(data["name"])
+        # The name of the document: renamed in Odoo, its attachment keeps the former name.
+        title = self.filter_xss(document.sudo().name) or filename
         access_token = access_token.decode("utf-8") if isinstance(access_token, bytes) else access_token
         document_type = file_utils.get_file_type(filename)
         is_mobile = bool(re.search(_mobile_regex, request.httprequest.headers.get("User-Agent"), re.IGNORECASE))
@@ -478,7 +489,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             "type": "mobile" if is_mobile else "desktop",
             "documentType": document_type,
             "document": {
-                "title": filename,
+                "title": title,
                 "url": odoo_url + "documents/content/" + access_token,
                 "fileType": file_utils.get_file_ext(filename),
                 "key": key,
@@ -530,7 +541,7 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
             root_config["token"] = jwt_utils.encode_payload(request.env, root_config)
 
         return {
-            "docTitle": filename,
+            "docTitle": title,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
             "customFunctionsJS": file_utils.get_custom_functions_url(),
@@ -583,13 +594,8 @@ class OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector):
                 file_url = body.get("url")
                 datas = base64.encodebytes(onlyoffice_urlopen(file_url, env=request.env).read())
                 document = request.env["documents.document"].sudo().browse(int(attachment.res_id))
-                document.with_user(user).sudo().write(
-                    {
-                        "name": attachment.name,
-                        "datas": datas,
-                        "mimetype": guess_type(file_url)[0],
-                    }
-                )
+                # The file only: the name of the document may have been changed in Odoo since it was opened.
+                document.with_user(user).sudo().write({"datas": datas, "mimetype": guess_type(file_url)[0]})
                 document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
 
         except Exception as ex:

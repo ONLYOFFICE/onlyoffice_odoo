@@ -118,12 +118,12 @@ test("a colleague gets the ONLYOFFICE role of the document: commenter → commen
   const marker = `e2e-colleague-${Date.now()}`
   const folderId = await newFolder(odoo, marker)
   const commented = await newDocument(odoo, folderId, `${marker}.docx`)
-  const hidden = await newDocument(odoo, folderId, `${marker}-hidden.docx`)
+  const hidden = await newDocument(odoo, folderId, `${marker}-hidden.docx`, undefined, { access_internal: "none" })
   const colleague = await newDocumentsUser(odoo, marker)
-  await odoo.call("onlyoffice.odoo.documents", "advanced_share_save", [
-    { document_id: commented, user_accesses: [{ user_id: colleague.partnerId, role: "commenter" }] },
-  ])
-  await odoo.call("onlyoffice.odoo.documents", "advanced_share_save", [{ document_id: hidden, internal_users: "none" }])
+  // As the share panel invites: a member of Odoo with an ONLYOFFICE role.
+  await odoo.call("documents.document", "action_update_access_rights", [[commented]], {
+    partners: { [colleague.partnerId]: ["commenter", false] },
+  })
 
   const context = await contextOf(browser, colleague.login)
   const page = await context.newPage()
@@ -144,10 +144,7 @@ test("a visitor with an edit link opens the document from the share page, types,
 }) => {
   const marker = `E2E-link-${Date.now()}`
   const folderId = await newFolder(odoo, marker)
-  const documentId = await newDocument(odoo, folderId, `${marker}.docx`, undefined, { access_via_link: "view" })
-  await odoo.call("onlyoffice.odoo.documents", "advanced_share_save", [
-    { document_id: documentId, link_access: "edit" },
-  ])
+  const documentId = await newDocument(odoo, folderId, `${marker}.docx`, undefined, { access_via_link: "edit" })
   const token = await odoo.read("documents.document", documentId, "access_token")
   const checksum = await documentChecksum(odoo, documentId)
 

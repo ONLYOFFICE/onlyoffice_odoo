@@ -45,8 +45,13 @@ class IrAttachment(models.Model):
         """
         if not attachments:
             return
-        templates = self.env["onlyoffice.odoo.templates"]
-        for attachment in attachments:
-            template = templates.browse(attachment.res_id).exists()
-            if template:
-                template._update_field_keys(attachment)
+        # A postcommit hook runs after the commit of its cursor: what it writes there is rolled back when the cursor
+        # closes, so the keys would stay stale. It writes through a cursor of its own, committed when it closes.
+        attachment_ids = attachments.ids
+        with self.env.registry.cursor() as cr:
+            env = self.env(cr=cr)
+            templates = env["onlyoffice.odoo.templates"]
+            for attachment in env["ir.attachment"].browse(attachment_ids):
+                template = templates.browse(attachment.res_id).exists()
+                if template:
+                    template._update_field_keys(attachment)

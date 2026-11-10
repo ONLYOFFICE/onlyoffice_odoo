@@ -67,7 +67,6 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
             (("internal_users", "reviewer"), ("colleague", "edit")): ("edit", {"edit": True}),
             (("colleague", "reviewer"),): ("edit", {"edit": False, "review": True}),
             (("internal_users", "none"),): "odoo.exceptions.AccessError",
-            (("internal_users", "edit"), ("colleague", "none")): "odoo.exceptions.AccessError",
         }
         for roles, result in expected.items():
             with self.subTest(roles=roles):
@@ -86,8 +85,7 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         config_utils.set_jwt_secret(self.env, "ds-secret")
         expected = {
             (): ("view", {"edit": False}),
-            (("colleague", "edit"),): ("view", {"edit": False}),
-            (("internal_users", "edit"),): ("view", {"edit": False}),
+            (("internal_users", "custom_filter"),): ("view", {"edit": False}),
             (("colleague", "commenter"),): ("edit", {"edit": False, "comment": True}),
             (("internal_users", "reviewer"),): ("edit", {"edit": False, "review": True}),
         }
@@ -153,6 +151,46 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         self.assertEqual(config["editorConfig"]["mode"], "view")
         self.assertFalse(config["document"]["permissions"]["edit"])
 
+    def test_the_editor_shows_the_name_of_the_document(self):
+        # Renamed in Odoo, a document keeps the former name on its attachment.
+        document = self._document()
+        document.name = "Q3 Report.docx"
+
+        config = self._config("oo_doc_owner", document_id=document.id)["result"]
+        page = self.url_open(f"/onlyoffice/editor/document/{document.id}")
+
+        self.assertEqual(config["editorConfig"]["document"]["title"], "Q3 Report.docx")
+        self.assertEqual(config["docTitle"], "Q3 Report.docx")
+        self.assertEqual(self._editor_config(page.text)["document"]["title"], "Q3 Report.docx")
+        self.assertEqual(config["editorConfig"]["document"]["fileType"], "docx")
+
+    def test_a_shortcut_opens_the_document_it_points_to(self):
+        document = self._document()
+        shortcut = self._document(shortcut_document_id=document.id, raw=False)
+
+        config = self._config("oo_doc_owner", document_id=shortcut.id)["result"]
+        page = self.url_open(f"/onlyoffice/editor/document/{shortcut.id}")
+
+        self.assertEqual(config["document_id"], document.id)
+        self.assertIn(
+            f"/onlyoffice/editor/callback/{document.attachment_id.id}?",
+            config["editorConfig"]["editorConfig"]["callbackUrl"],
+        )
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(
+            f"/onlyoffice/file/content/{document.attachment_id.id}?", self._editor_config(page.text)["document"]["url"]
+        )
+
+    def test_a_shortcut_to_a_document_the_user_cannot_read_does_not_open(self):
+        private = self._document(folder_id=False, access_internal="none")
+        shortcut = self._document(shortcut_document_id=private.id, raw=False, user=self.owner)
+        shortcut.sudo().owner_id = self.colleague
+        self.authenticate("oo_doc_colleague", "oo_doc_colleague")
+
+        response = self.url_open(f"/onlyoffice/editor/document/{shortcut.id}", allow_redirects=False)
+
+        self.assertEqual(response.status_code, 403)
+
     # -- GET /onlyoffice/editor/document/<id> --
 
     def test_editor_page_of_a_document(self):
@@ -165,6 +203,19 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         config = self._editor_config(response.text)
         self.assertEqual(config["document"]["title"], "Report.docx")
         self.assertEqual(config["editorConfig"]["mode"], "edit")
+
+    def test_editor_page_does_not_run_the_text_of_a_file(self):
+        # The labels of the filters come from the metadata sheet of the file, written by whoever uploads it.
+        label = "</script><script>window.injected=1</script>"
+        metadata = {"lists": {}, "globalFilters": [{"label": label, "defaultValue": "<b>EU</b>"}]}
+        document = self._document("Sales.xlsx", content=xlsx_with_metadata(metadata), mimetype=XLSX_MIMETYPE)
+        self.authenticate("oo_doc_owner", "oo_doc_owner")
+
+        page = self.url_open(f"/onlyoffice/editor/document/{document.id}").text
+
+        self.assertNotIn("<script>window.injected", page)
+        self.assertNotIn("</script><script>", page)
+        self.assertIn("window.odooFilterValues = ", page)
 
     def test_editor_page_is_forbidden_without_access_or_when_locked(self):
         private = self._document(folder_id=False)
@@ -200,6 +251,15 @@ class TestDocumentSave(DocumentsCase, HttpCase):
                 headers={"Content-Type": "application/json"},
             )
 
+    def test_a_save_keeps_the_name_the_document_got_in_odoo(self):
+        document = self._document()
+        document.name = "Q3 Report.docx"
+
+        self.assertEqual(self._save(document, self.owner, b"edited").json(), {"error": 0})
+
+        self.env.invalidate_all()
+        self.assertEqual((document.name, document.raw), ("Q3 Report.docx", b"edited"))
+
     def test_each_save_keeps_the_previous_version(self):
         document = self._document()
         attachment = document.attachment_id
@@ -232,12 +292,12 @@ class TestDocumentSave(DocumentsCase, HttpCase):
 
     def test_a_save_without_the_right_to_write_is_rejected(self):
         """Without JWT a save cannot be trusted; edit needs the right to write whatever signs it."""
-        cases = {"commenter without jwt": ("commenter", None), "edit with jwt": ("edit", "ds-secret")}
+        cases = {"commenter without jwt": ("commenter", None), "custom filter with jwt": ("custom_filter", "ds-secret")}
         for case, (role, jwt_secret) in cases.items():
             with self.subTest(case=case):
                 document = self._document()
                 document.action_update_access_rights(access_internal="view")
-                self._roles(document, colleague=role)
+                self._roles(document, internal_users=role)
 
                 response = self._save(document, self.colleague, b"overwritten", jwt_secret=jwt_secret)
 
@@ -463,8 +523,6 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         )
 
     def test_convert_needs_the_right_to_read_and_ignores_locks(self):
-        turned_off = self._document()
-        self._roles(turned_off, internal_users="edit", colleague="none")
         private = self._document(folder_id=False)
         read_only = self._document()
         read_only.action_update_access_rights(access_internal="view")
@@ -472,7 +530,7 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         locked.sudo().lock_uid = self.owner
         self.authenticate("oo_doc_colleague", "oo_doc_colleague")
 
-        for document in (turned_off, private):
+        for document in (private,):
             with self.subTest(document=document.id):
                 result, request = self._convert(document)
                 self.assertEqual(result["error"], "You do not have access to this document")
@@ -480,6 +538,26 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         for document in (read_only, locked):
             with self.subTest(document=document.id):
                 self.assertFalse(self._convert(document, save_to_documents=False)[0]["error"])
+
+    def test_a_converted_copy_has_the_name_of_the_document(self):
+        document = self._document()
+        document.name = "Q3 Report.docx"
+        result, _request = self._convert(document)
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Q3 Report.pdf")
+        # A name without the extension keeps all of it.
+        document.name = "Q3 Report v1.2"
+        result, _request = self._convert(document)
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Q3 Report v1.2.pdf")
+
+    def test_a_shortcut_converts_the_document_it_points_to(self):
+        document = self._document()
+        shortcut = self._document(shortcut_document_id=document.id, raw=False)
+
+        result, request = self._convert(shortcut)
+
+        self.assertFalse(result["error"])
+        self.assertIn(f"/onlyoffice/file/content/{document.attachment_id.id}?", str(request.call_args_list[0]))
+        self.assertEqual(self.env["documents.document"].browse(result["document_id"]).name, "Report.pdf")
 
     def test_converted_copy_goes_where_duplicate_puts_it(self):
         """Next to the source when the user may create there, otherwise in their own drive."""

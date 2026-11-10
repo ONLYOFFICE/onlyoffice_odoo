@@ -13,7 +13,7 @@ from odoo.fields import Domain
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 from ..controllers.spreadsheet_docbuilder import XLSX_MIMETYPE
-from .onlyoffice_odoo_documents import ONLYOFFICE_ONLY_ROLES
+from .onlyoffice_odoo_documents import onlyoffice_role
 
 _logger = logging.getLogger(__name__)
 
@@ -382,13 +382,26 @@ class Document(models.Model):
             original_partners,
         )
 
+        if partners:
+            # Odoo gives the members their new role, or removes them, in everything in the folders too (in the trash
+            # as well), without the ORM: an ONLYOFFICE role set before on a file in there would stay, above or below
+            # that role.
+            inside = self.browse()
+            if not no_propagation:
+                inside = self.sudo().with_context(active_test=False).search([("id", "child_of", self.ids)]) - self
+            partner_ids = [int(key) if isinstance(key, int | str) else key.id for key in partners]
+            self.env["onlyoffice.odoo.documents.access.user"].sudo().search(
+                [("document_id", "in", inside.ids), ("user_id", "in", partner_ids)]
+            ).unlink()
+            self.env["onlyoffice.odoo.documents"]._forget_former_members(self | inside)
+
         return result
 
     def _save_onlyoffice_roles(self, access_internal, access_via_link, partners):
-        def onlyoffice_role(role):
+        def kept_role(role):
             """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""
             role = role.replace("write_", "") if role and role.startswith("write_") else role
-            return role if role in ONLYOFFICE_ONLY_ROLES else False
+            return onlyoffice_role(role)
 
         for document in self:
             user_accesses = []
@@ -403,20 +416,20 @@ class Document(models.Model):
                         else:
                             role = role_data
 
-                        if not onlyoffice_role(role):
+                        if not kept_role(role):
                             users_to_remove.append(partner.id)
                         else:
                             user_accesses.append(
                                 {
                                     "user_id": partner.id,
-                                    "role": onlyoffice_role(role),
+                                    "role": kept_role(role),
                                 }
                             )
 
             access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
             # A right left unchanged keeps its ONLYOFFICE role.
-            internal_to_save = onlyoffice_role(access_internal) if access_internal else access.internal_users
-            link_to_save = onlyoffice_role(access_via_link) if access_via_link else access.link_access
+            internal_to_save = kept_role(access_internal) if access_internal else access.internal_users
+            link_to_save = kept_role(access_via_link) if access_via_link else access.link_access
 
             if access or internal_to_save or link_to_save or user_accesses or users_to_remove:
                 vals = {
