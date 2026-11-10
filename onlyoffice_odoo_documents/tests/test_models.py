@@ -328,6 +328,27 @@ class TestRolesOfMembers(DocumentsCase, TransactionCase):
         folder.action_update_access_rights(partners={self.colleague.partner_id.id: ["view", False]})
         self.assertEqual(self._role(document), "view")
 
+    def test_a_role_on_the_folder_leaves_the_files_odoo_leaves(self):
+        # Odoo gives the role of the folder only to what the user who shares it may edit: a file they only view keeps
+        # its members, and their ONLYOFFICE roles.
+        folder = self.env["documents.document"].create(
+            {"name": "OO Team", "type": "folder", "access_internal": "none", "owner_id": self.owner.id}
+        )
+        document = self._document(folder_id=folder.id, access_internal="none")
+        folder.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ["edit", False]}
+        )
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ["view", False]}, no_propagation=True
+        )
+        contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
+        document.with_user(self.owner).action_update_access_rights(partners={contact.id: ["commenter", False]})
+
+        folder.with_user(self.colleague).action_update_access_rights(partners={contact.id: ["view", False]})
+
+        row = self._own_rows(document).filtered(lambda r: r.user_id == contact)
+        self.assertEqual(row.role, "commenter")
+
     def test_a_new_role_on_the_folder_replaces_the_roles_in_it(self):
         # Odoo gives the member the role of the folder in everything in it: an ONLYOFFICE role set before on a file
         # in there gives way, in the trash too.

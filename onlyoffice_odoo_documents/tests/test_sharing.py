@@ -180,6 +180,7 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
         wizard = self._open(document)
         wizard.write({"invite_partner_ids": [(6, 0, no_email.ids)], "invite_role": "commenter"})
         self.assertEqual(wizard.action_invite_members()["params"]["type"], "warning")
+        self.assertEqual(wizard.invite_role, "commenter", "the dialog keeps the role chosen")
         self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
 
     def test_custom_role_must_fit_the_file_type(self):

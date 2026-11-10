@@ -130,7 +130,13 @@ class DocumentsSharing(models.TransientModel):
         # action_update_access_rights keeps the custom one.
         custom_role = self.invite_role
         self.invite_role = self.document_ids._convert_custom_role_to_standard(custom_role)
-        return super(DocumentsSharing, self.with_context(onlyoffice_invite_role=custom_role)).action_invite_members()
+        try:
+            return super(
+                DocumentsSharing, self.with_context(onlyoffice_invite_role=custom_role)
+            ).action_invite_members()
+        finally:
+            # Odoo may only warn (no partners, an email missing): the dialog stays open with the role chosen.
+            self.invite_role = custom_role
 
     def _get_allowed_roles_for_extension(self, ext):
         return self.ROLES_BY_EXTENSION.get(ext.lower() if ext else "", [])

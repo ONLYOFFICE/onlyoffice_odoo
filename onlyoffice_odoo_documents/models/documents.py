@@ -393,10 +393,12 @@ class Document(models.Model):
         if partners:
             # Odoo gives the members their new role, or removes them, in everything in the folders too (in the trash
             # as well), without the ORM: an ONLYOFFICE role set before on a file in there would stay, above or below
-            # that role.
+            # that role. Only where Odoo writes it (_action_update_members): what the user may edit, by their rules.
             inside = self.browse()
             if not no_propagation:
-                inside = self.sudo().with_context(active_test=False).search([("id", "child_of", self.ids)]) - self
+                domain = Domain("id", "child_of", self.ids) & Domain("shortcut_document_id", "=", False)
+                domain &= self._get_access_update_domain()
+                inside = self.with_context(active_test=False).search(domain) - self
             partner_ids = [int(key) if isinstance(key, int | str) else key.id for key in partners]
             self.env["onlyoffice.odoo.documents.access.user"].sudo().search(
                 [("document_id", "in", inside.ids), ("user_id", "in", partner_ids)]
