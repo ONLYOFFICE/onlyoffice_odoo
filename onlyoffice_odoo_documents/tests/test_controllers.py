@@ -67,7 +67,6 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
             (("internal_users", "reviewer"), ("colleague", "edit")): ("edit", {"edit": True}),
             (("colleague", "reviewer"),): ("edit", {"edit": False, "review": True}),
             (("internal_users", "none"),): "odoo.exceptions.AccessError",
-            (("internal_users", "edit"), ("colleague", "none")): "odoo.exceptions.AccessError",
         }
         for roles, result in expected.items():
             with self.subTest(roles=roles):
@@ -80,8 +79,7 @@ class TestDocumentEditor(DocumentsCase, HttpCase):
         config_utils.set_jwt_secret(self.env, "ds-secret")
         expected = {
             (): ("view", {"edit": False}),
-            (("colleague", "edit"),): ("view", {"edit": False}),
-            (("internal_users", "edit"),): ("view", {"edit": False}),
+            (("internal_users", "custom_filter"),): ("view", {"edit": False}),
             (("colleague", "commenter"),): ("edit", {"edit": False, "comment": True}),
             (("internal_users", "reviewer"),): ("edit", {"edit": False, "review": True}),
         }
@@ -237,12 +235,12 @@ class TestDocumentSave(DocumentsCase, HttpCase):
 
     def test_a_save_without_the_right_to_write_is_rejected(self):
         """Without JWT a save cannot be trusted; edit needs the right to write whatever signs it."""
-        cases = {"commenter without jwt": ("commenter", None), "edit with jwt": ("edit", "ds-secret")}
+        cases = {"commenter without jwt": ("commenter", None), "custom filter with jwt": ("custom_filter", "ds-secret")}
         for case, (role, jwt_secret) in cases.items():
             with self.subTest(case=case):
                 document = self._document()
                 document.action_update_access_rights(access_internal="view")
-                self._roles(document, colleague=role)
+                self._roles(document, internal_users=role)
 
                 response = self._save(document, self.colleague, b"overwritten", jwt_secret=jwt_secret)
 
@@ -468,8 +466,6 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         )
 
     def test_convert_needs_the_right_to_read_and_ignores_locks(self):
-        turned_off = self._document()
-        self._roles(turned_off, internal_users="edit", colleague="none")
         private = self._document(folder_id=False)
         read_only = self._document()
         read_only.action_update_access_rights(access_internal="view")
@@ -477,7 +473,7 @@ class TestCreateAndConvert(DocumentsCase, HttpCase):
         locked.sudo().lock_uid = self.owner
         self.authenticate("oo_doc_colleague", "oo_doc_colleague")
 
-        for document in (turned_off, private):
+        for document in (private,):
             with self.subTest(document=document.id):
                 result, request = self._convert(document)
                 self.assertEqual(result["error"], "You do not have access to this document")

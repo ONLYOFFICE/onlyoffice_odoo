@@ -33,7 +33,7 @@ Odoo lists/pivots into an existing XLSX; version history on every save; a restri
 
 | Route                                     | auth / type | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /onlyoffice/documents/file/create`  | user, json  | `folder_id`, `supported_format`, `title`, optional `url` (gallery form, downloaded only from the gallery files by `url_utils.download_form_file`; internal users only; formats docx / xlsx / pptx / pdf). Creates `documents.document` (`raw`, `mimetype`, `folder_id`) plus default access rows: `internal_users="none"`, `link_access="viewer"`, creator = `editor`. Returns a JSON **string** `{"error", "file_id", "document_id"}`.                               |
+| `POST /onlyoffice/documents/file/create`  | user, json  | `folder_id`, `supported_format`, `title`, optional `url` (gallery form, downloaded only from the gallery files by `url_utils.download_form_file`; internal users only; formats docx / xlsx / pptx / pdf). Creates `documents.document` (`raw`, `mimetype`, `folder_id`); no ONLYOFFICE role rows: the rights of Odoo decide until the owner sets a role. Returns a JSON **string** `{"error", "file_id", "document_id"}`.                                             |
 | `POST /onlyoffice/documents/file/convert` | user, json  | `document_id`, `target_format`, `save_to_documents`. Access via `_validate_document_for_convert` (read rule, lock, share role ≠ `none`, `folder_id.has_write_access` when saving). Target must be in the source format's `convert` list from the formats JSON. Calls `/converter` (`async: False`, `region` from the user lang) through `conversion_utils` + `onlyoffice_request`; saves a new document in the same folder or returns `{"data": base64, "filename"}`. |
 
 `OnlyofficeDocuments_Inherited_Connector(OnlyofficeConnector)`:
@@ -174,7 +174,16 @@ Assets are listed explicitly in the manifest (desktop scripts first, then `model
   `viewer` (no access row). `none` raises `AccessError`. A role can only lower what standard Odoo write access allows,
   never raise it (`editor` requires `can_write`).
 - Share links use `link_access`, overridden by the per-user role for logged-in users (`prepare_share_editor`).
-- Documents created through ONLYOFFICE start with `internal_users="none"`, `link_access="viewer"`, creator `editor`.
+- 18+: the rows keep only the roles Odoo does not have (`ONLYOFFICE_ONLY_ROLES`); none / view / edit stay in Odoo, and
+  every read of a row and `advanced_share_save` (also reachable by RPC) go through `onlyoffice_role()`, which drops
+  them. A per-user role counts only while the user is a member in Odoo (`_is_invited`: a `documents.access` row with a
+  role, not expired). Rows of former members are dropped by `documents.access.unlink` (the autovacuum of expired
+  invitations) and after `action_update_access_rights` for the documents and everything in them (Odoo removes members of
+  a folder by SQL); a member given a role on a folder loses the ONLYOFFICE roles set before on what is in it (trash
+  included), as Odoo writes that role there. `migrations/0.0.0/post-migrate.py` clears the roles of Odoo older versions
+  wrote into the rows; Odoo runs it on every raise of the module version.
+- Documents created through ONLYOFFICE get no role rows (older versions wrote none / viewer / editor: see the migration
+  above).
 - Full route-auth table and checklist: `odoo-security`.
 
 ## Versioning

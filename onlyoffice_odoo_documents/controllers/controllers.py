@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 from werkzeug.exceptions import Forbidden
 
-from odoo import fields, http
+from odoo import http
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.tools.json import scriptsafe
@@ -27,7 +27,7 @@ from odoo.addons.onlyoffice_odoo.utils import (
     url_utils,
 )
 
-from ..models.onlyoffice_odoo_documents import SAVING_ROLES
+from ..models.onlyoffice_odoo_documents import SAVING_ROLES, onlyoffice_role
 from .spreadsheet_docbuilder import (
     XLSX_MIMETYPE,
     SpreadsheetDocBuilder,
@@ -67,7 +67,7 @@ def _get_document_share_role(document):
 def _get_link_role(document):
     """The role a share link of a document or folder gives: its ONLYOFFICE role, otherwise that of Odoo."""
     access = request.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
-    return access.link_access or document.sudo().access_via_link or "none"
+    return onlyoffice_role(access.link_access) or document.sudo().access_via_link or "none"
 
 
 def _get_share_link_role(document, user, folder=None):
@@ -87,13 +87,10 @@ def _get_share_link_role(document, user, folder=None):
             .sudo()
             .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
         )
-        invitation = document.sudo().access_ids.filtered(lambda a: a.partner_id == user.partner_id)[:1]
-        expired = invitation.expiration_date and invitation.expiration_date < fields.Datetime.now()
-        # An expired invitation gives nothing in Odoo, nor its ONLYOFFICE role: the link decides.
-        if access_user.role and access_user.role != "none" and not expired:
-            own_role = request.env["onlyoffice.odoo.documents"]._get_role_within_odoo_rights(
-                document, user, document.with_user(user).has_access("write")
-            )
+        roles = request.env["onlyoffice.odoo.documents"]
+        # An invitation expired or removed gives nothing in Odoo, nor its ONLYOFFICE role: the link decides.
+        if onlyoffice_role(access_user.role) and roles._is_invited(document, user):
+            own_role = roles._get_role_within_odoo_rights(document, user, document.with_user(user).has_access("write"))
             role = max(role, own_role, key=lambda r: _ROLE_RANK.get(r, 0))
     # A frozen spreadsheet is only viewed.
     return "view" if document.onlyoffice_frozen and role != "none" else role

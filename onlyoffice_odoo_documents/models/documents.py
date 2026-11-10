@@ -13,7 +13,7 @@ from odoo.osv import expression
 from odoo.tools import DEFAULT_SERVER_DATE_FORMAT
 
 from ..controllers.spreadsheet_docbuilder import XLSX_MIMETYPE
-from .onlyoffice_odoo_documents import ONLYOFFICE_ONLY_ROLES
+from .onlyoffice_odoo_documents import onlyoffice_role
 
 _logger = logging.getLogger(__name__)
 
@@ -338,14 +338,14 @@ class Document(models.Model):
 
         # An ONLYOFFICE role is shown instead of the value of Odoo; without one, the panel shows that of Odoo.
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document_id)], limit=1)
-        if access.internal_users:
+        if onlyoffice_role(access.internal_users):
             result["record"]["access_internal"] = access.internal_users
-        if access.link_access:
+        if onlyoffice_role(access.link_access):
             result["record"]["access_via_link"] = access.link_access
 
         access_user = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document_id)])
         if access_user:
-            user_roles = {access.user_id.id: access.role for access in access_user if access.user_id and access.role}
+            user_roles = {access.user_id.id: access.role for access in access_user if onlyoffice_role(access.role)}
             for access_id in result["record"].get("access_ids", []):
                 partner_id = access_id["partner_id"]["id"]
                 if partner_id in user_roles:
@@ -400,10 +400,6 @@ class Document(models.Model):
             elif role == "custom_filter":
                 return "edit"
             return role
-
-        def onlyoffice_role(role):
-            """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""
-            return role if role in ONLYOFFICE_ONLY_ROLES else False
 
         # A frozen copy is only viewed: no role that edits it, in Odoo (edit) or in ONLYOFFICE.
         if any(self.mapped("onlyoffice_frozen")):
@@ -463,8 +459,8 @@ class Document(models.Model):
                             )
 
             access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)], limit=1)
-            internal_users = onlyoffice_role(access_internal) if access_internal else access.internal_users
-            link_access = onlyoffice_role(access_via_link) if access_via_link else access.link_access
+            internal_users = access_internal if access_internal else access.internal_users
+            link_access = access_via_link if access_via_link else access.link_access
 
             vals = {
                 "document_id": document.id,
@@ -475,5 +471,16 @@ class Document(models.Model):
             }
 
             self.env["onlyoffice.odoo.documents"].advanced_share_save(vals)
+
+        if partners:
+            # Odoo gives the members their new role, or removes them, in everything in the folders too (in the trash
+            # as well), without the ORM: an ONLYOFFICE role set before on a file in there would stay, above or below
+            # that role.
+            inside = self.sudo().with_context(active_test=False).search([("id", "child_of", self.ids)]) - self
+            partner_ids = [int(key) if isinstance(key, int | str) else key.id for key in partners]
+            self.env["onlyoffice.odoo.documents.access.user"].sudo().search(
+                [("document_id", "in", inside.ids), ("user_id", "in", partner_ids)]
+            ).unlink()
+            self.env["onlyoffice.odoo.documents"]._forget_former_members(self | inside)
 
         return result
