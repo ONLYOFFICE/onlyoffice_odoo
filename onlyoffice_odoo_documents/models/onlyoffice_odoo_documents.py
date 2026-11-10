@@ -18,6 +18,15 @@ ROLE_RANK = {
 }
 
 
+def onlyoffice_role(role):
+    """``role`` if it is one Odoo does not have, else False.
+
+    Odoo keeps none / view / edit itself: such a value in an ONLYOFFICE row was written by an older version and would
+    hide the current rights of Odoo.
+    """
+    return role if role in ONLYOFFICE_ONLY_ROLES else False
+
+
 class OnlyofficeDocuments(models.Model):
     _name = "onlyoffice.odoo.documents"
     _description = "ONLYOFFICE Documents"
@@ -48,25 +57,24 @@ class OnlyofficeDocuments(models.Model):
 
         if document.owner_id == user:
             return "edit" if can_write else "view"
-        odoo_access = document.sudo().access_ids.filtered(lambda a: a.partner_id == user.partner_id)[:1]
-        # An expired invitation gives nothing in Odoo, nor its ONLYOFFICE role.
-        if not (odoo_access.expiration_date and odoo_access.expiration_date < fields.Datetime.now()):
+        # A role of their own comes with a live invitation of Odoo: one expired, or removed (by the autovacuum of
+        # expired ones, or from a folder), gives nothing in Odoo, nor its ONLYOFFICE role.
+        if self._is_invited(document, user):
             access_user = (
                 self.env["onlyoffice.odoo.documents.access.user"]
                 .sudo()
                 .search([("document_id", "=", document.id), ("user_id", "=", user.partner_id.id)], limit=1)
             )
-            if access_user.role:
+            if onlyoffice_role(access_user.role):
                 return within_odoo_rights(access_user.role)
-            if odoo_access.role:
-                return "edit" if can_write else "view"
+            return "edit" if can_write else "view"
         group_role = self._get_group_role(document, user)
         if group_role:
             return within_odoo_rights(group_role)
         access = (
             self.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "=", document.id)], limit=1)
         )
-        if access.internal_users:
+        if onlyoffice_role(access.internal_users):
             return within_odoo_rights(access.internal_users)
         return "edit" if can_write else "view"
 
@@ -92,10 +100,41 @@ class OnlyofficeDocuments(models.Model):
             for access in self.env["onlyoffice.odoo.documents.access.group"]
             .sudo()
             .search([("document_id", "=", document.id), ("group_id", "in", group_accesses.group_id.ids)])
-            if access.role
+            if onlyoffice_role(access.role)
         }
         roles = [onlyoffice_roles.get(access.group_id, access.role) for access in group_accesses]
         return max(roles, key=lambda r: ROLE_RANK.get(r, 0))
+
+    @api.model
+    def _is_invited(self, document, user):
+        """Whether ``user`` is a member of ``document`` in Odoo: a row of its access with a role, not expired."""
+        odoo_access = document.sudo().access_ids.filtered(lambda a: a.partner_id == user.partner_id)[:1]
+        expired = odoo_access.expiration_date and odoo_access.expiration_date < fields.Datetime.now()
+        return bool(odoo_access.role) and not expired
+
+    @api.model
+    def _forget_former_members(self, documents):
+        """Drops the ONLYOFFICE roles of the users and groups who are no longer members of ``documents`` in Odoo.
+
+        Odoo removes a member without the ORM at times (from a folder and everything in it): a role left behind would
+        come back with a later invitation given another way (to the folder above, say). An expired invitation keeps
+        its role, which a new expiration date gives back.
+        """
+        rows = self.env["onlyoffice.odoo.documents.access.user"].sudo().search([("document_id", "in", documents.ids)])
+        group_rows = (
+            self.env["onlyoffice.odoo.documents.access.group"].sudo().search([("document_id", "in", documents.ids)])
+        )
+        if not rows and not group_rows:
+            return
+        accesses = (
+            self.env["documents.access"]
+            .sudo()
+            .search([("document_id", "in", (rows.document_id | group_rows.document_id).ids), ("role", "!=", False)])
+        )
+        members = {(access.document_id.id, access.partner_id.id) for access in accesses if access.partner_id}
+        groups = {(access.document_id.id, access.group_id.id) for access in accesses if access.group_id}
+        rows.filtered(lambda row: (row.document_id.id, row.user_id.id) not in members).unlink()
+        group_rows.filtered(lambda row: (row.document_id.id, row.group_id.id) not in groups).unlink()
 
     @api.model
     def _saves_with_read_access(self, document):
@@ -129,22 +168,16 @@ class OnlyofficeDocuments(models.Model):
         AccessUser = self.env["onlyoffice.odoo.documents.access.user"].sudo()
         AccessGroup = self.env["onlyoffice.odoo.documents.access.group"].sudo()
 
+        # Only the roles Odoo does not have are kept: Odoo keeps the others itself.
+        roles = {
+            "internal_users": onlyoffice_role(vals.get("internal_users")),
+            "link_access": onlyoffice_role(vals.get("link_access")),
+        }
         access = Access.search([("document_id", "=", document_id)], limit=1)
         if not access:
-            access = Access.create(
-                {
-                    "document_id": document_id,
-                    "internal_users": vals.get("internal_users") or False,
-                    "link_access": vals.get("link_access") or False,
-                }
-            )
+            access = Access.create({"document_id": document_id, **roles})
         else:
-            access.write(
-                {
-                    "internal_users": vals.get("internal_users") or False,
-                    "link_access": vals.get("link_access") or False,
-                }
-            )
+            access.write(roles)
 
         users_to_remove = vals.get("users_to_remove", [])
         if users_to_remove:
@@ -154,12 +187,13 @@ class OnlyofficeDocuments(models.Model):
         existing_accesses = AccessUser.search([("document_id", "=", document_id)]).mapped("user_id.id")
 
         for user_data in user_accesses:
-            role = user_data.get("role")
+            role = onlyoffice_role(user_data.get("role"))
             if not role:
+                AccessUser.search([("document_id", "=", document_id), ("user_id", "=", user_data["user_id"])]).unlink()
                 continue
             if user_data["user_id"] in existing_accesses:
                 AccessUser.search([("document_id", "=", document_id), ("user_id", "=", user_data["user_id"])]).write(
-                    {"role": user_data["role"]}
+                    {"role": role}
                 )
             else:
                 if self.env["res.partner"].search_count([("id", "=", user_data["user_id"])]):
@@ -167,7 +201,7 @@ class OnlyofficeDocuments(models.Model):
                         {
                             "document_id": document_id,
                             "user_id": user_data["user_id"],
-                            "role": user_data["role"],
+                            "role": role,
                         }
                     )
 

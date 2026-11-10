@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import re
 import uuid
 from datetime import date
 
@@ -49,6 +50,12 @@ def get_internal_jwt_secret(env):
     return secret
 
 
+# The public demo server: the settings show its address, secret and header while the demo is on.
+DEMO_PUBLIC_URL = "https://onlinedocs.docs.onlyoffice.com/"
+DEMO_JWT_HEADER = "AuthorizationJWT"
+DEMO_JWT_SECRET = "sn2puSUF7muF5Jas"
+
+
 def get_demo(env):
     return env["ir.config_parameter"].sudo().get_bool(config_constants.DOC_SERVER_DEMO)
 
@@ -93,11 +100,11 @@ def set_demo(env, param):
     if not demo_date:
         set_demo_date(env)
     if param:
-        set_doc_server_public_url(env, "https://onlinedocs.docs.onlyoffice.com/")
+        set_doc_server_public_url(env, DEMO_PUBLIC_URL)
         set_doc_server_odoo_url(env, "")
         set_doc_server_inner_url(env, "")
-        set_jwt_header(env, "AuthorizationJWT")
-        set_jwt_secret(env, "sn2puSUF7muF5Jas")
+        set_jwt_header(env, DEMO_JWT_HEADER)
+        set_jwt_secret(env, DEMO_JWT_SECRET)
     elif demo and not param:
         set_doc_server_public_url(env, "http://documentserver/")
         set_doc_server_odoo_url(env, "")
@@ -126,7 +133,8 @@ def fix_url(url):
 
 
 def fix_proto(url):
-    return url if url.startswith("http") else ("http://" + url)
+    # "httpdocs.example.com" has no scheme although it starts with "http".
+    return url if re.match(r"https?://", url, re.IGNORECASE) else ("http://" + url)
 
 
 def fix_end_slash(url):

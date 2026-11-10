@@ -49,8 +49,11 @@ class TestConfigUtils(TransactionCase):
             ("JWT secret", config_utils.set_jwt_secret, config_utils.get_jwt_secret, "secret", "secret"),
             ("JWT header", config_utils.set_jwt_header, config_utils.get_jwt_header, "X-Custom", "X-Custom"),
             ("same tab", config_utils.set_same_tab, config_utils.get_same_tab, True, True),
+            ("same tab off", config_utils.set_same_tab, config_utils.get_same_tab, False, False),
             ("certificate check disabled", config_utils.set_certificate_verify_disabled,
              config_utils.get_certificate_verify_disabled, True, True),
+            ("certificate check enabled", config_utils.set_certificate_verify_disabled,
+             config_utils.get_certificate_verify_disabled, False, False),
         ]  # fmt: skip
         for name, setter, getter, value, expected in cases:
             with self.subTest(setting=name):

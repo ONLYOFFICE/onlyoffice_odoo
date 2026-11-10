@@ -2,7 +2,7 @@
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
 import re
-import time
+import uuid
 
 from odoo.tools.translate import _
 
@@ -33,7 +33,8 @@ def get_region(lang):
 def build_conversion_body(source_url, source_ext, target_ext, extra_options=None, region=None):
     """Build the JSON body for the ONLYOFFICE Document Server converter API request."""
     body_json = {
-        "key": int(time.time()),
+        # Each conversion its own key: the Document Server gives the result of a known key again (to anyone).
+        "key": uuid.uuid4().hex,
         "url": source_url,
         "filetype": source_ext,
         "outputtype": target_ext,

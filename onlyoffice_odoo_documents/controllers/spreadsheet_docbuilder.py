@@ -73,11 +73,27 @@ _FILE_MODES = ("insert_sheet", "patch_formulas", "freeze_collect", "freeze", "co
 
 # A call of an Odoo spreadsheet function: ODOO.LIST(, odoo.pivot.header(, ... (not a part of a longer name).
 _ODOO_CALL = re.compile(r"(?<![\w.])ODOO\.([A-Z][A-Z0-9_.]*)\(", re.IGNORECASE)
-# A text in double quotes, or a call of a pivot function of Odoo with its pivot id ("1" or 1).
+# A text in double quotes (\" escapes a quote in o-spreadsheet), or a call of a pivot function of Odoo with its pivot id
+# ("1" or 1).
 _PIVOT_CALL = re.compile(
-    r'("(?:[^"]|"")*")|(?<![\w.])PIVOT\.(VALUE|HEADER)\(\s*("?)([\w-]+)\3\s*(?=[,)])', re.IGNORECASE
+    r'("(?:\\"|[^"])*")|(?<![\w.])PIVOT\.(VALUE|HEADER)\(\s*("?)([\w-]+)\3\s*(?=[,)])', re.IGNORECASE
 )
 _PIVOT_FUNCTIONS = {"VALUE": "ODOO_PIVOT", "HEADER": "ODOO_PIVOT_HEADER"}
+
+# The Odoo functions the ONLYOFFICE editor computes (odoo_custom_functions_init.js). A formula that calls any other
+# one (ODOO.BALANCE, ODOO.PIVOT.POSITION, a dynamic ODOO.PIVOT.TABLE, ...) keeps the value of the export.
+_EDITOR_FUNCTIONS = frozenset(
+    (
+        "LIST",
+        "LIST.HEADER",
+        "PIVOT",
+        "PIVOT.HEADER",
+        "FILTER.VALUE",
+        "FILTER.LABEL",
+        "FILTER.VALUE.V18",
+        "CURRENCY.RATE",
+    )
+)
 
 
 class _DateTimeEncoder(json.JSONEncoder):
@@ -228,6 +244,10 @@ def _find_odoo_calls(formula):
     return calls
 
 
+# An argument written as a value: text in quotes, a number, a logical value, or nothing.
+_PLAIN_ARGUMENT = re.compile(r'\s*("(?:[^"]|"")*"|-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?|TRUE|FALSE)?\s*', re.IGNORECASE)
+
+
 def _frozen_content(value):
     """A value in a frozen cell, as Odoo writes it (toFrozenContent): {"v": value} or {"f": formula}.
 
@@ -243,6 +263,16 @@ def _frozen_content(value):
     return {"v": text}
 
 
+def _text_literal(text):
+    """Text as a spreadsheet formula writes it: in quotes, a quote inside doubled."""
+    return '"' + str(text).replace('"', '""') + '"'
+
+
+def _spreadsheet_text_to_excel(quoted):
+    """A text of an Odoo spreadsheet formula (a quote inside escaped by a backslash) as an XLSX formula writes it."""
+    return _text_literal(quoted[1:-1].replace('\\"', '"'))
+
+
 def _formula_literal(value):
     """A value written in a formula in place of the call that gave it."""
     if isinstance(value, str) and value.startswith("#ERROR"):
@@ -253,7 +283,7 @@ def _formula_literal(value):
         return repr(value)
     if isinstance(value, list):
         return "NA()"
-    return '"' + ("" if value is None else str(value)).replace('"', '""') + '"'
+    return _text_literal("" if value is None else value)
 
 
 def _expand_group_paths(leaf_paths):
@@ -287,12 +317,12 @@ def _group_value_literal(model, field_spec, group):
         return str(int(value[0]))
     if field_obj is not None and field_obj.type in ("date", "datetime"):
         is_datetime = field_obj.type == "datetime"
-        return json.dumps(_format_date_group_value(group, field_spec, granularity or "month", is_datetime))
+        return _text_literal(_format_date_group_value(group, field_spec, granularity or "month", is_datetime))
     if isinstance(value, bool):
         return '"true"'
     if isinstance(value, int | float):
         return str(value)
-    return json.dumps(str(value))
+    return _text_literal(value)
 
 
 def _format_date_group_value(group, field_spec, granularity, is_datetime=False):
@@ -361,9 +391,12 @@ class SpreadsheetDocBuilder:
             if current_lang and request.env.context.get("lang") != current_lang:
                 request.update_env(context=dict(request.env.context, lang=current_lang))
 
-            document = request.env["documents.document"].browse(document_id)
+            document = request.env["documents.document"].browse(document_id).exists()
+            # A shortcut converts the spreadsheet it points to.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
+            document_id = document.id
 
-            if not document.exists() or document.handler != "spreadsheet":
+            if not document or document.handler != "spreadsheet":
                 result["error"] = _("Document is not a spreadsheet")
                 return result
             # As "Save to Documents" of a conversion: refused before the Document Builder runs.
@@ -434,7 +467,9 @@ class SpreadsheetDocBuilder:
         spreadsheet, a header by position "#field") keeps the value of the export: the editor has no such function.
         A dynamic pivot ('PIVOT(') is split into the formulas of its cells by the export; one it could not split
         (cells around taken) keeps the values of the export, as the editor cannot spread a table.
-        Text in double quotes is left as it is. Returns None when the formula calls no ODOO function.
+        Text in double quotes keeps its content and is written as an XLSX formula writes it: an Odoo spreadsheet
+        escapes a quote inside it by a backslash, a workbook doubles it. Returns None when the formula calls no ODOO
+        function, or one the editor does not compute (``_EDITOR_FUNCTIONS``): the cell keeps the value of the export.
         """
         if not isinstance(content, str) or not content.startswith("="):
             return None
@@ -452,9 +487,9 @@ class SpreadsheetDocBuilder:
         content = _PIVOT_CALL.sub(convert_pivot_call, content)
         if pivot_calls["kept"] or (pivot_calls["converted"] and '"#' in content):
             return None
-        # Even parts are outside the quotes, odd parts are the quoted texts ("" escapes a quote).
-        parts = re.split(r'("(?:[^"]|"")*")', content)
-        if any(m.group(1).upper() == "PIVOT.TABLE" for part in parts[::2] for m in _ODOO_CALL.finditer(part)):
+        # Even parts are outside the quotes, odd parts are the quoted texts (\" escapes a quote in o-spreadsheet).
+        parts = re.split(r'("(?:\\"|[^"])*")', content)
+        if any(m.group(1).upper() not in _EDITOR_FUNCTIONS for part in parts[::2] for m in _ODOO_CALL.finditer(part)):
             return None
         found = False
         for index in range(0, len(parts), 2):
@@ -463,7 +498,10 @@ class SpreadsheetDocBuilder:
             )
             parts[index] = converted
             found = found or bool(count)
-        return "".join(parts) if found or pivot_calls["converted"] else None
+        if not found and not pivot_calls["converted"]:
+            return None
+        parts[1::2] = [_spreadsheet_text_to_excel(text) for text in parts[1::2]]
+        return "".join(parts)
 
     def _build_formula_patches(self, snapshot, sheet_names=None):
         """Collect {sheet, index, cell, formula} for every cell whose formula calls an ODOO function.
@@ -852,17 +890,39 @@ class SpreadsheetDocBuilder:
             return []
         start, end = calls[0]
         if len(calls) == 1 and re.fullmatch(r"=\s*-?\s*", formula[:start]) and not formula[end:].strip():
-            value = self._formula_evaluator.evaluate_single_formula(snapshot, formula)
+            value = self._call_value(snapshot, formula[start:end])
+            if "-" in formula[:start] and isinstance(value, int | float) and not isinstance(value, bool):
+                value = -value
             if isinstance(value, list):
                 return self._frozen_table(sheet, cell, value)
             return [{"s": sheet, "c": cell, **_frozen_content(value)}]
         parts, last = [], 0
         for start, end in calls:
-            value = self._formula_evaluator.evaluate_single_formula(snapshot, "=" + formula[start:end])
+            value = self._call_value(snapshot, formula[start:end])
             parts.extend([formula[last:start], _formula_literal(value)])
             last = end
         parts.append(formula[last:])
         return [{"s": sheet, "c": cell, "f": "".join(parts)}]
+
+    def _call_value(self, snapshot, call):
+        """The value of one ODOO_*(...) call of a formula of the file.
+
+        The collect script wrote its computed arguments as values (freeze_collect.docbuilder); an argument that is an
+        Odoo call is computed here first, as the editor computes it. Any other argument (an error, or an expression
+        with an Odoo call inside) cannot be computed: the cell gets an error, not the value of a wrong argument.
+        """
+        name, args_text = call[: call.index("(")], call[call.index("(") + 1 : -1]
+        args = []
+        for arg in self._formula_evaluator._split_args(args_text):
+            if _find_odoo_calls(arg) == [(0, len(arg))]:
+                value = self._call_value(snapshot, arg)
+                if isinstance(value, list) or (isinstance(value, str) and value.startswith("#ERROR")):
+                    return value if not isinstance(value, list) else "#ERROR: A table cannot be an argument"
+                arg = _formula_literal(value)
+            elif not _PLAIN_ARGUMENT.fullmatch(arg):
+                return f"#ERROR: The argument {arg} could not be computed"
+            args.append(arg)
+        return self._formula_evaluator.evaluate_single_formula(snapshot, f"={name}({','.join(args)})")
 
     @staticmethod
     def _frozen_table(sheet, cell, table):

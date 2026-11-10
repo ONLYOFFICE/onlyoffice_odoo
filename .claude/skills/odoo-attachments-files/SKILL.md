@@ -70,8 +70,8 @@ Before returning any file:
    - 17: `attachment.check_access_rights(op)` / `check_access_rule(op)`
    - 18/19/20: `attachment.has_access(op)` / `attachment.check_access(op)` (`check_access_rights` is removed in 20; for
      a model-level check use `attachment.browse().has_access(op)`)
-3. For `documents.document` owners: lock check (`is_locked` and `lock_uid != user`) + the same version's rule check for
-   `"read"` (`OnlyofficeConnector._check_document_access`).
+3. For `documents.document` owners: lock check (`lock_uid` set and `!= user`; 19+ has no `is_locked`) + the same
+   version's rule check for `"read"` (`OnlyofficeConnector._check_document_access`).
 4. On public routes: resolve the user from `oo_security_token` first and use `with_user(user)` for all of the above.
 
 ## Supported formats

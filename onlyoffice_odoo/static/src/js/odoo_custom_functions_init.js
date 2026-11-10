@@ -63,7 +63,7 @@
          * @returns {any} The value from the list: a number, a date (serial number) or text.
          */
         async function ODOO_LIST(listId, index, fieldName) {
-          var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var escapedFieldName = String(fieldName).replace(/"/g, '""')
           var formula = "=ODOO_LIST(" + listId + "," + index + ',"' + escapedFieldName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
@@ -184,7 +184,7 @@
          * @returns {string} The header value.
          */
         async function ODOO_LIST_HEADER(listId, fieldName) {
-          var escapedFieldName = String(fieldName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var escapedFieldName = String(fieldName).replace(/"/g, '""')
           var formula = "=ODOO_LIST_HEADER(" + listId + ',"' + escapedFieldName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
@@ -299,7 +299,7 @@
               break
             }
             var a = arguments[i]
-            parts.push(typeof a === "string" ? '"' + a.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"' : a)
+            parts.push(typeof a === "string" ? '"' + a.replace(/"/g, '""') + '"' : a)
           }
           var formula = "=ODOO_PIVOT(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
@@ -413,7 +413,7 @@
               break
             }
             var a = arguments[i]
-            parts.push(typeof a === "string" ? '"' + a.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"' : a)
+            parts.push(typeof a === "string" ? '"' + a.replace(/"/g, '""') + '"' : a)
           }
           var formula = "=ODOO_PIVOT_HEADER(" + parts.join(",") + ")"
           return new Promise(function (resolve) {
@@ -569,7 +569,7 @@
          * @returns {any} The current filter value.
          */
         async function ODOO_FILTER_VALUE(filterName) {
-          var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var escapedFilterName = String(filterName).replace(/"/g, '""')
           var formula = '=ODOO_FILTER_VALUE("' + escapedFilterName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
@@ -638,7 +638,7 @@
           if (filterName in filterValues) {
             return filterValues[filterName]
           }
-          var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var escapedFilterName = String(filterName).replace(/"/g, '""')
           var formula = '=ODOO_FILTER_LABEL("' + escapedFilterName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
@@ -706,7 +706,7 @@
           if (filterName in filterValues) {
             return filterValues[filterName]
           }
-          var escapedFilterName = String(filterName).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+          var escapedFilterName = String(filterName).replace(/"/g, '""')
           var formula = '=ODOO_FILTER_VALUE_V18("' + escapedFilterName + '")'
           return new Promise(function (resolve) {
             _pendingFormulas.push({
@@ -775,7 +775,7 @@
          */
         async function ODOO_CURRENCY_RATE(currencyFrom, currencyTo, date, companyId) {
           var escapeQuotes = function (s) {
-            return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+            return String(s).replace(/"/g, '""')
           }
           var isSet = function (v) {
             return v !== undefined && v !== null && v !== ""
@@ -858,7 +858,8 @@
       })
 
       // Poll sheets: wait until no #BUSY! cells remain, then check for #NAME?.
-      // Returns "busy" / "name_error" / "ok".
+      // Returns "busy" / "name_error" / "ok". Only reads: the sheets are not activated (that would show a hidden
+      // sheet, such as _OdooMetadata, and change the file of a user who only opened it), hidden sheets are skipped.
       window._odooRetryCount = window._odooRetryCount || 0
       window._odooPollCount = window._odooPollCount || 0
 
@@ -874,15 +875,16 @@
         connector.callCommand(
           function () {
             var sheets = Api.GetSheets()
-            var activeSheet = Api.GetActiveSheet()
-            var activeName = activeSheet.GetName()
             var hasBusy = false
             var hasName = false
             for (var i = 0; i < sheets.length; i++) {
-              var sheetName = sheets[i].GetName()
-              sheets[i].SetActive()
+              if (!sheets[i].GetVisible()) {
+                continue
+              }
               var range = sheets[i].GetUsedRange()
-              var rangeAddr = range.GetAddress()
+              if (!range) {
+                continue
+              }
 
               if (!hasBusy) {
                 var busyMatch = range.Find({
@@ -917,13 +919,6 @@
                 }
               }
               if (hasBusy) {
-                break
-              }
-            }
-            // Restore original active sheet
-            for (var j = 0; j < sheets.length; j++) {
-              if (sheets[j].GetName() === activeName) {
-                sheets[j].SetActive()
                 break
               }
             }

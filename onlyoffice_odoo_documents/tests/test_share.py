@@ -177,14 +177,16 @@ class TestShareLink(DocumentsCase, HttpCase):
         self.assertEqual(response.json(), {"error": 0})
         self.assertEqual(self._raw(self.shared), b"edited through the link")
 
-    def test_user_with_an_edit_role_saves_through_a_view_link(self):
-        self._roles(self.shared, link_access="view", colleague="edit")
-        self.assertEqual(self._save(self.shared, self.colleague).json(), {"error": 0})
-        self.assertEqual(self._raw(self.shared), b"edited through the link")
+    def test_user_with_a_saving_role_saves_through_a_view_link(self):
+        sheet = self._document("Sheet.xlsx", access_via_link="view")
+        self._roles(sheet, colleague="custom_filter")
+        self.assertEqual(self._save(sheet, self.colleague).json(), {"error": 0})
+        self.assertEqual(self._raw(sheet), b"edited through the link")
 
     def test_own_role_on_a_link_stays_within_the_rights_of_odoo(self):
+        # Without JWT a commenting role saves only with the right to write.
         document = self._document(access_internal="view", access_via_link="view")
-        self._roles(document, link_access="view", colleague="edit")
+        self._roles(document, colleague="commenter")
         self.authenticate("oo_doc_colleague", "oo_doc_colleague")
         self.assertNotIn("callbackUrl", self._config(document)["editorConfig"])
 
@@ -214,7 +216,7 @@ class TestShareLink(DocumentsCase, HttpCase):
         self.assertEqual(self._raw(document), blank("docx"))
 
     def test_own_role_never_lowers_the_link(self):
-        self._roles(self.shared, link_access="edit", colleague="view")
+        self._roles(self.shared, link_access="edit", colleague="commenter")
         self.assertEqual(self._save(self.shared, self.colleague).json(), {"error": 0})
         self.assertEqual(self._raw(self.shared), b"edited through the link")
 
@@ -230,7 +232,7 @@ class TestShareLink(DocumentsCase, HttpCase):
                 self.assertEqual(self._raw(document), b"edited through the link")
 
     def test_view_link_cannot_save(self):
-        self._roles(self.shared, link_access="view", owner="edit")
+        self._roles(self.shared, link_access="view")
 
         response = self._save(self.shared, self.colleague)
 

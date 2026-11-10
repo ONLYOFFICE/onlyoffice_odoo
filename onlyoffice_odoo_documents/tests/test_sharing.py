@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -56,6 +56,42 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
 
         self.assertNotIn(group, wizard.share_access_ids.group_id)
 
+    def test_dialog_hides_a_custom_role_whose_invitation_is_gone(self):
+        # Removed by the autovacuum of expired invitations, or without one at all: the row gives nothing.
+        removed = self._document()
+        removed.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("reviewer", None)}
+        )
+        invitation = removed.access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id)
+        invitation.sudo().expiration_date = "2020-01-01 00:00:00"
+        self.env["documents.access"]._gc_expired()
+        alone = self._document()
+        self.env["onlyoffice.odoo.documents.access.user"].create(
+            {"document_id": alone.id, "user_id": self.colleague.partner_id.id, "role": "commenter"}
+        )
+
+        for document in (removed, alone):
+            with self.subTest(document=document.name):
+                self.assertNotIn(self.colleague.partner_id, self._open(document).share_access_ids.partner_id)
+
+    def test_dialog_shows_the_roles_of_odoo_over_those_older_versions_left_in_the_rows(self):
+        # Older versions copied the roles of Odoo into the rows ("none" on every share): Odoo decides.
+        document = self._document(access_internal="edit", access_via_link="view")
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ("edit", None)}
+        )
+        self.env["onlyoffice.odoo.documents.access"].create(
+            {"document_id": document.id, "internal_users": "none", "link_access": "edit"}
+        )
+        self.env["onlyoffice.odoo.documents.access.user"].create(
+            {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "view"}
+        )
+
+        wizard = self._open(document)
+
+        self.assertEqual((wizard.access_internal, wizard.access_via_link), ("edit", "view"))
+        self.assertEqual(self._role_of(wizard, self.colleague), "edit")
+
     def test_dialog_of_several_documents(self):
         report = self._document()
         sheet = self._document("Sheet.xlsx")
@@ -100,6 +136,32 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
         user_access = self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
         self.assertEqual((user_access.user_id, user_access.role), (self.colleague.partner_id, "reviewer"))
 
+    def test_invitation_with_a_custom_role_mails_the_link_to_the_file(self):
+        document = self._document()
+        contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
+        for role in ("view", "commenter"):
+            with self.subTest(role=role):
+                wizard = self._open(document)
+                wizard.write({"invite_partner_ids": [(6, 0, contact.ids)], "invite_role": role, "invite_notify": True})
+
+                self.assertEqual(wizard.action_invite_members()["params"]["type"], "success")
+
+                mail = self.env["mail.mail"].search([("recipient_ids", "in", contact.ids)], order="id desc", limit=1)
+                self.assertIn(f'href="{document.access_url}?member_signup_token=', mail.body_html)
+        user_access = self.env["onlyoffice.odoo.documents.access.user"].search(
+            [("document_id", "=", document.id), ("user_id", "=", contact.id)]
+        )
+        self.assertEqual(user_access.role, "commenter")
+        self.assertEqual(document.access_ids.filtered(lambda a: a.partner_id == contact).role, "view")
+
+    def test_frozen_copy_cannot_be_shared_with_a_custom_role(self):
+        document = self._document("Frozen.xlsx", access_internal="view")
+        document.sudo().onlyoffice_frozen = True
+        wizard = self._open(document)
+        wizard.write({"invite_partner_ids": [(6, 0, self.colleague.partner_id.ids)], "invite_role": "commenter"})
+        with self.assertRaises(UserError):
+            wizard.action_invite_members()
+
     def test_an_editor_invites_a_contact_with_a_custom_role(self):
         """Whoever can edit the document may share it, as in Documents itself, not only its owner."""
         document = self._document(access_internal="view")
@@ -128,6 +190,7 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
         wizard = self._open(document)
         wizard.write({"invite_partner_ids": [(6, 0, no_email.ids)], "invite_role": "commenter"})
         self.assertEqual(wizard.action_invite_members()["params"]["type"], "warning")
+        self.assertEqual(wizard.invite_role, "commenter", "the dialog keeps the role chosen")
         self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
 
     def test_custom_role_must_fit_the_file_type(self):

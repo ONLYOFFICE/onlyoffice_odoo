@@ -1,6 +1,7 @@
 # Copyright (C) 2026 Ascensio System SIA
 
 from . import documents
+from . import documents_access
 from . import documents_sharing
 from . import ir_attachment
 from . import onlyoffice_odoo_documents

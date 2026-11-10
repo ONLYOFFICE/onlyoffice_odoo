@@ -1,12 +1,15 @@
 # Copyright (C) 2026 Ascensio System SIA
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0-standalone.html).
 
+import importlib.util
 import json
 
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
+from odoo.tools.misc import file_path
 
+from odoo.addons.onlyoffice_odoo.utils import config_utils
 from odoo.addons.onlyoffice_odoo_documents.models.documents import _extract_odoo_metadata_from_xlsx
 
 from .common import XLSX_MIMETYPE, DocumentsCase, blank, make_xlsx, xlsx_with_metadata
@@ -56,25 +59,25 @@ class TestAccessRoles(DocumentsCase, TransactionCase):
     def test_users_read_the_roles_but_cannot_change_them_directly(self):
         """Roles are changed only through advanced_share_save, which checks the right to share first."""
         document = self._document(access_internal="view")
-        self._roles(document, internal_users="view", owner="edit")
+        self._roles(document, internal_users="commenter", colleague="reviewer")
         Access = self.env["onlyoffice.odoo.documents.access"].with_user(self.colleague)
         AccessUser = self.env["onlyoffice.odoo.documents.access.user"].with_user(self.colleague)
         AccessGroup = self.env["onlyoffice.odoo.documents.access.group"].with_user(self.colleague)
-        own_role = {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "edit"}
+        own_role = {"document_id": document.id, "user_id": self.owner.partner_id.id, "role": "commenter"}
         group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
-        group_role = {"document_id": document.id, "group_id": group.id, "role": "edit"}
+        group_role = {"document_id": document.id, "group_id": group.id, "role": "commenter"}
         attempts = {
             "create a role": lambda: AccessUser.create(own_role),
             "create a group role": lambda: AccessGroup.create(group_role),
             "raise the internal role": lambda: Access.search([("document_id", "=", document.id)]).write(
-                {"internal_users": "edit"}
+                {"internal_users": "custom_filter"}
             ),
             "remove a role": lambda: AccessUser.search([("document_id", "=", document.id)]).unlink(),
         }
         for attempt, action in attempts.items():
             with self.subTest(attempt=attempt), self.assertRaises(AccessError):
                 action()
-        self.assertEqual(AccessUser.search([("document_id", "=", document.id)]).role, "edit")
+        self.assertEqual(AccessUser.search([("document_id", "=", document.id)]).role, "reviewer")
 
     def test_attachment_version_starts_at_one(self):
         self.assertEqual(self._document().attachment_id.oo_attachment_version, 1)
@@ -99,21 +102,38 @@ class TestAdvancedShare(DocumentsCase, TransactionCase):
             {
                 "document_id": self.document.id,
                 "internal_users": "commenter",
-                "link_access": "view",
+                "link_access": "form_filling",
                 "user_accesses": [{"user_id": partner.id, "role": "reviewer"}],
             }
         )
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", self.document.id)])
-        self.assertEqual((access.internal_users, access.link_access), ("commenter", "view"))
+        self.assertEqual((access.internal_users, access.link_access), ("commenter", "form_filling"))
         self.assertEqual(self._user_roles(), {partner: "reviewer"})
+
+    def test_roles_of_odoo_are_left_to_odoo(self):
+        # It is called by RPC too: none / view / edit are never stored, a user given one loses the stored role.
+        partner = self.colleague.partner_id
+        vals = {"document_id": self.document.id, "user_accesses": [{"user_id": partner.id, "role": "reviewer"}]}
+        self.share.advanced_share_save(vals)
+        self.share.advanced_share_save(
+            {
+                "document_id": self.document.id,
+                "internal_users": "none",
+                "link_access": "edit",
+                "user_accesses": [{"user_id": partner.id, "role": "view"}],
+            }
+        )
+        access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", self.document.id)])
+        self.assertEqual((access.internal_users, access.link_access), (False, False))
+        self.assertEqual(self._user_roles(), {})
 
     def test_saving_again_updates_roles_and_removes_users(self):
         partner = self.colleague.partner_id
-        vals = {"document_id": self.document.id, "internal_users": "view", "link_access": "none"}
+        vals = {"document_id": self.document.id, "internal_users": "commenter"}
         self.share.advanced_share_save({**vals, "user_accesses": [{"user_id": partner.id, "role": "reviewer"}]})
 
-        self.share.advanced_share_save({**vals, "user_accesses": [{"user_id": partner.id, "role": "edit"}]})
-        self.assertEqual(self._user_roles(), {partner: "edit"})
+        self.share.advanced_share_save({**vals, "user_accesses": [{"user_id": partner.id, "role": "commenter"}]})
+        self.assertEqual(self._user_roles(), {partner: "commenter"})
         self.assertEqual(
             self.env["onlyoffice.odoo.documents.access"].search_count([("document_id", "=", self.document.id)]), 1
         )
@@ -127,7 +147,7 @@ class TestAdvancedShare(DocumentsCase, TransactionCase):
                 "document_id": self.document.id,
                 "user_accesses": [
                     {"user_id": self.colleague.partner_id.id, "role": False},
-                    {"user_id": 999_999_999, "role": "edit"},
+                    {"user_id": 999_999_999, "role": "commenter"},
                 ],
             }
         )
@@ -188,7 +208,13 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
         shared = self._document()
         group = self.env["res.group.functional"].create({"name": "OO Group", "user_ids": [(6, 0, self.colleague.ids)]})
         for document in (private, shared):
-            self._roles(document, internal_users="commenter", colleague="reviewer")
+            # The rows alone: an invitation would open the private document.
+            self.env["onlyoffice.odoo.documents.access"].create(
+                {"document_id": document.id, "internal_users": "commenter"}
+            )
+            self.env["onlyoffice.odoo.documents.access.user"].create(
+                {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "reviewer"}
+            )
             self.env["onlyoffice.odoo.documents.access.group"].create(
                 {"document_id": document.id, "group_id": group.id, "role": "commenter"}
             )
@@ -251,6 +277,145 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
         document = self._document("Form.pdf")
         self.assertFalse(document.thumbnail)
         self.assertFalse(document.thumbnail_status)
+
+
+@tagged("post_install", "-at_install")
+class TestRolesOfMembers(DocumentsCase, TransactionCase):
+    """A role of a user comes with their membership in Odoo; the roles of Odoo left in the rows by older versions."""
+
+    def setUp(self):
+        super().setUp()
+        config_utils.set_jwt_secret(self.env, "ds-secret")  # a commenting role saves with the right to read
+        self.Roles = self.env["onlyoffice.odoo.documents"]
+
+    def _role(self, document, user=None):
+        user = user or self.colleague
+        return self.Roles._get_user_role(document, user, document.with_user(user).has_access("write"))
+
+    def _invite(self, document, role, expiration_date=False):
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: [role, False]}
+        )
+        if expiration_date:
+            self._invitation(document).expiration_date = expiration_date
+
+    def _invitation(self, document):
+        return document.access_ids.filtered(lambda a: a.partner_id == self.colleague.partner_id)
+
+    def _own_rows(self, document):
+        return self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)])
+
+    def test_an_invitation_removed_by_the_autovacuum_gives_no_role(self):
+        document = self._document(access_internal="view")
+        self._invite(document, "commenter", "2020-01-01 00:00:00")
+        self.assertEqual(self._role(document), "view", "expired")
+
+        self.env["documents.access"]._gc_expired()
+
+        self.assertFalse(self._invitation(document))
+        self.assertEqual(self._role(document), "view")
+        self.assertFalse(self._own_rows(document), "the role goes with the invitation")
+
+    def test_an_expired_invitation_given_a_new_date_gets_its_role_back(self):
+        document = self._document(access_internal="view")
+        self._invite(document, "commenter", "2020-01-01 00:00:00")
+        self._invitation(document).expiration_date = "2999-01-01 00:00:00"
+        self.assertEqual(self._role(document), "commenter")
+
+    def test_a_member_removed_from_the_folder_loses_the_roles_in_it(self):
+        folder = self.env["documents.document"].create(
+            {"name": "OO Team", "type": "folder", "access_internal": "none", "owner_id": self.owner.id}
+        )
+        document = self._document(folder_id=folder.id, access_internal="none")
+        self._invite(document, "commenter")
+        self.assertEqual(self._role(document), "commenter")
+
+        # Odoo removes the member from the folder and everything in it, without the ORM.
+        folder.action_update_access_rights(partners={self.colleague.partner_id.id: [False, False]})
+        self.assertFalse(self._own_rows(document))
+        # Invited to the folder again, with a role of Odoo: the former role does not come back.
+        folder.action_update_access_rights(partners={self.colleague.partner_id.id: ["view", False]})
+        self.assertEqual(self._role(document), "view")
+
+    def test_a_role_on_the_folder_leaves_the_files_odoo_leaves(self):
+        # Odoo gives the role of the folder only to what the user who shares it may edit: a file they only view keeps
+        # its members, and their ONLYOFFICE roles.
+        folder = self.env["documents.document"].create(
+            {"name": "OO Team", "type": "folder", "access_internal": "none", "owner_id": self.owner.id}
+        )
+        document = self._document(folder_id=folder.id, access_internal="none")
+        folder.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ["edit", False]}
+        )
+        document.with_user(self.owner).action_update_access_rights(
+            partners={self.colleague.partner_id.id: ["view", False]}, no_propagation=True
+        )
+        contact = self.env["res.partner"].create({"name": "OO Contact", "email": "oo.contact@example.com"})
+        document.with_user(self.owner).action_update_access_rights(partners={contact.id: ["commenter", False]})
+
+        folder.with_user(self.colleague).action_update_access_rights(partners={contact.id: ["view", False]})
+
+        row = self._own_rows(document).filtered(lambda r: r.user_id == contact)
+        self.assertEqual(row.role, "commenter")
+
+    def test_a_new_role_on_the_folder_replaces_the_roles_in_it(self):
+        # Odoo gives the member the role of the folder in everything in it: an ONLYOFFICE role set before on a file
+        # in there gives way, in the trash too.
+        folder = self.env["documents.document"].create(
+            {"name": "OO Team", "type": "folder", "access_internal": "none", "owner_id": self.owner.id}
+        )
+        document = self._document(folder_id=folder.id, access_internal="none")
+        trashed = self._document(folder_id=folder.id, access_internal="none")
+        for file in (document, trashed):
+            self._invite(file, "commenter")
+        trashed.action_archive()
+
+        folder.action_update_access_rights(partners={self.colleague.partner_id.id: ["edit", False]})
+
+        self.assertEqual(self._role(document), "edit")
+        self.assertFalse(self._own_rows(document) | self._own_rows(trashed))
+
+    def test_a_role_without_a_membership_gives_nothing(self):
+        document = self._document(access_internal="view")
+        self.env["onlyoffice.odoo.documents.access.user"].create(
+            {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "commenter"}
+        )
+        self.assertEqual(self._role(document), "view")
+
+    def test_roles_of_odoo_left_in_the_rows_are_not_used(self):
+        # Older versions copied the roles of Odoo into the rows ("none" on every share): Odoo decides.
+        document = self._document(access_internal="edit", access_via_link="view")
+        self._invite(document, "edit")
+        self.env["onlyoffice.odoo.documents.access"].create(
+            {"document_id": document.id, "internal_users": "none", "link_access": "edit"}
+        )
+        self.env["onlyoffice.odoo.documents.access.user"].create(
+            {"document_id": document.id, "user_id": self.colleague.partner_id.id, "role": "view"}
+        )
+        self.assertEqual(self._role(document), "edit")
+        # The Share dialog of Odoo 19 shows the roles of Odoo too (TestSharingWizard).
+
+    def test_update_clears_the_roles_of_odoo_from_the_rows(self):
+        document = self._document()
+        Access = self.env["onlyoffice.odoo.documents.access"]
+        AccessUser = self.env["onlyoffice.odoo.documents.access.user"]
+        defaults = Access.create({"document_id": document.id, "internal_users": "none", "link_access": "view"})
+        kept = Access.create({"document_id": self._document().id, "internal_users": "commenter", "link_access": "edit"})
+        partner = self.colleague.partner_id.id
+        stale = AccessUser.create({"document_id": document.id, "user_id": partner, "role": "edit"})
+        own = AccessUser.create({"document_id": document.id, "user_id": self.owner.partner_id.id, "role": "reviewer"})
+        migration = importlib.util.spec_from_file_location(
+            "post_migrate", file_path("onlyoffice_odoo_documents/migrations/0.0.0/post-migrate.py")
+        )
+        script = importlib.util.module_from_spec(migration)
+        migration.loader.exec_module(script)
+
+        for _run in range(2):
+            script.migrate(self.env.cr, "18.0.5.3.0")
+            self.env.invalidate_all()
+            self.assertEqual((defaults.internal_users, defaults.link_access), (False, False))
+            self.assertEqual((kept.internal_users, kept.link_access), ("commenter", False))
+            self.assertEqual((stale.exists(), own.exists()), (AccessUser, own))
 
 
 @tagged("post_install", "-at_install")

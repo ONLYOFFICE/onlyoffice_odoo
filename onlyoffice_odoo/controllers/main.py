@@ -132,6 +132,8 @@ class OnlyofficeConnector(http.Controller):
         document = None
         if document_id:
             document = request.env["documents.document"].browse(int(document_id))
+            # A shortcut opens the document it points to, as in Odoo.
+            document = document.sudo().shortcut_document_id.sudo(False) or document
             attachment_id = document.attachment_id.id
 
         attachment = self.get_attachment(attachment_id)
@@ -159,7 +161,8 @@ class OnlyofficeConnector(http.Controller):
         # The record of the attachment too: for a document, the right to write it in Odoo.
         can_write = own_access and attachment.has_access("write") and file_utils.can_edit(filename)
 
-        config = self.prepare_editor_values(attachment, access_token, can_write)
+        # A document renamed in Odoo keeps the former name on its attachment.
+        config = self.prepare_editor_values(attachment, access_token, can_write, title=document and document.name)
         _logger.info("POST /onlyoffice/editor/get_config - success: %s", attachment_id)
         return config
 
@@ -289,13 +292,8 @@ class OnlyofficeConnector(http.Controller):
                     if save_as_superuser:
                         # Only the file: the user stays its author.
                         document, attachment = document.sudo(), attachment.sudo()
-                    document.write(
-                        {
-                            "name": attachment.name,
-                            "raw": datas,
-                            "mimetype": guess_type(file_url)[0],
-                        }
-                    )
+                    # The file only: the name of the document may have been changed in Odoo since it was opened.
+                    document.write({"raw": datas, "mimetype": guess_type(file_url)[0]})
 
                     document.sudo().message_post(body=_("Document edited by %(user)s", user=user.name))
                 else:
@@ -314,7 +312,8 @@ class OnlyofficeConnector(http.Controller):
             headers=[("Content-Type", "application/json")],
         )
 
-    def prepare_editor_values(self, attachment, access_token, can_write):
+    def prepare_editor_values(self, attachment, access_token, can_write, title=None):
+        """The values of the editor page; ``title`` is the name shown, the name of the attachment by default."""
         _logger.info("prepare_editor_values - attachment: %s", attachment.id)
         data = attachment.read(["id", "checksum", "public", "name", "access_token"])[0]
         key = str(data["id"]) + str(data["checksum"])
@@ -322,6 +321,7 @@ class OnlyofficeConnector(http.Controller):
         odoo_url = config_utils.get_base_or_odoo_url(request.env)
 
         filename = self.filter_xss(data["name"])
+        title = (self.filter_xss(title) if title else "") or filename
 
         security_token = jwt_utils.encode_payload(
             request.env, {"id": request.env.user.id}, config_utils.get_internal_jwt_secret(request.env)
@@ -347,7 +347,7 @@ class OnlyofficeConnector(http.Controller):
             "type": "mobile" if is_mobile else "desktop",
             "documentType": document_type,
             "document": {
-                "title": filename,
+                "title": title,
                 "url": odoo_url + "onlyoffice/file/content/" + path_part,
                 "fileType": file_utils.get_file_ext(filename),
                 "key": key,
@@ -381,7 +381,7 @@ class OnlyofficeConnector(http.Controller):
         _logger.info("prepare_editor_values - success: %s", attachment.id)
 
         return {
-            "docTitle": filename,
+            "docTitle": title,
             "docIcon": f"/onlyoffice_odoo/static/description/editor_icons/{document_type}.ico",
             "docApiJS": f"{docserver_url}web-apps/apps/api/documents/api.js?shardkey={key}",
             "customFunctionsJS": file_utils.get_custom_functions_url(),
