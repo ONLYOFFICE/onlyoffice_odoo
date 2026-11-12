@@ -1,91 +1,98 @@
 # ONLYOFFICE Modules for Odoo
 
-This repository contains three Odoo addons that connect Odoo with ONLYOFFICE Docs (Document Server). The same modules
-exist for Odoo 17, 18, and 19 on separate code lines.
+Three Odoo addons that connect Odoo with ONLYOFFICE Docs (Document Server). The same addons live on one code line per
+Odoo version. Project background, known problems and history are in `HANDOVER.md`.
 
-**Source of truth for the version is the manifest.** Read the version prefix in `__manifest__.py` (`17.0.x`, `18.0.x`,
-`19.0.x`) — for example in `onlyoffice_odoo/__manifest__.py` — and apply only patterns valid for that version (see the
-version tables in the skills and `.claude/skills/odoo-migration-17-18-19/SKILL.md`).
+| Odoo | Development branch | Release branch       |
+| ---- | ------------------ | -------------------- |
+| 17   | `develop`          | `17.0`               |
+| 18   | `feature/18.0`     | `18.0`               |
+| 19   | `feature/19.0`     | `19.0`               |
+| 20   | `feature/20.0`     | — (not released yet) |
 
-Never guess the version from a branch name alone; if the manifest prefix and the expected target disagree, stop and ask.
+**The version comes from the manifest.** Read the prefix of `version` in `<addon>/__manifest__.py` (`17.0.x`, `18.0.x`,
+…) and use only the APIs of that Odoo version (`.claude/skills/odoo-migration-17-18-19/SKILL.md`). If the prefix and the
+expected target disagree, stop and ask.
 
-Read this file first, then load the matching skill from `.claude/skills/` before you change code.
+## Structure
 
-## Modules
+- `onlyoffice_odoo/` — base connector: editor for `ir.attachment`, settings, JWT, save callback, preview. Key code:
+  `controllers/main.py` (`OnlyofficeConnector`, `onlyoffice_request`, `onlyoffice_urlopen`), `utils/`.
+- `onlyoffice_odoo_documents/` — Enterprise Documents: create, share roles, links, conversion, Odoo spreadsheet ↔ XLSX
+  with `ODOO_*` formulas (`controllers/spreadsheet_*.py`). Depends on Enterprise `documents`, `documents_spreadsheet`.
+  Differs the most between versions.
+- `onlyoffice_odoo_templates/` — PDF form templates filled through docbuilder, `onlyoffice-pdf` report.
+- `e2e/` — Playwright tests against a live Docs; `.github/workflows/` — `lint.yml`, `test.yml`, `e2e.yml`.
+- `onlyoffice_odoo/static/assets/` — vendored formats list and blank files; never edit by hand.
+- `CHANGELOG.md` (base), `CHANGELOG documents.md`, `CHANGELOG templates.md`.
 
-Three independent Odoo addons, each with its own `controllers/models/security/ static/tests`, connected only through
-`depends` in the manifest. Work on one module at a time and master it—don't assume that changes to one module require
-changes to others, unless specified in the assignment or explicitly required.
+## Commands
 
-### `onlyoffice_odoo` — base connector
+```bash
+# setup (once)
+npm install && python -m venv .venv && .venv/Scripts/pip install -e .[dev] && pre-commit install
 
-Opens office files from `ir.attachment` in the ONLYOFFICE editor. Handles settings, JWT, the save callback, and the
-read-only preview. Depends on `base`, `mail`. The other two modules both depend on this one and extend its controllers
-rather than duplicating routes.
+# lint, as CI
+pre-commit run -a
+pylint --rcfile=.pylintrc onlyoffice_odoo onlyoffice_odoo_documents onlyoffice_odoo_templates
+ruff check onlyoffice_odoo onlyoffice_odoo_documents onlyoffice_odoo_templates   # only addon folders
 
-- The user opens a file → a controller builds an editor config (document URL, permissions, callback URL) and renders the
-  `onlyoffice_odoo.onlyoffice_editor` QWeb page, which loads `api.js` from the Document Server.
-- The Document Server downloads the file from Odoo (`/onlyoffice/file/content/<id>`); the user edits it in the browser.
-- On save, the Document Server POSTs to `/onlyoffice/editor/callback/<id>` (status 2/3); Odoo downloads the result and
-  writes it back to the attachment.
-- Two JWT layers protect this: the Document Server secret (config) and an internal secret used for `oo_security_token`
-  (identifies the Odoo user on public routes).
-- Key code: `onlyoffice_odoo/controllers/main.py` (`OnlyofficeConnector`, `onlyoffice_request`, `onlyoffice_urlopen`),
-  `onlyoffice_odoo/utils/` (`config_utils`, `jwt_utils`, `file_utils`, `url_utils`).
-- Skill: `.claude/skills/onlyoffice-odoo-base/SKILL.md`.
+# unit tests in a running Odoo container (needs a DB; add --test-tags ...,external_docserver and
+# ONLYOFFICE_TEST_LIVE_DOCSERVER=1 ONLYOFFICE_TEST_DOCSERVER_URL=http://<docs>/ for live Docs tests)
+odoo -d <db> -u onlyoffice_odoo,onlyoffice_odoo_templates --test-enable \
+  --test-tags /onlyoffice_odoo,/onlyoffice_odoo_templates --stop-after-init --no-http
 
-### `onlyoffice_odoo_documents` — Enterprise Documents integration
+# e2e: own Docker stack (Odoo on 8069, Docs on 8080 must be free)
+cd e2e && npm run setup   # once
+cd e2e && npm run e2e     # stack up → tests → stack down; report: npm run report
+```
 
-Open/create/share files from the Enterprise `documents` app, per-document access roles, attachment versioning. Depends
-on `onlyoffice_odoo`, `documents`. The `documents` app differs a lot between 17/18/19 — **this module differs the most
-between Odoo-version code lines.**
+`onlyoffice_odoo_documents` needs Odoo Enterprise of the same version in the addons path. On 17 it has no tests; on
+18–20 add it to `-u` and `--test-tags`. After changing Python, restart Odoo; after changing data/XML/assets, `-u` the
+addon.
 
-- Key code: `onlyoffice_odoo_documents/controllers/controllers.py` (documents
-  - share routes, access roles), `models/onlyoffice_documents_access*.py`.
-- Skill: `.claude/skills/onlyoffice-odoo-documents/SKILL.md`.
+## Conventions
 
-### `onlyoffice_odoo_templates` — fillable PDF templates
+- Code, comments, docstrings, commit messages in simple English. Commit message: one line, `fix: …` / `feat: …` /
+  `test: …` / `docs: …` / `chore: …`. No bug numbers or tracker links in code and tests.
+- Fixes start on 17 (`develop`, through a PR from `fix/17.0-<topic>`), then merge upward version by version: `develop` →
+  `feature/18.0` → `feature/19.0` → `feature/20.0`, adapting each to its version. On 18–20 there are no PRs; merge and
+  commit directly in `feature/<v>.0`.
+- Every behavior change gets a test (on 18+ also for documents) and a line in the matching `CHANGELOG*.md` under
+  `## Unreleased`.
+- Talk to Docs only through `onlyoffice_request` / `onlyoffice_urlopen`. Build Odoo URLs with
+  `config_utils.get_base_or_odoo_url(env)`. Compare URLs by parsing, never with `startswith`.
+- Public routes must check `oo_security_token` (and the Docs JWT when enabled). Never trust a bare id.
+- Every new model needs `security/ir.model.access.csv` entries (20: `ir.access.csv`).
+- Duplicated paths: save callback (base + documents share callback), template filling (templates controller +
+  `ir_actions_report.py`). Change both.
+- When a change makes a rule in `.claude/skills/` wrong, fix the skill in the same change.
 
-Builds PDFs from Odoo record data through the Document Server docbuilder service; adds the `onlyoffice-pdf` report
-converter. Depends on `onlyoffice_odoo`, `web`.
+## Never
 
-- The module sends docbuilder scripts to `<docserver>/docbuilder`; the Document Server calls back to public routes to
-  fetch the script and the template file, then returns URLs of the generated PDFs.
-- Key code: `onlyoffice_odoo_templates/controllers/controllers.py` (fill flow, field mapping),
-  `controllers/report_controller.py` (`onlyoffice-pdf` converter).
-- Skill: `.claude/skills/onlyoffice-odoo-templates/SKILL.md`.
+- Change `version` in `__manifest__.py` or the released `CHANGELOG*` headings outside a release
+  (`.claude/skills/release/SKILL.md`).
+- Add new `env.cr.commit()` calls (the existing three are documented in `HANDOVER.md`).
+- Force-push or rewrite `develop`, `feature/*`, or release branches. Push only when asked.
+- Put secrets, customer data, or internal-only information in the repository: every branch is mirrored to the public
+  GitHub repository.
+- Run commands that touch a database, install addons, or call a live Docs without confirming with the user.
 
 ## Skills
 
-Always start with the core skill, then load the skill for the module you are actually editing:
+Start with `.claude/skills/onlyoffice-odoo-core/SKILL.md`, then load the skill of what you touch:
 
-| Task                                            | Skill                                               |
-| ----------------------------------------------- | --------------------------------------------------- |
-| Any work in this repo (start here)              | `.claude/skills/onlyoffice-odoo-core/SKILL.md`      |
-| Editing `onlyoffice_odoo`                       | `.claude/skills/onlyoffice-odoo-base/SKILL.md`      |
-| Editing `onlyoffice_odoo_documents`             | `.claude/skills/onlyoffice-odoo-documents/SKILL.md` |
-| Editing `onlyoffice_odoo_templates`             | `.claude/skills/onlyoffice-odoo-templates/SKILL.md` |
-| Naming/comment/logging style for new code       | `.claude/skills/odoo-code-style/SKILL.md`           |
-| HTTP routes, JWT, requests to Document Server   | `.claude/skills/odoo-controllers-jwt/SKILL.md`      |
-| Attachments, binary data, file types, streaming | `.claude/skills/odoo-attachments-files/SKILL.md`    |
-| OWL components, assets, JS/XML frontend         | `.claude/skills/odoo-owl-assets/SKILL.md`           |
-| Access rights, groups, record rules, route auth | `.claude/skills/odoo-security/SKILL.md`             |
-| Writing or fixing tests                         | `.claude/skills/odoo-testing/SKILL.md`              |
-| Porting changes to 18.0 / 19.0 branches         | `.claude/skills/odoo-migration-17-18-19/SKILL.md`   |
-| Reviewing a change before merge                 | `.claude/skills/odoo-code-review/SKILL.md`          |
-
-## Workflow rules
-
-- **Work where you already are**: fix bugs and add features directly on the Odoo version detected from the
-  `__manifest__.py` prefix. Do not assume work must start on 17.0 — porting to another version is a separate task, see
-  `.claude/skills/odoo-migration-17-18-19/SKILL.md`.
-- Do not reinvent: the Odoo core, Enterprise, and OCA sources are not part of this repository and may not be available
-  locally. Before writing new code that depends on framework/Enterprise/OCA behavior, ask the user whether they have
-  those sources and where — use them when available instead of guessing.
-- Code, comments, and docstrings in English. Keep changes small and scoped.
-- Every new model needs `security/ir.model.access.csv` entries.
-- Never change the module version in `__manifest__.py` — versioning is a separate release process. Do update the
-  matching `CHANGELOG*.md` when behavior changes.
-- Write new code compliant with the repo's lint rules: `ruff` + `pylint` (see `.ruff.toml`, `.pylintrc`), JS: `eslint` +
-  `prettier`.
-- Ask before running anything that needs a database or a live Document Server.
+| Task                              | Skill                       |
+| --------------------------------- | --------------------------- |
+| `onlyoffice_odoo`                 | `onlyoffice-odoo-base`      |
+| `onlyoffice_odoo_documents`       | `onlyoffice-odoo-documents` |
+| `onlyoffice_odoo_templates`       | `onlyoffice-odoo-templates` |
+| Naming, comments, logging         | `odoo-code-style`           |
+| Routes, JWT, requests to Docs     | `odoo-controllers-jwt`      |
+| Attachments, binary data, formats | `odoo-attachments-files`    |
+| OWL, assets, JS/XML               | `odoo-owl-assets`           |
+| Access rights, groups, route auth | `odoo-security`             |
+| Tests                             | `odoo-testing`              |
+| Porting between versions          | `odoo-migration-17-18-19`   |
+| Review before merge               | `odoo-code-review`          |
+| Release and Odoo Apps publication | `release`                   |
