@@ -61,8 +61,9 @@ Before returning any file:
 
 ## Supported formats
 
-Formats are data, not code: `onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json` (vendored
-submodule; do not hand-edit — update the submodule). Each entry has `name` (extension), `type`
+Formats are data, not code: `onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json` (a
+hard-committed copy of `ONLYOFFICE/document-formats`; never edit by hand, update it with `update-assets`). Each entry
+has `name` (extension), `type`
 (`word`/`cell`/`slide`/`pdf`/`diagram`), `actions` (`view`, `edit`, `fill`, ...), `convert` (target extensions) and
 `mime`.
 
@@ -81,8 +82,9 @@ Never inline extension lists in controllers or components.
 `file_utils.get_default_file_template(lang, ext)` returns the bytes of
 `onlyoffice_odoo/static/assets/document_templates/<locale>/new.<ext>` for `docx`, `xlsx`, `pptx` and `pdf` (blank PDF
 form). Locale resolution: exact code (`pt-BR`, `zh-CN`), then language prefix (`pt`), then `default`. Used by
-`file/create` (documents) and by template creation without a file (templates). New languages: add a folder with all four
-files and a mapping entry in `locale_path`.
+`file/create` (documents) and by template creation without a file (templates). The folders are a hard-committed copy of
+`ONLYOFFICE/document-templates`: new languages come from there (`update-assets`), then get a mapping entry in
+`locale_path`.
 
 ## Reading uploaded XLSX (documents module)
 

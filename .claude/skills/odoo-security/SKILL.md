@@ -116,6 +116,14 @@ Token details: `odoo-controllers-jwt`.
   - `file_open(filter_ext=...)`).
 - Never log secrets or tokens; logging URLs and ids is fine.
 
+## Address checks
+
+- Build Odoo URLs with `config_utils.get_base_or_odoo_url(env)`, never from `request.httprequest.host`.
+- Compare URLs by parsing (`urlparse`: scheme, host, port, path on a directory boundary), never with `startswith`.
+- Try every new address check against host spoofing (`host@attacker.com`), redirects, 4xx answers and timeouts.
+- Do not reject private or local Docs addresses: Docs often runs on one legitimately (Docker, LAN). If SSRF hardening
+  is needed, put it in one shared URL-check helper.
+
 ## Final security checklist (run for every change)
 
 - [ ] New models have ACL lines (and the XML twin for templates); new menus/actions restricted to the right groups
@@ -124,5 +132,6 @@ Token details: `odoo-controllers-jwt`.
 - [ ] JWT: incoming tokens decoded and used instead of raw body
 - [ ] No secrets (JWT secrets, tokens) in logs or error messages
 - [ ] User-controlled strings sanitized before entering configs, filenames, or docbuilder scripts
+- [ ] New address checks parse the URL and were tried against spoofing, redirects, 4xx and timeouts
 - [ ] Access errors raise `Forbidden`/`AccessError`, not generic 200 responses
 - [ ] Role model respected: a role never grants more than Odoo write access allows

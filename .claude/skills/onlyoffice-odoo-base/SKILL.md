@@ -104,8 +104,8 @@ the base callback only touches it inside the `documents.document` branch.
   `decode_token(env, token, secret=None)`. `secret=None` means the Document Server secret.
 - `url_utils.py` — `replace_public_url_to_internal(env, url)` for server-to-server calls (Docker networks).
 - `format_utils.py` — `Format(name, type, actions, convert, mime)` and `get_supported_formats()` which parses
-  `static/assets/document_formats/onlyoffice-docs-formats.json` (vendored submodule with its own LICENSE/CHANGELOG; do
-  not edit by hand).
+  `static/assets/document_formats/onlyoffice-docs-formats.json` (copy of `ONLYOFFICE/document-formats` with its own
+  LICENSE/CHANGELOG; do not edit by hand, see `update-assets`).
 - `file_utils.py` — `get_file_ext`, `get_file_type` (word/cell/slide/pdf/diagram), `can_view`, `can_edit`,
   `can_fill_form`, `get_mime_by_ext` (docx/xlsx/pptx/pdf only), `get_file_title_without_ext`, and
   `get_default_file_template(lang, ext)` → bytes of `static/assets/document_templates/<locale>/new.<ext>`
@@ -160,8 +160,8 @@ Assets (`web.assets_backend`): `static/src/actions/*`, `static/src/components/*/
 Repo-wide rules (Document Server calls only through the helpers, token checks on public routes, URL building, no new
 `cr.commit()`) are in `onlyoffice-odoo-core` and apply here first. In addition:
 
-- Add new formats to the vendored JSON (submodule update), never as hard-coded lists; new blank templates go to
-  `static/assets/document_templates/<locale>/`.
+- Formats and blank templates come from their upstream repositories, never as hard-coded lists or hand-edited files:
+  follow `update-assets`.
 - New settings: add the constant, a `get_*`/`set_*` pair, the `res.config.settings` field, `get_values`/`set_values`
   wiring, and the settings view — and decide whether `settings_changed` should trigger validation.
 - Anything shown to the Document Server (filename, title) goes through `filter_xss`.
