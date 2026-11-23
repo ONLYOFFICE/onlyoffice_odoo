@@ -1,7 +1,7 @@
 # ONLYOFFICE Modules for Odoo
 
 Three Odoo addons that connect Odoo with ONLYOFFICE Docs (Document Server). The same addons live on one code line per
-Odoo version. Project background, known problems and history are in `HANDOVER.md`.
+Odoo version. Supported versions, infrastructure, publishing, tech debt and plans are in `MAINTAINING.md`.
 
 | Odoo | Development branch | Release branch       |
 | ---- | ------------------ | -------------------- |
@@ -23,7 +23,9 @@ expected target disagree, stop and ask.
   Differs the most between versions.
 - `onlyoffice_odoo_templates/` — PDF form templates filled through docbuilder, `onlyoffice-pdf` report.
 - `e2e/` — Playwright tests against a live Docs; `.github/workflows/` — `lint.yml`, `test.yml`, `e2e.yml`.
-- `onlyoffice_odoo/static/assets/` — vendored formats list and blank files; never edit by hand.
+- `onlyoffice_odoo/static/assets/` — formats list and blank new-file templates, hard-committed copies of the shared
+  `ONLYOFFICE/document-formats` and `ONLYOFFICE/document-templates` repositories (the Odoo Apps Store does not fetch
+  submodules). Never edit by hand: fix upstream, then update with the `update-assets` skill.
 - `CHANGELOG.md` (base), `CHANGELOG documents.md`, `CHANGELOG templates.md`.
 
 ## Commands
@@ -35,7 +37,7 @@ npm install && python -m venv .venv && .venv/Scripts/pip install -e .[dev] && pr
 # lint, as CI
 pre-commit run -a
 pylint --rcfile=.pylintrc onlyoffice_odoo onlyoffice_odoo_documents onlyoffice_odoo_templates
-ruff check onlyoffice_odoo onlyoffice_odoo_documents onlyoffice_odoo_templates   # only addon folders
+ruff check onlyoffice_odoo onlyoffice_odoo_documents onlyoffice_odoo_templates   # only addon folders, not .enterprise/
 
 # unit tests in a running Odoo container (needs a DB; add --test-tags ...,external_docserver and
 # ONLYOFFICE_TEST_LIVE_DOCSERVER=1 ONLYOFFICE_TEST_DOCSERVER_URL=http://<docs>/ for live Docs tests)
@@ -71,8 +73,9 @@ addon.
 ## Never
 
 - Change `version` in `__manifest__.py` or the released `CHANGELOG*` headings outside a release
-  (`.claude/skills/release/SKILL.md`).
-- Add new `env.cr.commit()` calls (the existing three are documented in `HANDOVER.md`).
+  (`.claude/skills/release/SKILL.md`). Without a bump, existing databases are not upgraded: test new fields and access
+  rules with `-u`.
+- Add new `env.cr.commit()` calls (the existing three are listed in `.claude/skills/onlyoffice-odoo-core/SKILL.md`).
 - Force-push or rewrite `develop`, `feature/*`, or release branches. Push only when asked.
 - Put secrets, customer data, or internal-only information in the repository: every branch is mirrored to the public
   GitHub repository.
@@ -96,3 +99,4 @@ Start with `.claude/skills/onlyoffice-odoo-core/SKILL.md`, then load the skill o
 | Porting between versions          | `odoo-migration-17-18-19`   |
 | Review before merge               | `odoo-code-review`          |
 | Release and Odoo Apps publication | `release`                   |
+| Formats list, new-file templates  | `update-assets`             |

@@ -38,8 +38,9 @@ Read the current numbers from the manifests and `CHANGELOG*.md`; the table only 
 ## 2. Bump versions and changelogs (on the source branch)
 
 1. `__manifest__.py` of every released addon: `"version": "<series>.<x>.<y>.<z>"` — keep the series prefix
-   (`17.0.4.5.0`); the store expects it. Patch for fixes only, minor for features, major for breaking changes (e.g. the
-   controller rename above, data migrations).
+   (`17.0.4.5.0`); the store expects it. The prefix is on the development branches since July 2026; the releases before
+   were made without it. Patch for fixes only, minor for features, major for breaking changes (e.g. the controller
+   rename above, data migrations).
 2. `CHANGELOG.md` (base), `CHANGELOG documents.md`, `CHANGELOG templates.md`: rename `## Unreleased` (or an empty `##`)
    to `## <x>.<y>.<z>`; sections `## Added` / `## Changed` / `## Fixed`, user-facing wording. Remove empty sections.
 3. Migrations run only when the version changes. On 18–20 `onlyoffice_odoo_documents/migrations/0.0.0/post-migrate.py`
@@ -63,8 +64,27 @@ Read the current numbers from the manifests and `CHANGELOG*.md`; the table only 
    `onlyoffice_odoo,onlyoffice_odoo_templates,onlyoffice_odoo_documents` — no errors or warnings in the log.
 4. Upgrade: a database with the previous release installed, check out the new branch, `-u` all three addons — no errors;
    existing share roles and templates still work.
-5. The manual checklist in `HANDOVER.md` (section 8) on that database, as `admin` and as `demo`.
+5. The manual checklist below on that database, as `admin` and as `demo` (a user without admin rights).
 6. Every `depends` is either core/Enterprise Odoo or an addon published from this repository.
+
+Manual checklist (Odoo of that version with Enterprise, Docs Developer Edition):
+
+- [ ] Settings: save the Docs address, inner address and Odoo address. The check passes, and a wrong address is
+      rejected.
+- [ ] Discuss: open docx / xlsx / pptx in ONLYOFFICE, type, close. Within about a minute the attachment holds the text.
+- [ ] Documents: open a docx, type, close. The file is saved and a new version appears.
+- [ ] Documents: create a docx / xlsx / pptx / pdf, and create one from the form gallery.
+- [ ] Documents: convert docx → pdf, with "Save to Documents" and without (download).
+- [ ] Share link with role view → the editor is read-only; with role edit → the edit is saved; wrong token → 404.
+- [ ] Share dialog with ONLYOFFICE roles: `demo` without write access never gets edit mode. On 18+, an expired
+      invitation gives nothing.
+- [ ] Odoo spreadsheet → XLSX with formulas: `ODOO_LIST` / `ODOO_PIVOT` values in the editor match Odoo, and global
+      filters apply. Insert a list into an XLSX. Open and close it without editing → no new version.
+- [ ] Templates: print an employee from the form and two from the list (ZIP), print through the `onlyoffice-pdf` report,
+      and attach that report to a mail.
+- [ ] As `demo`: a document of another user, or of someone else's private chat, does not open (403 / no editor).
+- [ ] After upgrading from the previous release (`-u` of all three addons on an old database), existing share roles
+      still work.
 
 ## 4. Release PR, merge, tag
 
@@ -85,6 +105,7 @@ Read the current numbers from the manifests and `CHANGELOG*.md`; the table only 
    rescan check the app pages (apps.odoo.com/apps/modules/<v>.0/onlyoffice_odoo, …\_documents, …\_templates): new
    version number, description, screenshots. If a page did not update or apps disappeared, look for a scan error (bad
    manifest, missing dependency) and fix it on the release branch at once — the store does it for the whole repository.
+   The store can also unpublish an app without notice.
 3. The DMS addon (`ONLYOFFICE/onlyoffice_odoo_dms`) has its own repository and is released the same way when it changes;
    it depends on `onlyoffice_odoo`, so check it still installs against the new base addon.
 
@@ -92,5 +113,6 @@ Read the current numbers from the manifests and `CHANGELOG*.md`; the table only 
 
 - Source branch: add an empty `## Unreleased` to the changelogs only when the next change lands (do not leave empty
   headings in a release).
-- Tell the team the released versions; update the version table in `HANDOVER.md` if a version line or support status
-  changed (for example, 17 stops being supported after its last release).
+- Tell the team the released versions. If a version line changed, update the table at the top of this skill; if a
+  support status changed (for example, 17 stops being supported after its last release), update the table in
+  `MAINTAINING.md` and the branch table in `CLAUDE.md`.

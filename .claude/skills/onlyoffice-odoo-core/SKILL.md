@@ -38,6 +38,7 @@ Base skill for this repository. Read it before any change, then load the skill f
 | Reviewing a diff / PR                                       | `odoo-code-review`          |
 | Adding or fixing tests                                      | `odoo-testing`              |
 | Porting between 17 / 18 / 19, version deltas                | `odoo-migration-17-18-19`   |
+| Formats list, blank new-file templates (`static/assets/`)   | `update-assets`             |
 
 ## Shared architecture facts
 
@@ -53,8 +54,10 @@ Base skill for this repository. Read it before any change, then load the skill f
   (`/converter`: settings validation in base, format conversion in documents, PDF → PDF-form in templates) and the
   **docbuilder** (`/docbuilder`: template filling and form-key extraction in templates, spreadsheet export/insert in
   documents). Shared request-building code for the converter is `onlyoffice_odoo/utils/conversion_utils.py`.
-- Supported formats are not hard-coded: `onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json` (a
-  vendored submodule) is read by Python (`format_utils` / `file_utils`) and fetched by JS.
+- Supported formats are not hard-coded: `onlyoffice_odoo/static/assets/document_formats/onlyoffice-docs-formats.json` is
+  read by Python (`format_utils` / `file_utils`) and fetched by JS. It and the blank templates in `document_templates/`
+  are hard-committed copies of shared ONLYOFFICE repositories (the Odoo Apps Store does not fetch submodules); update
+  them only with `update-assets`.
 - Some code is intentionally duplicated between modules or classes (template filling exists in
   `onlyoffice_odoo_templates/controllers/controllers.py` and `models/ir_actions_report.py`; the save callback exists in
   the base module and in the documents share callback). When you change one copy, check the others.
@@ -75,8 +78,13 @@ Base skill for this repository. Read it before any change, then load the skill f
 - Public routes must validate `oo_security_token` (internal JWT) and, when JWT is enabled, the Document Server token
   too. Never trust a bare attachment or document id. See `odoo-controllers-jwt` for the token table.
 - Build callback/content URLs from `config_utils.get_base_or_odoo_url(env)`, never from `request.httprequest.host`.
-- Keep `env.cr.commit()` out of new code unless there is a documented reason (existing spots — internal secret
-  generation, template PDF conversion, docbuilder cache — have comments or pylint pragmas explaining why).
+- Add no new `env.cr.commit()`. It is intentional in exactly three places, each explained by a comment or
+  `# pylint: disable=invalid-commit`:
+  - creating the internal JWT secret (`config_utils.get_internal_jwt_secret`), so that a rollback does not drop it;
+  - the docbuilder cache (`spreadsheet_docbuilder._store_docbuilder_data`), because the Docs callback arrives in another
+    transaction;
+  - converting a template PDF into a form (`onlyoffice_odoo_templates/models/onlyoffice_odoo_templates.py`, `create()`
+    and `_onchange_file`), so the public download route sees the attachment from the Docs request.
 - Never change the module version in `__manifest__.py` (versioning is a separate release process).
 - Update the matching changelog on behavior changes: `CHANGELOG.md` → `onlyoffice_odoo`, `CHANGELOG documents.md` →
   `onlyoffice_odoo_documents`, `CHANGELOG templates.md` → `onlyoffice_odoo_templates`. Format:
@@ -90,7 +98,11 @@ Base skill for this repository. Read it before any change, then load the skill f
 
 - `pre-commit run -a` runs all linters (ruff, pylint-odoo, prettier with plugin-xml, eslint, OCA checks); setup is in
   `CONTRIBUTING.md`. The config excludes `**/assets/**` (vendored formats/templates) and
-  `static/description/index.html`.
+  `static/description/index.html`. It also regenerates the addon READMEs (`oca-gen-addon-readme` from `readme/`) and
+  `requirements.txt`; the prettier hook may fail the first commit attempt — `git add` and commit again.
+- pylint-odoo is pinned (`.pre-commit-config.yaml`) because newer versions do not know some checks listed in
+  `.pylintrc`; do not bump it without cleaning `.pylintrc`.
+- Run ruff only on the addon folders: a sibling `.enterprise/` checkout would otherwise be reformatted.
 - CI (`.github/workflows/test.yml`) runs the `onlyoffice_odoo` and `onlyoffice_odoo_templates` tests (a matrix, with
   stub `documents`/`documents_spreadsheet` manifests and the coverage thresholds of `.coveragerc*`); the documents
   module is tested locally only. `.github/workflows/e2e.yml` runs the Playwright suite in `e2e/` against a live Document

@@ -19,16 +19,14 @@ This skill has two uses:
 
 ## Workflow
 
-A change ports forward from whichever code line it was made on, toward newer ones — 17 → 18 → 19 is the typical path,
-but a fix can just as well start on 18 and only need porting to 19. Release branches are `17.0`, `18.0`, `19.0`;
-integration branches are `feature/18.0` and `feature/19.0`; new 18/19 work is usually done on branches forked from them
-and merged back (`hotfix/<version>` branches exist for urgent fixes).
+Fixes start on 17 (`develop`, through a PR from `fix/17.0-<topic>`) and move upward by merge commits, one version at a
+time: `develop` → `feature/18.0` → `feature/19.0` → `feature/20.0`. There are no PRs on 18–20: merge and commit directly
+in `feature/<v>.0`. A change that exists only on a newer line starts there and moves up from it. Release branches are
+`17.0`, `18.0`, `19.0`; `hotfix/<v>` branches are for urgent fixes of a released version (`release` skill).
 
 1. Finish and test the change on its original code line.
-2. If an 18 code line is affected and the change didn't originate there, merge into the 18 integration branch
-   (`feature/18.0`) or a branch forked from it. Resolve conflicts in favor of the 18 API.
-3. If a 19 code line is affected and the change didn't originate there, merge the 18 result into the 19 integration
-   branch (`feature/19.0`) or a fork of it. Resolve for the 19 API.
+2. Merge it into `feature/18.0`. Review every incoming change and adapt it to 18: the 18 code wins over the 17 code.
+3. Merge the 18 result into `feature/19.0` and adapt it to 19 the same way; then 19 into `feature/20.0`.
 4. Run the module tests on each target; confirm each target's manifest prefix before resolving anything.
 
 Rules:
@@ -72,7 +70,14 @@ Run these greps on the merge result before committing; each hit must use the tar
 
 API deltas are in the grep list above (access checks, `<tree>` → `<list>`, Documents models/JS, rpc import, module
 header). Generic framework changes that do not touch this repo today (chatter tag, `SQL()` builder) only matter for new
-code.
+code. Deltas of this repo's own models:
+
+| Area                                         | 17                                    | 18+                                                |
+| -------------------------------------------- | ------------------------------------- | -------------------------------------------------- |
+| Odoo roles in the documents share code       | `viewer` / `editor`                   | `view` / `edit`                                    |
+| Share links                                  | `documents.share`                     | `access_via_link` on the document                  |
+| `onlyoffice.odoo.documents.access.user`      | `user_id` is a `res.users`            | `user_id` is a `res.partner`                       |
+| Odoo roles copied into ONLYOFFICE role rows  | —                                     | cleared by `migrations/0.0.0/post-migrate.py`      |
 
 Port checklist (18):
 
@@ -91,6 +96,7 @@ Port checklist (18):
 | OWL                | 2.x                        | 3.x — stricter props validation                                                 | all components and patches     |
 | `res.users` create | `groups_id` in vals worked | `groups_id` ignored in `create()`; add via `group.write({"users": [(4, uid)]})` | test setUp code                |
 | Raw SQL            | discouraged                | `SQL()` builder required                                                        | any raw SQL                    |
+| JSON routes        | `type="json"`              | `type="jsonrpc"`                                                                | all JSON routes of the repo    |
 | Python             | 3.10+                      | 3.12+                                                                           | dependency checks              |
 | Documents app      | 18 access model            | changed again — re-verify                                                       | `onlyoffice_odoo_documents`    |
 
