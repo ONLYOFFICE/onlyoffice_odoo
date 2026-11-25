@@ -33,7 +33,6 @@
             "onlyoffice_odoo_documents/static/src/js/desktop_mode_init.js",
             "onlyoffice_odoo_documents/static/src/js/desktop_restriction.js",
             "onlyoffice_odoo_documents/static/src/js/desktop_auth.js",
-            "onlyoffice_odoo_documents/static/src/models/*.js",
             "onlyoffice_odoo_documents/static/src/documents_view/**/*",
             "onlyoffice_odoo_documents/static/src/onlyoffice_create_template/**/*",
             "onlyoffice_odoo_documents/static/src/spreadsheet_selector/**/*",
