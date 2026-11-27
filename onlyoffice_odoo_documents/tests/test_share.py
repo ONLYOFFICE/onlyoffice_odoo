@@ -128,7 +128,7 @@ class TestShareLink(DocumentsCase, HttpCase):
                 "name": "OO Finance",
                 "type": "folder",
                 "access_internal": "edit",
-                "access_via_link": "none",
+                "access_via_link": "view",
                 "owner_id": self.owner.id,
             }
         )
