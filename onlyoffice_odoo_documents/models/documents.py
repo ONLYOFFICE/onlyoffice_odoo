@@ -407,6 +407,38 @@ class Document(models.Model):
 
         return result
 
+    def _action_update_access(self, access_internal, access_via_link, is_access_via_link_hidden, no_propagation=False):
+        """Drop the ONLYOFFICE link and internal roles of a folder's children when Odoo gives them its access.
+
+        Odoo sets the new access on the children of an updated folder and skips the ones that already have it. A child
+        with an ONLYOFFICE role has the right of Odoo behind it, so Odoo can skip it, or change that right, while the
+        ONLYOFFICE role stays and keeps giving its old rights: every child of a folder Odoo updated loses it.
+        """
+        changes_by_document = super()._action_update_access(
+            access_internal, access_via_link, is_access_via_link_hidden, no_propagation=no_propagation
+        )
+        if no_propagation:
+            return changes_by_document
+
+        for field, onlyoffice_field, value in (
+            ("access_internal", "internal_users", access_internal),
+            ("access_via_link", "link_access", access_via_link),
+        ):
+            if value is None:
+                continue
+            changed_ids = [document_id for document_id, changes in changes_by_document.items() if field in changes]
+            folders = self.browse(changed_ids).filtered(lambda d: d.type == "folder" and not d.shortcut_document_id)
+            if not folders:
+                continue
+            # The children Odoo updates: what the user may edit (as in _action_update_access), archived ones too.
+            domain = Domain("folder_id", "in", folders.ids) & Domain("shortcut_document_id", "=", False)
+            children = self.with_context(active_test=False).search(domain & self._get_access_update_domain()) - self
+            self.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "in", children.ids)]).filtered(
+                lambda access, onlyoffice_field=onlyoffice_field: onlyoffice_role(access[onlyoffice_field])
+            ).write({onlyoffice_field: False})
+
+        return changes_by_document
+
     def _save_onlyoffice_roles(self, access_internal, access_via_link, partners):
         def kept_role(role):
             """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""
