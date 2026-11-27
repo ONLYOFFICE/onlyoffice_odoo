@@ -38,6 +38,30 @@ msgid "Blank"
 msgstr "Em branco"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can edit. Filters they apply are not shown to others."
+msgstr "Pode editar. Os filtros aplicados não são exibidos para os outros."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can only fill in form fields."
+msgstr "Só pode preencher os campos do formulário."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can view and add comments."
+msgstr "Pode visualizar e adicionar comentários."
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can view and suggest changes in review mode."
+msgstr "Pode visualizar e sugerir alterações no modo de revisão."
+
+#. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0
