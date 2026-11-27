@@ -16,6 +16,10 @@
 - changing only the link or the members in the Share dialog reset the ONLYOFFICE role of internal users to none
 - converting an Odoo spreadsheet to XLSX and opening it in ONLYOFFICE failed with an export error
 - ODOO.\* formulas of a converted spreadsheet could stay as text in cells formatted as Text
+- the ONLYOFFICE link and internal roles of files and folders stayed after their parent folder changed their right in
+  Odoo
+- the Share dialog said "No one on the internet can access" for the Commenter, Reviewer, Form Filling and Custom Filter
+  roles
 
 ## 6.3.1
 

@@ -35,6 +35,37 @@ class DocumentsSharing(models.TransientModel):
 
             record.oo_file_extension = file_extension or ""
 
+    @api.depends("access_internal", "document_ids")
+    def _compute_access_internal_help(self):
+        super()._compute_access_internal_help()
+        for record in self:
+            role_help = record._get_custom_role_help(record.access_internal)
+            if role_help:
+                record.access_internal_help = role_help
+
+    @api.depends("access_via_link", "document_ids")
+    def _compute_access_via_link_help(self):
+        super()._compute_access_via_link_help()
+        for record in self:
+            role_help = record._get_custom_role_help(record.access_via_link)
+            if role_help:
+                record.access_via_link_help = role_help
+
+    def _get_custom_role_help(self, role):
+        """Return the caption of an ONLYOFFICE role, or None for an Odoo role.
+
+        Odoo shows the caption of 'none' for every role it does not know.
+        """
+        if not role:
+            return None
+        role_helps = {
+            "commenter": _("Can view and add comments."),
+            "reviewer": _("Can view and suggest changes in review mode."),
+            "form_filling": _("Can only fill in form fields."),
+            "custom_filter": _("Can edit. Filters they apply are not shown to others."),
+        }
+        return role_helps.get(role.removeprefix(self.WRITE_VALUE_PREFIX))
+
     CUSTOM_ROLES = [
         ("commenter", "Commenter"),
         ("reviewer", "Reviewer"),

@@ -435,6 +435,32 @@ class Document(models.Model):
                 invited[member] = invite_role if role_data else role_data
         return invited
 
+    def _action_update_access(self, access_internal, access_via_link, is_access_via_link_hidden, no_propagation=False):
+        """Drop the ONLYOFFICE link and internal roles of a folder's children whose right in Odoo the folder changes.
+
+        A custom role stands on a right of Odoo: custom filter on edit, the others on view. Odoo gives the new access of
+        a folder to its children and skips the ones that already have it, and returns the ones it changed. A child whose
+        right changed loses its custom role, which no longer fits that right; a child Odoo left keeps it.
+        """
+        changes_by_document = super()._action_update_access(
+            access_internal, access_via_link, is_access_via_link_hidden, no_propagation=no_propagation
+        )
+
+        for field, onlyoffice_field in (("access_internal", "internal_users"), ("access_via_link", "link_access")):
+            # The roles of the shared documents themselves are set with the new access (_save_onlyoffice_roles).
+            changed_ids = [
+                document_id
+                for document_id, changes in changes_by_document.items()
+                if field in changes and document_id not in self.ids
+            ]
+            if not changed_ids:
+                continue
+            self.env["onlyoffice.odoo.documents.access"].sudo().search([("document_id", "in", changed_ids)]).filtered(
+                lambda access, onlyoffice_field=onlyoffice_field: onlyoffice_role(access[onlyoffice_field])
+            ).write({onlyoffice_field: False})
+
+        return changes_by_document
+
     def _save_onlyoffice_roles(self, access_internal, access_via_link, partners, groups=None):
         def kept_role(role):
             """The role kept in the ONLYOFFICE rows: none / view / edit are kept by Odoo, so they stay current."""

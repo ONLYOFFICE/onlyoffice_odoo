@@ -120,6 +120,33 @@ class TestShareLink(DocumentsCase, HttpCase):
         self.assertEqual(config["document"]["permissions"], {"edit": False, "review": True})
         self.assertEqual(config["editorConfig"]["user"]["id"], str(self.colleague.id))
 
+    def test_a_link_role_gives_way_to_the_new_link_access_of_its_folder(self):
+        """A file shared by link with Custom Filter, then the link of its folder set to None and to Viewer: the link
+        of the file views it, as that of the folder does, and saves nothing."""
+        folder = self.env["documents.document"].create(
+            {
+                "name": "OO Finance",
+                "type": "folder",
+                "access_internal": "edit",
+                "access_via_link": "view",
+                "owner_id": self.owner.id,
+            }
+        )
+        sheet = self._document("Sheet.xlsx", folder_id=folder.id)
+        sheet.with_user(self.owner).action_update_access_rights(access_via_link="custom_filter", no_propagation=True)
+        self.assertEqual(self._config(sheet)["editorConfig"]["mode"], "edit")
+
+        folder.with_user(self.owner).action_update_access_rights(access_via_link="none")
+        self.assertEqual(self._open(sheet).status_code, 404)
+        folder.with_user(self.owner).action_update_access_rights(access_via_link="view")
+
+        config = self._config(sheet)
+        self.assertEqual(config["editorConfig"]["mode"], "view")
+        self.assertNotIn("callbackUrl", config["editorConfig"])
+        self.assertEqual(self._save(sheet, self.public_user).status_code, 500)
+        Sharing = self.env["documents.sharing"].with_user(self.owner)
+        self.assertEqual(Sharing.browse(Sharing.action_open(sheet.ids)["res_id"]).access_via_link, "view")
+
     def test_blocked_links_are_not_found(self):
         blocked = self._document(access_via_link="view")
         self._roles(blocked, link_access="none")

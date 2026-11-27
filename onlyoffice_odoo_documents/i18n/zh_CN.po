@@ -38,6 +38,30 @@ msgid "Blank"
 msgstr "空白"
 
 #. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can edit. Filters they apply are not shown to others."
+msgstr "可编辑。所应用的筛选器对其他人不可见。"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can only fill in form fields."
+msgstr "仅可填写表单字段。"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can view and add comments."
+msgstr "可查看和添加评论。"
+
+#. module: onlyoffice_odoo_documents
+#. odoo-python
+#: code:addons/onlyoffice_odoo_documents/models/documents_sharing.py:0
+msgid "Can view and suggest changes in review mode."
+msgstr "可查看并在审阅模式下建议更改。"
+
+#. module: onlyoffice_odoo_documents
 #. odoo-javascript
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/convert_dialog/convert_dialog.xml:0
 #: code:addons/onlyoffice_odoo_documents/static/src/documents_view/create_mode_dialog/create_mode_dialog.xml:0

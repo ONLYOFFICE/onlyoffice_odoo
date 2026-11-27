@@ -106,6 +106,27 @@ class TestSharingWizard(DocumentsCase, TransactionCase):
         self.assertEqual((wizard.access_internal, wizard.access_via_link), ("edit", "view"))
         self.assertEqual(self._role_of(wizard, self.colleague), "edit")
 
+    def test_dialog_tells_what_an_onlyoffice_role_allows(self):
+        """Odoo says "No one on the internet can access" for a role it does not know: an ONLYOFFICE role gets its own
+        caption, for the link and for internal users."""
+        captions = {
+            ("Report.docx", "commenter"): "Can view and add comments.",
+            ("Report.docx", "reviewer"): "Can view and suggest changes in review mode.",
+            ("Form.pdf", "form_filling"): "Can only fill in form fields.",
+            ("Sheet.xlsx", "custom_filter"): "Can edit. Filters they apply are not shown to others.",
+        }
+        for (name, role), caption in captions.items():
+            with self.subTest(role=role):
+                document = self._document(name)
+                document.with_user(self.owner).action_update_access_rights(access_internal=role, access_via_link=role)
+
+                wizard = self._open(document)
+
+                self.assertEqual((wizard.access_internal_help, wizard.access_via_link_help), (caption, caption))
+
+        wizard.access_via_link = f"{wizard.WRITE_VALUE_PREFIX}view"
+        self.assertEqual(wizard.access_via_link_help, "Can only view. Cannot rename, move, or delete.")
+
     def test_dialog_of_several_documents(self):
         report = self._document()
         sheet = self._document("Sheet.xlsx")
