@@ -15,6 +15,8 @@
 - changing only the link or the members in the Share dialog reset the ONLYOFFICE role of internal users to none
 - ODOO.\* formulas of a converted spreadsheet could stay as text in cells formatted as Text
 - the ONLYOFFICE link and internal roles of files and folders stayed after the access of their parent folder changed
+- the Share dialog said "No one on the internet can access" for the Commenter, Reviewer, Form Filling and Custom
+  Filter roles
 
 ## 6.3.1
 
