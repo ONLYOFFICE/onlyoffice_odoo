@@ -264,40 +264,47 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
 
         self.assertFalse(self.env["onlyoffice.odoo.documents.access.user"].search([("document_id", "=", document.id)]))
 
-    def test_a_new_access_on_the_folder_replaces_the_onlyoffice_roles_in_it(self):
-        """Odoo gives the new access of a folder to everything in it: the ONLYOFFICE link or internal role of a file
-        in there gives way, also when Odoo skips the file as it already has that right (a commenter views)."""
+    def test_a_new_access_on_the_folder_drops_the_onlyoffice_roles_whose_right_of_odoo_it_changes(self):
+        """A custom role stands on a right of Odoo (custom filter on edit, the others on view). A new access of the
+        folder that changes that right of a file in it drops the ONLYOFFICE link or internal role of the file; one that
+        leaves it keeps the role."""
         cases = (
-            # file, its ONLYOFFICE role (edit / view in Odoo), the new access of the folder
-            ("Sheet.xlsx", "custom_filter", "view"),
-            ("Report.docx", "commenter", "view"),
-            ("Report.docx", "commenter", "none"),
+            # file, its ONLYOFFICE role, its right in Odoo, the new access of the folder, whether the role stays
+            ("Sheet.xlsx", "custom_filter", "edit", "edit", True),
+            ("Sheet.xlsx", "custom_filter", "edit", "view", False),
+            ("Sheet.xlsx", "custom_filter", "edit", "none", False),
+            ("Report.docx", "commenter", "view", "view", True),
+            ("Report.docx", "commenter", "view", "edit", False),
+            ("Report.docx", "commenter", "view", "none", False),
         )
         Access = self.env["onlyoffice.odoo.documents.access"]
-        for name, role, access in cases:
+        for name, role, right, access, kept in cases:
             for field, onlyoffice_field in (("access_via_link", "link_access"), ("access_internal", "internal_users")):
-                with self.subTest(file=name, role=role, folder=access, field=field):
+                with self.subTest(role=role, folder=access, field=field):
+                    # The folder starts from another access, so that Odoo gives the new one to what is in it.
+                    start = "none" if access != "none" else "edit"
                     folder = self.env["documents.document"].create(
                         {
                             "name": "OO Team",
                             "type": "folder",
-                            "access_internal": "edit",
-                            "access_via_link": "edit",
+                            "access_internal": start,
+                            "access_via_link": start,
                             "owner_id": self.owner.id,
                         }
                     )
                     document = self._document(name, folder_id=folder.id)
                     document.with_user(self.owner).action_update_access_rights(**{field: role}, no_propagation=True)
-                    self.assertEqual(Access.search([("document_id", "=", document.id)])[onlyoffice_field], role)
+                    self.assertEqual(document[field], right)
 
                     folder.with_user(self.owner).action_update_access_rights(**{field: access})
 
-                    self.assertFalse(Access.search([("document_id", "=", document.id)])[onlyoffice_field])
-                    self.assertEqual(document[field], access)
+                    self.assertEqual(folder[field], access)
+                    own_role = Access.search([("document_id", "=", document.id)])[onlyoffice_field]
+                    self.assertEqual((own_role, document[field]), (role, right) if kept else (False, access))
 
     def test_a_new_access_on_the_folder_leaves_the_roles_of_the_files_odoo_leaves(self):
         # Odoo gives the access of the folder only to what the user who changes it may edit: a file they only view
-        # keeps its access, and its ONLYOFFICE role.
+        # keeps its right of Odoo, and so its ONLYOFFICE role, though the new access of the folder would change it.
         folder = self.env["documents.document"].create(
             {"name": "OO Team", "type": "folder", "access_internal": "none", "owner_id": self.owner.id}
         )
@@ -309,9 +316,9 @@ class TestDocumentAccessRights(DocumentsCase, TransactionCase):
             access_via_link="commenter", partners={self.colleague.partner_id.id: ["view", False]}, no_propagation=True
         )
 
-        folder.with_user(self.colleague).action_update_access_rights(access_via_link="view")
+        folder.with_user(self.colleague).action_update_access_rights(access_via_link="none")
 
-        self.assertEqual(folder.access_via_link, "view")
+        self.assertEqual((folder.access_via_link, document.access_via_link), ("none", "view"))
         access = self.env["onlyoffice.odoo.documents.access"].search([("document_id", "=", document.id)])
         self.assertEqual(access.link_access, "commenter")
 
